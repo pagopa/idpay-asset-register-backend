@@ -1,2 +1,3 @@
-# Add the repository's code owners here
-* @pagopa/idpay-app-maintainer-team @pagopa/idpay-approver-team @dariopelliccioli
+# see https://help.github.com/en/articles/about-code-owners#example-of-a-codeowners-file
+
+* @pagopa/idpay-app-maintainer-team @stedelia
