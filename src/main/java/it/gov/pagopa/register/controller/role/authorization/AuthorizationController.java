@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 
 @Validated
 @Tag(name = "UserPermission", description = "")
-@RequestMapping("${openapi.idPayWelfarePortalUserPermissions.base-path:/idpay-itn/register/authorization}")
+@RequestMapping("${openapi.idPayWelfarePortalUserPermissions.base-path:/idpay/authorization/}")
 public interface AuthorizationController {
 
     /**
