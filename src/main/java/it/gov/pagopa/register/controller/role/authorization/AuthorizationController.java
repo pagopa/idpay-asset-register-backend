@@ -1,4 +1,4 @@
-package it.gov.pagopa.register.controller.rolepermission.authorization;
+package it.gov.pagopa.register.controller.role.authorization;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import io.swagger.v3.oas.annotations.Operation;
@@ -9,7 +9,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import it.gov.pagopa.common.web.dto.ErrorDTO;
-import it.gov.pagopa.register.dto.rolepermission.UserPermissionDTO;
+import it.gov.pagopa.register.dto.role.UserPermissionDTO;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 
 @Validated
 @Tag(name = "UserPermission", description = "")
-@RequestMapping("${openapi.idPayWelfarePortalUserPermissions.base-path:/idpay/authorization}")
+@RequestMapping("${openapi.idPayWelfarePortalUserPermissions.base-path:/idpay-itn/register/authorization}")
 public interface AuthorizationController {
 
     /**

@@ -1,4 +1,4 @@
-package it.gov.pagopa.register.controller.rolepermission.consent;
+package it.gov.pagopa.register.controller.role.consent;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import io.swagger.v3.oas.annotations.Operation;
@@ -6,7 +6,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import it.gov.pagopa.common.web.dto.ErrorDTO;
-import it.gov.pagopa.register.dto.rolepermission.PortalConsentDTO;
+import it.gov.pagopa.register.dto.role.PortalConsentDTO;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 

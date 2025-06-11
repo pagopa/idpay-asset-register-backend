@@ -1,4 +1,4 @@
-package it.gov.pagopa.register.dto.rolepermission;
+package it.gov.pagopa.register.dto.role;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import lombok.Data;

@@ -1,8 +1,8 @@
-package it.gov.pagopa.register.controller.rolepermission.authorization;
+package it.gov.pagopa.register.controller.role.authorization;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import it.gov.pagopa.register.dto.rolepermission.UserPermissionDTO;
-import it.gov.pagopa.register.service.rolepermission.RolePermissionService;
+import it.gov.pagopa.register.dto.role.UserPermissionDTO;
+import it.gov.pagopa.register.service.role.RolePermissionService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;

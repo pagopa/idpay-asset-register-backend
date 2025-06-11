@@ -1,4 +1,4 @@
-package it.gov.pagopa.register.model.rolepermission;
+package it.gov.pagopa.register.model.role;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

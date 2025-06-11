@@ -1,6 +1,6 @@
-package it.gov.pagopa.register.service.rolepermission;
+package it.gov.pagopa.register.service.role;
 
-import it.gov.pagopa.register.dto.rolepermission.PortalConsentDTO;
+import it.gov.pagopa.register.dto.role.PortalConsentDTO;
 
 public interface PortalConsentService {
 

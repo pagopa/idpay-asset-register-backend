@@ -1,7 +1,7 @@
-package it.gov.pagopa.register.dto.mapper.rolepermission;
+package it.gov.pagopa.register.dto.mapper.role;
 
 import it.gov.pagopa.register.dto.onetrust.PrivacyNoticesDTO;
-import it.gov.pagopa.register.dto.rolepermission.PortalConsentDTO;
+import it.gov.pagopa.register.dto.role.PortalConsentDTO;
 import org.springframework.stereotype.Service;
 
 @Service

@@ -1,6 +1,6 @@
-package it.gov.pagopa.register.service.rolepermission;
+package it.gov.pagopa.register.service.role;
 
-import it.gov.pagopa.register.dto.rolepermission.UserPermissionDTO;
+import it.gov.pagopa.register.dto.role.UserPermissionDTO;
 import org.springframework.stereotype.Service;
 
 @Service

@@ -2,6 +2,7 @@ package it.gov.pagopa.common.web.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import it.gov.pagopa.common.web.exception.ServiceExceptionPayload;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -14,6 +15,8 @@ import lombok.NoArgsConstructor;
 @EqualsAndHashCode
 public class ErrorDTO implements ServiceExceptionPayload {
 
+  @NotNull
   private String code;
+  @NotNull
   private String message;
 }

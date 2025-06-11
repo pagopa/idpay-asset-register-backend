@@ -1,7 +1,7 @@
-package it.gov.pagopa.register.controller.rolepermission.consent;
+package it.gov.pagopa.register.controller.role.consent;
 
-import it.gov.pagopa.register.dto.rolepermission.PortalConsentDTO;
-import it.gov.pagopa.register.service.rolepermission.PortalConsentService;
+import it.gov.pagopa.register.dto.role.PortalConsentDTO;
+import it.gov.pagopa.register.service.role.PortalConsentService;
 import org.springframework.web.bind.annotation.RestController;
 
 

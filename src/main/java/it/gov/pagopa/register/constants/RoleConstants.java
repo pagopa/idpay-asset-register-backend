@@ -1,9 +1,9 @@
 package it.gov.pagopa.register.constants;
 
-public final class RolePermissionConstants {
+public final class RoleConstants {
     public static final String PERMISSIONS_NOT_FOUND_MSG = "Permissions not found for [%s] institution";
 
-    private RolePermissionConstants(){}
+    private RoleConstants(){}
 
     public static final class ExceptionCode {
         public static final String PERMISSIONS_NOT_FOUND = "ROLE_PERMISSION_NOT_FOUND";

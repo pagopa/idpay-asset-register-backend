@@ -1,12 +1,12 @@
-package it.gov.pagopa.register.service.rolepermission;
+package it.gov.pagopa.register.service.role;
 
-import it.gov.pagopa.register.constants.RolePermissionConstants;
-import it.gov.pagopa.register.dto.rolepermission.PermissionDTO;
-import it.gov.pagopa.register.dto.rolepermission.UserPermissionDTO;
-import it.gov.pagopa.register.exception.rolepermission.PermissionNotFoundException;
-import it.gov.pagopa.register.model.rolepermission.Permission;
-import it.gov.pagopa.register.model.rolepermission.RolePermission;
-import it.gov.pagopa.register.repository.rolepermission.RolePermissionRepository;
+import it.gov.pagopa.register.constants.RoleConstants;
+import it.gov.pagopa.register.dto.role.PermissionDTO;
+import it.gov.pagopa.register.dto.role.UserPermissionDTO;
+import it.gov.pagopa.register.exception.role.PermissionNotFoundException;
+import it.gov.pagopa.register.model.role.Permission;
+import it.gov.pagopa.register.model.role.RolePermission;
+import it.gov.pagopa.register.repository.role.RolePermissionRepository;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
@@ -25,7 +25,7 @@ public class RolePermissionServiceImpl implements RolePermissionService {
     @Override
     public UserPermissionDTO getUserPermission(String institutionType) {
         RolePermission roleOptional = rolePermissionRepository.findByInstitution(institutionType).orElseThrow(() ->
-                new PermissionNotFoundException(String.format(RolePermissionConstants.PERMISSIONS_NOT_FOUND_MSG, institutionType))
+                new PermissionNotFoundException(String.format(RoleConstants.PERMISSIONS_NOT_FOUND_MSG, institutionType))
         );
         return rolePermissionToDTO(roleOptional);
     }
