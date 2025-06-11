@@ -1,0 +1,19 @@
+package it.gov.pagopa.common.web.dto;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+import it.gov.pagopa.common.web.exception.ServiceExceptionPayload;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+
+@JsonInclude(JsonInclude.Include.NON_NULL)
+@AllArgsConstructor
+@NoArgsConstructor
+@Data
+@EqualsAndHashCode
+public class ErrorDTO implements ServiceExceptionPayload {
+
+  private String code;
+  private String message;
+}

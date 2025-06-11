@@ -1,0 +1,28 @@
+package it.gov.pagopa.register.model.rolepermission;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
+
+import java.time.LocalDateTime;
+
+@Data
+@Builder
+@Document("portal_consent")
+@NoArgsConstructor
+@AllArgsConstructor
+public class PortalConsent {
+    @Id
+    private String userId;
+    private LocalDateTime acceptanceDate;
+    private String versionId;
+
+    public PortalConsent(String userId, String versionId) {
+        this.userId = userId;
+        this.acceptanceDate = LocalDateTime.now();
+        this.versionId = versionId;
+    }
+}
