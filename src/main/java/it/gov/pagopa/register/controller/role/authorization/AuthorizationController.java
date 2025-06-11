@@ -56,8 +56,8 @@ public interface AuthorizationController {
             produces = { "application/json" }
     )
     ResponseEntity<UserPermissionDTO> getUserPermissions(
-            @Parameter(name = "institution", description = "Institution Type (eg. invitalia & ope_base)", required = true)
-            @PathVariable("institution") String role
+            @Parameter(name = "institution", description = "Institution Type (es. invitalia & ope_base)", required = true)
+            @PathVariable("institution") String institution
     ) throws JsonProcessingException;
 
 }
