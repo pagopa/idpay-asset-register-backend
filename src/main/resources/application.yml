@@ -35,3 +35,12 @@ spring:
           maxConnectionLifeTimeMS: ${MONGODB_CONNECTIONPOOL_MAX_CONNECTION_LIFE_MS:0}
           maxConnectionIdleTimeMS: ${MONGODB_CONNECTIONPOOL_MAX_CONNECTION_IDLE_MS:120000}
           maxConnecting: ${MONGODB_CONNECTIONPOOL_MAX_CONNECTING:2}
+app:
+  rest-client:
+    one-trust:
+      service:
+        name: one-trust
+        privacy-notices:
+          base-url: ${ONE_TRUST_PRIVACYNOTICES_BASE_URL:https://api-io.dev.cstar.pagopa.it/idpay-itn/mock/api/privacynotice/v2}
+          tosId: ${ONE_TRUST_TOS_ID:}
+          apiKey: ${ONE_TRUST_API_KEY:}
