@@ -6,7 +6,7 @@ management:
       probes.enabled: true
       group:
         readiness.include: "*"
-        liveness.include: livenessState,diskSpace,ping,streams #,binders REMOVE COMMENT AFTER BINDERS IMPLEMENTATION
+        liveness.include: livenessState,diskSpace,ping # streams, binders REMOVE COMMENT AFTER BINDERS IMPLEMENTATION
       logging.slow-indicator-threshold: ${HEALTH_ACTUATOR_LOGGER_TIMEOUT_DURATION:PT1S}
   endpoints:
     jmx:
@@ -35,6 +35,7 @@ spring:
           maxConnectionLifeTimeMS: ${MONGODB_CONNECTIONPOOL_MAX_CONNECTION_LIFE_MS:0}
           maxConnectionIdleTimeMS: ${MONGODB_CONNECTIONPOOL_MAX_CONNECTION_IDLE_MS:120000}
           maxConnecting: ${MONGODB_CONNECTIONPOOL_MAX_CONNECTING:2}
+
 app:
   rest-client:
     one-trust:
@@ -42,5 +43,5 @@ app:
         name: one-trust
         privacy-notices:
           base-url: ${ONE_TRUST_PRIVACYNOTICES_BASE_URL:https://api-io.dev.cstar.pagopa.it/idpay-itn/mock/api/privacynotice/v2}
-          tosId: ${ONE_TRUST_TOS_ID:}
-          apiKey: ${ONE_TRUST_API_KEY:}
+          tosId: ${ONE_TRUST_TOS_ID:123}
+          apiKey: ${ONE_TRUST_API_KEY:fake-api-key}
