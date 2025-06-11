@@ -3,8 +3,6 @@ name: 📦 Flow Snapshot Docker
 on:
   push:
     branches-ignore:
-      - 'develop'
-      - 'uat'
       - 'main'
     paths-ignore:
       - 'CODEOWNERS'
@@ -27,15 +25,11 @@ on:
       postman_branch:
         description: postman branch name'
         required: false
-        default: 'develop'
+        default: 'release-dev'
 
 env:
   # branch choosed by workflow_dispatch or by push event
   CURRENT_BRANCH: ${{ github.event.inputs.branch || github.ref_name }}
-
-permissions:
-  packages: write
-  contents: read
 
 jobs:
   checkout:
@@ -43,7 +37,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout code
-        uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 #4.2.2
         with:
           ref: ${{ env.CURRENT_BRANCH }}
 
@@ -54,13 +48,13 @@ jobs:
     if: ${{ github.event_name == 'push' || github.event.inputs.docker_build_enabled == 'true' }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 #4.2.2
         with:
           ref: ${{ env.CURRENT_BRANCH }}
 
       - name: Run Snapshot Docker Build/Push
-        # https://github.com/pagopa/github-actions-template/releases/tag/v2.1.1
-        uses: pagopa/github-actions-template/payments-flow-docker-snapshot@e67e0ec4bb01d6cb5065e311ba0e1c92c49966a7
+        # https://github.com/pagopa/github-actions-template/releases/tag/v2.0.0
+        uses: pagopa/github-actions-template/payments-flow-docker-snapshot@b825ee193430395706a4a7e580b8435bdded0227
         with:
           current_branch: ${{ github.ref_name }}
 
@@ -78,15 +72,17 @@ jobs:
         uses: pagopa/github-actions-template/azure-devops-trigger-pipeline@cad30356d9046af6e7b0cee43db4cf919cc408f9
         with:
           enable_azure_devops_step: 'true'
-          azure_devops_project_url: 'https://dev.azure.com/pagopaspa/CHANGEME'
-          azure_devops_pipeline_name: 'CHANGEME-deploy-aks.deploy'
+          azure_devops_project_url: 'https://dev.azure.com/pagopaspa/idpay-itn-projects'
+          azure_devops_pipeline_name: 'idpay-deploy-aks.deploy'
           azure_devops_pat: ${{ secrets.AZURE_DEVOPS_TOKEN }}
           azure_template_parameters: |
             {
-              "APPS_TOP": "[CHANGEME]",
+              "APPS_TOP": "[idpay-asset-register-backend]",
               "APPS_MID": "[]",
               "APPS_EXT": "[]",
               "ARGOCD_TARGET_BRANCH": "${{ github.event.inputs.argocd_target_branch }}",
               "POSTMAN_BRANCH": "${{ github.event.inputs.postman_branch }}",
-              "TRIGGER_MESSAGE": "CHANGEME"
+              "TRIGGER_MESSAGE": "idpay-asset-register-backend"
             }
+
+
