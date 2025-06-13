@@ -18,6 +18,7 @@ public class AuthorizationControllerImpl implements AuthorizationController {
 
     @Override
     public ResponseEntity<UserPermissionDTO> getUserPermissions(String institution) throws JsonProcessingException {
+        if(!institution.equalsIgnoreCase("invitalia")) institution = "operatore";
         UserPermissionDTO userPermissionDTO = rolePermissionService.getUserPermission(institution);
         return new ResponseEntity<>(userPermissionDTO, HttpStatus.OK);
     }
