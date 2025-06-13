@@ -52,6 +52,6 @@ app:
       service:
         name: one-trust
         privacy-notices:
-          base-url: ${ONE_TRUST_PRIVACYNOTICES_BASE_URL:https://api-io.dev.cstar.pagopa.it/idpay-itn/mock/api/privacynotice/v2}
-          tosId: ${ONE_TRUST_TOS_ID:}
-          apiKey: ${ONE_TRUST_API_KEY:}
+          base-url: "https://app-de.onetrust.com/api/privacynotice/v2"
+          tosId: "44d36c0c-f859-4437-ae03-7da3c8b660f2"
+          apiKey: "OGM3ODBjM2ViZTU2NDRhNGE5MDk4MmQxM2MyYjk5Nzc6RHVVMTRaQjRBMG14YVN6cmF4R2RFT3V0cGZwdjhLR3I="
