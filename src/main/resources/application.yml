@@ -53,5 +53,5 @@ app:
         name: one-trust
         privacy-notices:
           base-url: "https://app-de.onetrust.com/api/privacynotice/v2"
-          tosId: "77f17844-04c3-4969-a11d-462ee77acbe1"
+          tosId: "f1b252d1-de0a-4e99-859c-47918b46876e"
           apiKey: "OGM3ODBjM2ViZTU2NDRhNGE5MDk4MmQxM2MyYjk5Nzc6RHVVMTRaQjRBMG14YVN6cmF4R2RFT3V0cGZwdjhLR3I="
