@@ -1,0 +1,144 @@
+package it.gov.pagopa.register.controller;
+
+import it.gov.pagopa.register.config.ServiceExceptionConfig;
+import it.gov.pagopa.register.constants.RoleConstants;
+import it.gov.pagopa.register.controller.role.authorization.AuthorizationController;
+import it.gov.pagopa.register.dto.role.PermissionDTO;
+import it.gov.pagopa.register.dto.role.UserPermissionDTO;
+import it.gov.pagopa.register.exception.role.PermissionNotFoundException;
+import it.gov.pagopa.register.model.role.Permission;
+import it.gov.pagopa.register.model.role.RolePermission;
+import it.gov.pagopa.register.repository.role.RolePermissionRepository;
+import it.gov.pagopa.register.service.role.RolePermissionService;
+import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.*;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+@ExtendWith(MockitoExtension.class)
+@WebMvcTest(value = {
+        AuthorizationController.class, ServiceExceptionConfig.class}, excludeAutoConfiguration = SecurityAutoConfiguration.class)
+@Slf4j
+class AuthorizationControllerTest {
+
+    @Mock
+    RolePermissionRepository rolePermissionRepository;
+
+    @MockBean
+    RolePermissionService rolePermissionServiceMock;
+
+    @Autowired
+    protected MockMvc mvc;
+
+    private static final String BASE_URL = "http://localhost:8080/idpay/authorization";
+    private static final String PERMISSIONS_URL = "/permissions/";
+    private static final String INSTITUTION = "TEST_INSTITUTION";
+
+    RolePermission createAdminRolePermission () {
+        RolePermission rolePermission = new RolePermission();
+        List<Permission> permissionList = new ArrayList<>();
+        Permission permission = new Permission();
+        permission.setMode("WRITE");
+        permission.setName("InitiativeCreation");
+        permission.setDescription("Initiative Creation");
+        permissionList.add(permission);
+        Permission permission2 = new Permission();
+        permission2.setMode("WRITE");
+        permission2.setName("InitiativeModification");
+        permission2.setDescription("Initiative Modification");
+        permissionList.add(permission2);
+        rolePermission.setInstitution("Invitalia");
+        rolePermission.setDescription("Administrator");
+        rolePermission.setPermissions(permissionList);
+        return rolePermission;
+    }
+
+    UserPermissionDTO createAdminPermissionDTO () {
+        UserPermissionDTO userPermissionDTO = new UserPermissionDTO();
+        List<PermissionDTO> permissionDTOList = new ArrayList<>();
+        PermissionDTO permissionDTO = new PermissionDTO();
+        permissionDTO.setMode("WRITE");
+        permissionDTO.setName("InitiativeCreation");
+        permissionDTO.setDescription("Initiative Creation");
+        PermissionDTO permissionDTO2 = new PermissionDTO();
+        permissionDTO2.setMode("WRITE");
+        permissionDTO2.setName("InitiativeCreation");
+        permissionDTO2.setDescription("Initiative Creation");
+        permissionDTOList.add(permissionDTO);
+        permissionDTOList.add(permissionDTO2);
+        userPermissionDTO.setInstitution("Invitalia");
+        userPermissionDTO.setPermissions(permissionDTOList);
+        return userPermissionDTO;
+    }
+
+    @Test
+    void shouldReturnPermission() throws Exception {
+        UserPermissionDTO dummyAdminPermissionDTO = new UserPermissionDTO();
+        dummyAdminPermissionDTO.setInstitution("Invitalia");
+        dummyAdminPermissionDTO.setPermissions(List.of(new PermissionDTO()));
+
+        when(rolePermissionServiceMock.getUserPermission(anyString())).thenReturn(dummyAdminPermissionDTO);
+
+        UserPermissionDTO adminPermissions = rolePermissionServiceMock.getUserPermission("invitalia");
+
+        assertThat("result", adminPermissions, is(sameInstance(dummyAdminPermissionDTO)));
+
+        mvc.perform(
+            MockMvcRequestBuilders.get(BASE_URL + PERMISSIONS_URL + "invitalia")
+                .contentType(MediaType.APPLICATION_JSON_VALUE).accept(MediaType.APPLICATION_JSON))
+                .andExpect(MockMvcResultMatchers.status().isOk())
+                .andExpect(jsonPath("$.institution").value(dummyAdminPermissionDTO.getInstitution()))
+                .andExpect(jsonPath("$.permissions[0].name").value(dummyAdminPermissionDTO.getPermissions().get(0).getName()))
+                .andExpect(jsonPath("$.permissions[0].description").value(dummyAdminPermissionDTO.getPermissions().get(0).getDescription()))
+                .andExpect(jsonPath("$.permissions[0].mode").value(dummyAdminPermissionDTO.getPermissions().get(0).getMode()))
+                .andDo(print())
+                .andReturn();
+
+    }
+
+    @Test
+    void shouldReturnNotFound() throws Exception {
+        Mockito.doThrow(new PermissionNotFoundException(String.format(RoleConstants.PERMISSIONS_NOT_FOUND_MSG, INSTITUTION)))
+                .when(rolePermissionServiceMock).getUserPermission(anyString());
+
+        MvcResult mvcResult = mvc.perform(get(BASE_URL + PERMISSIONS_URL + "/{institution}", INSTITUTION))
+                .andExpect(status().isNotFound())
+                .andExpect(getResult -> Assertions.assertInstanceOf(PermissionNotFoundException.class, getResult.getResolvedException()))
+                .andExpect(status().is4xxClientError())
+                .andDo(print())
+                .andReturn();
+
+
+        Optional<PermissionNotFoundException> authorizationPermissionException = Optional.ofNullable((PermissionNotFoundException) mvcResult.getResolvedException());
+
+        authorizationPermissionException.ifPresent(authExp -> assertThat(authExp, is(notNullValue())));
+        authorizationPermissionException.ifPresent(authExp -> assertThat(authExp, is(instanceOf(PermissionNotFoundException.class))));
+
+    }
+
+}
