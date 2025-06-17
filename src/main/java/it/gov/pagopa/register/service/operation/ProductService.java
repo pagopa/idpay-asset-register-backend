@@ -1,6 +1,8 @@
 package it.gov.pagopa.register.service.operation;
 
 import it.gov.pagopa.common.storage.AzureBlobClientImpl;
+import it.gov.pagopa.register.connector.onetrust.InitiativeFileStorageClient;
+import it.gov.pagopa.register.connector.onetrust.InitiativeFileStorageConnector;
 import it.gov.pagopa.register.dto.operation.RegisterUploadReqeustDTO;
 import it.gov.pagopa.register.exception.operation.CsvValidationException;
 import it.gov.pagopa.register.repository.operation.UploadRepository;
@@ -25,9 +27,9 @@ import static it.gov.pagopa.register.utils.Utils.*;
 public class ProductService {
 
   private final UploadRepository uploadRepository;
-  private final AzureBlobClientImpl azureBlobClient;
+  private final InitiativeFileStorageClient azureBlobClient;
 
-  public ProductService(UploadRepository uploadRepository, AzureBlobClientImpl azureBlobClient) {
+  public ProductService(UploadRepository uploadRepository, InitiativeFileStorageClient azureBlobClient) {
     this.uploadRepository = uploadRepository;
     this.azureBlobClient = azureBlobClient;
   }
