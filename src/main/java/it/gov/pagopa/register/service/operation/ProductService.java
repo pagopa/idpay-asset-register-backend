@@ -5,6 +5,7 @@ import it.gov.pagopa.register.connector.onetrust.InitiativeFileStorageClient;
 import it.gov.pagopa.register.connector.onetrust.InitiativeFileStorageConnector;
 import it.gov.pagopa.register.dto.operation.RegisterUploadReqeustDTO;
 import it.gov.pagopa.register.exception.operation.CsvValidationException;
+import it.gov.pagopa.register.model.operation.UploadCsv;
 import it.gov.pagopa.register.repository.operation.UploadRepository;
 import it.gov.pagopa.register.utils.ValidationError;
 import lombok.extern.slf4j.Slf4j;
@@ -12,12 +13,14 @@ import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import static it.gov.pagopa.register.utils.Utils.*;
 
@@ -34,6 +37,16 @@ public class ProductService {
     this.azureBlobClient = azureBlobClient;
   }
 
+  private final List<String> categorieProdotti = List.of(
+    "WASHINGMACHINES",
+    "WASHERDRIERS",
+    "OVENS",
+    "RANGEHOODS",
+    "DISHWASHERS",
+    "TUMBLEDRIERS",
+    "REFRIGERATINGAPPL"
+  );
+
 
   public void saveCsv(RegisterUploadReqeustDTO registerUploadReqeustDTO) {
         /*
@@ -47,77 +60,138 @@ public class ProductService {
         //2. CONTROLLI DEL CONTENUTO
 
         //1.1
-        if(!registerUploadReqeustDTO.getCsv().getContentType().equalsIgnoreCase("csv"))
-              throw new CsvValidationException("MESSAGGIO DA DEFINIRE");
-        List<ValidationError> validationErrors = new ArrayList<>();
+
+        //check estensione
+        if(!isCsv(registerUploadReqeustDTO.getCsv()))
+              throw new CsvValidationException("Il file inserito non è un .csv");
+        List<List<ValidationError>> validationErrors = new ArrayList<>();
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(registerUploadReqeustDTO.getCsv().getInputStream()));
              CSVParser csvParser = new CSVParser(reader,
-                     CSVFormat.Builder.create().build().builder().setHeader().setTrim(true).build()))  {
-             /*1.2
-              if(!checkHeaders())
-                  throw new CsvValidationException("MESSAGGIO DA DEFINIRE");
-              */
-             //1.3
-             if(csvParser.getRecords().size() > MAX_ROWS)
-               throw new CsvValidationException("MESSAGGIO DA DEFINIRE");
+                     CSVFormat.Builder.create().setHeader().setTrim(true).build()))  {
 
-             //GENERARE idUpload
+          //check headers
+          if (!csvParser.getHeaderMap().keySet().containsAll(CSV_HEADER)) {
+            throw new CsvValidationException("header csv non validi");
+          }
 
-             //2
-             for (CSVRecord csvRecord : csvParser) {
-                      validationErrors.addAll(checkCsvRow(csvRecord));
-             }
-             /*
-              SE validationErrors è VUOTA
-                1.
-                1.1 Salvo a db i dati legati al caricamento è quelli necessari al successivo downlaod
-                1.2 Carico il file sullo storage di azure
+          //check numero righe
+          if(csvParser.getRecords().size() > MAX_ROWS+1)
+            throw new CsvValidationException("numero di record nel csv maggiore di " + MAX_ROWS);
+
+          //GENERARE idUpload
+          UUID idUpload = UUID.randomUUID();
+
+
+          //Check contenuto
+          for (CSVRecord record : csvParser) {
+            String categoriaValue = record.get("Categoria");
+            if ("COOKINGHOBS".equalsIgnoreCase(categoriaValue)) {
+              validationErrors.add(checkPianiCotturaCsvRow(record));
+            }else{
+              validationErrors.add(checkProdottiCsvRow(record));
+            }
+          }
+
+
+          for(List<ValidationError> validationError : validationErrors){
+
+
+            //1 SE validationErrors è VUOTA
+            if (validationError.isEmpty()){
+              // 1.1 Salvo a db i dati legati al caricamento è quelli necessari al successivo downlaod
+              uploadRepository.save(new UploadCsv());
+
+              //1.2 Carico il file sullo storage di azure
+              String destination = "";
+              azureBlobClient.uploadFile(registerUploadReqeustDTO.getCsv().getResource().getFile(),
+                destination,
+                registerUploadReqeustDTO.getCsv().getContentType());
+              /*
                 1.3 Restituo il seguento body e code
                 String idUpload = ID GENERATO IN PRECEDENZA
                 String statusUpload = QUALCOSA DEL TIPO PRESA IN CARICO;
                 Status 200
+               */
 
-                2.
-                2.1 Salvo a db i dati legati al caricamento è quelli necessari al successivo downlaod
-                2.2 Geniro il file di reporr e carico il file sullo storage di azure
-                1.3 Restituo il seguento body e code
+
+
+              //2 SE validationErrors NON è VUOTA
+            }else{
+              // 2.1 Salvo a db i dati legati al caricamento è quelli necessari al successivo downlaod
+              uploadRepository.save(new UploadCsv());
+
+              //2.2 Geniro il file di report e carico il file sullo storage di azure
+
+
+             /*
+                2.3 Restituo il seguento body e code
                 String idUpload = ID GENERATO IN PRECEDENZA
                 String statusUpload = VALIDATION_ERROR;
                 Status 500
               */
+
+
+
+            }
+
+          }
+
         } catch ( IOException e) {
             throw new RuntimeException("Errore nella lettura del file CSV: " + e.getMessage());
         }
     }
 
-    private boolean checkHeaders(CSVRecord csvRecord, String category){
-      if(category.equalsIgnoreCase("pianicottura"))
-        // CONTROLLO HEADER CSV PIANI COTTURA
-        return true;
-      else {
-        // CONTROLLO HEADER CSV EPREL
-        return true;
+    private Boolean isCsv(MultipartFile file){
+      if (file == null || file.isEmpty() || file.getOriginalFilename() == null || file.getOriginalFilename().toLowerCase().endsWith(".csv") ) {
+        return false;
       }
+
+      return true;
     }
-    private List<ValidationError> checkCsvRow(CSVRecord csvRecord) {
+
+    private List<ValidationError> checkPianiCotturaCsvRow(CSVRecord csvRecord) {
             List<ValidationError> errors = new ArrayList<>();
             int rowCount = 0;
-            if (!csvRecord.get("codiceEprel").matches(CODICE_GTIN_REGEX)) {
-                errors.add(new ValidationError(rowCount, "codiceGTIN", "Il campo codiceGTIN non rispetta la regex: " + CODICE_GTIN_REGEX));
+            if (!csvRecord.get("Codice GTIN/EAN").matches(CODICE_GTIN_EAN_REGEX)) {
+                errors.add(new ValidationError(rowCount, "codiceGTIN/EAN", "Il campo codiceGTIN/EAN non rispetta la regex: " + CODICE_GTIN_EAN_REGEX));
             }
-            if (!csvRecord.get("categoria").matches(CATEGORIA_REGEX)) {
-                errors.add(new ValidationError(rowCount, "categoria", "Il campo categoria non rispetta la regex: " + CATEGORIA_REGEX));
+            if (!csvRecord.get("Categoria").equals("COOKINGHOBS")) {
+                errors.add(new ValidationError(rowCount, "categoria", "Il campo categoria è diverso da COOKINGHOBS"));
             }
-            if (!csvRecord.get("marca").matches(MARCA_REGEX)) {
+            if (!csvRecord.get("Marca").matches(MARCA_REGEX)) {
                 errors.add(new ValidationError(rowCount, "marca", "Il campo marca non rispetta la regex: " + MARCA_REGEX));
             }
-            if (!csvRecord.get("modello").matches(MODELLO_REGEX)) {
+            if (!csvRecord.get("Modello").matches(MODELLO_REGEX)) {
                 errors.add(new ValidationError(rowCount, "modello", "Il campo modello non rispetta la regex: " + MODELLO_REGEX));
             }
-            if (!csvRecord.get("codiceProdotto").matches(CODICE_PRODOTTO_REGEX)) {
+            if (!csvRecord.get("Codice prodotto").matches(CODICE_PRODOTTO_REGEX)) {
                 errors.add(new ValidationError(rowCount, "codiceProdotto", "Il campo codiceProdotto non rispetta la regex: " + CODICE_PRODOTTO_REGEX));
             }
+            if (!csvRecord.get("Paese di Produzione").matches(PAESE_DI_PRODUZIONE_REGEX)) {
+              errors.add(new ValidationError(rowCount, "codiceProdotto", "Il campo codiceProdotto non rispetta la regex: " + CODICE_PRODOTTO_REGEX));
+            }
         return errors;
+    }
+
+    private List<ValidationError> checkProdottiCsvRow(CSVRecord csvRecord) {
+      List<ValidationError> errors = new ArrayList<>();
+      int rowCount = 0;
+      if (!csvRecord.get("Codice EPREL").matches(CODICE_EPREL_REGEX)) {
+        errors.add(new ValidationError(rowCount, "codiceGTIN/EAN", "Il campo codiceGTIN/EAN non rispetta la regex: " + CODICE_GTIN_EAN_REGEX));
+      }
+      if (!csvRecord.get("Codice GTIN/EAN").matches(CODICE_GTIN_EAN_REGEX)) {
+        errors.add(new ValidationError(rowCount, "codiceGTIN/EAN", "Il campo codiceGTIN/EAN non rispetta la regex: " + CODICE_GTIN_EAN_REGEX));
+      }
+      if (!categorieProdotti.contains(csvRecord.get("Categoria"))) {
+        errors.add(new ValidationError(rowCount, "categoria", "Il campo categoria non rispetta la lista categorie prodotto"));
+      }
+      if (!csvRecord.get("Codice prodotto").matches(CODICE_PRODOTTO_REGEX)) {
+        errors.add(new ValidationError(rowCount, "codiceProdotto", "Il campo codiceProdotto non rispetta la regex: " + CODICE_PRODOTTO_REGEX));
+      }
+      if (!csvRecord.get("Paese di Produzione").matches(PAESE_DI_PRODUZIONE_REGEX)) {
+        errors.add(new ValidationError(rowCount, "codiceProdotto", "Il campo codiceProdotto non rispetta la regex: " + CODICE_PRODOTTO_REGEX));
+      }
+      return errors;
     }
 
 

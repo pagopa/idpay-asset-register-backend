@@ -6,17 +6,19 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-//@Data
+import java.time.LocalDateTime;
+import java.util.UUID;
+
+@Data
 @Builder
-@Document("asset_file")
-//@NoArgsConstructor
-//@AllArgsConstructor
+@Document("upload_csv")
+@NoArgsConstructor
+@AllArgsConstructor
 public class UploadCsv {
 
-  //userId
-  //orgName
-  //idUpload
-  //fileName
-  //time
-  //uploadStatus
+  Long userId;
+  String orgName;
+  Long idUpload;
+  LocalDateTime generationDate;
+  String category;
 }

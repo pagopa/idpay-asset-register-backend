@@ -19,6 +19,7 @@ public class ProductController {
     @PostMapping("upload")
     public ResponseEntity<Void> uploadCsv(@RequestParam(required = false) String idProduttore,
                                           @RequestParam(required = false) String orgName,
+                                          @RequestParam(required = false) String role,
                                           @RequestBody()RegisterUploadReqeustDTO registerUploadReqeustDTO) {
         // CONTROLLO AUTORIZZAZIONI TRAMITE ORGNAME E OPERATION
         productService.saveCsv(registerUploadReqeustDTO);
