@@ -40,14 +40,14 @@ class RolePermissionServiceImplTest {
 
     @Test
     void getUserPermissionReturnPermission() {
-        UserPermissionDTO userPermissionDTO = new UserPermissionDTO();
+      UserPermissionDTO userPermissionDTO = new UserPermissionDTO();
       List<PermissionDTO> permissionDTOList = getPermissionDTOS();
-      userPermissionDTO.setInstitution("invitalia");
-        userPermissionDTO.setPermissions(permissionDTOList);
+      userPermissionDTO.setRole("invitalia");
+      userPermissionDTO.setPermissions(permissionDTOList);
 
       RolePermission rolePermission = getRolePermission();
 
-      Mockito.when(rolePermissionRepository.findByInstitution("invitalia")).thenReturn(Optional.of(rolePermission));
+      Mockito.when(rolePermissionRepository.findByRole("invitalia")).thenReturn(Optional.of(rolePermission));
 
         UserPermissionDTO admin = rolePermissionService.getUserPermission("invitalia");
 
@@ -82,7 +82,7 @@ class RolePermissionServiceImplTest {
     permission2.setName("Permission2");
     permission2.setDescription("Permission2");
     permissionList.add(permission2);
-    rolePermission.setInstitution("invitalia");
+    rolePermission.setRole("invitalia");
     rolePermission.setDescription("Administrator");
     rolePermission.setPermissions(permissionList);
     return rolePermission;
@@ -101,24 +101,24 @@ class RolePermissionServiceImplTest {
     @Test
     void getInvitaliaRole_ok() {
         RolePermission rolePermission = new RolePermission();
-        rolePermission.setInstitution("invitalia");
+        rolePermission.setRole("invitalia");
 
         UserPermissionDTO userPermissionDTO = new UserPermissionDTO();
-        userPermissionDTO.setInstitution("invitalia");
+        userPermissionDTO.setRole("invitalia");
         userPermissionDTO.setPermissions(new ArrayList<>());
 
-        Mockito.when(rolePermissionRepository.findByInstitution(anyString()))
+        Mockito.when(rolePermissionRepository.findByRole(anyString()))
                 .thenReturn(Optional.of(rolePermission));
         UserPermissionDTO userPermission = rolePermissionService.getUserPermission(anyString());
 
-        verify(rolePermissionRepository).findByInstitution(anyString());
+        verify(rolePermissionRepository).findByRole(anyString());
 
-        assertEquals(rolePermission.getInstitution(), userPermission.getInstitution());
+        assertEquals(rolePermission.getRole(), userPermission.getRole());
     }
 
     @Test
     void getUserPermissionReturnPermission_ko() {
-        Mockito.when(rolePermissionRepository.findByInstitution(anyString()))
+        Mockito.when(rolePermissionRepository.findByRole(anyString()))
                 .thenReturn(Optional.empty());
         try {
             rolePermissionService.getUserPermission(anyString());

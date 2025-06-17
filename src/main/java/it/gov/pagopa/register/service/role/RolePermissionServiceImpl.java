@@ -23,16 +23,16 @@ public class RolePermissionServiceImpl implements RolePermissionService {
     }
 
     @Override
-    public UserPermissionDTO getUserPermission(String institutionType) {
-        RolePermission roleOptional = rolePermissionRepository.findByInstitution(institutionType).orElseThrow(() ->
-                new PermissionNotFoundException(String.format(RoleConstants.PERMISSIONS_NOT_FOUND_MSG, institutionType))
+    public UserPermissionDTO getUserPermission(String role) {
+        RolePermission roleOptional = rolePermissionRepository.findByRole(role).orElseThrow(() ->
+                new PermissionNotFoundException(String.format(RoleConstants.PERMISSIONS_NOT_FOUND_MSG, role))
         );
         return rolePermissionToDTO(roleOptional);
     }
 
     private UserPermissionDTO rolePermissionToDTO(RolePermission rolePermission) {
         UserPermissionDTO userPermissionDTO = new UserPermissionDTO();
-        userPermissionDTO.setInstitution(rolePermission.getInstitution());
+        userPermissionDTO.setRole(rolePermission.getRole());
         List<PermissionDTO> permissionDTOList = new ArrayList<>();
         if(rolePermission.getPermissions() != null) {
             for (Permission source : rolePermission.getPermissions()) {

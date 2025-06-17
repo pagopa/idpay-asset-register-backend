@@ -72,7 +72,7 @@ class AuthorizationControllerTest {
         permission2.setName("InitiativeModification");
         permission2.setDescription("Initiative Modification");
         permissionList.add(permission2);
-        rolePermission.setInstitution("Invitalia");
+        rolePermission.setRole("Invitalia");
         rolePermission.setDescription("Administrator");
         rolePermission.setPermissions(permissionList);
         return rolePermission;
@@ -91,7 +91,7 @@ class AuthorizationControllerTest {
         permissionDTO2.setDescription("Initiative Creation");
         permissionDTOList.add(permissionDTO);
         permissionDTOList.add(permissionDTO2);
-        userPermissionDTO.setInstitution("Invitalia");
+        userPermissionDTO.setRole("Invitalia");
         userPermissionDTO.setPermissions(permissionDTOList);
         return userPermissionDTO;
     }
@@ -99,7 +99,7 @@ class AuthorizationControllerTest {
     @Test
     void shouldReturnPermission() throws Exception {
         UserPermissionDTO dummyAdminPermissionDTO = new UserPermissionDTO();
-        dummyAdminPermissionDTO.setInstitution("Invitalia");
+        dummyAdminPermissionDTO.setRole("Invitalia");
         dummyAdminPermissionDTO.setPermissions(List.of(new PermissionDTO()));
 
         when(rolePermissionServiceMock.getUserPermission(anyString())).thenReturn(dummyAdminPermissionDTO);
@@ -112,7 +112,7 @@ class AuthorizationControllerTest {
             MockMvcRequestBuilders.get(BASE_URL + PERMISSIONS_URL + "invitalia")
                 .contentType(MediaType.APPLICATION_JSON_VALUE).accept(MediaType.APPLICATION_JSON))
                 .andExpect(MockMvcResultMatchers.status().isOk())
-                .andExpect(jsonPath("$.institution").value(dummyAdminPermissionDTO.getInstitution()))
+                .andExpect(jsonPath("$.role").value(dummyAdminPermissionDTO.getRole()))
                 .andExpect(jsonPath("$.permissions[0].name").value(dummyAdminPermissionDTO.getPermissions().get(0).getName()))
                 .andExpect(jsonPath("$.permissions[0].description").value(dummyAdminPermissionDTO.getPermissions().get(0).getDescription()))
                 .andExpect(jsonPath("$.permissions[0].mode").value(dummyAdminPermissionDTO.getPermissions().get(0).getMode()))

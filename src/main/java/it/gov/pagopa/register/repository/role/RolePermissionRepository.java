@@ -7,5 +7,5 @@ import java.util.Optional;
 
 public interface RolePermissionRepository extends MongoRepository<RolePermission, String> {
 
-    Optional<RolePermission> findByInstitution(String institutionType);
+    Optional<RolePermission> findByRole (String role);
 }

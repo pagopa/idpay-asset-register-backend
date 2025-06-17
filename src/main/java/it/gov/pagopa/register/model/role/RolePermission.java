@@ -19,7 +19,7 @@ public class RolePermission {
     @Id
     private String id;
 
-    private String institution;
+    private String role;
 
     private String description;
 

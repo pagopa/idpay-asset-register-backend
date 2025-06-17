@@ -12,7 +12,7 @@ import java.util.List;
 @Data
 public class UserPermissionDTO {
   public static final String JSON_PROPERTY_INSTITUTION = "institution";
-  private String institution;
+  private String role;
 
   public static final String JSON_PROPERTY_PERMISSIONS = "permissions";
   private List<PermissionDTO> permissions = null;
