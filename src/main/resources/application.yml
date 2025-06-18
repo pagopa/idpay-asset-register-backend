@@ -50,7 +50,7 @@ app:
   rest-client:
     one-trust:
       service:
-        name: one-trust
+        name: oneTrustClient
         privacy-notices:
           base-url: ${ONE_TRUST_PRIVACYNOTICES_BASE_URL:https://api-io.dev.cstar.pagopa.it/idpay-itn/mock/api/privacynotice/v2}
           tosId: ${ONE_TRUST_TOS_ID:}
