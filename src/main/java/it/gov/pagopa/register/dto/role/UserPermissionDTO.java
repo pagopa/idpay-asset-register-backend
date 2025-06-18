@@ -6,12 +6,12 @@ import lombok.Data;
 import java.util.List;
 
 @JsonPropertyOrder({
-  UserPermissionDTO.JSON_PROPERTY_INSTITUTION,
+  UserPermissionDTO.JSON_PROPERTY_ROLE,
   UserPermissionDTO.JSON_PROPERTY_PERMISSIONS
 })
 @Data
 public class UserPermissionDTO {
-  public static final String JSON_PROPERTY_INSTITUTION = "institution";
+  public static final String JSON_PROPERTY_ROLE = "role";
   private String role;
 
   public static final String JSON_PROPERTY_PERMISSIONS = "permissions";

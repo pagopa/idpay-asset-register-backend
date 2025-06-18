@@ -8,13 +8,11 @@ import it.gov.pagopa.register.dto.role.UserPermissionDTO;
 import it.gov.pagopa.register.exception.role.PermissionNotFoundException;
 import it.gov.pagopa.register.model.role.Permission;
 import it.gov.pagopa.register.model.role.RolePermission;
-import it.gov.pagopa.register.repository.role.RolePermissionRepository;
 import it.gov.pagopa.register.service.role.RolePermissionService;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,9 +44,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Slf4j
 class AuthorizationControllerTest {
 
-    @Mock
-    RolePermissionRepository rolePermissionRepository;
-
     @MockBean
     RolePermissionService rolePermissionServiceMock;
 
@@ -57,7 +52,7 @@ class AuthorizationControllerTest {
 
     private static final String BASE_URL = "http://localhost:8080/idpay/authorization";
     private static final String PERMISSIONS_URL = "/permissions/";
-    private static final String INSTITUTION = "TEST_INSTITUTION";
+    private static final String ROLE = "TEST_ROLE";
 
     RolePermission createAdminRolePermission () {
         RolePermission rolePermission = new RolePermission();
@@ -123,10 +118,10 @@ class AuthorizationControllerTest {
 
     @Test
     void shouldReturnNotFound() throws Exception {
-        Mockito.doThrow(new PermissionNotFoundException(String.format(RoleConstants.PERMISSIONS_NOT_FOUND_MSG, INSTITUTION)))
+        Mockito.doThrow(new PermissionNotFoundException(String.format(RoleConstants.PERMISSIONS_NOT_FOUND_MSG, ROLE)))
                 .when(rolePermissionServiceMock).getUserPermission(anyString());
 
-        MvcResult mvcResult = mvc.perform(get(BASE_URL + PERMISSIONS_URL + "/{institution}", INSTITUTION))
+        MvcResult mvcResult = mvc.perform(get(BASE_URL + PERMISSIONS_URL + "/{role}", ROLE))
                 .andExpect(status().isNotFound())
                 .andExpect(getResult -> Assertions.assertInstanceOf(PermissionNotFoundException.class, getResult.getResolvedException()))
                 .andExpect(status().is4xxClientError())

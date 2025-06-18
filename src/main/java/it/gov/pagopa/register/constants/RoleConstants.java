@@ -1,7 +1,7 @@
 package it.gov.pagopa.register.constants;
 
 public final class RoleConstants {
-    public static final String PERMISSIONS_NOT_FOUND_MSG = "Permissions not found for [%s] institution";
+    public static final String PERMISSIONS_NOT_FOUND_MSG = "Permissions not found for [%s] role";
 
     private RoleConstants(){}
 

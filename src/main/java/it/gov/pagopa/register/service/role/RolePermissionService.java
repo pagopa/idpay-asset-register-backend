@@ -6,6 +6,6 @@ import org.springframework.stereotype.Service;
 @Service
 public interface RolePermissionService {
 
-    UserPermissionDTO getUserPermission(String institution);
+    UserPermissionDTO getUserPermission(String role);
 
 }

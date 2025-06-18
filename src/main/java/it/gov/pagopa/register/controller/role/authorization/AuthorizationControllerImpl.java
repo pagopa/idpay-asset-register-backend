@@ -1,6 +1,5 @@
 package it.gov.pagopa.register.controller.role.authorization;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import it.gov.pagopa.register.dto.role.UserPermissionDTO;
 import it.gov.pagopa.register.service.role.RolePermissionService;
 import org.springframework.http.HttpStatus;
@@ -17,9 +16,8 @@ public class AuthorizationControllerImpl implements AuthorizationController {
     }
 
     @Override
-    public ResponseEntity<UserPermissionDTO> getUserPermissions(String institution) throws JsonProcessingException {
-        if(!institution.equalsIgnoreCase("invitalia")) institution = "operatore";
-        UserPermissionDTO userPermissionDTO = rolePermissionService.getUserPermission(institution);
+    public ResponseEntity<UserPermissionDTO> getUserPermissions(String role) {
+        UserPermissionDTO userPermissionDTO = rolePermissionService.getUserPermission(role);
         return new ResponseEntity<>(userPermissionDTO, HttpStatus.OK);
     }
 
