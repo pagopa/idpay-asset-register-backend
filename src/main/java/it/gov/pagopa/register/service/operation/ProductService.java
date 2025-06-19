@@ -1,10 +1,13 @@
 package it.gov.pagopa.register.service.operation;
 
+import com.azure.core.http.rest.Response;
+import com.azure.storage.blob.models.BlobProperties;
 import it.gov.pagopa.common.storage.AzureBlobClientImpl;
 import it.gov.pagopa.register.connector.onetrust.InitiativeFileStorageClient;
 import it.gov.pagopa.register.connector.onetrust.InitiativeFileStorageConnector;
 import it.gov.pagopa.register.dto.operation.RegisterUploadReqeustDTO;
 import it.gov.pagopa.register.exception.operation.CsvValidationException;
+import it.gov.pagopa.register.exception.operation.ReportNotFoundException;
 import it.gov.pagopa.register.model.operation.UploadCsv;
 import it.gov.pagopa.register.repository.operation.UploadRepository;
 import it.gov.pagopa.register.utils.ValidationError;
@@ -18,6 +21,8 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -195,9 +200,34 @@ public class ProductService {
     }
 
 
-  public void downloadReport(String idUpload) {
-    //FIND A DB DEL DOCUMNET LEGATO ALL UPLOAD
-    //RICERCA SULLO STORAGE IN BASE AI DATI RECUPERATO
+  public Path downloadReport(String idUpload) throws IOException {
+    // 1. Recupero il metadata dal DB
+    UploadCsv upload = uploadRepository.findById(idUpload)
+      .orElseThrow(() -> new ReportNotFoundException("Report non trovato con id: " + idUpload));
+
+    String filePath = "";
+
+    // 2. Ricavo il percorso del file da Azure
+    //String filePath = upload.getStoragePath();
+    //Controllo se è un formalError o eprelError
+    //In base al tipo costruisco il percorso
+    if (upload.getStatus().equalsIgnoreCase("EPREL_ERROR")) {
+      filePath = "/Report/Eprel_Error/" + upload.getIdUpload() + ".csv";
+    } else if (upload.getStatus().equalsIgnoreCase("FORMAL_ERROR")) {
+      filePath = "/Report/Formal_Error/" + upload.getIdUpload() + ".csv";
+    } else {
+      throw new ReportNotFoundException("Tipo di errore non supportato: " + upload.getStatus());
+    }
+
+    // 3. Preparo una destinazione temporanea
+    Path destination = Paths.get(System.getProperty("java.io.tmpdir"), upload.getIdUpload().toString());
+
+    // 4. Invoco il download
+    Response<BlobProperties> result = azureBlobClient.download(filePath, destination);
+    if (result == null) {
+      throw new ReportNotFoundException("Report non trovato su Azure per path: " + filePath);
+    }
+    return destination;
   }
 }
 

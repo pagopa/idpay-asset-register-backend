@@ -21,4 +21,5 @@ public class UploadCsv {
   Long idUpload;
   LocalDateTime generationDate;
   String category;
+  String status;
 }
