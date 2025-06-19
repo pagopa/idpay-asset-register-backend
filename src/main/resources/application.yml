@@ -6,13 +6,23 @@ management:
       probes.enabled: true
       group:
         readiness.include: "*"
-        liveness.include: livenessState,diskSpace,ping,binders,streams
+        liveness.include: livenessState,diskSpace,ping # streams, binders REMOVE COMMENT AFTER BINDERS IMPLEMENTATION
       logging.slow-indicator-threshold: ${HEALTH_ACTUATOR_LOGGER_TIMEOUT_DURATION:PT1S}
   endpoints:
     jmx:
       exposure.include: "*"
     web:
       exposure.include: info, health
+mongo:
+  request-rate-too-large:
+    api:
+      enabled: ${MONGO_REQUEST_RATE_TOO_LARGE_API_ENABLED:false}
+      max-retry: ${MONGO_REQUEST_RATE_TOO_LARGE_API_MAX_RETRY:0}
+      max-millis-elapsed: ${MONGO_REQUEST_RATE_TOO_LARGE_API_MAX_MILLIS_ELAPSED:200}
+    batch:
+      enabled: ${MONGO_REQUEST_RATE_TOO_LARGE_BATCH_ENABLED:true}
+      max-retry: ${MONGO_REQUEST_RATE_TOO_LARGE_BATCH_MAX_RETRY:5}
+      max-millis-elapsed: ${MONGO_REQUEST_RATE_TOO_LARGE_BATCH_MAX_MILLIS_ELAPSED:0}
 
 spring:
   application:
@@ -35,4 +45,14 @@ spring:
           maxConnectionLifeTimeMS: ${MONGODB_CONNECTIONPOOL_MAX_CONNECTION_LIFE_MS:0}
           maxConnectionIdleTimeMS: ${MONGODB_CONNECTIONPOOL_MAX_CONNECTION_IDLE_MS:120000}
           maxConnecting: ${MONGODB_CONNECTIONPOOL_MAX_CONNECTING:2}
+
+app:
+  rest-client:
+    one-trust:
+      service:
+        name: oneTrustClient
+        privacy-notices:
+          base-url: ${ONE_TRUST_PRIVACYNOTICES_BASE_URL:https://api-io.dev.cstar.pagopa.it/idpay-itn/mock/api/privacynotice/v2}
+          tosId: ${ONE_TRUST_TOS_ID:}
+          apiKey: ${ONE_TRUST_API_KEY:}
 
