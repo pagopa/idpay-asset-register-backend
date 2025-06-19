@@ -7,7 +7,6 @@ import lombok.NoArgsConstructor;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Data
 @Builder
@@ -16,10 +15,12 @@ import java.util.UUID;
 @AllArgsConstructor
 public class UploadCsv {
 
-  Long userId;
-  String orgName;
-  Long idUpload;
-  LocalDateTime generationDate;
-  String category;
-  String status;
+  private String userId;
+  private String orgName;
+  private String idUpload;
+  private LocalDateTime generationDate;
+  private String category;
+
+  // formalKo, formalOK, eprelKO, loadindCheck
+  private String status;
 }
