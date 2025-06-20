@@ -17,8 +17,15 @@ public class Utils {
 
 
   // CSV HEADER
-  public static final List<String> CSV_HEADER = List.of(
+  public static final List<String> CSV_HEADER_PRODOTTI = List.of(
     "Codice EPREL",
+    "Codice GTIN/EAN",
+    "Codice Prodotto",
+    "Categoria",
+    "Paese di Produzione"
+  );
+
+  public static final List<String> CSV_HEADER_PIANI_COTTURA = List.of(
     "Codice GTIN/EAN",
     "Codice Prodotto",
     "Categoria",
@@ -27,5 +34,19 @@ public class Utils {
     "Modello"
   );
 
+
+  public static final List<String> CATEGORIE_PRODOTTI = List.of(
+    "WASHINGMACHINES",
+    "WASHERDRIERS",
+    "OVENS",
+    "RANGEHOODS",
+    "DISHWASHERS",
+    "TUMBLEDRIERS",
+    "REFRIGERATINGAPPL"
+  );
+
+  public static final List<String> CATEGORIE_PIANI_COTTURA = List.of(
+    "COOKINGHOBS"
+  );
 
 }

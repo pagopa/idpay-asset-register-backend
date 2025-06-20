@@ -15,12 +15,12 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class UploadCsv {
 
-  private String userId;
-  private String orgName;
+  private String idUser;
+  private String idOrg;
   private String idUpload;
-  private LocalDateTime generationDate;
-  private String category;
-
-  // formalKo, formalOK, eprelKO, loadindCheck
+  private LocalDateTime uploadDate;
   private String status;
+  private Integer totalUpload;
+  private Integer failedUpload;
+  private String originalFileName;
 }

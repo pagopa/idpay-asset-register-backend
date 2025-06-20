@@ -1,6 +1,7 @@
 package it.gov.pagopa.register.controller.operation;
 
 import it.gov.pagopa.register.dto.operation.RegisterUploadReqeustDTO;
+import it.gov.pagopa.register.service.operation.AuthorizationService;
 import it.gov.pagopa.register.service.operation.ProductService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -15,18 +16,23 @@ public class ProductController {
 
     private final ProductService productService;
 
+    private final AuthorizationService authorizationService;
 
-    public ProductController(ProductService productService) {
+
+    public ProductController(ProductService productService, AuthorizationService authorizationService) {
         this.productService = productService;
+        this.authorizationService = authorizationService;
     }
 
     @PostMapping("upload")
-    public ResponseEntity<Void> uploadCsv(@RequestParam(required = false) String idProduttore,
-                                          @RequestParam(required = false) String orgName,
+    public ResponseEntity<Void> uploadCsv(@RequestParam(required = false) String idUser,
+                                          @RequestParam(required = false) String idOrg,
                                           @RequestParam(required = false) String role,
                                           @RequestBody()RegisterUploadReqeustDTO registerUploadReqeustDTO) {
         // CONTROLLO AUTORIZZAZIONI TRAMITE ORGNAME E OPERATION
-        productService.saveCsv(registerUploadReqeustDTO);
+      //enum con operazioni (
+        authorizationService.validateAction(role, "operation");
+        productService.saveCsv(registerUploadReqeustDTO, idOrg, idUser, role);
         return ResponseEntity.ok().build();
     }
 
