@@ -38,7 +38,8 @@ public class ProductController {
 
   @GetMapping("/download/report/{idUpload}")
   public ResponseEntity<byte[]> downloadCsv(
-    @RequestParam(required = false) String orgRole,
+    @RequestParam(required = false) String idProduttore,
+    @RequestParam(required = false) String orgName,
     @PathVariable("idUpload") String idUpload) throws IOException {
 
     ByteArrayOutputStream file = productService.downloadReport(idUpload); // ora ritorna `Path`
@@ -50,7 +51,6 @@ public class ProductController {
       .contentType(org.springframework.http.MediaType.APPLICATION_OCTET_STREAM)
       .body(zipBytes);
   }
-
 
 
 }
