@@ -5,6 +5,7 @@ import it.gov.pagopa.register.service.operation.AuthorizationService;
 import it.gov.pagopa.register.service.operation.ProductService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -24,15 +25,16 @@ public class ProductController {
         this.authorizationService = authorizationService;
     }
 
-    @PostMapping("upload")
+    @PostMapping(value = "upload", consumes = "multipart/form-data")
     public ResponseEntity<Void> uploadCsv(@RequestParam(required = false) String idUser,
                                           @RequestParam(required = false) String idOrg,
                                           @RequestParam(required = false) String role,
-                                          @RequestBody()RegisterUploadReqeustDTO registerUploadReqeustDTO) {
+                                          @RequestPart("category") String category,
+                                          @RequestPart("csv") MultipartFile csv) {
         // CONTROLLO AUTORIZZAZIONI TRAMITE ORGNAME E OPERATION
       //enum con operazioni (
         authorizationService.validateAction(role, "operation");
-        productService.saveCsv(registerUploadReqeustDTO, idOrg, idUser, role);
+        productService.saveCsv(csv, category, idOrg, idUser, role);
         return ResponseEntity.ok().build();
     }
 

@@ -39,7 +39,7 @@ public class ProductService {
 
 
 
-  public void saveCsv(RegisterUploadReqeustDTO registerUploadReqeustDTO, String idOrg, String idUser, String role) {
+  public void saveCsv(MultipartFile csv, String category, String idOrg, String idUser, String role) {
   /*
     1. CONTROLLI CHE BLOCCO IL CONTROLLO DEL CONTENUTO
 
@@ -53,14 +53,14 @@ public class ProductService {
     //1.1
 
     //check estensione
-    if (!isCsv(registerUploadReqeustDTO.getCsv()))
+    if (!isCsv(csv))
       throw new CsvValidationException("Il file inserito non è un .csv");
 
     // settere ; come separatore
-    try (BufferedReader reader = new BufferedReader(new InputStreamReader(registerUploadReqeustDTO.getCsv().getInputStream()));
+    try (BufferedReader reader = new BufferedReader(new InputStreamReader(csv.getInputStream()));
          CSVParser csvParser = new CSVParser(reader, CSVFormat.Builder.create().setHeader().setTrim(true).build())){
 
-      Boolean isPianoCottura = checkCategory(CATEGORIE_PIANI_COTTURA, registerUploadReqeustDTO.getCategory());
+      Boolean isPianoCottura = checkCategory(CATEGORIE_PIANI_COTTURA, category);
       //check headers
       if ((isPianoCottura && !new HashSet<>(CSV_HEADER_PIANI_COTTURA).containsAll(csvParser.getHeaderMap().keySet())) ||
           (!isPianoCottura && !new HashSet<>(CSV_HEADER_PRODOTTI).containsAll(csvParser.getHeaderMap().keySet())))
@@ -73,7 +73,7 @@ public class ProductService {
         throw new CsvValidationException("numero di record nel csv maggiore di " + MAX_ROWS);
 
       //GENERARE idUpload idOrg +category+ userId + timestamp
-      String idUpload = idOrg + "-" + registerUploadReqeustDTO.getCategory() + "-" + idUser + "-" + LocalDateTime.now();
+      String idUpload = idOrg + "-" + category + "-" + idUser + "-" + LocalDateTime.now();
 
       //Check contenuto
       Map<String, String> rowWithErrors = new LinkedHashMap<>();
@@ -84,7 +84,7 @@ public class ProductService {
         if ("COOKINGHOBS".equalsIgnoreCase(categoriaValue)) {
           errors = checkPianiCotturaCsvRow(record);
         } else {
-          errors = checkProdottiCsvRow(record, registerUploadReqeustDTO.getCategory());
+          errors = checkProdottiCsvRow(record, category);
         }
 
 
@@ -98,7 +98,7 @@ public class ProductService {
       }
 
 
-      String fileName = registerUploadReqeustDTO.getCsv().getResource().getFile().getName();
+      String fileName = csv.getResource().getFile().getName();
 
       //da inserire dopo iterazione
       UploadCsv uploadFile = new UploadCsv(
@@ -120,9 +120,9 @@ public class ProductService {
 
         //1.2 Carico il file sullo storage di azure
         String destination = "CSV/" + idOrg + "/";
-        azureBlobClient.uploadFile(registerUploadReqeustDTO.getCsv().getResource().getFile(),
+        azureBlobClient.uploadFile(csv.getResource().getFile(),
           destination,
-          registerUploadReqeustDTO.getCsv().getContentType());
+          csv.getContentType());
                 /*
                 1.3 Restituo il seguento body e code
                 String idUpload = ID GENERATO IN PRECEDENZA
@@ -145,7 +145,7 @@ public class ProductService {
           // ReportError da cambiare in MultipartFile? (1 riga per prodotto)
           azureBlobClient.uploadFile(null,
             destination,
-            registerUploadReqeustDTO.getCsv().getContentType());
+            csv.getContentType());
 
              /*
                 2.3 Restituo il seguento body e code
