@@ -123,7 +123,6 @@ public class ProductService {
         azureBlobClient.uploadFile(registerUploadReqeustDTO.getCsv().getResource().getFile(),
           destination,
           registerUploadReqeustDTO.getCsv().getContentType());
-
                 /*
                 1.3 Restituo il seguento body e code
                 String idUpload = ID GENERATO IN PRECEDENZA
