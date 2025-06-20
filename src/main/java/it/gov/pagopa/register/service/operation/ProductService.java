@@ -252,9 +252,9 @@ public class ProductService {
     //String filePath = upload.getStoragePath();
     //Controllo se è un formalError o eprelError
     //In base al tipo costruisco il percorso
-    if (upload.getStatus().equalsIgnoreCase("EPREL_ERROR")) {
+    if (upload.getStatus().equalsIgnoreCase("EPREL_KO")) {
       filePath = "Report/Eprel_Error/" + upload.getIdUpload() + ".csv";
-    } else if (upload.getStatus().equalsIgnoreCase("FORMAL_ERROR")) {
+    } else if (upload.getStatus().equalsIgnoreCase("FORMAL_KO")) {
       filePath = "Report/Formal_Error/" + upload.getIdUpload() + ".csv";
     } else {
       throw new ReportNotFoundException("Tipo di errore non supportato: " + upload.getStatus());
