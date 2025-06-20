@@ -38,8 +38,7 @@ public class ProductController {
 
   @GetMapping("/download/report/{idUpload}")
   public ResponseEntity<byte[]> downloadCsv(
-    @RequestParam(required = false) String idProduttore,
-    @RequestParam(required = false) String orgName,
+    @RequestParam(required = false) String orgRole,
     @PathVariable("idUpload") String idUpload) throws IOException {
 
     ByteArrayOutputStream file = productService.downloadReport(idUpload); // ora ritorna `Path`
