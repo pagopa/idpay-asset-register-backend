@@ -38,7 +38,7 @@ public class ProductController {
 
   @GetMapping("/download/report/{idUpload}")
   public ResponseEntity<byte[]> downloadCsv(
-    @RequestParam(required = false) String idProduttore,
+    @RequestParam(required = false) String idProducer,
     @RequestParam(required = false) String orgName,
     @PathVariable("idUpload") String idUpload) throws IOException {
 
