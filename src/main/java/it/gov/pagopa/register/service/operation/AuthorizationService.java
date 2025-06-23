@@ -12,8 +12,7 @@ import org.springframework.stereotype.Service;
 public class AuthorizationService {
 
   public void validateAction(String role, String operation){
-    if(true)
-
+    if(false)
       throw new PermissionNotFoundException("il seguente ruolo non puo eseguire questa operazione");
   }
 }
