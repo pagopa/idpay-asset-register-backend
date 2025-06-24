@@ -1,19 +1,23 @@
 package it.gov.pagopa.register.service.operation;
 
 import it.gov.pagopa.register.connector.storage.FileStorageClient;
+import it.gov.pagopa.register.exception.operation.CsvValidationException;
 import it.gov.pagopa.register.exception.operation.ReportNotFoundException;
 import it.gov.pagopa.register.model.operation.UploadCsv;
 import it.gov.pagopa.register.repository.operation.UploadRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.mock.web.MockMultipartFile;
 
 import java.io.ByteArrayOutputStream;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -29,6 +33,28 @@ class ProductServiceImplTest {
   private ProductService productService;
 
   private final String ID_UPLOAD_CORRECT = "example_eprel";
+
+  @BeforeEach
+  void setUp() {
+    productService.maxRows = 5; // Imposta maxRows per il test
+  }
+
+  //-------------------------Test su metodo upload csv--------------------
+
+  //File di estensione diversa da .csv
+  @Test
+  void shouldThrowExceptionWhenFileIsNotCsv() {
+    MockMultipartFile file = new MockMultipartFile("file", "test.txt", "text/plain", "header\nvalue".getBytes());
+
+    assertThrows(CsvValidationException.class, () ->
+      productService.saveCsv(file, "category", "orgId", "userId")
+    );
+
+    verifyNoInteractions(uploadRepository, azureBlobClient);
+  }
+
+
+  //-------------------------Test su metodo download report--------------------
 
   //Test con errori Eprel
   @Test

@@ -17,8 +17,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -39,7 +37,7 @@ public class ProductService {
   }
 
   @Value("${config.max-rows}")
-  private int maxRows = 100;
+  int maxRows = 100;
 
   public void saveCsv(MultipartFile csv, String category, String idOrg, String idUser) {
     if (Boolean.FALSE.equals(isCsv(csv)))
