@@ -2,7 +2,6 @@ package it.gov.pagopa.register.service.operation;
 
 import it.gov.pagopa.register.connector.onetrust.InitiativeFileStorageClient;
 import it.gov.pagopa.register.constants.enums.UploadCsvStatus;
-import it.gov.pagopa.register.dto.operation.RegisterUploadReqeustDTO;
 import it.gov.pagopa.register.exception.operation.CsvValidationException;
 import it.gov.pagopa.register.exception.operation.ReportNotFoundException;
 import it.gov.pagopa.register.model.operation.UploadCsv;
@@ -12,6 +11,7 @@ import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.csv.CSVRecord;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -19,6 +19,7 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 import static it.gov.pagopa.register.utils.Utils.*;
@@ -36,6 +37,8 @@ public class ProductService {
     this.azureBlobClient = azureBlobClient;
   }
 
+  @Value("${config.max-rows}")
+  private int maxRows = 100;
 
 
 
@@ -56,9 +59,9 @@ public class ProductService {
     if (!isCsv(csv))
       throw new CsvValidationException("Il file inserito non è un .csv");
 
-    // settere ; come separatore
+
     try (BufferedReader reader = new BufferedReader(new InputStreamReader(csv.getInputStream()));
-         CSVParser csvParser = new CSVParser(reader, CSVFormat.Builder.create().setHeader().setTrim(true).build())){
+         CSVParser csvParser = new CSVParser(reader, CSVFormat.Builder.create().setHeader().setTrim(true).setDelimiter(';').build())){
 
       Boolean isPianoCottura = checkCategory(CATEGORIE_PIANI_COTTURA, category);
       //check headers
@@ -67,21 +70,24 @@ public class ProductService {
             throw new CsvValidationException("header csv non validi");
       List<String> csvHeader = new ArrayList<>(isPianoCottura ? CSV_HEADER_PIANI_COTTURA : CSV_HEADER_PRODOTTI);
 
+
       //check numero righe
-      //da spostare nell'appProperties
-      if (csvParser.getRecords().size() > MAX_ROWS + 1)
-        throw new CsvValidationException("numero di record nel csv maggiore di " + MAX_ROWS);
+      List<CSVRecord> records = csvParser.getRecords();
+      if (records.size() > maxRows + 1)
+        throw new CsvValidationException("numero di record nel csv maggiore di " + maxRows);
+
+
 
       //GENERARE idUpload idOrg +category+ userId + timestamp
-      String idUpload = idOrg + "-" + category + "-" + idUser + "-" + LocalDateTime.now();
+      String idUpload = idOrg + "-" + category + "-" + idUser + "-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss"));
 
       //Check contenuto
       Map<String, String> rowWithErrors = new LinkedHashMap<>();
-      for (CSVRecord record : csvParser) {
+      for (CSVRecord record : records) {
         List<String> errors;
-        String categoriaValue = record.get("Categoria");
+       // String categoriaValue = record.get("Categoria");
 
-        if ("COOKINGHOBS".equalsIgnoreCase(categoriaValue)) {
+        if (isPianoCottura) {
           errors = checkPianiCotturaCsvRow(record);
         } else {
           errors = checkProdottiCsvRow(record, category);
@@ -89,16 +95,17 @@ public class ProductService {
 
 
         if (!errors.isEmpty()) {
-          csvHeader.add("Errori");
+
           for (String header : csvHeader) {
             rowWithErrors.put(header, record.get(header));
           }
+          //csvHeader.add("Errori");
           rowWithErrors.put("Errori", String.join(", ", errors));
         }
       }
 
 
-      String fileName = csv.getResource().getFile().getName();
+      String fileName = csv.getOriginalFilename();
 
       //da inserire dopo iterazione
       UploadCsv uploadFile = new UploadCsv(
@@ -140,6 +147,7 @@ public class ProductService {
           uploadRepository.save(uploadFile);
 
           //2.2 Geniro il file di report e carico il file sullo storage di azure
+          //MultipartFile fileErrorReport = generateErrorFile(rowWithErrors);
 
           String destination = "Report/Eprel_Error/";
           // ReportError da cambiare in MultipartFile? (1 riga per prodotto)
@@ -169,7 +177,7 @@ public class ProductService {
   }
 
   private Boolean isCsv(MultipartFile file){
-      return file != null && !file.isEmpty() && file.getOriginalFilename() != null && !file.getOriginalFilename().toLowerCase().endsWith(".csv");
+      return file != null && "text/csv".equalsIgnoreCase(file.getContentType());
   }
 
   private List<String> checkPianiCotturaCsvRow(CSVRecord csvRecord) {
@@ -186,7 +194,7 @@ public class ProductService {
           if (!csvRecord.get("Modello").matches(MODELLO_REGEX)) {
               errors.add("Il campo Modello è obbligatorio e deve contenere una stringa lunga al massimo 100 caratteri");
           }
-          if (!csvRecord.get("Codice prodotto").matches(CODICE_PRODOTTO_REGEX)) {
+          if (!csvRecord.get("Codice Prodotto").matches(CODICE_PRODOTTO_REGEX)) {
               errors.add( "Il Codice prodotto non deve contenere caratteri speciali o lettere accentate e deve essere lungo al massimo 100 caratteri");
           }
           if (!csvRecord.get("Paese di Produzione").matches(PAESE_DI_PRODUZIONE_REGEX)) {
@@ -206,7 +214,7 @@ public class ProductService {
     if (!CATEGORIE_PRODOTTI.contains(csvRecord.get("Categoria"))) {
       errors.add("Il campo Categoria è obbligatorio e deve contenere il valore fisso "+category);
     }
-    if (!csvRecord.get("Codice prodotto").matches(CODICE_PRODOTTO_REGEX)) {
+    if (!csvRecord.get("Codice Prodotto").matches(CODICE_PRODOTTO_REGEX)) {
       errors.add("Il Codice prodotto non deve contenere caratteri speciali o lettere accentate e deve essere lungo al massimo 100 caratteri");
     }
     if (!csvRecord.get("Paese di Produzione").matches(PAESE_DI_PRODUZIONE_REGEX)) {

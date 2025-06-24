@@ -1,10 +1,11 @@
 package it.gov.pagopa.register.utils;
 
+import org.springframework.beans.factory.annotation.Value;
+
 import java.util.List;
 
 public class Utils {
 
-  public static final int MAX_ROWS = 100;
 
   // CSV REGEX
   public static final String CODICE_GTIN_EAN_REGEX = "^[a-zA-Z0-9]{1,14}$";
