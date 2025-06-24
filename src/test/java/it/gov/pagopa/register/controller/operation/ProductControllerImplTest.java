@@ -21,7 +21,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @ExtendWith(MockitoExtension.class)
 @WebMvcTest(ProductController.class)
-public class ProductControllerImplTest {
+class ProductControllerImplTest {
 
   @Autowired
   private MockMvc mockMvc;
@@ -32,18 +32,15 @@ public class ProductControllerImplTest {
   @MockBean
   private AuthorizationService authorizationService;
 
-  private final String TEST_ID_UPLOAD = "example_upload";
+  private static final  String TEST_ID_UPLOAD = "example_upload";
 
-  //Testa il corretto funzionamento del controller (200)
   @Test
   void downloadCsv_successfulResponse() throws Exception {
-    // Arrange
     ByteArrayOutputStream file = new ByteArrayOutputStream();
     file.write("fake csv content".getBytes());
 
     Mockito.when(productService.downloadReport(TEST_ID_UPLOAD)).thenReturn(file);
 
-    // Act & Assert
     mockMvc.perform(get("/idpay/register/download/report/{idUpload}", TEST_ID_UPLOAD)
         .param("idProduttore", "testProducer")
         .param("orgName", "testOrg"))
@@ -53,7 +50,6 @@ public class ProductControllerImplTest {
       .andExpect(content().bytes(file.toByteArray()));
   }
 
-  //Testa il fallimentare comportamento del controller
   @Test
   void downloadCsv_notFound() throws Exception {
     Mockito.when(productService.downloadReport(TEST_ID_UPLOAD))

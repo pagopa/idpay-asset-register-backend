@@ -17,7 +17,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-public class ProductServiceImplTest {
+class ProductServiceImplTest {
 
   @Mock
   private UploadRepository uploadRepository;
@@ -35,7 +35,7 @@ public class ProductServiceImplTest {
   void downloadReport_withEprelKo() {
     UploadCsv uploadCsv = new UploadCsv();
     uploadCsv.setIdUpload(ID_UPLOAD_CORRECT);
-    uploadCsv.setStatus("EPREL_KO");
+    uploadCsv.setStatus("EPREL_ERROR");
 
     ByteArrayOutputStream expectedStream = new ByteArrayOutputStream();
 
@@ -52,7 +52,7 @@ public class ProductServiceImplTest {
   void downloadReport_withFormalKo() {
     UploadCsv upload = new UploadCsv();
     upload.setIdUpload(ID_UPLOAD_CORRECT);
-    upload.setStatus("FORMAL_KO");
+    upload.setStatus("FORMAL_ERROR");
 
     ByteArrayOutputStream expectedStream = new ByteArrayOutputStream();
 
@@ -99,7 +99,7 @@ public class ProductServiceImplTest {
   void downloadReport_whenAzureReturnsNull() {
     UploadCsv upload = new UploadCsv();
     upload.setIdUpload(ID_UPLOAD_CORRECT);
-    upload.setStatus("FORMAL_KO");
+    upload.setStatus("FORMAL_ERROR");
 
     when(uploadRepository.findByIdUpload(ID_UPLOAD_CORRECT)).thenReturn(Optional.of(upload));
     when(azureBlobClient.download("Report/Formal_Error/" + ID_UPLOAD_CORRECT + ".csv")).thenReturn(null);
