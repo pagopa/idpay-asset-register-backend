@@ -1,10 +1,12 @@
 package it.gov.pagopa.register.constants.enums;
 
+
 public enum UploadCsvStatus {
 
-  FORMAL_KO,
+  FORMAL_ERROR,
   FORMAL_OK,
-  EPREL_KO,
+  EPREL_ERROR,
   LOADING_CHECK;
+
 
 }

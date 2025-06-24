@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
@@ -40,12 +41,12 @@ public class ProductService {
   @Value("${config.max-rows}")
   private int maxRows = 100;
 
-  public void saveCsv(MultipartFile csv, String category, String idOrg, String idUser, String role) {
+  public void saveCsv(MultipartFile csv, String category, String idOrg, String idUser) {
     if (Boolean.FALSE.equals(isCsv(csv)))
       throw new CsvValidationException("Il file inserito non è un .csv");
     log.info("Il file inserito è un .csv");
 
-    try (BufferedReader reader = new BufferedReader(new InputStreamReader(csv.getInputStream()));
+    try (BufferedReader reader = new BufferedReader(new InputStreamReader(csv.getInputStream(), StandardCharsets.UTF_8));
          CSVParser csvParser = new CSVParser(reader, CSVFormat.Builder.create().setHeader().setTrim(true).setDelimiter(';').build())) {
 
       Boolean isCookinghobs = COOKINGHOBS.equals(category);
@@ -105,18 +106,23 @@ public class ProductService {
           csv.getContentType());
 
       } else {
-        try (BufferedWriter writer = Files.newBufferedWriter(Paths.get(idUpload + ".csv"));
-             CSVPrinter csvPrinter = new CSVPrinter(writer, CSVFormat.Builder.create().setHeader(csvHeader.toArray(new String[0])).setTrim(true).build())) {
-          csvPrinter.printRecord(rowWithErrors.values());
+        try (ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+             BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(byteArrayOutputStream, StandardCharsets.UTF_8));
+             CSVPrinter csvPrinter = new CSVPrinter(writer, CSVFormat.Builder.create().setHeader(csvHeader.toArray(new String[0])).setTrim(true).setDelimiter(";").build())) {
+              log.info(rowWithErrors.toString());
+              csvPrinter.printRecord(rowWithErrors.values());
+              csvPrinter.flush();
+              writer.flush();
+              ByteArrayInputStream inputStream = new ByteArrayInputStream(byteArrayOutputStream.toByteArray());
 
-          uploadFile.setStatus(UploadCsvStatus.FORMAL_KO.toString());
-          uploadRepository.save(uploadFile);
+              uploadFile.setStatus(String.valueOf(UploadCsvStatus.FORMAL_ERROR));
+              uploadRepository.save(uploadFile);
 
-          String destination = "Report/Eprel_Error/";
+              String destination = "Report/Formal_Error/"+idUpload+".csv";
 
-          azureBlobClient.uploadFile(null,
-            destination,
-            csv.getContentType());
+              azureBlobClient.upload(inputStream,
+                destination,
+                csv.getContentType());
         } catch (IOException e) {
           throw new CsvValidationException("Errore nella scrittura del file CSV di report: " + e.getMessage());
         }

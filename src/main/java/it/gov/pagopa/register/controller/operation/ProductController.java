@@ -1,6 +1,6 @@
 package it.gov.pagopa.register.controller.operation;
 
-import it.gov.pagopa.register.dto.operation.RegisterUploadReqeustDTO;
+
 import it.gov.pagopa.register.service.operation.AuthorizationService;
 import it.gov.pagopa.register.service.operation.ProductService;
 import org.springframework.http.ResponseEntity;
@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
+
 
 @RestController
 @RequestMapping("/idpay/register")
@@ -34,7 +34,7 @@ public class ProductController {
         // CONTROLLO AUTORIZZAZIONI TRAMITE ORGNAME E OPERATION
       //enum con operazioni (
         authorizationService.validateAction(role, "operation");
-        productService.saveCsv(csv, category, idOrg, idUser, role);
+        productService.saveCsv(csv, category, idOrg, idUser);
         return ResponseEntity.ok().build();
     }
 
@@ -42,14 +42,14 @@ public class ProductController {
   public ResponseEntity<byte[]> downloadCsv(
     @RequestParam(required = false) String idProducer,
     @RequestParam(required = false) String orgName,
-    @PathVariable("idUpload") String idUpload) throws IOException {
+    @PathVariable("idUpload") String idUpload) {
 
-    ByteArrayOutputStream file = productService.downloadReport(idUpload); // ora ritorna `Path`
+    ByteArrayOutputStream file = productService.downloadReport(idUpload);
 
     byte[] zipBytes = file.toByteArray();
 
     return ResponseEntity.ok()
-      .header("Content-Disposition", "attachment; filename=expenseFiles.zip")
+      .header("Content-Disposition", "attachment; filename=test.csv")
       .contentType(org.springframework.http.MediaType.APPLICATION_OCTET_STREAM)
       .body(zipBytes);
   }
