@@ -1,6 +1,6 @@
 package it.gov.pagopa.register.service.operation;
 
-import it.gov.pagopa.register.connector.onetrust.InitiativeFileStorageClient;
+import it.gov.pagopa.register.connector.storage.FileStorageClient;
 import it.gov.pagopa.register.exception.operation.ReportNotFoundException;
 import it.gov.pagopa.register.model.operation.UploadCsv;
 import it.gov.pagopa.register.repository.operation.UploadRepository;
@@ -23,7 +23,7 @@ public class ProductServiceImplTest {
   private UploadRepository uploadRepository;
 
   @Mock
-  private InitiativeFileStorageClient azureBlobClient;
+  private FileStorageClient azureBlobClient;
 
   @InjectMocks
   private ProductService productService;
