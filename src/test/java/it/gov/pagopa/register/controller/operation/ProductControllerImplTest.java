@@ -1,7 +1,6 @@
 package it.gov.pagopa.register.controller.operation;
 
 import it.gov.pagopa.register.service.operation.ProductService;
-import it.gov.pagopa.register.service.operation.AuthorizationService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
@@ -29,8 +28,7 @@ class ProductControllerImplTest {
   @MockBean
   private ProductService productService;
 
-  @MockBean
-  private AuthorizationService authorizationService;
+
 
   private static final  String TEST_ID_UPLOAD = "example_upload";
 

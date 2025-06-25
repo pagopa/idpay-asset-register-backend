@@ -1,7 +1,7 @@
 package it.gov.pagopa.register.controller.operation;
 
 
-import it.gov.pagopa.register.service.operation.AuthorizationService;
+import it.gov.pagopa.register.dto.mapper.operation.AssetProductDTO;
 import it.gov.pagopa.register.service.operation.ProductService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,25 +17,21 @@ public class ProductController {
 
     private final ProductService productService;
 
-    private final AuthorizationService authorizationService;
 
 
-    public ProductController(ProductService productService, AuthorizationService authorizationService) {
+    public ProductController(ProductService productService) {
         this.productService = productService;
-        this.authorizationService = authorizationService;
     }
 
     @PostMapping(value = "upload", consumes = "multipart/form-data")
-    public ResponseEntity<Void> uploadCsv(@RequestParam(required = false) String idUser,
-                                          @RequestParam(required = false) String idOrg,
-                                          @RequestParam(required = false) String role,
-                                          @RequestPart("category") String category,
-                                          @RequestPart("csv") MultipartFile csv) {
-        // CONTROLLO AUTORIZZAZIONI TRAMITE ORGNAME E OPERATION
-      //enum con operazioni (
-        authorizationService.validateAction(role, "operation");
-        productService.saveCsv(csv, category, idOrg, idUser);
-        return ResponseEntity.ok().build();
+    public ResponseEntity<AssetProductDTO> uploadCsv(@RequestParam(required = false) String idUser,
+                                                     @RequestParam(required = false) String idOrg,
+                                                     @RequestParam(required = false) String role,
+                                                     @RequestPart("category") String category,
+                                                     @RequestPart("csv") MultipartFile csv) {
+
+      AssetProductDTO assetProductDTO = productService.saveCsv(csv, category, idOrg, idUser);
+        return ResponseEntity.ok().body(assetProductDTO);
     }
 
   @GetMapping("/download/report/{idUpload}")

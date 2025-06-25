@@ -1,7 +1,9 @@
 package it.gov.pagopa.register.service.operation;
 
 import it.gov.pagopa.register.connector.storage.FileStorageClient;
+import it.gov.pagopa.register.constants.ErrorKeyConstant;
 import it.gov.pagopa.register.constants.enums.UploadCsvStatus;
+import it.gov.pagopa.register.dto.mapper.operation.AssetProductDTO;
 import it.gov.pagopa.register.exception.operation.CsvValidationException;
 import it.gov.pagopa.register.exception.operation.ReportNotFoundException;
 import it.gov.pagopa.register.model.operation.UploadCsv;
@@ -39,30 +41,43 @@ public class ProductService {
   @Value("${config.max-rows}")
   int maxRows = 100;
 
-  public void saveCsv(MultipartFile csv, String category, String idOrg, String idUser) {
+  public AssetProductDTO saveCsv(MultipartFile csv, String category, String idOrg, String idUser) {
     if (Boolean.FALSE.equals(isCsv(csv)))
-      throw new CsvValidationException("Il file inserito non è un .csv");
+      return new AssetProductDTO(
+        UploadCsvStatus.FORMAL_ERROR.toString(),
+        ErrorKeyConstant.EXTENSION_FILE_ERROR,
+        LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss")));
     log.info("Il file inserito è un .csv");
+
+    String idUpload = null;
+    Map<String, String> rowWithErrors = new LinkedHashMap<>();
+    Set<String> csvHeader = new HashSet<>();
 
     try (BufferedReader reader = new BufferedReader(new InputStreamReader(csv.getInputStream(), StandardCharsets.UTF_8));
          CSVParser csvParser = new CSVParser(reader, CSVFormat.Builder.create().setHeader().setTrim(true).setDelimiter(';').build())) {
 
       Boolean isCookinghobs = COOKINGHOBS.equals(category);
       Set<String> headers = new HashSet<>(csvParser.getHeaderNames());
-      Set<String> csvHeader = Boolean.TRUE.equals(isCookinghobs) ? CSV_HEADER_PIANI_COTTURA : CSV_HEADER_PRODOTTI;
+      csvHeader = Boolean.TRUE.equals(isCookinghobs) ? CSV_HEADER_PIANI_COTTURA : CSV_HEADER_PRODOTTI;
 
       if (!headers.equals(csvHeader)) {
-        throw new CsvValidationException("header csv non validi");
+        return new AssetProductDTO(
+          UploadCsvStatus.FORMAL_ERROR.toString(),
+          ErrorKeyConstant.HEADER_FILE_ERROR,
+          LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss")));
       }
       log.info("header csv validi");
       List<CSVRecord> records = csvParser.getRecords();
       if (records.size() > maxRows + 1)
-        throw new CsvValidationException("numero di record nel csv maggiore di " + maxRows);
+        return new AssetProductDTO(
+          UploadCsvStatus.FORMAL_ERROR.toString(),
+          ErrorKeyConstant.MAX_ROW_FILE_ERROR,
+          LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss")));
       log.info("numero di record nel csv valide");
-      String idUpload = idOrg + "-" + category + "-" + idUser + "-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss"));
+      idUpload = idOrg + "-" + category + "-" + idUser + "-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss"));
       log.info("idUpload {}", idUpload);
 
-      Map<String, String> rowWithErrors = new LinkedHashMap<>();
+
       for (CSVRecord csvRecord : records) {
         List<String> errors;
 
@@ -79,6 +94,9 @@ public class ProductService {
           rowWithErrors.put("Errori", String.join(", ", errors));
         }
       }
+    } catch (IOException e) {
+      throw new CsvValidationException("Errore nella lettura del file CSV: " + e.getMessage());
+    }
 
       String fileName = csv.getOriginalFilename();
 
@@ -99,9 +117,19 @@ public class ProductService {
 
         String destination = "CSV/" + idUpload + ".csv";
         log.info("destination: {}", destination);
-        azureBlobClient.upload(csv.getResource().getInputStream(),
-          destination,
-          csv.getContentType());
+        try {
+          azureBlobClient.upload(csv.getResource().getInputStream(),
+            destination,
+            csv.getContentType());
+          return new AssetProductDTO(
+            UploadCsvStatus.FORMAL_OK.toString(),
+            ErrorKeyConstant.UPLOAD_FILE_OK,
+            LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss")));
+        } catch (IOException e) {
+          throw new CsvValidationException("Errore nel caricamento del file CSV su Azure:" + e.getMessage());
+        }
+
+
 
       } else {
         try (ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
@@ -121,13 +149,15 @@ public class ProductService {
               azureBlobClient.upload(inputStream,
                 destination,
                 csv.getContentType());
+          return new AssetProductDTO(
+            UploadCsvStatus.FORMAL_ERROR.toString(),
+            ErrorKeyConstant.REPORT_FORMAL_FILE_ERROR,
+            LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss")));
         } catch (IOException e) {
           throw new CsvValidationException("Errore nella scrittura del file CSV di report: " + e.getMessage());
         }
       }
-    } catch (IOException e) {
-      throw new CsvValidationException("Errore nella lettura del file CSV: " + e.getMessage());
-    }
+
   }
 
   private Boolean isCsv(MultipartFile file) {
