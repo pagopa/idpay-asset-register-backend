@@ -1,7 +1,7 @@
 package it.gov.pagopa.register.service.operation;
 
 import it.gov.pagopa.register.connector.storage.FileStorageClient;
-import it.gov.pagopa.register.constants.ErrorKeyConstant;
+import it.gov.pagopa.register.constants.UploadKeyConstant;
 import it.gov.pagopa.register.constants.enums.UploadCsvStatus;
 import it.gov.pagopa.register.dto.mapper.operation.AssetProductDTO;
 import it.gov.pagopa.register.exception.operation.CsvValidationException;
@@ -45,7 +45,7 @@ public class ProductService {
     if (Boolean.FALSE.equals(isCsv(csv)))
       return new AssetProductDTO(
         UploadCsvStatus.FORMAL_ERROR.toString(),
-        ErrorKeyConstant.EXTENSION_FILE_ERROR,
+        UploadKeyConstant.EXTENSION_FILE_ERROR.getKey(),
         LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss")));
     log.info("Il file inserito è un .csv");
 
@@ -63,7 +63,7 @@ public class ProductService {
       if (!headers.equals(csvHeader)) {
         return new AssetProductDTO(
           UploadCsvStatus.FORMAL_ERROR.toString(),
-          ErrorKeyConstant.HEADER_FILE_ERROR,
+          UploadKeyConstant.HEADER_FILE_ERROR.getKey(),
           LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss")));
       }
       log.info("header csv validi");
@@ -71,7 +71,7 @@ public class ProductService {
       if (records.size() > maxRows + 1)
         return new AssetProductDTO(
           UploadCsvStatus.FORMAL_ERROR.toString(),
-          ErrorKeyConstant.MAX_ROW_FILE_ERROR,
+          UploadKeyConstant.MAX_ROW_FILE_ERROR.getKey(),
           LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss")));
       log.info("numero di record nel csv valide");
       idUpload = idOrg + "-" + category + "-" + idUser + "-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss"));
@@ -123,7 +123,7 @@ public class ProductService {
             csv.getContentType());
           return new AssetProductDTO(
             UploadCsvStatus.FORMAL_OK.toString(),
-            ErrorKeyConstant.UPLOAD_FILE_OK,
+            UploadKeyConstant.UPLOAD_FILE_OK.getKey(),
             LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss")));
         } catch (IOException e) {
           throw new CsvValidationException("Errore nel caricamento del file CSV su Azure:" + e.getMessage());
@@ -151,7 +151,7 @@ public class ProductService {
                 csv.getContentType());
           return new AssetProductDTO(
             UploadCsvStatus.FORMAL_ERROR.toString(),
-            ErrorKeyConstant.REPORT_FORMAL_FILE_ERROR,
+            UploadKeyConstant.REPORT_FORMAL_FILE_ERROR.getKey(),
             LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss")));
         } catch (IOException e) {
           throw new CsvValidationException("Errore nella scrittura del file CSV di report: " + e.getMessage());

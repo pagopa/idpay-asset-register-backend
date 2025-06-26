@@ -13,7 +13,8 @@ public class AssetProductDTO {
 
   private String status;
 
-  private String errorKey;
+  private String uploadKey;
 
   private String elabTimeStamp;
 }
+
