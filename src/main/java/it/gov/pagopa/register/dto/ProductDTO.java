@@ -1,11 +1,9 @@
-package it.gov.pagopa.register.model.role;
+package it.gov.pagopa.register.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDateTime;
 
@@ -13,12 +11,7 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Document(collection = "product")
-
-public class Product {
-
-  @Id
-  private String id;
+public class ProductDTO {
 
   /**
    * Identificatore univoco del caricamento
@@ -88,5 +81,9 @@ public class Product {
    * Classe energetica del prodotto
    */
   private String energyClass;
+
+
+
+
 
 }
