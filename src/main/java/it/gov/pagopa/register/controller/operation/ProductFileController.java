@@ -2,6 +2,7 @@ package it.gov.pagopa.register.controller.operation;
 
 import it.gov.pagopa.register.dto.operation.ProductFileResponseDTO;
 import it.gov.pagopa.register.service.operation.ProductFileService;
+import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -13,12 +14,12 @@ public class ProductFileController {
     this.productFileService = productFileService;
   }
 
-  @GetMapping("/listUpload")
+  @GetMapping("/product-file")
   public ProductFileResponseDTO downloadListUpload(
-    @RequestHeader String idOrg,
-    @RequestParam int page,
-    @RequestParam int size) {
+    @RequestHeader("X-Organization-Id") String idOrg,
+    Pageable pageable) {
 
-    return productFileService.downloadFilesByPage(idOrg, page, size);
+    return productFileService.downloadFilesByPage(idOrg, pageable);
   }
+
 }

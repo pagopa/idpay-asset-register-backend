@@ -1,4 +1,4 @@
-package it.gov.pagopa.register.dto.mapper.role;
+package it.gov.pagopa.register.mapper.role;
 
 import it.gov.pagopa.register.dto.onetrust.PrivacyNoticesDTO;
 import it.gov.pagopa.register.dto.role.PortalConsentDTO;

@@ -1,5 +1,5 @@
 package it.gov.pagopa.register.service.operation;
-import it.gov.pagopa.register.dto.mapper.operation.ProductFileMapper;
+import it.gov.pagopa.register.mapper.operation.ProductFileMapper;
 import it.gov.pagopa.register.dto.operation.ProductFileDTO;
 import it.gov.pagopa.register.dto.operation.ProductFileResponseDTO;
 import it.gov.pagopa.register.model.operation.ProductFile;
@@ -7,6 +7,7 @@ import it.gov.pagopa.register.repository.operation.ProductFileRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 
@@ -19,9 +20,8 @@ public class ProductFileService {
     this.uploadRepository = uploadRepository;
   }
 
-  public ProductFileResponseDTO downloadFilesByPage(String idOrg, int page, int size) {
-    Page<ProductFile> filesPage = uploadRepository.findByIdOrgAndStatusNot(
-      idOrg, "FORMAL_ERROR", PageRequest.of(page, size));
+  public ProductFileResponseDTO downloadFilesByPage(String organizationId, Pageable pageable) {
+    Page<ProductFile> filesPage = uploadRepository.findByIdOrgAndStatusNot(organizationId, "FORMAL_ERROR", pageable);
 
     Page<ProductFileDTO> filesPageDTO = filesPage.map(ProductFileMapper::toDTO);
 
@@ -30,4 +30,5 @@ public class ProductFileService {
       .totalElements(filesPageDTO.getTotalElements())
       .build();
   }
+
 }
