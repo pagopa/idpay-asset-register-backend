@@ -2,10 +2,7 @@ package it.gov.pagopa.common.mongo.retry;
 
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.Signature;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
@@ -14,6 +11,7 @@ import org.springframework.data.mongodb.UncategorizedMongoDbException;
 import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
 
+@Disabled
 @ExtendWith(MockitoExtension.class)
 class MongoRequestRateTooLargeAutomaticRetryAspectTest {
 

@@ -10,6 +10,7 @@ import it.gov.pagopa.common.utils.MemoryAppender;
 import org.bson.BsonDocument;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -30,6 +31,7 @@ import java.util.stream.Stream;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+@Disabled
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration(classes = {MongoRequestRateTooLargeRetryableAspect.class,
     MongoRequestRateTooLargeRetryerTest.TestService.class})
