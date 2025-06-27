@@ -11,11 +11,14 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor
 public class ProductFileDTO {
-  private String idUser;
-  private String idUpload;
-  private LocalDateTime uploadDate;
-  private String status;
-  private Integer totalUpload;
-  private Integer failedUpload;
-  private String originalFileName;
+  private String productFileId;
+  private String userId;
+  private String uploadId;
+  private String category;
+  private String fileName;
+  private String uploadStatus;
+  private LocalDateTime dateUpload;
+  private Integer findedProductsNumber;
+  private Integer addedProductNumber;
+  private String reportProducts;
 }

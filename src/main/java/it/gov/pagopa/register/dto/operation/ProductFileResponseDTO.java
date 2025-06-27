@@ -1,5 +1,4 @@
 package it.gov.pagopa.register.dto.operation;
-import it.gov.pagopa.register.model.operation.ProductFile;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -14,5 +13,8 @@ import java.util.List;
 @Builder
 public class ProductFileResponseDTO {
   private List<ProductFileDTO> content;
+  private long pageNo;
+  private long pageSize;
   private long totalElements;
+  private long totalPages;
 }

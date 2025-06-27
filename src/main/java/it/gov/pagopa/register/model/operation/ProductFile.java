@@ -9,16 +9,22 @@ import java.time.LocalDateTime;
 
 @Data
 @Builder
-@Document("upload_csv")
+@Document("product_file")
 @NoArgsConstructor
 @AllArgsConstructor
 public class ProductFile {
-  private String idUser;
-  private String idOrg;
-  private String idUpload;
-  private LocalDateTime uploadDate;
-  private String status;
-  private Integer totalUpload;
-  private Integer failedUpload;
-  private String originalFileName;
+  private String productFileId;
+  private String userId;
+  private String organizationId;
+  private String uploadId;
+  private String fileName;
+  private String uploadStatus;
+  private LocalDateTime dateUpload;
+  private Integer findedProductsNumber;
+  private Integer addedProductNumber;
+  private String reportProducts;
+
+  public ProductFile(String fileName) {
+    this.fileName = fileName;
+  }
 }

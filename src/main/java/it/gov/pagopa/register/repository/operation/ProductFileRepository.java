@@ -8,7 +8,7 @@ import org.springframework.data.mongodb.repository.MongoRepository;
 import java.util.Optional;
 
 public interface ProductFileRepository extends MongoRepository<ProductFile, String> {
-  Optional<ProductFile> findByIdUpload(String idUpload);
+  Optional<ProductFile> findByUploadId(String uploadId);
 
-  Page<ProductFile> findByIdOrgAndStatusNot(String idOrg, String status, Pageable pageable);
+  Page<ProductFile> findByOrganizationIdAndUploadStatusNot(String organizationId, String uploadStatus, Pageable pageable);
 }
