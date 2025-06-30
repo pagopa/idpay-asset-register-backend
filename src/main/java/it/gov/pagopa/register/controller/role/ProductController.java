@@ -11,11 +11,11 @@ import org.springframework.web.bind.annotation.*;
 public interface ProductController {
 
   @GetMapping("/")
-  ResponseEntity<ProductListDTO> getProductList(@RequestHeader @NotNull String organizationId,
-                                                       @RequestParam String category,
-                                                       @RequestParam String productCode,
-                                                       @RequestParam String productFileId,
-                                                       @RequestParam String eprelCode,
-                                                       @RequestParam String gtinCode,
-                                                       @RequestParam Pageable pageable);
+  ResponseEntity<ProductListDTO> getProductList(  @RequestHeader @NotNull String organizationId,
+                                                  @RequestParam String category,
+                                                  @RequestParam String productCode,
+                                                  @RequestParam String productFileId,
+                                                  @RequestParam String eprelCode,
+                                                  @RequestParam String gtinCode,
+                                                  @RequestParam Pageable pageable);
 }

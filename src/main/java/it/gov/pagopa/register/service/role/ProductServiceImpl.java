@@ -8,6 +8,7 @@ import it.gov.pagopa.register.repository.role.ProductRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -29,7 +30,9 @@ public class ProductServiceImpl implements ProductService {
                                      String gtinCode,
                                      Pageable pageable){
 
-    Page<Product>entities = productRepository.findProducts( organizationId,
+    Criteria criteria = productRepository.getCriteria(organizationId, category, productCode, productFileId, eprelCode, gtinCode);
+
+    Page<Product>entities = productRepository.findByFilter( organizationId,
                                                             category,
                                                             productCode,
                                                             productFileId,
