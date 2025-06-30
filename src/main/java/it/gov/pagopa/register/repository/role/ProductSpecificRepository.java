@@ -9,4 +9,13 @@ import java.util.List;
 public interface ProductSpecificRepository {
 
   List<Product> findByFilter(Criteria criteria, Pageable pageable);
+
+  Criteria getCriteria(String organizationId,
+                       String category,
+                       String productCode,
+                       String productFileId,
+                       String eprelCode,
+                       String gtinCode);
+
+  Long getCount(Criteria criteria);
 }
