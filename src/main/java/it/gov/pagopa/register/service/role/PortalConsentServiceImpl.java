@@ -2,7 +2,7 @@ package it.gov.pagopa.register.service.role;
 
 import it.gov.pagopa.register.connector.onetrust.OneTrustRestService;
 import it.gov.pagopa.register.dto.role.PortalConsentDTO;
-import it.gov.pagopa.register.dto.mapper.role.PrivacyNotices2PortalConsentDTOMapper;
+import it.gov.pagopa.register.mapper.role.PrivacyNotices2PortalConsentDTOMapper;
 import it.gov.pagopa.register.dto.onetrust.PrivacyNoticesDTO;
 import it.gov.pagopa.register.exception.role.VersionNotMatchedException;
 import it.gov.pagopa.register.model.role.PortalConsent;
