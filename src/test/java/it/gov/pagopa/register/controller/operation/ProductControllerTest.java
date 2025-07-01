@@ -3,16 +3,12 @@ package it.gov.pagopa.register.controller.operation;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import it.gov.pagopa.register.dto.ProductDTO;
 import it.gov.pagopa.register.dto.ProductListDTO;
-import it.gov.pagopa.register.dto.operation.ProductFileDTO;
-import it.gov.pagopa.register.dto.operation.ProductFileResponseDTO;
-import it.gov.pagopa.register.service.operation.ProductFileService;
 import it.gov.pagopa.register.service.operation.ProductService;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
