@@ -1,4 +1,4 @@
-package it.gov.pagopa.register.controller;
+package it.gov.pagopa.register.controller.consent;
 
 import it.gov.pagopa.register.config.ServiceExceptionConfig;
 import it.gov.pagopa.register.constants.RoleConstants;

@@ -1,8 +1,8 @@
 package it.gov.pagopa.register.controller.operation;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import it.gov.pagopa.register.dto.ProductDTO;
-import it.gov.pagopa.register.dto.ProductListDTO;
+import it.gov.pagopa.register.dto.operation.ProductDTO;
+import it.gov.pagopa.register.dto.operation.ProductListDTO;
 import it.gov.pagopa.register.service.operation.ProductService;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -23,7 +23,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 
 
-  @WebMvcTest(ProductControllerImpl.class)
+  @WebMvcTest(ProductController.class)
   class ProductControllerTest {
 
     @Autowired
@@ -57,7 +57,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
           , any()
           , any()))
         .thenReturn(mockResponse);
-      mockMvc.perform(get("/products/")
+      mockMvc.perform(get("/idpay/register/products")
           .header("x-organization-id", "organizationIdTest")
           .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk())
@@ -72,7 +72,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
     //Test senza header
     @Test
     void testGetProducts_MissingHeader() throws Exception {
-      mockMvc.perform(get("/products/")
+      mockMvc.perform(get("/idpay/register/products")
           .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isBadRequest());
     }
@@ -89,7 +89,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
           , any()))
         .thenThrow(new RuntimeException("Service error"));
 
-      mockMvc.perform(get("/products/")
+      mockMvc.perform(get("/idpay/register/products")
           .header("x-organization-id", "organizationIdTest")
           .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isInternalServerError());

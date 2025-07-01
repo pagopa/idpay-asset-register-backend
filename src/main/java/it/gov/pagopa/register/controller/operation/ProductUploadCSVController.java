@@ -1,7 +1,7 @@
 package it.gov.pagopa.register.controller.operation;
 
 
-import it.gov.pagopa.register.dto.mapper.operation.AssetProductDTO;
+import it.gov.pagopa.register.dto.operation.AssetProductDTO;
 import it.gov.pagopa.register.service.operation.ProductUploadCSVService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

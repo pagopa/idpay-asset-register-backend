@@ -1,7 +1,6 @@
 package it.gov.pagopa.register.constants;
 
-import it.gov.pagopa.register.dto.mapper.operation.KeyDTO;
-import org.springframework.beans.factory.annotation.Value;
+import it.gov.pagopa.register.dto.operation.KeyDTO;
 
 public final class UploadKeyConstant {
 

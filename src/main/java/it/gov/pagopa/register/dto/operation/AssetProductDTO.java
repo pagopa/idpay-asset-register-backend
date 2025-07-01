@@ -1,4 +1,4 @@
-package it.gov.pagopa.register.dto.mapper.operation;
+package it.gov.pagopa.register.dto.operation;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -10,6 +10,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class AssetProductDTO {
+
+  private String productFileId;
 
   private String status;
 

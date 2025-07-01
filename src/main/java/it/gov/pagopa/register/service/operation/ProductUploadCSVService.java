@@ -3,11 +3,11 @@ package it.gov.pagopa.register.service.operation;
 import it.gov.pagopa.register.connector.storage.FileStorageClient;
 import it.gov.pagopa.register.constants.UploadKeyConstant;
 import it.gov.pagopa.register.constants.enums.UploadCsvStatus;
-import it.gov.pagopa.register.dto.mapper.operation.AssetProductDTO;
+import it.gov.pagopa.register.dto.operation.AssetProductDTO;
 import it.gov.pagopa.register.exception.operation.CsvValidationException;
 import it.gov.pagopa.register.exception.operation.ReportNotFoundException;
-import it.gov.pagopa.register.model.operation.UploadCsv;
-import it.gov.pagopa.register.repository.operation.UploadRepository;
+import it.gov.pagopa.register.model.operation.ProductFile;
+import it.gov.pagopa.register.repository.operation.ProductFileRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
@@ -26,18 +26,18 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import static it.gov.pagopa.register.utils.Utils.*;
+import static it.gov.pagopa.register.constants.AssetRegisterConstant.*;
 
 
 @Service
 @Slf4j
 public class ProductUploadCSVService {
 
-  private final UploadRepository uploadRepository;
+  private final ProductFileRepository productFileRepository;
   private final FileStorageClient azureBlobClient;
 
-  public ProductUploadCSVService(UploadRepository uploadRepository, FileStorageClient azureBlobClient) {
-    this.uploadRepository = uploadRepository;
+  public ProductUploadCSVService(ProductFileRepository productFileRepository, FileStorageClient azureBlobClient) {
+    this.productFileRepository = productFileRepository;
     this.azureBlobClient = azureBlobClient;
   }
 
@@ -47,6 +47,7 @@ public class ProductUploadCSVService {
   public AssetProductDTO saveCsv(MultipartFile csv, String category, String idOrg, String idUser) {
     if (Boolean.FALSE.equals(isCsv(csv)))
       return new AssetProductDTO(
+        null,
         UploadCsvStatus.FORMAL_ERROR.toString(),
         UploadKeyConstant.EXTENSION_FILE_ERROR.getKey(),
         LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss")));
@@ -65,6 +66,7 @@ public class ProductUploadCSVService {
 
       if (!headers.equals(csvHeader)) {
         return new AssetProductDTO(
+          null,
           UploadCsvStatus.FORMAL_ERROR.toString(),
           UploadKeyConstant.HEADER_FILE_ERROR.getKey(),
           LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss")));
@@ -73,6 +75,7 @@ public class ProductUploadCSVService {
       List<CSVRecord> records = csvParser.getRecords();
       if (records.size() > maxRows + 1)
         return new AssetProductDTO(
+          null,
           UploadCsvStatus.FORMAL_ERROR.toString(),
           UploadKeyConstant.MAX_ROW_FILE_ERROR.getKey(),
           LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss")));
@@ -101,28 +104,30 @@ public class ProductUploadCSVService {
 
       String fileName = csv.getOriginalFilename();
 
-      UploadCsv uploadFile = new UploadCsv(
-        idUser,
-        idOrg,
-        idUpload,
-        LocalDateTime.now(),
-        UploadCsvStatus.LOADING_CHECK.toString(),
-        null,
-        null,
-        fileName);
-      log.info("uploadFile: {}", uploadFile);
+
 
       if (rowWithErrors.isEmpty()) {
-        uploadFile.setStatus(UploadCsvStatus.FORMAL_OK.toString());
-        uploadRepository.save(uploadFile);
-
-        String destination = "CSV/" + idUpload + ".csv";
+        ProductFile productFile = new ProductFile(
+          null,
+          category,
+          idUser,
+          idOrg,
+          fileName,
+          UploadCsvStatus.FORMAL_OK.toString(),
+          LocalDateTime.now(),
+          null,
+          null
+        );
+        log.info("uploadFile: {}", productFile);
+        productFile = productFileRepository.save(productFile);
+        String destination = "CSV/" + productFile.getId() + ".csv";
         log.info("destination: {}", destination);
         try {
           azureBlobClient.upload(csv.getResource().getInputStream(),
             destination,
             csv.getContentType());
           return new AssetProductDTO(
+            productFile.getId(),
             UploadCsvStatus.FORMAL_OK.toString(),
             UploadKeyConstant.UPLOAD_FILE_OK.getKey(),
             LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss")));
@@ -142,15 +147,26 @@ public class ProductUploadCSVService {
               writer.flush();
               ByteArrayInputStream inputStream = new ByteArrayInputStream(byteArrayOutputStream.toByteArray());
 
-              uploadFile.setStatus(String.valueOf(UploadCsvStatus.FORMAL_ERROR));
-              uploadRepository.save(uploadFile);
+              ProductFile productFile = new ProductFile(
+                null,
+                category,
+                idUser,
+                idOrg,
+                fileName,
+                UploadCsvStatus.FORMAL_ERROR.toString(),
+                LocalDateTime.now(),
+                null,
+                null
+              );
+              productFile = productFileRepository.save(productFile);
 
-              String destination = "Report/Formal_Error/"+idUpload+".csv";
+              String destination = "Report/Formal_Error/"+productFile.getId()+".csv";
 
               azureBlobClient.upload(inputStream,
                 destination,
                 csv.getContentType());
           return new AssetProductDTO(
+            productFile.getId(),
             UploadCsvStatus.FORMAL_ERROR.toString(),
             UploadKeyConstant.REPORT_FORMAL_FILE_ERROR.getKey(),
             LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss")));
@@ -196,7 +212,7 @@ public class ProductUploadCSVService {
     if (!csvRecord.get(CODICE_GTIN_EAN).matches(CODICE_GTIN_EAN_REGEX)) {
       errors.add(ERROR_GTIN_EAN);
     }
-    if (!CATEGORIE_PRODOTTI.contains(csvRecord.get(CATEGORIA))) {
+    if (category.equals(csvRecord.get(CATEGORIA))) {
       errors.add(ERROR_CATEGORIA_PRODOTTI + category);
     }
     if (!csvRecord.get(CODICE_PRODOTTO).matches(CODICE_PRODOTTO_REGEX)) {
@@ -210,17 +226,17 @@ public class ProductUploadCSVService {
 
 
   public ByteArrayOutputStream downloadReport(String idUpload) {
-    UploadCsv upload = uploadRepository.findByIdUpload(idUpload)
+    ProductFile upload = productFileRepository.findById(idUpload)
       .orElseThrow(() -> new ReportNotFoundException("Report non trovato con id: " + idUpload));
 
     String filePath = "";
 
-    if (upload.getStatus().equalsIgnoreCase("EPREL_ERROR")) {
-      filePath = "Report/Eprel_Error/" + upload.getIdUpload() + ".csv";
-    } else if (upload.getStatus().equalsIgnoreCase("FORMAL_ERROR")) {
-      filePath = "Report/Formal_Error/" + upload.getIdUpload() + ".csv";
+    if (upload.getUploadStatus().equalsIgnoreCase("EPREL_ERROR")) {
+      filePath = "Report/Eprel_Error/" + upload.getId() + ".csv";
+    } else if (upload.getUploadStatus().equalsIgnoreCase("FORMAL_ERROR")) {
+      filePath = "Report/Formal_Error/" + upload.getId() + ".csv";
     } else {
-      throw new ReportNotFoundException("Tipo di errore non supportato: " + upload.getStatus());
+      throw new ReportNotFoundException("Tipo di errore non supportato: " + upload.getUploadStatus());
     }
 
     ByteArrayOutputStream result = azureBlobClient.download(filePath);

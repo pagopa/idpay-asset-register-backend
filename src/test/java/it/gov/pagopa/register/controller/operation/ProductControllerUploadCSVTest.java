@@ -43,7 +43,7 @@ class ProductControllerUploadCSVTest {
         .param("idProduttore", "testProducer")
         .param("orgName", "testOrg"))
       .andExpect(status().isOk())
-      .andExpect(header().string("Content-Disposition", "attachment; filename=expenseFiles.zip"))
+      .andExpect(header().string("Content-Disposition", "attachment; filename=test.csv"))
       .andExpect(content().contentType(MediaType.APPLICATION_OCTET_STREAM))
       .andExpect(content().bytes(file.toByteArray()));
   }

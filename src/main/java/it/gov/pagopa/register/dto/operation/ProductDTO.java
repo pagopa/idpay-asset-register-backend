@@ -1,12 +1,10 @@
-package it.gov.pagopa.register.model.operation;
+package it.gov.pagopa.register.dto.operation;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.experimental.FieldNameConstants;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDateTime;
 
@@ -14,12 +12,8 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@FieldNameConstants
-@Document(collection = "product")
+public class ProductDTO {
 
-public class Product {
-
-  private String productFileId;
   private String organizationId;
   private LocalDateTime registrationDate;
   private String status;

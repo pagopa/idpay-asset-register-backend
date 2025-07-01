@@ -1,6 +1,6 @@
 package it.gov.pagopa.register.service.operation;
 
-import it.gov.pagopa.register.dto.ProductListDTO;
+import it.gov.pagopa.register.dto.operation.ProductListDTO;
 import org.springframework.data.domain.Pageable;
 
 public interface ProductService  {

@@ -3,6 +3,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDateTime;
@@ -13,18 +14,16 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ProductFile {
-  private String productFileId;
+  @Id
+  private String id;
+  private String category;
   private String userId;
   private String organizationId;
-  private String uploadId;
   private String fileName;
   private String uploadStatus;
   private LocalDateTime dateUpload;
   private Integer findedProductsNumber;
   private Integer addedProductNumber;
-  private String reportProducts;
 
-  public ProductFile(String fileName) {
-    this.fileName = fileName;
-  }
+
 }

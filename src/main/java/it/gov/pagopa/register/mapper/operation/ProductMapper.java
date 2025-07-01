@@ -1,6 +1,6 @@
 package it.gov.pagopa.register.mapper.operation;
 
-import it.gov.pagopa.register.dto.ProductDTO;
+import it.gov.pagopa.register.dto.operation.ProductDTO;
 import it.gov.pagopa.register.model.operation.Product;
 
 
@@ -14,7 +14,6 @@ public class ProductMapper {
 
 
     return ProductDTO.builder()
-      .productFileId(entity.getProductFileId())
       .organizationId(entity.getOrganizationId())
       .registrationDate(entity.getRegistrationDate())
       .status(entity.getStatus())
@@ -38,7 +37,6 @@ public class ProductMapper {
     }
 
     return Product.builder()
-      .productFileId(dto.getProductFileId())
       .organizationId(dto.getOrganizationId())
       .registrationDate(dto.getRegistrationDate())
       .status(dto.getStatus())

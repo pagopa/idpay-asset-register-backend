@@ -1,10 +1,7 @@
 package it.gov.pagopa.register.service.operation;
 
-import it.gov.pagopa.register.dto.ProductListDTO;
-import it.gov.pagopa.register.dto.operation.ProductFileResponseDTO;
+import it.gov.pagopa.register.dto.operation.ProductListDTO;
 import it.gov.pagopa.register.model.operation.Product;
-import it.gov.pagopa.register.model.operation.ProductFile;
-import it.gov.pagopa.register.repository.operation.ProductFileRepository;
 import it.gov.pagopa.register.repository.operation.ProductRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -23,7 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
-public class ProductServiceTest {
+class ProductServiceTest {
   @Mock
   private ProductRepository productRepository;
 

@@ -1,14 +1,8 @@
-package it.gov.pagopa.register.utils;
+package it.gov.pagopa.register.constants;
 
-import org.springframework.beans.factory.annotation.Value;
-
-import java.util.List;
 import java.util.Set;
 
-public class Utils {
-
-
-  // CSV REGEX
+public class AssetRegisterConstant {
   public static final String CODICE_GTIN_EAN_REGEX = "^[a-zA-Z0-9]{1,14}$";
   public static final String MARCA_REGEX = "^.{1,100}$";
   public static final String MODELLO_REGEX = "^.{1,100}$";
@@ -72,6 +66,4 @@ public class Utils {
   public static final String ERROR_PAESE_DI_PRODUZIONE = "Il Paese di Produzione è obbligatorio e deve essere composto da esattamente 2 caratteri";
   public static final String ERROR_CODICE_EPREL = "Il Codice EPREL è obbligatorio e deve essere un valore numerico";
   public static final String ERROR_CATEGORIA_PRODOTTI = "Il campo Categoria è obbligatorio e deve contenere il valore fisso ";
-
-
 }

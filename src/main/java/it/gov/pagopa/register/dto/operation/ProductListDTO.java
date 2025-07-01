@@ -1,4 +1,4 @@
-package it.gov.pagopa.register.dto;
+package it.gov.pagopa.register.dto.operation;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
