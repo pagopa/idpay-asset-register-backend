@@ -82,7 +82,10 @@ public class ProductDTO {
    */
   private String energyClass;
 
-
+  /**
+   * Link dettaglio prodotto
+   */
+  private String linkEprel;
 
 
 

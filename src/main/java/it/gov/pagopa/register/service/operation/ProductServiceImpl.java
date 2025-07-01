@@ -47,8 +47,12 @@ public class ProductServiceImpl implements ProductService {
 
     return ProductListDTO.builder()
       .content(result.getContent())
+      .pageNo(result.getNumber())
+      .pageSize(result.getSize())
       .totalElements(result.getTotalElements())
+      .totalPages(result.getTotalPages())
       .build();
+
   }
 
   private Pageable getPageable(Pageable pageable) {

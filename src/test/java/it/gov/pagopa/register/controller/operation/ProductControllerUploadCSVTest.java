@@ -19,8 +19,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @ExtendWith(MockitoExtension.class)
-@WebMvcTest(ProductController.class)
-class ProductControllerImplTest {
+@WebMvcTest(ProductUploadCSVController.class)
+class ProductControllerUploadCSVTest {
 
   @Autowired
   private MockMvc mockMvc;

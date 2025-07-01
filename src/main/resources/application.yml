@@ -60,3 +60,5 @@ app:
           tosId: ${ONE_TRUST_TOS_ID:}
           apiKey: ${ONE_TRUST_API_KEY:}
 
+config:
+  max-rows: 100

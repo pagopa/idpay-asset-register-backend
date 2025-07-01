@@ -57,7 +57,7 @@ public class ProductSpecificRepositoryImpl implements ProductSpecificRepository 
 
   private Pageable getPageable(Pageable pageable) {
     if (pageable == null) {
-      return PageRequest.of(0, 15, Sort.by("registrationDate"));
+      return PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), pageable.getSort());
     }
     return pageable;
   }
