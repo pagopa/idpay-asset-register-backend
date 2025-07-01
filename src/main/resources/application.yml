@@ -61,8 +61,9 @@ spring:
                 brokers: ${KAFKA_BROKER:}
                 configuration:
                   sasl.jaas.config: ${KAFKA_REGISTER_PRODUCT_FILE_UPLOAD_SASL_JAAS_CONFIG:}
+      bindings:
         productFileConsumer-in-0:
-          binder: kafka-asset-register
+          binder: kafka-asset-notification
           content-type: ${KAFKA_CONTENT_TYPE:application/json}
           destination: ${KAFKA_ASSET_REGISTER:idpay-asset-register}
           group: ${KAFKA_COMMANDS_GROUP_IN:idpay-asset-register-consumer-group}

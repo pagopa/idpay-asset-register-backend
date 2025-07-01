@@ -40,7 +40,7 @@ import static it.gov.pagopa.register.constants.enums.UploadCsvStatus.LOADED;
 @Service
 public class ProductFileService extends BaseKafkaConsumer<List<StorageEventDTO>> {
 
-  private static final Pattern SUBJECT_PATTERN = Pattern.compile(".*blobs/CSV/(.*?)-(.*?)-(.*?)-(.*?\\.csv)$");
+  private static final Pattern SUBJECT_PATTERN = Pattern.compile(".*blobs/CSV/(.*?)/(.*?)/(.*?\\.csv)$");
 
   private static final Map<String, String> ENERGY_CLASS_REQUIREMENTS = Map.of(
     "WASHINGMACHINES", "A",
@@ -100,22 +100,21 @@ public class ProductFileService extends BaseKafkaConsumer<List<StorageEventDTO>>
     for (StorageEventDTO event : events) {
       String subject = event.getSubject();
       String url = event.getData().getUrl();
-
+      //modificare matcher
       Matcher matcher = SUBJECT_PATTERN.matcher(subject);
       if (!matcher.find() || matcher.groupCount() < 4) {
         log.warn("[PRODUCT_UPLOAD] - Invalid subject format: {}", subject);
         continue;
       }
 
-      String orgId = matcher.group(1);
+      String fileName = matcher.group(3);
       String category = matcher.group(2);
-      String userId = matcher.group(3);
-      String fileName = matcher.group(4);
+      String orgId = matcher.group(1);
 
-      log.info("[PRODUCT_UPLOAD] - Processing file: {} for orgId={}, category={}, userId={}", fileName, orgId, category, userId);
-
+      log.info("[PRODUCT_UPLOAD] - Processing file: {} for orgId={}, category={}, userId={}", fileName);
+      //modifica url rimore quello prima di CSV
       try (ByteArrayOutputStream inputStream = fileStorageClient.download(url)) {
-        processCsvFromStorage(inputStream, fileName, category, orgId, userId);
+        processCsvFromStorage(inputStream, fileName, category, orgId, null);
       } catch (Exception e) {
         log.error("[PRODUCT_UPLOAD] - Error processing file {}: {}", fileName, e.getMessage(), e);
         setFinalProductFileStatus(fileName, orgId, String.valueOf(EPREL_ERROR));
@@ -130,9 +129,9 @@ public class ProductFileService extends BaseKafkaConsumer<List<StorageEventDTO>>
                                     String userId) {
 
     List<Product> validProducts = new ArrayList<>();
-    Map<Integer, List<String>> errorRows = new LinkedHashMap<>();
+    List<List<String>> errorRows =new ArrayList<>();
     boolean isCookingHob = "COOKINGHOBS".equalsIgnoreCase(category);
-    String productFileId = getExistingProductFileId(fileName, orgId);
+    String productFileId = fileName.replace(".csv","");
 
     try (InputStream inputStream = new ByteArrayInputStream(byteArrayOutputStream.toByteArray());
          BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
@@ -150,7 +149,7 @@ public class ProductFileService extends BaseKafkaConsumer<List<StorageEventDTO>>
         CSVRecord record = records.get(i);
         List<String> errors = processCsvRecord(record, orgId, category, productFileId, validProducts, isCookingHob);
         if (!errors.isEmpty()) {
-          errorRows.put(i + 1, buildErrorRow(record, headers, errors));
+          errorRows.add(buildErrorRow(record, headers, errors));
         }
       }
 
