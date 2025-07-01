@@ -91,4 +91,9 @@ public class Product {
    */
   private String energyClass;
 
+  /**
+   * Link di dettaglio prodotto
+   */
+  private String linkEprel;
+
 }

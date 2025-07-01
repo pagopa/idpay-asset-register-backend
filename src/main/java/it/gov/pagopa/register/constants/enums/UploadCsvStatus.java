@@ -6,7 +6,8 @@ public enum UploadCsvStatus {
   FORMAL_ERROR,
   FORMAL_OK,
   EPREL_ERROR,
-  LOADING_CHECK;
+  LOADING_CHECK,
+  LOADED
 
 
 }
