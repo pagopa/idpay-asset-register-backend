@@ -1,11 +1,7 @@
-package it.gov.pagopa.register.dto.mapper.role;
+package it.gov.pagopa.register.mapper.operation;
 
 import it.gov.pagopa.register.dto.ProductDTO;
-import it.gov.pagopa.register.model.role.Product;
-import org.springframework.stereotype.Component;
-
-import java.util.ArrayList;
-import java.util.List;
+import it.gov.pagopa.register.model.operation.Product;
 
 
 public class ProductMapper {

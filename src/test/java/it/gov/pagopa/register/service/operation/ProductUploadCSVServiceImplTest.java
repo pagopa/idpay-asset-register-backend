@@ -21,7 +21,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class ProductServiceImplTest {
+class ProductUploadCSVServiceImplTest {
 
   @Mock
   private UploadRepository uploadRepository;
@@ -30,13 +30,13 @@ class ProductServiceImplTest {
   private FileStorageClient azureBlobClient;
 
   @InjectMocks
-  private ProductService productService;
+  private ProductUploadCSVService productUploadCSVService;
 
   private final String ID_UPLOAD_CORRECT = "example_eprel";
 
   @BeforeEach
   void setUp() {
-    productService.maxRows = 5; // Imposta maxRows per il test
+    productUploadCSVService.maxRows = 5; // Imposta maxRows per il test
   }
 
   //-------------------------Test su metodo upload csv--------------------
@@ -47,7 +47,7 @@ class ProductServiceImplTest {
     MockMultipartFile file = new MockMultipartFile("file", "test.txt", "text/plain", "header\nvalue".getBytes());
 
     assertThrows(CsvValidationException.class, () ->
-      productService.saveCsv(file, "category", "orgId", "userId")
+      productUploadCSVService.saveCsv(file, "category", "orgId", "userId")
     );
 
     verifyNoInteractions(uploadRepository, azureBlobClient);
@@ -68,7 +68,7 @@ class ProductServiceImplTest {
     when(uploadRepository.findByIdUpload(ID_UPLOAD_CORRECT)).thenReturn(Optional.of(uploadCsv));
     when(azureBlobClient.download("Report/Eprel_Error/" + ID_UPLOAD_CORRECT + ".csv")).thenReturn(expectedStream);
 
-    ByteArrayOutputStream result = productService.downloadReport(ID_UPLOAD_CORRECT);
+    ByteArrayOutputStream result = productUploadCSVService.downloadReport(ID_UPLOAD_CORRECT);
 
     assertEquals(expectedStream, result);
   }
@@ -85,7 +85,7 @@ class ProductServiceImplTest {
     when(uploadRepository.findByIdUpload(ID_UPLOAD_CORRECT)).thenReturn(Optional.of(upload));
     when(azureBlobClient.download("Report/Formal_Error/" + ID_UPLOAD_CORRECT + ".csv")).thenReturn(expectedStream);
 
-    ByteArrayOutputStream result = productService.downloadReport(ID_UPLOAD_CORRECT);
+    ByteArrayOutputStream result = productUploadCSVService.downloadReport(ID_UPLOAD_CORRECT);
 
     assertEquals(expectedStream, result);
   }
@@ -97,7 +97,7 @@ class ProductServiceImplTest {
 
     ReportNotFoundException ex = assertThrows(
       ReportNotFoundException.class,
-      () -> productService.downloadReport(ID_UPLOAD_CORRECT)
+      () -> productUploadCSVService.downloadReport(ID_UPLOAD_CORRECT)
     );
 
     assertTrue(ex.getMessage().contains("Report non trovato con id"));
@@ -114,7 +114,7 @@ class ProductServiceImplTest {
 
     ReportNotFoundException ex = assertThrows(
       ReportNotFoundException.class,
-      () -> productService.downloadReport(ID_UPLOAD_CORRECT)
+      () -> productUploadCSVService.downloadReport(ID_UPLOAD_CORRECT)
     );
 
     assertTrue(ex.getMessage().contains("Tipo di errore non supportato"));
@@ -132,7 +132,7 @@ class ProductServiceImplTest {
 
     ReportNotFoundException ex = assertThrows(
       ReportNotFoundException.class,
-      () -> productService.downloadReport(ID_UPLOAD_CORRECT)
+      () -> productUploadCSVService.downloadReport(ID_UPLOAD_CORRECT)
     );
 
     assertTrue(ex.getMessage().contains("Report non trovato su Azure"));

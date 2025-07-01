@@ -1,8 +1,7 @@
 package it.gov.pagopa.register.controller.role;
 
 import it.gov.pagopa.register.dto.ProductListDTO;
-import it.gov.pagopa.register.service.role.ProductService;
-import it.gov.pagopa.register.service.role.ProductServiceImpl;
+import it.gov.pagopa.register.service.operation.ProductService;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;

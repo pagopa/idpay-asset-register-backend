@@ -1,6 +1,6 @@
 package it.gov.pagopa.register.controller.operation;
 
-import it.gov.pagopa.register.service.operation.ProductService;
+import it.gov.pagopa.register.service.operation.ProductUploadCSVService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
@@ -26,7 +26,7 @@ class ProductControllerImplTest {
   private MockMvc mockMvc;
 
   @MockBean
-  private ProductService productService;
+  private ProductUploadCSVService productUploadCSVService;
 
 
 
@@ -37,7 +37,7 @@ class ProductControllerImplTest {
     ByteArrayOutputStream file = new ByteArrayOutputStream();
     file.write("fake csv content".getBytes());
 
-    Mockito.when(productService.downloadReport(TEST_ID_UPLOAD)).thenReturn(file);
+    Mockito.when(productUploadCSVService.downloadReport(TEST_ID_UPLOAD)).thenReturn(file);
 
     mockMvc.perform(get("/idpay/register/download/report/{idUpload}", TEST_ID_UPLOAD)
         .param("idProduttore", "testProducer")
@@ -50,7 +50,7 @@ class ProductControllerImplTest {
 
   @Test
   void downloadCsv_notFound() throws Exception {
-    Mockito.when(productService.downloadReport(TEST_ID_UPLOAD))
+    Mockito.when(productUploadCSVService.downloadReport(TEST_ID_UPLOAD))
       .thenThrow(new RuntimeException("File not found"));
 
     mockMvc.perform(get("/idpay/register/download/report/{idUpload}", TEST_ID_UPLOAD))

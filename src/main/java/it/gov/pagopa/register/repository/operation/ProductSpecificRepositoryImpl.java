@@ -1,7 +1,6 @@
-package it.gov.pagopa.register.repository.role;
+package it.gov.pagopa.register.repository.operation;
 
-import it.gov.pagopa.register.model.role.Product;
-import org.springframework.data.domain.Page;
+import it.gov.pagopa.register.model.operation.Product;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -11,7 +10,7 @@ import org.springframework.data.mongodb.core.query.Query;
 
 import java.util.List;
 
-public class ProductSpecificRepositoryImpl implements ProductSpecificRepository{
+public class ProductSpecificRepositoryImpl implements ProductSpecificRepository {
 
   private final MongoTemplate mongoTemplate;
 

@@ -1,10 +1,10 @@
-package it.gov.pagopa.register.service.role;
+package it.gov.pagopa.register.service.operation;
 
 import it.gov.pagopa.register.dto.ProductDTO;
 import it.gov.pagopa.register.dto.ProductListDTO;
-import it.gov.pagopa.register.dto.mapper.role.ProductMapper;
-import it.gov.pagopa.register.model.role.Product;
-import it.gov.pagopa.register.repository.role.ProductRepository;
+import it.gov.pagopa.register.mapper.operation.ProductMapper;
+import it.gov.pagopa.register.model.operation.Product;
+import it.gov.pagopa.register.repository.operation.ProductRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;

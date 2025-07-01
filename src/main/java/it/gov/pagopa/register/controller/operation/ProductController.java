@@ -2,7 +2,7 @@ package it.gov.pagopa.register.controller.operation;
 
 
 import it.gov.pagopa.register.dto.mapper.operation.AssetProductDTO;
-import it.gov.pagopa.register.service.operation.ProductService;
+import it.gov.pagopa.register.service.operation.ProductUploadCSVService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -15,12 +15,12 @@ import java.io.ByteArrayOutputStream;
 public class ProductController {
 
 
-    private final ProductService productService;
+    private final ProductUploadCSVService productUploadCSVService;
 
 
 
-    public ProductController(ProductService productService) {
-        this.productService = productService;
+    public ProductController(ProductUploadCSVService productUploadCSVService) {
+        this.productUploadCSVService = productUploadCSVService;
     }
 
     @PostMapping(value = "upload", consumes = "multipart/form-data")
@@ -30,7 +30,7 @@ public class ProductController {
                                                      @RequestPart("category") String category,
                                                      @RequestPart("csv") MultipartFile csv) {
 
-      AssetProductDTO assetProductDTO = productService.saveCsv(csv, category, idOrg, idUser);
+      AssetProductDTO assetProductDTO = productUploadCSVService.saveCsv(csv, category, idOrg, idUser);
         return ResponseEntity.ok().body(assetProductDTO);
     }
 
@@ -40,7 +40,7 @@ public class ProductController {
     @RequestParam(required = false) String orgName,
     @PathVariable("idUpload") String idUpload) {
 
-    ByteArrayOutputStream file = productService.downloadReport(idUpload);
+    ByteArrayOutputStream file = productUploadCSVService.downloadReport(idUpload);
 
     byte[] zipBytes = file.toByteArray();
 
