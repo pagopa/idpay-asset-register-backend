@@ -54,12 +54,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         .build();
 
       Mockito.when(productService.getProducts(eq("organizationIdTest")
-          , any(String.class)
-          , any(String.class)
-          , any(String.class)
-          , any(String.class)
-          , any(String.class)
-          , any(Pageable.class)))
+          , any()
+          , any()
+          , any()
+          , any()
+          , any()
+          , any()))
         .thenReturn(mockResponse);
       mockMvc.perform(get("/products/")
           .header("x-organization-id", "organizationIdTest")
@@ -85,12 +85,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
     @Test
     void testGetProducts_ServiceThrowsException() throws Exception {
       Mockito.when(productService.getProducts(eq("organizationIdTest")
-          , any(String.class)
-          , any(String.class)
-          , any(String.class)
-          , any(String.class)
-          , any(String.class)
-          , any(Pageable.class)))
+          , any()
+          , any()
+          , any()
+          , any()
+          , any()
+          , any()))
         .thenThrow(new RuntimeException("Service error"));
 
       mockMvc.perform(get("/products/")
