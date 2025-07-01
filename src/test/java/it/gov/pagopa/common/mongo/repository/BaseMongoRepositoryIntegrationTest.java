@@ -25,7 +25,7 @@ import java.util.Map;
         properties = {
                 "de.flapdoodle.mongodb.embedded.version=4.2.24",
 
-                "spring.data.mongodb.database=idpay",
+                "spring.data.mongodb.database=rdb",
                 "spring.data.mongodb.config.connectionPool.maxSize: 100",
                 "spring.data.mongodb.config.connectionPool.minSize: 0",
                 "spring.data.mongodb.config.connectionPool.maxWaitTimeMS: 120000",
@@ -90,7 +90,7 @@ class BaseMongoRepositoryIntegrationTest {
 
         List<Map.Entry<MongoTestUtilitiesService.MongoCommand, Long>> commands = MongoTestUtilitiesService.stopAndGetMongoCommands();
         Assertions.assertEquals(1, commands.size());
-        Assertions.assertEquals("{\"find\": \"beneficiary_rule\", \"filter\": {\"_id\": \"VALUE\"}, \"$db\": \"idpay\"}", commands.get(0).getKey().getCommand());
+        Assertions.assertEquals("{\"find\": \"beneficiary_rule\", \"filter\": {\"_id\": \"VALUE\"}, \"$db\": \"rdb\"}", commands.get(0).getKey().getCommand());
         Assertions.assertEquals(2L, commands.get(0).getValue());
     }
 }
