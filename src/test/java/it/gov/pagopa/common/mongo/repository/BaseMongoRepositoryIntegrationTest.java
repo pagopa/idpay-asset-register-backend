@@ -21,7 +21,6 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import java.util.List;
 import java.util.Map;
 
-@Disabled
 @TestPropertySource(
         properties = {
                 "de.flapdoodle.mongodb.embedded.version=4.2.24",

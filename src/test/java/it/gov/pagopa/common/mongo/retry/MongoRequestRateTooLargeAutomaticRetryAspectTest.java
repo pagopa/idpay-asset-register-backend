@@ -11,7 +11,6 @@ import org.springframework.data.mongodb.UncategorizedMongoDbException;
 import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
 
-@Disabled
 @ExtendWith(MockitoExtension.class)
 class MongoRequestRateTooLargeAutomaticRetryAspectTest {
 
