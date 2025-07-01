@@ -20,7 +20,7 @@ public class ProductFileService {
     this.productFileRepository = productFileRepository;
   }
 
-  public ProductFileResponseDTO downloadFilesByPage(String organizationId, Pageable pageable) {
+  public ProductFileResponseDTO getFilesByPage(String organizationId, Pageable pageable) {
 
     if (organizationId == null) {
       throw new IllegalArgumentException("OrganizationId must not be null");

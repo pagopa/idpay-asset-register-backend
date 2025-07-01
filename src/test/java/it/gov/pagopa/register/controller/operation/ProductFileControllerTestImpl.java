@@ -20,7 +20,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(ProductFileController.class)
-class ProductFileControllerTestImpl {
+class ProductFileControllerTest {
   @Autowired
   private MockMvc mockMvc;
 
@@ -44,7 +44,7 @@ class ProductFileControllerTestImpl {
       .totalPages(1)
       .build();
 
-    Mockito.when(productFileService.downloadFilesByPage(eq("org123"), any(Pageable.class)))
+    Mockito.when(productFileService.getFilesByPage(eq("org123"), any(Pageable.class)))
       .thenReturn(mockResponse);
 
     mockMvc.perform(get("/idpay/register/product-files")
@@ -70,7 +70,7 @@ class ProductFileControllerTestImpl {
   //Test in caso di eccezione
   @Test
   void testDownloadListUpload_ServiceThrowsException() throws Exception {
-    Mockito.when(productFileService.downloadFilesByPage(eq("org123"), any(Pageable.class)))
+    Mockito.when(productFileService.getFilesByPage(eq("org123"), any(Pageable.class)))
       .thenThrow(new RuntimeException("Service error"));
 
     mockMvc.perform(get("/idpay/register/product-files")

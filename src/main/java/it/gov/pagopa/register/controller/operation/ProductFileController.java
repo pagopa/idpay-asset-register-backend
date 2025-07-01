@@ -21,6 +21,6 @@ public class ProductFileController {
     @RequestHeader("x-organization-id") String organizationId,
     @PageableDefault(size = 10, sort = "dateUpload", direction = Sort.Direction.DESC) Pageable pageable) {
 
-    return productFileService.downloadFilesByPage(organizationId, pageable);
+    return productFileService.getFilesByPage(organizationId, pageable);
   }
 }

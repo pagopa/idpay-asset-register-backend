@@ -42,7 +42,7 @@ class ProductFileServiceTest {
     when(productFileRepository.findByOrganizationIdAndUploadStatusNot(organizationId, "FORMAL_ERROR", pageable))
       .thenReturn(filesPage);
 
-    ProductFileResponseDTO response = productFileService.downloadFilesByPage(organizationId, pageable);
+    ProductFileResponseDTO response = productFileService.getFilesByPage(organizationId, pageable);
 
     assertEquals(2, response.getContent().size());
     assertEquals(0, response.getPageNo());
@@ -66,7 +66,7 @@ class ProductFileServiceTest {
     when(productFileRepository.findByOrganizationIdAndUploadStatusNot(organizationId, "FORMAL_ERROR", pageable))
       .thenReturn(filesPage);
 
-    ProductFileResponseDTO response = productFileService.downloadFilesByPage(organizationId, pageable);
+    ProductFileResponseDTO response = productFileService.getFilesByPage(organizationId, pageable);
 
     assertEquals(0, response.getContent().size());
     assertEquals(0, response.getPageNo());
@@ -88,7 +88,7 @@ class ProductFileServiceTest {
       .thenThrow(new RuntimeException("Database error"));
 
     RuntimeException exception = assertThrows(RuntimeException.class, () -> {
-      productFileService.downloadFilesByPage(organizationId, pageable);
+      productFileService.getFilesByPage(organizationId, pageable);
     });
 
     assertEquals("Database error", exception.getMessage());
@@ -106,7 +106,7 @@ class ProductFileServiceTest {
     // Se invece gestisci l'input a monte, dovresti eventualmente lanciare una IllegalArgumentException personalizzata.
 
     assertThrows(IllegalArgumentException.class, () -> {
-      productFileService.downloadFilesByPage(null, pageable);
+      productFileService.getFilesByPage(null, pageable);
     });
   }
 

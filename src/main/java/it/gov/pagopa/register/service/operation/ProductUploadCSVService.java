@@ -21,7 +21,10 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import static it.gov.pagopa.register.utils.Utils.*;
 
@@ -50,7 +53,7 @@ public class ProductUploadCSVService {
     log.info("Il file inserito è un .csv");
 
     String idUpload = null;
-    Map<String, String> rowWithErrors = new LinkedHashMap<>();
+    List<List<String>> rowWithErrors = new ArrayList<>();
     Set<String> csvHeader = new HashSet<>();
 
     try (BufferedReader reader = new BufferedReader(new InputStreamReader(csv.getInputStream(), StandardCharsets.UTF_8));
@@ -80,7 +83,6 @@ public class ProductUploadCSVService {
 
       for (CSVRecord csvRecord : records) {
         List<String> errors;
-
         if (Boolean.TRUE.equals(isCookinghobs)) {
           errors = checkPianiCotturaCsvRow(csvRecord);
         } else {
@@ -88,10 +90,9 @@ public class ProductUploadCSVService {
         }
 
         if (!errors.isEmpty()) {
-          for (String header : csvHeader) {
-            rowWithErrors.put(header, csvRecord.get(header));
-          }
-          rowWithErrors.put("Errori", String.join(", ", errors));
+          List<String> row = new ArrayList<>(csvRecord.stream().toList());
+          row.add(String.join(", ", errors));
+          rowWithErrors.add(row);
         }
       }
     } catch (IOException e) {
@@ -136,7 +137,7 @@ public class ProductUploadCSVService {
              BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(byteArrayOutputStream, StandardCharsets.UTF_8));
              CSVPrinter csvPrinter = new CSVPrinter(writer, CSVFormat.Builder.create().setHeader(csvHeader.toArray(new String[0])).setTrim(true).setDelimiter(";").build())) {
               log.info(rowWithErrors.toString());
-              csvPrinter.printRecord(rowWithErrors.values());
+              csvPrinter.printRecord(rowWithErrors);
               csvPrinter.flush();
               writer.flush();
               ByteArrayInputStream inputStream = new ByteArrayInputStream(byteArrayOutputStream.toByteArray());
