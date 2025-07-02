@@ -3,6 +3,11 @@ package it.gov.pagopa.register.constants;
 import java.util.Set;
 
 public class AssetRegisterConstant {
+
+  //private constructor to avoid instantiation
+  private AssetRegisterConstant(){
+  }
+
   public static final String CODICE_GTIN_EAN_REGEX = "^[a-zA-Z0-9]{1,14}$";
   public static final String MARCA_REGEX = "^.{1,100}$";
   public static final String MODELLO_REGEX = "^.{1,100}$";
@@ -10,6 +15,8 @@ public class AssetRegisterConstant {
   public static final String PAESE_DI_PRODUZIONE_REGEX = "^.{2}$";
   public static final String CODICE_EPREL_REGEX = "^\\d+$";
 
+  public static final String EPREL_ERROR = "EPREL_ERROR";
+  public static final String FORMAL_ERROR = "FORMAL_ERROR";
 
   // CSV HEADER
   public static final String CODICE_EPREL = "Codice EPREL";
