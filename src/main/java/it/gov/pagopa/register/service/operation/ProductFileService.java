@@ -7,12 +7,12 @@ import it.gov.pagopa.common.kafka.BaseKafkaConsumer;
 import it.gov.pagopa.register.connector.eprel.EprelConnector;
 import it.gov.pagopa.register.connector.storage.FileStorageClient;
 import it.gov.pagopa.register.dto.operation.EprelProductDTO;
-import it.gov.pagopa.register.dto.operation.StorageEventDTO;
 import it.gov.pagopa.register.dto.operation.ProductFileDTO;
 import it.gov.pagopa.register.dto.operation.ProductFileResponseDTO;
+import it.gov.pagopa.register.dto.operation.StorageEventDTO;
 import it.gov.pagopa.register.mapper.operation.ProductFileMapper;
-import it.gov.pagopa.register.model.role.Product;
 import it.gov.pagopa.register.model.operation.ProductFile;
+import it.gov.pagopa.register.model.role.Product;
 import it.gov.pagopa.register.repository.operation.ProductFileRepository;
 import it.gov.pagopa.register.repository.role.ProductRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -31,30 +31,14 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
+import static it.gov.pagopa.register.constants.RegisterConstants.*;
 import static it.gov.pagopa.register.constants.enums.UploadCsvStatus.EPREL_ERROR;
 import static it.gov.pagopa.register.constants.enums.UploadCsvStatus.LOADED;
 
 @Slf4j
 @Service
 public class ProductFileService extends BaseKafkaConsumer<List<StorageEventDTO>> {
-
-  private static final Pattern SUBJECT_PATTERN = Pattern.compile(".*blobs/CSV/(.*?)/(.*?)/(.*?\\.csv)$");
-
-  private static final Map<String, String> ENERGY_CLASS_REQUIREMENTS = Map.of(
-    "WASHINGMACHINES", "A",
-    "WASHERDRIERS", "A",
-    "OVENS", "A",
-    "RANGEHOODS", "B",
-    "DISHWASHERS", "C",
-    "TUMBLEDRIERS", "C",
-    "REFRIGERATINGAPPLIANCES", "D"
-  );
-
-  private static final List<String> ENERGY_CLASS_ORDER = Arrays.asList(
-    "A+++", "A++", "A+", "A", "B", "C", "D", "E", "F", "G"
-  );
 
   private final ProductFileRepository productFileRepository;
   private final ProductRepository productRepository;
@@ -95,29 +79,61 @@ public class ProductFileService extends BaseKafkaConsumer<List<StorageEventDTO>>
       .build();
   }
 
+
   @Override
   public void execute(List<StorageEventDTO> events, Message<String> message) {
     for (StorageEventDTO event : events) {
+      if (event == null || event.getData() == null) {
+        log.warn("[PRODUCT_UPLOAD] - Null event or event data, skipping");
+        continue;
+      }
+
       String subject = event.getSubject();
       String url = event.getData().getUrl();
-      //modificare matcher
+
+      if (url == null || url.trim().isEmpty()) {
+        log.warn("[PRODUCT_UPLOAD] - Empty or null URL in event, skipping. Subject: {}", subject);
+        continue;
+      }
+
+      log.info("[PRODUCT_UPLOAD] - Processing event - Subject: {}, URL: {}", subject, url);
+
       Matcher matcher = SUBJECT_PATTERN.matcher(subject);
       if (!matcher.find() || matcher.groupCount() < 4) {
         log.warn("[PRODUCT_UPLOAD] - Invalid subject format: {}", subject);
         continue;
       }
 
-      String fileName = matcher.group(3);
-      String category = matcher.group(2);
       String orgId = matcher.group(1);
+      String category = matcher.group(2);
+      String userId = matcher.group(3);
+      String fileName = matcher.group(4);
 
-      log.info("[PRODUCT_UPLOAD] - Processing file: {} for orgId={}, category={}, userId={}", fileName);
-      //modifica url rimore quello prima di CSV
-      try (ByteArrayOutputStream inputStream = fileStorageClient.download(url)) {
-        processCsvFromStorage(inputStream, fileName, category, orgId, null);
+      log.info("[PRODUCT_UPLOAD] - Processing file: {} for orgId={}, category={}, userId={}",
+        fileName, orgId, category, userId);
+
+      ByteArrayOutputStream downloadedData = null;
+      try {
+        downloadedData = fileStorageClient.download(url);
+        if (downloadedData == null) {
+          log.warn("[PRODUCT_UPLOAD] - File not found or download failed for URL: {}. " +
+            "This might be a timing issue or the file was already processed.", url);
+          setFinalProductFileStatus(fileName, String.valueOf(EPREL_ERROR));
+          continue;
+        }
+
+        processCsvFromStorage(downloadedData, fileName, category, orgId);
       } catch (Exception e) {
         log.error("[PRODUCT_UPLOAD] - Error processing file {}: {}", fileName, e.getMessage(), e);
-        setFinalProductFileStatus(fileName, orgId, String.valueOf(EPREL_ERROR));
+        setFinalProductFileStatus(fileName, String.valueOf(EPREL_ERROR));
+      } finally {
+        if (downloadedData != null) {
+          try {
+            downloadedData.close();
+          } catch (IOException e) {
+            log.warn("[PRODUCT_UPLOAD] - Error closing ByteArrayOutputStream for file {}: {}", fileName, e.getMessage());
+          }
+        }
       }
     }
   }
@@ -125,16 +141,15 @@ public class ProductFileService extends BaseKafkaConsumer<List<StorageEventDTO>>
   public void processCsvFromStorage(ByteArrayOutputStream byteArrayOutputStream,
                                     String fileName,
                                     String category,
-                                    String orgId,
-                                    String userId) {
+                                    String orgId) {
 
     List<Product> validProducts = new ArrayList<>();
-    List<List<String>> errorRows =new ArrayList<>();
+    List<List<String>> errorRows = new ArrayList<>();
     boolean isCookingHob = "COOKINGHOBS".equalsIgnoreCase(category);
-    String productFileId = fileName.replace(".csv","");
+    String productFileId = fileName.replace(".csv", "");
 
-    try (InputStream inputStream = new ByteArrayInputStream(byteArrayOutputStream.toByteArray());
-         BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
+    try (BufferedReader reader = new BufferedReader(new InputStreamReader(
+      new ByteArrayInputStream(byteArrayOutputStream.toByteArray()), StandardCharsets.UTF_8));
          CSVParser csvParser = new CSVParser(reader, CSVFormat.Builder.create()
            .setHeader()
            .setTrim(true)
@@ -143,7 +158,7 @@ public class ProductFileService extends BaseKafkaConsumer<List<StorageEventDTO>>
 
       List<CSVRecord> records = csvParser.getRecords();
       Set<String> headers = new LinkedHashSet<>(csvParser.getHeaderMap().keySet());
-      log.info("[PRODUCT_UPLOAD] - Header CSV validi: {}", headers);
+      log.info("[PRODUCT_UPLOAD] - Valid CSV headers: {}", headers);
 
       for (int i = 0; i < records.size(); i++) {
         CSVRecord record = records.get(i);
@@ -155,30 +170,31 @@ public class ProductFileService extends BaseKafkaConsumer<List<StorageEventDTO>>
 
       if (!validProducts.isEmpty()) {
         productRepository.saveAll(validProducts);
-        log.info("[PRODUCT_UPLOAD] - Salvati {} prodotti validi per file {}", validProducts.size(), fileName);
+        log.info("[PRODUCT_UPLOAD] - Saved {} valid products for file {}", validProducts.size(), fileName);
       }
 
       if (!errorRows.isEmpty()) {
-        generateErrorReport(fileName, errorRows, headers, orgId, category, userId);
-        setFinalProductFileStatus(fileName, orgId, String.valueOf(EPREL_ERROR));
-        log.info("[PRODUCT_UPLOAD] - File {} processato con {} errori EPREL", fileName, errorRows.size());
+        generateErrorReport(fileName, errorRows, headers);
+        setFinalProductFileStatus(fileName, String.valueOf(EPREL_ERROR));
+        log.info("[PRODUCT_UPLOAD] - File {} processed with {} EPREL errors", fileName, errorRows.size());
       } else {
-        setFinalProductFileStatus(fileName, orgId, String.valueOf(LOADED));
-        log.info("[PRODUCT_UPLOAD] - File {} caricato completamente senza errori", fileName);
+        setFinalProductFileStatus(fileName, String.valueOf(LOADED));
+        log.info("[PRODUCT_UPLOAD] - File {} processed successfully with no errors", fileName);
       }
 
     } catch (IOException e) {
-      log.error("[PRODUCT_UPLOAD] - Errore lettura CSV {}: {}", fileName, e.getMessage());
-      setFinalProductFileStatus(fileName, orgId, String.valueOf(EPREL_ERROR));
+      log.error("[PRODUCT_UPLOAD] - Error reading CSV {}: {}", fileName, e.getMessage());
+      setFinalProductFileStatus(fileName, String.valueOf(EPREL_ERROR));
     }
   }
+
   private List<String> processCsvRecord(CSVRecord record, String orgId, String category, String productFileId,
                                         List<Product> validProducts, boolean isCookingHob) {
     List<String> errors = new ArrayList<>();
 
     if (isCookingHob) {
       validProducts.add(mapCookingHobToProduct(record, orgId, productFileId));
-      log.debug("[PRODUCT_UPLOAD] - Piano cottura aggiunto: {}", record.get("Codice Prodotto"));
+      log.debug("[PRODUCT_UPLOAD] - Added cooking hob product: {}", record.get("Codice Prodotto"));
       return errors;
     }
 
@@ -188,14 +204,14 @@ public class ProductFileService extends BaseKafkaConsumer<List<StorageEventDTO>>
 
       if (eprelErrors.isEmpty()) {
         validProducts.add(mapEprelToProduct(record, eprelData, orgId, productFileId));
-        log.debug("[PRODUCT_UPLOAD] - Prodotto EPREL validato: {}", record.get("Codice EPREL"));
+        log.debug("[PRODUCT_UPLOAD] - EPREL product validated: {}", record.get("Codice EPREL"));
       } else {
         errors.addAll(eprelErrors);
       }
 
     } catch (Exception e) {
-      log.error("[PRODUCT_UPLOAD] - Errore EPREL per codice {}: {}", record.get("Codice EPREL"), e.getMessage());
-      errors.add("Errore chiamata EPREL: " + e.getMessage());
+      log.error("[PRODUCT_UPLOAD] - EPREL error for code {}: {}", record.get("Codice EPREL"), e.getMessage());
+      errors.add("EPREL call error: " + e.getMessage());
     }
 
     return errors;
@@ -208,23 +224,12 @@ public class ProductFileService extends BaseKafkaConsumer<List<StorageEventDTO>>
     return row;
   }
 
-
-  private String getExistingProductFileId(String fileName, String orgId) {
-    Optional<ProductFile> productFile = productFileRepository.findByOrganizationIdAndFileName(orgId, fileName);
-    if (productFile.isPresent()) {
-      return productFile.get().getProductFileId();
-    } else {
-      log.error("[PRODUCT_UPLOAD] - ProductFile non trovato per fileName={}, orgId={}", fileName, orgId);
-      throw new IllegalStateException("ProductFile non trovato per il file: " + fileName);
-    }
-  }
-
-  private void setFinalProductFileStatus(String fileName, String orgId, String status) {
-    Optional<ProductFile> productFile = productFileRepository.findByOrganizationIdAndFileName(orgId, fileName);
+  private void setFinalProductFileStatus(String fileName, String status) {
+    Optional<ProductFile> productFile = productFileRepository.findById(fileName.replace(".csv", ""));
     if (productFile.isPresent()) {
       productFile.get().setUploadStatus(status);
       productFileRepository.save(productFile.get());
-      log.info("[PRODUCT_UPLOAD] - Stato finale file {} impostato a: {}", fileName, status);
+      log.info("[PRODUCT_UPLOAD] - Final status for file {} set to: {}", fileName, status);
     }
   }
 
@@ -233,7 +238,7 @@ public class ProductFileService extends BaseKafkaConsumer<List<StorageEventDTO>>
       .productFileId(productFileId)
       .organizationId(orgId)
       .registrationDate(LocalDateTime.now())
-      .status("PENDING_VALIDATION")
+      .status("APPROVED")
       .productCode(record.get("Codice Prodotto"))
       .gtinCode(record.get("Codice GTIN/EAN"))
       .category("COOKINGHOBS")
@@ -248,7 +253,7 @@ public class ProductFileService extends BaseKafkaConsumer<List<StorageEventDTO>>
       .productFileId(productFileId)
       .organizationId(orgId)
       .registrationDate(LocalDateTime.now())
-      .status("PENDING_VALIDATION")
+      .status("APPROVED")
       .productCode(record.get("Codice Prodotto"))
       .gtinCode(record.get("Codice GTIN/EAN"))
       .eprelCode(record.get("Codice EPREL"))
@@ -269,34 +274,34 @@ public class ProductFileService extends BaseKafkaConsumer<List<StorageEventDTO>>
     List<String> errors = new ArrayList<>();
 
     if (eprelData == null) {
-      errors.add("Prodotto non trovato su EPREL");
+      errors.add("Product not found in EPREL");
       return errors;
     }
 
     if (!"VERIFIED".equalsIgnoreCase(eprelData.getOrgVerificationStatus())) {
-      errors.add("orgVerificationStatus non VERIFIED");
+      errors.add("orgVerificationStatus is not VERIFIED");
     }
 
     if (!"VERIFIED".equalsIgnoreCase(eprelData.getTrademarkVerificationStatus())) {
-      errors.add("trademarkVerificationStatus non VERIFIED");
+      errors.add("trademarkVerificationStatus is not VERIFIED");
     }
 
     if (Boolean.TRUE.equals(eprelData.getBlocked())) {
-      errors.add("Prodotto bloccato");
+      errors.add("Product is blocked");
     }
 
     if (!"PUBLISHED".equalsIgnoreCase(eprelData.getStatus())) {
-      errors.add("status non PUBLISHED");
+      errors.add("Status is not PUBLISHED");
     }
 
     if (eprelData.getProductGroup() == null ||
       !eprelData.getProductGroup().toLowerCase().startsWith(expectedCategory.toLowerCase())) {
-      errors.add("Categoria non compatibile con productGroup EPREL");
+      errors.add("Product group from EPREL is not compatible with expected category");
     }
 
     if (!isEnergyClassValid(eprelData.getEnergyClass(), expectedCategory)) {
       String requiredClass = ENERGY_CLASS_REQUIREMENTS.get(expectedCategory.toUpperCase());
-      errors.add(String.format("Classe energetica %s non conforme. Richiesta minimo: %s",
+      errors.add(String.format("Energy class %s is not compliant. Minimum required: %s",
         eprelData.getEnergyClass(), requiredClass));
     }
 
@@ -310,7 +315,7 @@ public class ProductFileService extends BaseKafkaConsumer<List<StorageEventDTO>>
 
     String requiredMinClass = ENERGY_CLASS_REQUIREMENTS.get(category.toUpperCase());
     if (requiredMinClass == null) {
-      log.warn("[PRODUCT_UPLOAD] - Categoria non riconosciuta per validazione classe energetica: {}", category);
+      log.warn("[PRODUCT_UPLOAD] - Unrecognized category for energy class validation: {}", category);
       return false;
     }
 
@@ -318,7 +323,7 @@ public class ProductFileService extends BaseKafkaConsumer<List<StorageEventDTO>>
     int productIndex = ENERGY_CLASS_ORDER.indexOf(energyClass.toUpperCase());
 
     if (requiredIndex == -1 || productIndex == -1) {
-      log.warn("[PRODUCT_UPLOAD] - Classe energetica non riconosciuta. Richiesta: {}, Prodotto: {}",
+      log.warn("[PRODUCT_UPLOAD] - Unrecognized energy class. Required: {}, Product: {}",
         requiredMinClass, energyClass);
       return false;
     }
@@ -326,32 +331,38 @@ public class ProductFileService extends BaseKafkaConsumer<List<StorageEventDTO>>
     return productIndex <= requiredIndex;
   }
 
-  private void generateErrorReport(String fileName, Map<Integer, List<String>> errorRows,
-                                   Set<String> headers, String orgId, String category, String userId) {
-    try {
-      String reportFileName = fileName.replace(".csv", "_errors.csv");
-      ByteArrayOutputStream reportOutputStream = new ByteArrayOutputStream();
+  private void generateErrorReport(String fileName,
+                                   List<List<String>> errorRows,
+                                   Set<String> headers) {
+    try (ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+         BufferedWriter writer = new BufferedWriter(
+           new OutputStreamWriter(byteArrayOutputStream, StandardCharsets.UTF_8));
+         CSVPrinter csvPrinter = new CSVPrinter(writer,
+           CSVFormat.Builder.create()
+             .setHeader(headers.toArray(new String[0]))
+             .setTrim(true)
+             .setDelimiter(';')
+             .build())) {
 
-      try (OutputStreamWriter writer = new OutputStreamWriter(reportOutputStream, StandardCharsets.UTF_8);
-           CSVPrinter csvPrinter = new CSVPrinter(writer, CSVFormat.DEFAULT.withDelimiter(';'))) {
+      log.info("[PRODUCT_UPLOAD] - Writing EPREL error rows: {}", errorRows);
 
-        List<String> reportHeaders = new ArrayList<>(headers);
-        reportHeaders.add("Errori");
-        csvPrinter.printRecord(reportHeaders);
-
-        for (List<String> errorRow : errorRows.values()) {
-          csvPrinter.printRecord(errorRow);
-        }
+      for (List<String> row : errorRows) {
+        csvPrinter.printRecord(row);
       }
 
-      String reportPath = String.format("CSV/%s-%s-%s-%s", orgId, category, userId, reportFileName);
-      InputStream reportInputStream = new ByteArrayInputStream(reportOutputStream.toByteArray());
-      fileStorageClient.upload(reportInputStream, reportPath, "text/csv");
+      csvPrinter.flush();
+      writer.flush();
 
-      log.info("[PRODUCT_UPLOAD] - Report errori generato: {}", reportPath);
+      ByteArrayInputStream inputStream = new ByteArrayInputStream(byteArrayOutputStream.toByteArray());
+
+      String destination = "Report/Eprel_Error/" + fileName;
+
+      fileStorageClient.upload(inputStream, destination, "text/csv");
+
+      log.info("[PRODUCT_UPLOAD] - EPREL error report uploaded to {}", destination);
 
     } catch (IOException e) {
-      log.error("[PRODUCT_UPLOAD] - Errore generazione report per file {}: {}", fileName, e.getMessage(), e);
+      log.error("[PRODUCT_UPLOAD] - Error generating EPREL error report for file {}: {}", fileName, e.getMessage(), e);
     }
   }
 
