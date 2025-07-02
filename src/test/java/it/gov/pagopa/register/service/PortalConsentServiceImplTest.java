@@ -7,7 +7,7 @@ import it.gov.pagopa.register.mapper.role.PrivacyNotices2PortalConsentDTOMapper;
 import it.gov.pagopa.register.dto.onetrust.PrivacyNoticesDTO;
 import it.gov.pagopa.register.dto.onetrust.PrivacyNoticesVersion;
 import it.gov.pagopa.register.model.role.PortalConsent;
-import it.gov.pagopa.register.repository.role.PortalConsentRepository;
+import it.gov.pagopa.register.repository.operation.PortalConsentRepository;
 import it.gov.pagopa.register.service.role.PortalConsentService;
 import it.gov.pagopa.register.service.role.PortalConsentServiceImpl;
 import org.junit.jupiter.api.Assertions;

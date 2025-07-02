@@ -1,7 +1,6 @@
-package it.gov.pagopa.register.repository.role;
+package it.gov.pagopa.register.repository.operation;
 
 import it.gov.pagopa.register.model.role.Product;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;

@@ -14,7 +14,7 @@ import it.gov.pagopa.register.mapper.operation.ProductFileMapper;
 import it.gov.pagopa.register.model.operation.ProductFile;
 import it.gov.pagopa.register.model.role.Product;
 import it.gov.pagopa.register.repository.operation.ProductFileRepository;
-import it.gov.pagopa.register.repository.role.ProductRepository;
+import it.gov.pagopa.register.repository.operation.ProductRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;

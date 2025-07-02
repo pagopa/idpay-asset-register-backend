@@ -19,15 +19,10 @@ public class ProductFile {
   private String id;
   private String userId;
   private String organizationId;
-  private String uploadId;
   private String fileName;
   private String uploadStatus;
   private LocalDateTime dateUpload;
   private Integer findedProductsNumber;
   private Integer addedProductNumber;
-  private String reportProducts;
 
-  public ProductFile(String fileName) {
-    this.fileName = fileName;
-  }
 }

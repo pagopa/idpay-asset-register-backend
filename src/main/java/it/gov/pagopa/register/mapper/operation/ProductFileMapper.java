@@ -9,14 +9,13 @@ public class ProductFileMapper {
 
   public static ProductFileDTO toDTO(ProductFile productFile){
     return ProductFileDTO.builder()
+      .productFileId(productFile.getId())
       .userId(productFile.getUserId())
-      .uploadId(productFile.getUploadId())
       .fileName(productFile.getFileName())
       .uploadStatus(productFile.getUploadStatus())
       .dateUpload(productFile.getDateUpload())
       .findedProductsNumber(productFile.getFindedProductsNumber())
       .addedProductNumber(productFile.getAddedProductNumber())
-      .reportProducts(productFile.getReportProducts())
       .build();
   }
 }

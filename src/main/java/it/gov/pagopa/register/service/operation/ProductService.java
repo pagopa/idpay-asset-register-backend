@@ -6,8 +6,8 @@ import it.gov.pagopa.register.constants.enums.UploadCsvStatus;
 import it.gov.pagopa.register.dto.mapper.operation.AssetProductDTO;
 import it.gov.pagopa.register.exception.operation.CsvValidationException;
 import it.gov.pagopa.register.exception.operation.ReportNotFoundException;
-import it.gov.pagopa.register.model.operation.UploadCsv;
-import it.gov.pagopa.register.repository.operation.UploadRepository;
+import it.gov.pagopa.register.model.operation.ProductFile;
+import it.gov.pagopa.register.repository.operation.ProductFileRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
@@ -30,10 +30,10 @@ import static it.gov.pagopa.register.utils.Utils.*;
 @Slf4j
 public class ProductService {
 
-  private final UploadRepository uploadRepository;
+  private final ProductFileRepository uploadRepository;
   private final FileStorageClient azureBlobClient;
 
-  public ProductService(UploadRepository uploadRepository, FileStorageClient azureBlobClient) {
+  public ProductService(ProductFileRepository uploadRepository, FileStorageClient azureBlobClient) {
     this.uploadRepository = uploadRepository;
     this.azureBlobClient = azureBlobClient;
   }
@@ -74,8 +74,6 @@ public class ProductService {
           UploadKeyConstant.MAX_ROW_FILE_ERROR.getKey(),
           LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss")));
       log.info("numero di record nel csv valide");
-      idUpload = idOrg + "-" + category + "-" + idUser + "-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss"));
-      log.info("idUpload {}", idUpload);
 
 
       for (CSVRecord csvRecord : records) {
@@ -100,22 +98,22 @@ public class ProductService {
 
       String fileName = csv.getOriginalFilename();
 
-      UploadCsv uploadFile = new UploadCsv(
-        idUser,
-        idOrg,
-        idUpload,
-        LocalDateTime.now(),
-        UploadCsvStatus.LOADING_CHECK.toString(),
-        null,
-        null,
-        fileName);
-      log.info("uploadFile: {}", uploadFile);
+
 
       if (rowWithErrors.isEmpty()) {
-        uploadFile.setStatus(UploadCsvStatus.FORMAL_OK.toString());
-        uploadRepository.save(uploadFile);
+        ProductFile uploadFile = new ProductFile(
+          null,
+          idUser,
+          idOrg,
+          fileName,
+          UploadCsvStatus.FORMAL_OK.toString(),
+          LocalDateTime.now(),
+          null,
+          null)
+          ;
+        uploadFile=uploadRepository.save(uploadFile);
 
-        String destination = "CSV/" + idUpload + ".csv";
+        String destination = "CSV/" + uploadFile.getId() + ".csv";
         log.info("destination: {}", destination);
         try {
           azureBlobClient.upload(csv.getResource().getInputStream(),
@@ -141,10 +139,20 @@ public class ProductService {
               writer.flush();
               ByteArrayInputStream inputStream = new ByteArrayInputStream(byteArrayOutputStream.toByteArray());
 
-              uploadFile.setStatus(String.valueOf(UploadCsvStatus.FORMAL_ERROR));
-              uploadRepository.save(uploadFile);
+            ProductFile uploadFile = new ProductFile(
+              null,
+              idUser,
+              idOrg,
+              fileName,
+              UploadCsvStatus.FORMAL_ERROR.toString(),
+              LocalDateTime.now(),
+              null,
+              null)
+              ;
 
-              String destination = "Report/Formal_Error/"+idUpload+".csv";
+          uploadFile=uploadRepository.save(uploadFile);
+
+              String destination = "Report/Formal_Error/"+uploadFile.getId()+".csv";
 
               azureBlobClient.upload(inputStream,
                 destination,
@@ -209,17 +217,17 @@ public class ProductService {
 
 
   public ByteArrayOutputStream downloadReport(String idUpload) {
-    UploadCsv upload = uploadRepository.findByIdUpload(idUpload)
+    ProductFile upload = uploadRepository.findById(idUpload)
       .orElseThrow(() -> new ReportNotFoundException("Report non trovato con id: " + idUpload));
 
     String filePath = "";
 
-    if (upload.getStatus().equalsIgnoreCase("EPREL_ERROR")) {
-      filePath = "Report/Eprel_Error/" + upload.getIdUpload() + ".csv";
-    } else if (upload.getStatus().equalsIgnoreCase("FORMAL_ERROR")) {
-      filePath = "Report/Formal_Error/" + upload.getIdUpload() + ".csv";
+    if (upload.getUploadStatus().equalsIgnoreCase("EPREL_ERROR")) {
+      filePath = "Report/Eprel_Error/" + upload.getId() + ".csv";
+    } else if (upload.getUploadStatus().equalsIgnoreCase("FORMAL_ERROR")) {
+      filePath = "Report/Formal_Error/" + upload.getId() + ".csv";
     } else {
-      throw new ReportNotFoundException("Tipo di errore non supportato: " + upload.getStatus());
+      throw new ReportNotFoundException("Tipo di errore non supportato: " + upload.getUploadStatus());
     }
 
     ByteArrayOutputStream result = azureBlobClient.download(filePath);

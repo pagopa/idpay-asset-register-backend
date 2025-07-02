@@ -33,8 +33,8 @@ class ProductFileServiceTest {
     String organizationId = "org123";
     Pageable pageable = PageRequest.of(0, 2);
 
-    ProductFile file1 = new ProductFile("file1");
-    ProductFile file2 = new ProductFile("file2");
+    ProductFile file1 =   ProductFile.builder().fileName("file1").build();
+    ProductFile file2 =  ProductFile.builder().fileName("file2").build();
 
     List<ProductFile> fileList = Arrays.asList(file1, file2);
     Page<ProductFile> filesPage = new PageImpl<>(fileList, pageable, fileList.size());

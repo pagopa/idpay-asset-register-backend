@@ -3,8 +3,8 @@ package it.gov.pagopa.register.service.operation;
 import it.gov.pagopa.register.connector.storage.FileStorageClient;
 import it.gov.pagopa.register.exception.operation.CsvValidationException;
 import it.gov.pagopa.register.exception.operation.ReportNotFoundException;
-import it.gov.pagopa.register.model.operation.UploadCsv;
-import it.gov.pagopa.register.repository.operation.UploadRepository;
+import it.gov.pagopa.register.model.operation.ProductFile;
+import it.gov.pagopa.register.repository.operation.ProductFileRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -24,7 +24,7 @@ import static org.mockito.Mockito.when;
 class ProductServiceImplTest {
 
   @Mock
-  private UploadRepository uploadRepository;
+  private ProductFileRepository productFileRepository;
 
   @Mock
   private FileStorageClient azureBlobClient;
@@ -50,7 +50,7 @@ class ProductServiceImplTest {
       productService.saveCsv(file, "category", "orgId", "userId")
     );
 
-    verifyNoInteractions(uploadRepository, azureBlobClient);
+    verifyNoInteractions(productFileRepository, azureBlobClient);
   }
 
 
@@ -59,13 +59,13 @@ class ProductServiceImplTest {
   //Test con errori Eprel
   @Test
   void downloadReport_withEprelKo() {
-    UploadCsv uploadCsv = new UploadCsv();
-    uploadCsv.setIdUpload(ID_UPLOAD_CORRECT);
-    uploadCsv.setStatus("EPREL_ERROR");
+    ProductFile upload = new ProductFile();
+    upload.setId(ID_UPLOAD_CORRECT);
+    upload.setUploadStatus("EPREL_ERROR");
 
     ByteArrayOutputStream expectedStream = new ByteArrayOutputStream();
 
-    when(uploadRepository.findByIdUpload(ID_UPLOAD_CORRECT)).thenReturn(Optional.of(uploadCsv));
+    when(productFileRepository.findById(ID_UPLOAD_CORRECT)).thenReturn(Optional.of(upload));
     when(azureBlobClient.download("Report/Eprel_Error/" + ID_UPLOAD_CORRECT + ".csv")).thenReturn(expectedStream);
 
     ByteArrayOutputStream result = productService.downloadReport(ID_UPLOAD_CORRECT);
@@ -76,13 +76,14 @@ class ProductServiceImplTest {
   //Test con errori formali
   @Test
   void downloadReport_withFormalKo() {
-    UploadCsv upload = new UploadCsv();
-    upload.setIdUpload(ID_UPLOAD_CORRECT);
-    upload.setStatus("FORMAL_ERROR");
+    ProductFile upload = new ProductFile();
+    upload.setId(ID_UPLOAD_CORRECT);
+    upload.setUploadStatus("FORMAL_ERROR");
+
 
     ByteArrayOutputStream expectedStream = new ByteArrayOutputStream();
 
-    when(uploadRepository.findByIdUpload(ID_UPLOAD_CORRECT)).thenReturn(Optional.of(upload));
+    when(productFileRepository.findById(ID_UPLOAD_CORRECT)).thenReturn(Optional.of(upload));
     when(azureBlobClient.download("Report/Formal_Error/" + ID_UPLOAD_CORRECT + ".csv")).thenReturn(expectedStream);
 
     ByteArrayOutputStream result = productService.downloadReport(ID_UPLOAD_CORRECT);
@@ -93,7 +94,7 @@ class ProductServiceImplTest {
   //Test con idUpload errato -> ritorna un'eccezione
   @Test
   void downloadReport_withInvalidId() {
-    when(uploadRepository.findByIdUpload(ID_UPLOAD_CORRECT)).thenReturn(Optional.empty());
+    when(productFileRepository.findById(ID_UPLOAD_CORRECT)).thenReturn(Optional.empty());
 
     ReportNotFoundException ex = assertThrows(
       ReportNotFoundException.class,
@@ -106,11 +107,12 @@ class ProductServiceImplTest {
   //Test con status errato -> ritorna un'eccezione
   @Test
   void downloadReport_withUnsupportedStatus() {
-    UploadCsv upload = new UploadCsv();
-    upload.setIdUpload(ID_UPLOAD_CORRECT);
-    upload.setStatus("UNKNOWN");
+    ProductFile upload = new ProductFile();
+    upload.setId(ID_UPLOAD_CORRECT);
+    upload.setUploadStatus("UNKNOWN");
 
-    when(uploadRepository.findByIdUpload(ID_UPLOAD_CORRECT)).thenReturn(Optional.of(upload));
+
+    when(productFileRepository.findById(ID_UPLOAD_CORRECT)).thenReturn(Optional.of(upload));
 
     ReportNotFoundException ex = assertThrows(
       ReportNotFoundException.class,
@@ -123,11 +125,12 @@ class ProductServiceImplTest {
   //Test quando Azure fallisce -> ritorna un'eccezione
   @Test
   void downloadReport_whenAzureReturnsNull() {
-    UploadCsv upload = new UploadCsv();
-    upload.setIdUpload(ID_UPLOAD_CORRECT);
-    upload.setStatus("FORMAL_ERROR");
+    ProductFile upload = new ProductFile();
+    upload.setId(ID_UPLOAD_CORRECT);
+    upload.setUploadStatus("FORMAL_ERROR");
 
-    when(uploadRepository.findByIdUpload(ID_UPLOAD_CORRECT)).thenReturn(Optional.of(upload));
+
+    when(productFileRepository.findById(ID_UPLOAD_CORRECT)).thenReturn(Optional.of(upload));
     when(azureBlobClient.download("Report/Formal_Error/" + ID_UPLOAD_CORRECT + ".csv")).thenReturn(null);
 
     ReportNotFoundException ex = assertThrows(
