@@ -15,7 +15,6 @@ import java.util.Map;
 @Data
 public class ProductFileValidationConfig {
 
-  @Value("max-rows")
   private int maxRows;
 
   private Map<String, LinkedHashMap<String, ColumnValidationRule>> schemas;

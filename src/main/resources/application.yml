@@ -61,7 +61,7 @@ app:
           apiKey: ${ONE_TRUST_API_KEY:}
 
 product-file-validation:
-  max-rows: 100
+  maxRows: 100
   schemas:
     cookinghobs:
       Codice GTIN/EAN:
