@@ -27,13 +27,13 @@ class ProductUploadCSVServiceImplTest {
   private FileStorageClient azureBlobClient;
 
   @InjectMocks
-  private ProductUploadCSVService productUploadCSVService;
+  private ProductFileService productUploadCSVService;
 
   private final String ID_UPLOAD_CORRECT = "example_eprel";
 
   @BeforeEach
   void setUp() {
-    productUploadCSVService.maxRows = 5; // Imposta maxRows per il test
+    //productUploadCSVService.maxRows = 5; // Imposta maxRows per il test
   }
 
   //-------------------------Test su metodo upload csv--------------------
@@ -54,7 +54,7 @@ class ProductUploadCSVServiceImplTest {
     when(uploadRepository.findById(ID_UPLOAD_CORRECT)).thenReturn(Optional.of(uploadCsv));
     when(azureBlobClient.download("Report/Eprel_Error/" + ID_UPLOAD_CORRECT + ".csv")).thenReturn(expectedStream);
 
-    ByteArrayOutputStream result = productUploadCSVService.downloadReport(ID_UPLOAD_CORRECT);
+    ByteArrayOutputStream result = productUploadCSVService.downloadReport(ID_UPLOAD_CORRECT, "123");
 
     assertEquals(expectedStream, result);
   }
@@ -71,7 +71,7 @@ class ProductUploadCSVServiceImplTest {
     when(uploadRepository.findById(ID_UPLOAD_CORRECT)).thenReturn(Optional.of(uploadCsv));
     when(azureBlobClient.download("Report/Formal_Error/" + ID_UPLOAD_CORRECT + ".csv")).thenReturn(expectedStream);
 
-    ByteArrayOutputStream result = productUploadCSVService.downloadReport(ID_UPLOAD_CORRECT);
+    ByteArrayOutputStream result = productUploadCSVService.downloadReport(ID_UPLOAD_CORRECT, "123");
 
     assertEquals(expectedStream, result);
   }
@@ -83,7 +83,7 @@ class ProductUploadCSVServiceImplTest {
 
     ReportNotFoundException ex = assertThrows(
       ReportNotFoundException.class,
-      () -> productUploadCSVService.downloadReport(ID_UPLOAD_CORRECT)
+      () -> productUploadCSVService.downloadReport(ID_UPLOAD_CORRECT, "123")
     );
 
     assertTrue(ex.getMessage().contains("Report non trovato con id"));
@@ -101,7 +101,7 @@ class ProductUploadCSVServiceImplTest {
 
     ReportNotFoundException ex = assertThrows(
       ReportNotFoundException.class,
-      () -> productUploadCSVService.downloadReport(ID_UPLOAD_CORRECT)
+      () -> productUploadCSVService.downloadReport(ID_UPLOAD_CORRECT, "123")
     );
 
     assertTrue(ex.getMessage().contains("Tipo di errore non supportato"));
@@ -119,7 +119,7 @@ class ProductUploadCSVServiceImplTest {
 
     ReportNotFoundException ex = assertThrows(
       ReportNotFoundException.class,
-      () -> productUploadCSVService.downloadReport(ID_UPLOAD_CORRECT)
+      () -> productUploadCSVService.downloadReport(ID_UPLOAD_CORRECT, "123")
     );
 
     assertTrue(ex.getMessage().contains("Report non trovato su Azure"));

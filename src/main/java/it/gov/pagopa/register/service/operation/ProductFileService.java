@@ -1,6 +1,8 @@
 package it.gov.pagopa.register.service.operation;
+import it.gov.pagopa.register.config.ProductFileValidationConfig;
 import it.gov.pagopa.register.connector.storage.FileStorageClient;
 import it.gov.pagopa.register.constants.AssetRegisterConstant;
+import it.gov.pagopa.register.dto.operation.ProductFileResult;
 import it.gov.pagopa.register.exception.operation.ReportNotFoundException;
 import it.gov.pagopa.register.mapper.operation.ProductFileMapper;
 import it.gov.pagopa.register.dto.operation.ProductFileDTO;
@@ -11,6 +13,7 @@ import it.gov.pagopa.register.utils.CsvUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -28,6 +31,9 @@ public class ProductFileService {
   private final ProductFileRepository productFileRepository;
   private final FileStorageClient azureBlobClient;
   private final ProductFileValidator productFileValidator;
+
+  @Autowired
+  private ProductFileValidationConfig validationConfig;
 
   public ProductFileService(ProductFileRepository productFileRepository, FileStorageClient azureBlobClient,ProductFileValidator productFileValidator) {
     this.productFileRepository = productFileRepository;
@@ -78,7 +84,7 @@ public class ProductFileService {
     return result;
   }
 
-  public FileProcessingResult processFile(MultipartFile file, String category, String idOrg, String idUser) {
+  public ProductFileResult processFile(MultipartFile file, String category, String idOrg, String idUser) {
 
     try {
       String originalFileName = file.getOriginalFilename();
@@ -87,18 +93,18 @@ public class ProductFileService {
 
       // 0. Validazione preliminare: file vuoto
       if (file == null || file.isEmpty() || file.getSize() == 0) {
-        return FileProcessingResult.ko("EMPTY_FILE");
+        return ProductFileResult.ko("EMPTY_FILE");
       }
 
       // 0.1. Verifica estensione e tipo mime (grezza ma utile)
       if (!originalFileName.endsWith(".csv")) {
-        return FileProcessingResult.ko("INVALID_FILE_TYPE");
+        return ProductFileResult.ko("INVALID_FILE_TYPE");
       }
 
       // 1. Carica configurazione
-      LinkedHashMap<String, ColumnValidationRule> columnDefinitions = columnConfigService.getColumnDefinitions(category);
+      LinkedHashMap<String, ColumnValidationRule> columnDefinitions = validationConfig.getSchemas().getOrDefault(category, validationConfig.getSchemas().get("eprel"));
       if (columnDefinitions == null || columnDefinitions.isEmpty()) {
-        return FileProcessingResult.ko("UNKNOWN_CATEGORY");
+        return ProductFileResult.ko("UNKNOWN_CATEGORY");
       }
 
       // 2. Legge header
@@ -106,7 +112,7 @@ public class ProductFileService {
       List<String> expectedHeader = new ArrayList<>(columnDefinitions.keySet());
 
       if (!actualHeader.equals(expectedHeader)) {
-        return FileProcessingResult.ko("INVALID_HEADER");
+        return ProductFileResult.ko("INVALID_HEADER");
       }
 
       // 3. Legge record (dopo aver letto l'header)
@@ -114,11 +120,11 @@ public class ProductFileService {
       int totalRecords = records.size();
 
       if (totalRecords == 0) {
-        return FileProcessingResult.ko("NO_DATA");
+        return ProductFileResult.ko("NO_DATA");
       }
 
-      if (totalRecords > MAX_RECORDS) {
-        return FileProcessingResult.ko("TOO_MANY_RECORDS");
+      if (totalRecords > 100) {
+        return ProductFileResult.ko("TOO_MANY_RECORDS");
       }
 
       // 4. Validazione dei singoli record
@@ -128,13 +134,13 @@ public class ProductFileService {
       for (CSVRecord record : records) {
         List<String> errors = new ArrayList<>();
 
-        for (Map.Entry<String, ColumnDefinition> entry : columnDefinitions.entrySet()) {
+        for (Map.Entry<String, ColumnValidationRule> entry : columnDefinitions.entrySet()) {
           String columnName = entry.getKey();
-          ColumnDefinition def = entry.getValue();
+          ColumnValidationRule def = entry.getValue();
           String value = record.get(columnName);
 
-          if (value == null || !def.getPattern().matcher(value).matches()) {
-            errors.add(def.getErrorMessage());
+          if (def.isValid(value)) {
+            errors.add(def.getMessage());
           }
         }
 
@@ -150,14 +156,14 @@ public class ProductFileService {
         String scartiFilename = "scarti_" + originalFileName;
         CsvUtils.writeCsvWithErrors(invalidRecords, expectedHeader, errorMessages, scartiFilename);
 
-        productFileRepository.save(new ProcessingLog(
+/*        productFileRepository.save(new ProcessingLog(
           batchId, originalFileName, category, totalRecords, invalidCount,
           "FORMAL_ERROR", now
         ));
-
-        return FileProcessingResult.ko("FORMAL_ERRORS_FOUND");
+*/
+        return ProductFileResult.ko("FORMAL_ERRORS_FOUND");
       }
-
+/*
       // 6. Upload su Azure
       azureBlobClient.upload(file, batchId);
 
@@ -166,12 +172,12 @@ public class ProductFileService {
         batchId, originalFileName, category, totalRecords, 0,
         "LOADED", now
       ));
-
-      return FileProcessingResult.ok(batchId);
+*/
+      return ProductFileResult.ok();
 
     } catch (Exception e) {
       e.printStackTrace();
-      return FileProcessingResult.ko("GENERIC_ERROR");
+      return ProductFileResult.ko("GENERIC_ERROR");
     }
   }
 

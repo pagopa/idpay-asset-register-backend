@@ -3,6 +3,7 @@ package it.gov.pagopa.register.controller.operation;
 import com.azure.core.annotation.Post;
 import it.gov.pagopa.register.dto.operation.AssetProductDTO;
 import it.gov.pagopa.register.dto.operation.ProductFileResponseDTO;
+import it.gov.pagopa.register.dto.operation.ProductFileResult;
 import it.gov.pagopa.register.service.operation.ProductFileService;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -31,10 +32,10 @@ public class ProductFileController {
   }
 
   @PostMapping(name = "/product-files", consumes = "multipart/form-data")
-  public AssetProductDTO uploadProductFile(@RequestHeader("x-organization-id") String organizationId, @RequestHeader("x-user-id") String userId,
+  public ResponseEntity<ProductFileResult> uploadProductFile(@RequestHeader("x-organization-id") String organizationId, @RequestHeader("x-user-id") String userId,
                                            @RequestPart("category") String category, @RequestPart("csv") MultipartFile csv) {
-    AssetProductDTO assetProductDTO = productFileService.processFile(csv, category, organizationId, userId);
-    return ResponseEntity.ok().body(assetProductDTO);
+    ProductFileResult productFileResult = productFileService.processFile(csv, category, organizationId, userId);
+    return ResponseEntity.ok().body(productFileResult);
   }
 
   @GetMapping("/product-files/{productFileId}/report")
