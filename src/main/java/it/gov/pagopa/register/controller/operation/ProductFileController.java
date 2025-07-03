@@ -1,7 +1,5 @@
 package it.gov.pagopa.register.controller.operation;
 
-import com.azure.core.annotation.Post;
-import it.gov.pagopa.register.dto.operation.AssetProductDTO;
 import it.gov.pagopa.register.dto.operation.ProductFileResponseDTO;
 import it.gov.pagopa.register.dto.operation.ProductFileResult;
 import it.gov.pagopa.register.service.operation.ProductFileService;
@@ -33,7 +31,7 @@ public class ProductFileController {
 
   @PostMapping(value = "/product-files", consumes = "multipart/form-data")
   public ResponseEntity<ProductFileResult> uploadProductFile(@RequestHeader("x-organization-id") String organizationId, @RequestHeader("x-user-id") String userId,
-                                           @RequestPart("category") String category, @RequestPart("csv") MultipartFile csv) {
+                                           @RequestParam(value = "category") String category, @RequestPart("csv") MultipartFile csv) {
     ProductFileResult productFileResult = productFileService.processFile(csv, category, organizationId, userId);
     return ResponseEntity.ok().body(productFileResult);
   }
