@@ -4,10 +4,17 @@ public class ProductFileResult {
 
   private String status;     // "OK" o "KO"
   private String errorKey;   // presente solo se status == "KO"
+  private String productFileId; // id of ko file
 
   private ProductFileResult(String status, String errorKey) {
     this.status = status;
     this.errorKey = errorKey;
+  }
+
+  private ProductFileResult(String status, String errorKey, String productFileId) {
+    this.status = status;
+    this.errorKey = errorKey;
+    this.productFileId = productFileId;
   }
 
   public static ProductFileResult ok() {
@@ -18,12 +25,8 @@ public class ProductFileResult {
     return new ProductFileResult("KO", errorKey);
   }
 
-  public String getStatus() {
-    return status;
-  }
-
-  public String getErrorKey() {
-    return errorKey;
+  public static ProductFileResult ko(String errorKey, String productFileId) {
+    return new ProductFileResult("KO", errorKey, productFileId);
   }
 
 }

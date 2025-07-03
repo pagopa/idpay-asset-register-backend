@@ -1,5 +1,7 @@
 package it.gov.pagopa.register.constants;
 
+import it.gov.pagopa.register.dto.operation.KeyDTO;
+
 import java.util.Set;
 
 public class AssetRegisterConstant {
@@ -73,4 +75,15 @@ public class AssetRegisterConstant {
   public static final String ERROR_PAESE_DI_PRODUZIONE = "Il Paese di Produzione è obbligatorio e deve essere composto da esattamente 2 caratteri";
   public static final String ERROR_CODICE_EPREL = "Il Codice EPREL è obbligatorio e deve essere un valore numerico";
   public static final String ERROR_CATEGORIA_PRODOTTI = "Il campo Categoria è obbligatorio e deve contenere il valore fisso ";
+
+  public static class UploadKeyConstant {
+    private UploadKeyConstant(){}
+
+    public static final String EXTENSION_FILE_ERROR_KEY = "product.invalid.file.extension";
+    public static final String MAX_ROW_FILE_ERROR_KEY = "product.invalid.file.maxrow";
+    public static final String HEADER_FILE_ERROR_KEY = "product.invalid.file.header";
+    public static final String REPORT_FORMAL_FILE_ERROR_KEY = "product.invalid.file.report";
+    public static final String UNKNOWN_CATEGORY_ERROR_KEY = "product.invalid.file.category";
+    public static final String EMPTY_FILE_ERROR_KEY = "product.invalid.file.empty";
+  }
 }
