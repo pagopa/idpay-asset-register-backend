@@ -1,4 +1,7 @@
 package it.gov.pagopa.register.constants;
+
+import java.util.Set;
+
 public class AssetRegisterConstant {
 
   //private constructor to avoid instantiation
@@ -26,6 +29,26 @@ public class AssetRegisterConstant {
   public static final String PAESE_DI_PRODUZIONE = "Paese di Produzione";
   public static final String MARCA = "Marca";
   public static final String MODELLO = "Modello";
+
+  public static final String WASHINGMACHINES = "WASHINGMACHINES";
+  public static final String WASHERDRIERS = "WASHERDRIERS";
+  public static final String OVENS = "OVENS";
+  public static final String RANGEHOODS = "RANGEHOODS";
+  public static final String DISHWASHERS = "DISHWASHERS";
+  public static final String TUMBLEDRIERS = "TUMBLEDRIERS";
+  public static final String REFRIGERATINGAPPL = "REFRIGERATINGAPPL";
+  public static final String COOKINGHOBS = "COOKINGHOBS";
+
+  public static final Set<String> CATEGORIES = Set.of(
+    WASHINGMACHINES,
+    WASHERDRIERS,
+    OVENS,
+    RANGEHOODS,
+    DISHWASHERS,
+    TUMBLEDRIERS,
+    REFRIGERATINGAPPL,
+    COOKINGHOBS
+  );
 
   // Errors
 

@@ -10,6 +10,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.*;
 
+import static it.gov.pagopa.register.constants.AssetRegisterConstant.CATEGORIES;
+
 @Component
 @RequiredArgsConstructor
 public class ProductFileValidator {
@@ -25,6 +27,10 @@ public class ProductFileValidator {
     }
 
     // 1. load configuration
+    if(!CATEGORIES.contains(category)) {
+      return ValidationResultDTO.ko(AssetRegisterConstant.UploadKeyConstant.UNKNOWN_CATEGORY_ERROR_KEY);
+    }
+
     LinkedHashMap<String, ColumnValidationRule> columnDefinitions = validationConfig.getSchemas().getOrDefault(category.toLowerCase(), validationConfig.getSchemas().get(DEFAULT_CATEGORY));
     if (columnDefinitions == null || columnDefinitions.isEmpty()) {
       return ValidationResultDTO.ko(AssetRegisterConstant.UploadKeyConstant.UNKNOWN_CATEGORY_ERROR_KEY);
