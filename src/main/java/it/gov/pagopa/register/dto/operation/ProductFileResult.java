@@ -1,5 +1,8 @@
 package it.gov.pagopa.register.dto.operation;
 
+import lombok.Getter;
+
+@Getter
 public class ProductFileResult {
 
   private String status;     // "OK" o "KO"

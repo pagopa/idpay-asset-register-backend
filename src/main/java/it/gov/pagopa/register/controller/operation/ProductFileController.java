@@ -31,7 +31,7 @@ public class ProductFileController {
     return productFileService.getFilesByPage(organizationId, pageable);
   }
 
-  @PostMapping(name = "/product-files", consumes = "multipart/form-data")
+  @PostMapping(value = "/product-files", consumes = "multipart/form-data")
   public ResponseEntity<ProductFileResult> uploadProductFile(@RequestHeader("x-organization-id") String organizationId, @RequestHeader("x-user-id") String userId,
                                            @RequestPart("category") String category, @RequestPart("csv") MultipartFile csv) {
     ProductFileResult productFileResult = productFileService.processFile(csv, category, organizationId, userId);
