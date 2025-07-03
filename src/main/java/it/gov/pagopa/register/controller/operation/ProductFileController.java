@@ -22,11 +22,11 @@ public class ProductFileController {
   }
 
   @GetMapping("/product-files")
-  public ProductFileResponseDTO downloadProductFileList(
+  public ResponseEntity<ProductFileResponseDTO> downloadProductFileList(
     @RequestHeader("x-organization-id") String organizationId,
     @PageableDefault(size = 10, sort = "dateUpload", direction = Sort.Direction.DESC) Pageable pageable) {
 
-    return productFileService.getFilesByPage(organizationId, pageable);
+    return ResponseEntity.ok().body(productFileService.getFilesByPage(organizationId, pageable));
   }
 
   @PostMapping(value = "/product-files", consumes = "multipart/form-data")
