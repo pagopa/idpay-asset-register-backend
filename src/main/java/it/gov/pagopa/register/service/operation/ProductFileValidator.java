@@ -60,7 +60,8 @@ public class ProductFileValidator {
 
   public ValidationResultDTO validateRecords(List<CSVRecord> records, List<String> headers, String category) {
 
-    Map<String, ColumnValidationRule> rules = validationConfig.getSchemas().get(category);
+
+    Map<String, ColumnValidationRule> rules = validationConfig.getSchemas().getOrDefault(category.toLowerCase(), validationConfig.getSchemas().get(DEFAULT_CATEGORY));
     if (rules == null || rules.isEmpty()) {
       throw new IllegalArgumentException("No validation rules found for category: " + category);
     }
