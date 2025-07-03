@@ -6,9 +6,7 @@ import it.gov.pagopa.register.model.operation.Product;
 
 public class ProductMapper {
 
-  private ProductMapper() {
-    
-  }
+  private ProductMapper() {}
 
   public static ProductDTO toDTO(Product entity){
 
