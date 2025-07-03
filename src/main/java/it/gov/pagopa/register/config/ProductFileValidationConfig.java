@@ -3,6 +3,7 @@ package it.gov.pagopa.register.config;
 
 import it.gov.pagopa.register.service.operation.ColumnValidationRule;
 import lombok.Data;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.util.Arrays;
@@ -14,6 +15,7 @@ import java.util.Map;
 public class ProductFileValidationConfig {
 
 
+  @Value("${product-file-validation.maxRows}")
   private int maxRows;
 
   private Map<String, LinkedHashMap<String, ColumnValidationRule>> schemas = initialize();
