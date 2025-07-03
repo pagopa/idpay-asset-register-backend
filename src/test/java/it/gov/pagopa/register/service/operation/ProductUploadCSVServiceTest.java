@@ -18,7 +18,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class ProductUploadCSVServiceImplTest {
+class ProductUploadCSVServiceTest {
 
   @Mock
   private ProductFileRepository uploadRepository;
@@ -29,7 +29,8 @@ class ProductUploadCSVServiceImplTest {
   @InjectMocks
   private ProductFileService productUploadCSVService;
 
-  private final String ID_UPLOAD_CORRECT = "example_eprel";
+  private final String id = "example_id";
+  private final String orgId = "example_orgId";
 
   @BeforeEach
   void setUp() {
@@ -46,15 +47,17 @@ class ProductUploadCSVServiceImplTest {
   @Test
   void downloadReport_withEprelKo() {
     ProductFile uploadCsv = new ProductFile();
-    uploadCsv.setId(ID_UPLOAD_CORRECT);
+    uploadCsv.setId(id);
+    uploadCsv.setOrganizationId(orgId);
     uploadCsv.setUploadStatus("EPREL_ERROR");
+
 
     ByteArrayOutputStream expectedStream = new ByteArrayOutputStream();
 
-    when(uploadRepository.findById(ID_UPLOAD_CORRECT)).thenReturn(Optional.of(uploadCsv));
-    when(azureBlobClient.download("Report/Eprel_Error/" + ID_UPLOAD_CORRECT + ".csv")).thenReturn(expectedStream);
+    when(uploadRepository.findByIdAndOrganizationId(id, orgId)).thenReturn(Optional.of(uploadCsv));
+    when(azureBlobClient.download("Report/Eprel_Error/" + id + ".csv")).thenReturn(expectedStream);
 
-    ByteArrayOutputStream result = productUploadCSVService.downloadReport(ID_UPLOAD_CORRECT, "123");
+    ByteArrayOutputStream result = productUploadCSVService.downloadReport(id, orgId);
 
     assertEquals(expectedStream, result);
   }
@@ -63,15 +66,16 @@ class ProductUploadCSVServiceImplTest {
   @Test
   void downloadReport_withFormalKo() {
     ProductFile uploadCsv = new ProductFile();
-    uploadCsv.setId(ID_UPLOAD_CORRECT);
+    uploadCsv.setId(id);
+    uploadCsv.setOrganizationId(orgId);
     uploadCsv.setUploadStatus("FORMAL_ERROR");
 
     ByteArrayOutputStream expectedStream = new ByteArrayOutputStream();
 
-    when(uploadRepository.findById(ID_UPLOAD_CORRECT)).thenReturn(Optional.of(uploadCsv));
-    when(azureBlobClient.download("Report/Formal_Error/" + ID_UPLOAD_CORRECT + ".csv")).thenReturn(expectedStream);
+    when(uploadRepository.findByIdAndOrganizationId(id, orgId)).thenReturn(Optional.of(uploadCsv));
+    when(azureBlobClient.download("Report/Formal_Error/" + id + ".csv")).thenReturn(expectedStream);
 
-    ByteArrayOutputStream result = productUploadCSVService.downloadReport(ID_UPLOAD_CORRECT, "123");
+    ByteArrayOutputStream result = productUploadCSVService.downloadReport(id, orgId);
 
     assertEquals(expectedStream, result);
   }
@@ -79,49 +83,52 @@ class ProductUploadCSVServiceImplTest {
   //Test con idUpload errato -> ritorna un'eccezione
   @Test
   void downloadReport_withInvalidId() {
-    when(uploadRepository.findById(ID_UPLOAD_CORRECT)).thenReturn(Optional.empty());
+    when(uploadRepository.findByIdAndOrganizationId(id, orgId)).thenReturn(Optional.empty());
 
     ReportNotFoundException ex = assertThrows(
       ReportNotFoundException.class,
-      () -> productUploadCSVService.downloadReport(ID_UPLOAD_CORRECT, "123")
+      () -> productUploadCSVService.downloadReport(id, orgId)
     );
 
-    assertTrue(ex.getMessage().contains("Report non trovato con id"));
+    assertTrue(ex.getMessage().contains("Report not found with id: " + id));
   }
 
   //Test con status errato -> ritorna un'eccezione
   @Test
   void downloadReport_withUnsupportedStatus() {
     ProductFile uploadCsv = new ProductFile();
-    uploadCsv.setId(ID_UPLOAD_CORRECT);
+    uploadCsv.setId(id);
+    uploadCsv.setOrganizationId(orgId);
     uploadCsv.setUploadStatus("UNKNOWN");
+    uploadCsv.setFileName("UNKNOWN");
 
 
-    when(uploadRepository.findById(ID_UPLOAD_CORRECT)).thenReturn(Optional.of(uploadCsv));
+    when(uploadRepository.findByIdAndOrganizationId(id, orgId)).thenReturn(Optional.of(uploadCsv));
 
     ReportNotFoundException ex = assertThrows(
       ReportNotFoundException.class,
-      () -> productUploadCSVService.downloadReport(ID_UPLOAD_CORRECT, "123")
+      () -> productUploadCSVService.downloadReport(id, orgId)
     );
 
-    assertTrue(ex.getMessage().contains("Tipo di errore non supportato"));
+    assertTrue(ex.getMessage().contains("Report not available for file: UNKNOWN"));
   }
 
   //Test quando Azure fallisce -> ritorna un'eccezione
   @Test
   void downloadReport_whenAzureReturnsNull() {
     ProductFile uploadCsv = new ProductFile();
-    uploadCsv.setId(ID_UPLOAD_CORRECT);
+    uploadCsv.setId(id);
+    uploadCsv.setOrganizationId(orgId);
     uploadCsv.setUploadStatus("FORMAL_ERROR");
 
-    when(uploadRepository.findById(ID_UPLOAD_CORRECT)).thenReturn(Optional.of(uploadCsv));
-    when(azureBlobClient.download("Report/Formal_Error/" + ID_UPLOAD_CORRECT + ".csv")).thenReturn(null);
+    when(uploadRepository.findByIdAndOrganizationId(id, orgId)).thenReturn(Optional.of(uploadCsv));
+    when(azureBlobClient.download("Report/Formal_Error/" + id + ".csv")).thenReturn(null);
 
     ReportNotFoundException ex = assertThrows(
       ReportNotFoundException.class,
-      () -> productUploadCSVService.downloadReport(ID_UPLOAD_CORRECT, "123")
+      () -> productUploadCSVService.downloadReport(id, orgId)
     );
 
-    assertTrue(ex.getMessage().contains("Report non trovato su Azure"));
+    assertTrue(ex.getMessage().contains("Report not found on Azure for path: Report/Formal_Error/" + id + ".csv"));
   }
 }

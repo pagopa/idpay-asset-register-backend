@@ -1,4 +1,4 @@
-package it.gov.pagopa.register.controller.consent;
+package it.gov.pagopa.register.controller.role;
 
 import it.gov.pagopa.register.controller.role.consent.PortalConsentControllerImpl;
 import it.gov.pagopa.register.dto.role.PortalConsentDTO;
@@ -19,7 +19,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 
 @ExtendWith(MockitoExtension.class)
 @WebMvcTest(PortalConsentControllerImpl.class)
-class PortalConsentControllerImplTest {
+class PortalConsentControllerTest {
 
     //region String constants
     private static final String BASE_URL = "/idpay/consent";
