@@ -6,6 +6,10 @@ import it.gov.pagopa.register.model.operation.Product;
 
 public class ProductMapper {
 
+  private ProductMapper() {
+    
+  }
+
   public static ProductDTO toDTO(Product entity){
 
     if(entity==null){
@@ -27,6 +31,7 @@ public class ProductMapper {
       .countryOfProduction(entity.getCountryOfProduction())
       .energyClass(entity.getEnergyClass())
       .linkEprel(entity.getLinkEprel())
+      .batchName(entity.getCategory()+"_"+entity.getProductFileId()+".csv")
       .build();
   }
 

@@ -14,6 +14,8 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class ProductDTO {
 
+  @Id
+  private String gtinCode;
   private String organizationId;
   private LocalDateTime registrationDate;
   private String status;
@@ -22,11 +24,10 @@ public class ProductDTO {
   private String category;
   private String brand;
   private String eprelCode;
-  @Id
-  private String gtinCode;
   private String productCode;
   private String countryOfProduction;
   private String energyClass;
   private String linkEprel;
+  private String batchName;
 
 }
