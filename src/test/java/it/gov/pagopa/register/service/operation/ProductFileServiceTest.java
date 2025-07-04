@@ -1,15 +1,5 @@
 package it.gov.pagopa.register.service.operation;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.nio.file.Files;
-import java.util.*;
-import java.util.stream.IntStream;
-
-import it.gov.pagopa.common.storage.AzureBlobClientImpl;
-import it.gov.pagopa.register.config.ProductFileValidationConfig;
 import it.gov.pagopa.register.connector.storage.FileStorageClient;
 import it.gov.pagopa.register.constants.AssetRegisterConstant;
 import it.gov.pagopa.register.constants.enums.UploadCsvStatus;
@@ -25,21 +15,35 @@ import org.apache.commons.csv.CSVRecord;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.*;
+import org.mockito.Mock;
+import org.mockito.MockedStatic;
+import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.mock.web.MockMultipartFile;
-import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.util.*;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class ProductFileServiceTest {
 
-  @Mock ProductFileRepository productFileRepository;
-  @Mock FileStorageClient fileStorageClient;
-  @Mock AzureBlobClientImpl azureBlobClient;
-  @Mock ProductFileValidator productFileValidator;
-  @Mock ProductFileValidationConfig validationConfig;
+  @Mock
+  ProductFileRepository productFileRepository;
+  @Mock
+  FileStorageClient fileStorageClient;
+  @Mock
+  ProductFileValidator productFileValidator;
 
   private ProductFileService productFileService;
 
@@ -47,13 +51,8 @@ class ProductFileServiceTest {
   void setUp() {
     MockitoAnnotations.openMocks(this);
     productFileService = new ProductFileService(productFileRepository, fileStorageClient, productFileValidator);
-    // in Jetty container spring config getter exist
-    ReflectionTestUtils.setField(productFileService, "validationConfig", validationConfig);
   }
 
-  private MultipartFile createMockFile() {
-    return new MockMultipartFile("file", "test.csv", "text/csv", "test content".getBytes());
-  }
 
   //--------------------------Test per metodo getFilesByPage----------------------------------------
   //Test con esito positivo dell'api
@@ -124,7 +123,7 @@ class ProductFileServiceTest {
     ProductFile pf = new ProductFile(); pf.setId("1"); pf.setOrganizationId("o"); pf.setUploadStatus("EPREL_ERROR");
     when(productFileRepository.findByIdAndOrganizationId("1","o")).thenReturn(Optional.of(pf));
     ByteArrayOutputStream os = new ByteArrayOutputStream();
-    when(azureBlobClient.download("Report/Eprel_Error/1.csv")).thenReturn(os);
+    when(fileStorageClient.download("Report/Eprel_Error/1.csv")).thenReturn(os);
 
     FileReportDTO res = productFileService.downloadReport("1","o");
     assertSame(os, res.getData());
@@ -136,7 +135,7 @@ class ProductFileServiceTest {
     ProductFile pf = new ProductFile(); pf.setId("1"); pf.setOrganizationId("o"); pf.setUploadStatus("FORMAL_ERROR");
     when(productFileRepository.findByIdAndOrganizationId("1","o")).thenReturn(Optional.of(pf));
     ByteArrayOutputStream os = new ByteArrayOutputStream();
-    when(azureBlobClient.download("Report/Formal_Error/1.csv")).thenReturn(os);
+    when(fileStorageClient.download("Report/Formal_Error/1.csv")).thenReturn(os);
 
     FileReportDTO res = productFileService.downloadReport("1","o");
     assertSame(os, res.getData());
@@ -166,7 +165,7 @@ class ProductFileServiceTest {
   void downloadReport_azureNull() {
     ProductFile pf = new ProductFile(); pf.setId("1"); pf.setOrganizationId("o"); pf.setUploadStatus("FORMAL_ERROR");
     when(productFileRepository.findByIdAndOrganizationId("1","o")).thenReturn(Optional.of(pf));
-    when(azureBlobClient.download("Report/Formal_Error/1.csv")).thenReturn(null);
+    when(fileStorageClient.download("Report/Formal_Error/1.csv")).thenReturn(null);
     ReportNotFoundException ex = assertThrows(ReportNotFoundException.class,
       () -> productFileService.downloadReport("1","o"));
     assertTrue(ex.getMessage().contains("Report not found on Azure"));
@@ -175,26 +174,40 @@ class ProductFileServiceTest {
 
   //-------------------------Test processFile method--------------------
 
+  private MultipartFile createMockFile() {
+    return new MockMultipartFile("file", "test.csv", "text/csv", "test content".getBytes());
+  }
+  private MultipartFile createMockFile_InvalidFileType() {
+    return new MockMultipartFile("file", "test.test", "text/csv", "test content".getBytes());
+  }
+
   //Test with invalid headers
   @Test
-  void whenInvalidHeaders_thenReturnKoResult() throws Exception {
-    MultipartFile file = createMockFile();
-    try (MockedStatic<CsvUtils> mocked = mockStatic(CsvUtils.class)) {
-      mocked.when(() -> CsvUtils.readHeader(file)).thenReturn(List.of("X","Y"));
-      mocked.when(() -> CsvUtils.readCsvRecords(file)).thenReturn(List.of());
-      when(productFileValidator.validateFile(file, "cat", List.of("X","Y"), 0))
-        .thenReturn(ValidationResultDTO.ko("INVALID_HEADERS"));
+  void whenInvalidFileType_thenReturnKoResult() {
+    MultipartFile file = createMockFile_InvalidFileType();
+    ValidationResultDTO validationResultDTO = new ValidationResultDTO("KO","TEST");
+    when(productFileValidator.validateFile(any(),anyString(),anyList(),anyInt())).thenReturn(validationResultDTO);
+    ProductFileResult res = productFileService.processFile(file, "cat","org","user");
+    assertEquals("KO", res.getStatus());
+    assertEquals("TEST", res.getErrorKey());
+  }
 
-      ProductFileResult res = productFileService.processFile(file, "cat","org","user");
-      assertEquals("KO", res.getStatus());
-      assertEquals("INVALID_HEADERS", res.getErrorKey());
-    }
+
+  //Test with invalid headers
+  @Test
+  void whenInvalidHeaders_thenReturnKoResult() {
+    MultipartFile file = createMockFile();
+    ValidationResultDTO validationResultDTO = new ValidationResultDTO("KO","HEADE");
+    when(productFileValidator.validateFile(any(),anyString(),anyList(),anyInt())).thenReturn(validationResultDTO);
+    ProductFileResult res = productFileService.processFile(file, "cat","org","user");
+    assertEquals("KO", res.getStatus());
+    assertEquals("TEST", res.getErrorKey());
   }
 
 
   //Test superati i 100 record
   @Test
-  void whenExceedsMaxRows_thenReturnKoResult() throws Exception {
+  void whenExceedsMaxRows_thenReturnKoResult() {
     MultipartFile file = createMockFile();
     List<CSVRecord> recs = new ArrayList<>();
     for (int i=0; i<101; i++) recs.add(mock(CSVRecord.class));
@@ -214,7 +227,7 @@ class ProductFileServiceTest {
 
 
   //Test con controlli formali falliti
-  private void testFormalError(String errorMessage) throws Exception {
+  private void testFormalError(String errorMessage) {
     MultipartFile file = createMockFile();
 
     try (MockedStatic<CsvUtils> mockedCsv = mockStatic(CsvUtils.class);
@@ -232,13 +245,13 @@ class ProductFileServiceTest {
       mockedFiles.when(() -> Files.newInputStream(any()))
         .thenReturn(new ByteArrayInputStream("dummy".getBytes()));
 
-      when(azureBlobClient.upload(any(), any(), any())).thenReturn(null);
+      when(fileStorageClient.upload(any(), any(), any())).thenReturn(null);
 
       when(productFileValidator.validateFile(any(), any(), any(), anyInt()))
         .thenReturn(new ValidationResultDTO("OK", null));
 
       CSVRecord invalidRecordLocal = mock(CSVRecord.class);
-      List<CSVRecord> invalidRecordsLocal = Arrays.asList(invalidRecordLocal);
+      List<CSVRecord> invalidRecordsLocal = Collections.singletonList(invalidRecordLocal);
       Map<CSVRecord, String> errorMessagesLocal = new HashMap<>();
       errorMessagesLocal.put(invalidRecordLocal, errorMessage);
 
@@ -257,37 +270,37 @@ class ProductFileServiceTest {
   }
 
   @Test
-  void whenInvalidGtin_thenReturnFormalError() throws Exception {
+  void whenInvalidGtin_thenReturnFormalError()  {
     testFormalError("Il Codice GTIN/EAN è obbligatorio e deve essere univoco ed alfanumerico e lungo al massimo 14 caratteri");
   }
 
   @Test
-  void whenInvalidProductCode_thenReturnFormalError() throws Exception {
+  void whenInvalidProductCode_thenReturnFormalError()  {
     testFormalError("Il Codice prodotto non deve contenere caratteri speciali o lettere accentate e deve essere lungo al massimo 100 caratteri");
   }
 
   @Test
-  void whenInvalidCategory_thenReturnFormalError() throws Exception {
+  void whenInvalidCategory_thenReturnFormalError()  {
     testFormalError("Il campo Categoria è obbligatorio");
   }
 
   @Test
-  void whenInvalidCountry_thenReturnFormalError() throws Exception {
+  void whenInvalidCountry_thenReturnFormalError()  {
     testFormalError("Il Paese di Produzione è obbligatorio e deve essere composto da esattamente 2 caratteri");
   }
 
   @Test
-  void whenInvalidBrand_thenReturnFormalError() throws Exception {
+  void whenInvalidBrand_thenReturnFormalError()  {
     testFormalError("Il campo Marca è obbligatorio e deve contenere una stringa lunga al massimo 100 caratteri");
   }
 
   @Test
-  void whenInvalidModel_thenReturnFormalError() throws Exception {
+  void whenInvalidModel_thenReturnFormalError()  {
     testFormalError("Il campo Modello è obbligatorio e deve contenere una stringa lunga al massimo 100 caratteri");
   }
 
   @Test
-  void whenAllValid_thenReturnOk() throws Exception {
+  void whenAllValid_thenReturnOk()  {
     MultipartFile file = createMockFile();
     CSVRecord rec = mock(CSVRecord.class);
 
@@ -311,12 +324,14 @@ class ProductFileServiceTest {
       when(file.getOriginalFilename()).thenReturn("f.csv");
       when(file.getContentType()).thenReturn("text/csv");
 
-      when(azureBlobClient.upload(any(), any(), any())).thenReturn(null);
+      when(fileStorageClient.upload(any(), any(), any())).thenReturn(null);
 
       ProductFileResult res = productFileService.processFile(file, "cat", "org", "user");
 
       assertEquals("OK", res.getStatus());
       assertNull(res.getErrorKey());
+    } catch (IOException e) {
+        throw new RuntimeException(e);
     }
   }
 }
