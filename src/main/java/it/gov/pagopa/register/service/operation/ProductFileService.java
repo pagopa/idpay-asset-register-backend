@@ -4,12 +4,9 @@ import it.gov.pagopa.register.config.ProductFileValidationConfig;
 import it.gov.pagopa.register.connector.storage.FileStorageClient;
 import it.gov.pagopa.register.constants.AssetRegisterConstant;
 import it.gov.pagopa.register.constants.enums.UploadCsvStatus;
-import it.gov.pagopa.register.dto.operation.ProductFileResult;
-import it.gov.pagopa.register.dto.operation.ValidationResultDTO;
+import it.gov.pagopa.register.dto.operation.*;
 import it.gov.pagopa.register.exception.operation.ReportNotFoundException;
 import it.gov.pagopa.register.mapper.operation.ProductFileMapper;
-import it.gov.pagopa.register.dto.operation.ProductFileDTO;
-import it.gov.pagopa.register.dto.operation.ProductFileResponseDTO;
 import it.gov.pagopa.register.model.operation.ProductFile;
 import it.gov.pagopa.register.repository.operation.ProductFileRepository;
 import it.gov.pagopa.register.utils.CsvUtils;
@@ -73,7 +70,7 @@ public class ProductFileService {
       .build();
   }
 
-  public ByteArrayOutputStream downloadReport(String id, String organizationId) {
+  public FileReportDTO downloadReport(String id, String organizationId) {
     ProductFile productFile = productFileRepository.findByIdAndOrganizationId(id, organizationId)
       .orElseThrow(() -> new ReportNotFoundException("Report not found with id: " + id));
 
@@ -93,7 +90,7 @@ public class ProductFileService {
       throw new ReportNotFoundException("Report not found on Azure for path: " + filePath);
     }
 
-    return result;
+    return FileReportDTO.builder().data(result).filename(FilenameUtils.getBaseName(productFile.getFileName()) + "_errors.csv").build();
   }
 
   public ProductFileResult processFile(MultipartFile file, String category, String organizationId, String userId) {

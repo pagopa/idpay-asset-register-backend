@@ -1,5 +1,6 @@
 package it.gov.pagopa.register.controller.operation;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import it.gov.pagopa.register.dto.operation.FileReportDTO;
 import it.gov.pagopa.register.dto.operation.ProductFileDTO;
 import it.gov.pagopa.register.dto.operation.ProductFileResponseDTO;
 import it.gov.pagopa.register.dto.operation.ProductFileResult;
@@ -91,7 +92,7 @@ class ProductFileControllerTest {
     ByteArrayOutputStream file = new ByteArrayOutputStream();
     file.write("fake csv content".getBytes());
 
-    Mockito.when(productFileService.downloadReport(TEST_ID_UPLOAD, "testOrg")).thenReturn(file);
+    Mockito.when(productFileService.downloadReport(TEST_ID_UPLOAD, "testOrg")).thenReturn(FileReportDTO.builder().data(file).build());
 
     mockMvc.perform(get("/idpay/register/product-files/{productFileId}/report", TEST_ID_UPLOAD)
         .param("idProduttore", "testProducer")

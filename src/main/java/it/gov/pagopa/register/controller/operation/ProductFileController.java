@@ -1,5 +1,6 @@
 package it.gov.pagopa.register.controller.operation;
 
+import it.gov.pagopa.register.dto.operation.FileReportDTO;
 import it.gov.pagopa.register.dto.operation.ProductFileResponseDTO;
 import it.gov.pagopa.register.dto.operation.ProductFileResult;
 import it.gov.pagopa.register.service.operation.ProductFileService;
@@ -39,18 +40,16 @@ public class ProductFileController {
   }
 
   @GetMapping("/product-files/{productFileId}/report")
-  public ResponseEntity<byte[]> downloadProductFileReport(
+  public ResponseEntity<FileReportDTO> downloadProductFileReport(
     @RequestHeader("x-organization-id") String organizationId,
     @PathVariable("productFileId") String productFileId) {
 
-    ByteArrayOutputStream file = productFileService.downloadReport(productFileId, organizationId);
-
-    byte[] zipBytes = file.toByteArray();
+    FileReportDTO file = productFileService.downloadReport(productFileId, organizationId);
 
     return ResponseEntity.ok()
-      .header("Content-Disposition", "attachment; filename=test.csv") //TODO fix filename
+      .header("Content-Disposition", "attachment; filename="+file.getFilename())
       .contentType(MediaType.APPLICATION_JSON) //force to json because of FE client spec
-      .body(zipBytes);
+      .body(file);
   }
 
 }
