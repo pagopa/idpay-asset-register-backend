@@ -61,39 +61,3 @@ app:
 
 product-file-validation:
   maxRows: 100
-  schemas:
-    cookinghobs:
-      Codice GTIN/EAN:
-        regex: "^[a-zA-Z0-9]{1,14}$"
-        message: "Il Codice GTIN/EAN è obbligatorio e deve essere univoco ed alfanumerico e lungo al massimo 14 caratteri"
-      Codice Prodotto:
-        regex: "^[a-zA-Z0-9 ]{0,100}$"
-        message: "Il Codice prodotto non deve contenere caratteri speciali o lettere accentate e deve essere lungo al massimo 100 caratteri"
-      Categoria:
-        regex: "^[A-G]$"
-        message: "Il campo Categoria è obbligatorio"
-      Paese di Produzione:
-        regex: "^.{2}$"
-        message: "Il Paese di Produzione è obbligatorio e deve essere composto da esattamente 2 caratteri"
-      Marca:
-        regex: "^.{1,100}$"
-        message: "Il campo Marca è obbligatorio e deve contenere una stringa lunga al massimo 100 caratteri"
-      Modello:
-        regex: "^.{1,100}$"
-        message: "Il campo Modello è obbligatorio e deve contenere una stringa lunga al massimo 100 caratteri"
-    eprel:
-      Codice EPREL:
-        regex: "^\\d+$"
-        message: "Il Codice EPREL è obbligatorio e deve essere un valore numerico"
-      Codice GTIN/EAN:
-        regex: "^[a-zA-Z0-9]{1,14}$"
-        message: "Il Codice GTIN/EAN è obbligatorio e deve essere univoco ed alfanumerico e lungo al massimo 14 caratteri"
-      Codice Prodotto:
-        regex: "^[a-zA-Z0-9 ]{0,100}$"
-        message: "Il Codice prodotto non deve contenere caratteri speciali o lettere accentate e deve essere lungo al massimo 100 caratteri"
-      Categoria:
-        regex: "^[A-G]$"
-        message: "Il campo Categoria è obbligatorio"
-      Paese di Produzione:
-        regex: "^.{2}$"
-        message: "Il Paese di Produzione è obbligatorio e deve essere composto da esattamente 2 caratteri"
