@@ -90,7 +90,7 @@ public class ProductFileService {
       throw new ReportNotFoundException("Report not found on Azure for path: " + filePath);
     }
 
-    return FileReportDTO.builder().data(result).filename(FilenameUtils.getBaseName(productFile.getFileName()) + "_errors.csv").build();
+    return FileReportDTO.builder().data(result.toByteArray()).filename(FilenameUtils.getBaseName(productFile.getFileName()) + "_errors.csv").build();
   }
 
   public ProductFileResult processFile(MultipartFile file, String category, String organizationId, String userId) {

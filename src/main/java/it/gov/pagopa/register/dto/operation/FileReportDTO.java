@@ -10,7 +10,7 @@ import java.io.ByteArrayOutputStream;
 @Builder
 public class FileReportDTO {
 
-  private ByteArrayOutputStream data;
+  private byte[] data;
   private String filename;
 
 }
