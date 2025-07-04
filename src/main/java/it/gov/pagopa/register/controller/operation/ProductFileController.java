@@ -38,7 +38,7 @@ public class ProductFileController {
   }
 
   @GetMapping("/product-files/{productFileId}/report")
-  public ResponseEntity<FileReportDTO> downloadProductFileReport(
+  public ResponseEntity<byte[]> downloadProductFileReport(
     @RequestHeader("x-organization-id") String organizationId,
     @PathVariable("productFileId") String productFileId) {
 
@@ -47,7 +47,7 @@ public class ProductFileController {
     return ResponseEntity.ok()
       .header("Content-Disposition", "attachment; filename="+file.getFilename())
       .contentType(MediaType.APPLICATION_JSON)
-      .body(file);
+      .body(file.getData());
   }
 
 }

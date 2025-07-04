@@ -1,4 +1,5 @@
 package it.gov.pagopa.register.controller.operation;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import it.gov.pagopa.register.dto.operation.FileReportDTO;
 import it.gov.pagopa.register.dto.operation.ProductFileDTO;
@@ -9,14 +10,13 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.data.domain.*;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.io.ByteArrayOutputStream;
-import java.util.Base64;
 import java.util.Collections;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -95,7 +95,6 @@ class ProductFileControllerTest {
 
     Mockito.when(productFileService.downloadReport(TEST_ID_UPLOAD, "testOrg")).thenReturn(fileReportDTO);
 
-    String expectedData = Base64.getEncoder().encodeToString(file.toByteArray());
 
     mockMvc.perform(get("/idpay/register/product-files/{productFileId}/report", TEST_ID_UPLOAD)
         .param("idProduttore", "testProducer")
@@ -103,7 +102,7 @@ class ProductFileControllerTest {
       .andExpect(status().isOk())
       .andExpect(header().string("Content-Disposition", "attachment; filename=test.csv"))
       .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-      .andExpect(jsonPath("$.data").value(expectedData));
+      .andExpect(content().bytes(file.toByteArray()));
   }
 
 
