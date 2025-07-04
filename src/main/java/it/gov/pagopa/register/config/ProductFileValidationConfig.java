@@ -17,55 +17,30 @@ import static it.gov.pagopa.register.constants.AssetRegisterConstant.*;
 @Data
 public class ProductFileValidationConfig {
 
-
   @Value("${product-file-validation.maxRows}")
   private int maxRows;
 
   private Map<String, LinkedHashMap<String, ColumnValidationRule>> schemas = initialize();
-  private static Map<String, LinkedHashMap<String, ColumnValidationRule>> initialize(){
+
+  private static Map<String, LinkedHashMap<String, ColumnValidationRule>> initialize() {
     LinkedHashMap<String, ColumnValidationRule> cookingHobsSchema = new LinkedHashMap<>();
-    cookingHobsSchema.put(
-      CODICE_GTIN_EAN,
-      new ColumnValidationRule((v,z)-> v != null && v.matches(CODICE_GTIN_EAN_REGEX), ERROR_GTIN_EAN));
-    cookingHobsSchema.put(
-      CODICE_PRODOTTO,
-      new ColumnValidationRule((v,z) -> v != null && v.matches(CODICE_PRODOTTO_REGEX), ERROR_CODICE_PRODOTTO));
-    cookingHobsSchema.put(
-      CATEGORIA,
-      new ColumnValidationRule(String::equals, ERROR_CATEGORIA_COOKINGHOBS));
-    cookingHobsSchema.put(PAESE_DI_PRODUZIONE,
-      new ColumnValidationRule((v,z) -> Arrays.asList(Locale.getISOCountries()).contains(v), ERROR_PAESE_DI_PRODUZIONE));
-    cookingHobsSchema.put(
-      MARCA,
-      new ColumnValidationRule((v,z) -> v != null && v.matches(MARCA_REGEX), ERROR_MARCA));
-    cookingHobsSchema.put(
-      MODELLO,
-      new ColumnValidationRule((v,z) -> v != null && v.matches(MODELLO_REGEX), ERROR_MODELLO));
+    cookingHobsSchema.put(CODE_GTIN_EAN, ValidationRules.GTIN_EAN_RULE);
+    cookingHobsSchema.put(CODE_PRODUCT, ValidationRules.CODE_PRODUCT_RULE);
+    cookingHobsSchema.put(CATEGORY, ValidationRules.CATEGOY_COOKINGHOBS_RULE);
+    cookingHobsSchema.put(COUNTRY_OF_PRODUCTION, ValidationRules.COUNTRY_OF_PRODUCTION_RULE);
+    cookingHobsSchema.put(BRAND, ValidationRules.BRAND_RULE);
+    cookingHobsSchema.put(MODEL, ValidationRules.MODEL_RULE);
 
     LinkedHashMap<String, ColumnValidationRule> eprelSchema = new LinkedHashMap<>();
-    eprelSchema.put(
-      CODICE_EPREL,
-      new ColumnValidationRule((v,z) -> v != null && v.matches(CODICE_EPREL_REGEX), ERROR_CODICE_EPREL));
-    eprelSchema.put(
-      CODICE_GTIN_EAN,
-      new ColumnValidationRule((v,z) -> v != null && v.matches(CODICE_GTIN_EAN_REGEX), ERROR_GTIN_EAN));
-    eprelSchema.put(
-      CODICE_PRODOTTO,
-      new ColumnValidationRule((v,z) -> v != null && v.matches(CODICE_PRODOTTO_REGEX), ERROR_CODICE_PRODOTTO));
-    eprelSchema.put(
-      CATEGORIA,
-      new ColumnValidationRule(String::equals, ERROR_CATEGORIA_PRODOTTI));
-    eprelSchema.put(
-      PAESE_DI_PRODUZIONE,
-      new ColumnValidationRule((v,z) -> Arrays.asList(Locale.getISOCountries()).contains(v), ERROR_PAESE_DI_PRODUZIONE));
+    eprelSchema.put(CODE_EPREL, ValidationRules.CODE_EPREL_RULE);
+    eprelSchema.put(CODE_GTIN_EAN, ValidationRules.GTIN_EAN_RULE);
+    eprelSchema.put(CODE_PRODUCT, ValidationRules.CODE_PRODUCT_RULE);
+    eprelSchema.put(CATEGORY, ValidationRules.CATEGOY_PRODUCTS_RULE);
+    eprelSchema.put(COUNTRY_OF_PRODUCTION, ValidationRules.COUNTRY_OF_PRODUCTION_RULE);
 
     Map<String, LinkedHashMap<String, ColumnValidationRule>> schemas = new LinkedHashMap<>();
     schemas.put("cookinghobs", cookingHobsSchema);
     schemas.put("eprel", eprelSchema);
-    return  schemas;
+    return schemas;
   }
-
-
 }
-
-
