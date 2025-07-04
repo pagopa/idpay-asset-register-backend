@@ -43,6 +43,8 @@ public class ValidationResultDTO {
     this.errorMessages = errorMessages;
   }
 
+  public ValidationResultDTO() {}
+
   public String getStatus() {
     return status;
   }
@@ -58,5 +60,6 @@ public class ValidationResultDTO {
   public Map<CSVRecord, String> getErrorMessages() {
     return errorMessages;
   }
+
 
 }
