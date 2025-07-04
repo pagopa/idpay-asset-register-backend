@@ -38,9 +38,12 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class ProductFileServiceTest {
 
-  @Mock ProductFileRepository productFileRepository;
-  @Mock FileStorageClient fileStorageClient;
-  @Mock ProductFileValidator productFileValidator;
+  @Mock
+  ProductFileRepository productFileRepository;
+  @Mock
+  FileStorageClient fileStorageClient;
+  @Mock
+  ProductFileValidator productFileValidator;
 
   private ProductFileService productFileService;
 
