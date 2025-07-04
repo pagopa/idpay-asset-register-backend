@@ -16,6 +16,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.io.ByteArrayOutputStream;
+import java.util.Base64;
 import java.util.Collections;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -90,17 +91,21 @@ class ProductFileControllerTest {
   void downloadCsv_successfulResponse() throws Exception {
     ByteArrayOutputStream file = new ByteArrayOutputStream();
     file.write("fake csv content".getBytes());
+    FileReportDTO fileReportDTO = FileReportDTO.builder().data(file.toByteArray()).filename("test.csv").build();
 
-    Mockito.when(productFileService.downloadReport(TEST_ID_UPLOAD, "testOrg")).thenReturn(FileReportDTO.builder().data(file.toByteArray()).build());
+    Mockito.when(productFileService.downloadReport(TEST_ID_UPLOAD, "testOrg")).thenReturn(fileReportDTO);
+
+    String expectedData = Base64.getEncoder().encodeToString(file.toByteArray());
 
     mockMvc.perform(get("/idpay/register/product-files/{productFileId}/report", TEST_ID_UPLOAD)
         .param("idProduttore", "testProducer")
         .header("x-organization-id", "testOrg"))
       .andExpect(status().isOk())
       .andExpect(header().string("Content-Disposition", "attachment; filename=test.csv"))
-      .andExpect(content().contentType(MediaType.APPLICATION_OCTET_STREAM))
-      .andExpect(content().bytes(file.toByteArray()));
+      .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+      .andExpect(jsonPath("$.data").value(expectedData));
   }
+
 
   @Test
   void downloadCsv_notFound() throws Exception {

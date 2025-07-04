@@ -119,26 +119,35 @@ class ProductFileServiceTest {
 
   //Test con errori Eprel
   @Test
-  void downloadReport_eprelError() {
-    ProductFile pf = new ProductFile(); pf.setId("1"); pf.setOrganizationId("o"); pf.setUploadStatus("EPREL_ERROR");
-    when(productFileRepository.findByIdAndOrganizationId("1","o")).thenReturn(Optional.of(pf));
-    ByteArrayOutputStream os = new ByteArrayOutputStream();
-    when(fileStorageClient.download("Report/Eprel_Error/1.csv")).thenReturn(os);
+  void downloadReport_eprelError() throws IOException {
+    ProductFile pf = new ProductFile();
+    pf.setId("1");
+    pf.setOrganizationId("o");
+    pf.setUploadStatus("EPREL_ERROR");
+    when(productFileRepository.findByIdAndOrganizationId("1", "o")).thenReturn(Optional.of(pf));
 
-    FileReportDTO res = productFileService.downloadReport("1","o");
-    assertSame(os, res.getData());
+    ByteArrayOutputStream os = new ByteArrayOutputStream();
+    os.write("fake csv content".getBytes());
+    when(fileStorageClient.download("Report/Eprel_Error/1.csv")).thenReturn(os);
+    FileReportDTO res = productFileService.downloadReport("1", "o");
+    assertArrayEquals(os.toByteArray(), res.getData());
   }
+
 
   //Test con errori formali
   @Test
-  void downloadReport_formalError() {
-    ProductFile pf = new ProductFile(); pf.setId("1"); pf.setOrganizationId("o"); pf.setUploadStatus("FORMAL_ERROR");
-    when(productFileRepository.findByIdAndOrganizationId("1","o")).thenReturn(Optional.of(pf));
-    ByteArrayOutputStream os = new ByteArrayOutputStream();
-    when(fileStorageClient.download("Report/Formal_Error/1.csv")).thenReturn(os);
+  void downloadReport_formalError() throws IOException {
+    ProductFile pf = new ProductFile();
+    pf.setId("1");
+    pf.setOrganizationId("o");
+    pf.setUploadStatus("FORMAL_ERROR");
+    when(productFileRepository.findByIdAndOrganizationId("1", "o")).thenReturn(Optional.of(pf));
 
-    FileReportDTO res = productFileService.downloadReport("1","o");
-    assertSame(os, res.getData());
+    ByteArrayOutputStream os = new ByteArrayOutputStream();
+    os.write("fake csv content".getBytes());
+    when(fileStorageClient.download("Report/Formal_Error/1.csv")).thenReturn(os);
+    FileReportDTO res = productFileService.downloadReport("1", "o");
+    assertArrayEquals(os.toByteArray(), res.getData());
   }
 
   //Test con idUpload errato -> ritorna un'eccezione

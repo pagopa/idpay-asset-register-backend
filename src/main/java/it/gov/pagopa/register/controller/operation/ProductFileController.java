@@ -12,8 +12,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.ByteArrayOutputStream;
-
 @RestController
 @RequestMapping("/idpay/register")
 public class ProductFileController {
@@ -48,7 +46,7 @@ public class ProductFileController {
 
     return ResponseEntity.ok()
       .header("Content-Disposition", "attachment; filename="+file.getFilename())
-      .contentType(MediaType.APPLICATION_JSON) //force to json because of FE client spec
+      .contentType(MediaType.APPLICATION_JSON)
       .body(file);
   }
 
