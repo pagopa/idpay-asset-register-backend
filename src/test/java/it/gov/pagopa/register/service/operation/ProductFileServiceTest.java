@@ -13,6 +13,7 @@ import it.gov.pagopa.register.config.ProductFileValidationConfig;
 import it.gov.pagopa.register.connector.storage.FileStorageClient;
 import it.gov.pagopa.register.constants.AssetRegisterConstant;
 import it.gov.pagopa.register.constants.enums.UploadCsvStatus;
+import it.gov.pagopa.register.dto.operation.FileReportDTO;
 import it.gov.pagopa.register.dto.operation.ProductFileResponseDTO;
 import it.gov.pagopa.register.dto.operation.ProductFileResult;
 import it.gov.pagopa.register.dto.operation.ValidationResultDTO;
@@ -125,8 +126,8 @@ class ProductFileServiceTest {
     ByteArrayOutputStream os = new ByteArrayOutputStream();
     when(azureBlobClient.download("Report/Eprel_Error/1.csv")).thenReturn(os);
 
-    ByteArrayOutputStream res = productFileService.downloadReport("1","o");
-    assertSame(os, res);
+    FileReportDTO res = productFileService.downloadReport("1","o");
+    assertSame(os, res.getData());
   }
 
   //Test con errori formali
@@ -137,8 +138,8 @@ class ProductFileServiceTest {
     ByteArrayOutputStream os = new ByteArrayOutputStream();
     when(azureBlobClient.download("Report/Formal_Error/1.csv")).thenReturn(os);
 
-    ByteArrayOutputStream res = productFileService.downloadReport("1","o");
-    assertSame(os, res);
+    FileReportDTO res = productFileService.downloadReport("1","o");
+    assertSame(os, res.getData());
   }
 
   //Test con idUpload errato -> ritorna un'eccezione
