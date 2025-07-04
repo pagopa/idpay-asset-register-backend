@@ -73,5 +73,9 @@ public class Utils {
   public static final String ERROR_CODICE_EPREL = "Il Codice EPREL è obbligatorio e deve essere un valore numerico";
   public static final String ERROR_CATEGORIA_PRODOTTI = "Il campo Categoria è obbligatorio e deve contenere il valore fisso ";
 
+  public static String generateEprelUrl(String productGroup, String eprelCode) {
+    if (productGroup == null || eprelCode == null) return null;
+    return String.format("https://eprel.ec.europa.eu/screen/product/%s/%s", productGroup, eprelCode);
+  }
 
 }

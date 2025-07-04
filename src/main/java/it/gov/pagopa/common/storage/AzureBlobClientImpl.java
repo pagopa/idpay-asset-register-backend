@@ -94,33 +94,23 @@ public class AzureBlobClientImpl implements AzureBlobClient {
         }
     }
 
-  @Override
-  public ByteArrayOutputStream download(String filePath) {
-    log.info("Downloading file {} from azure blob container", filePath);
+    @Override
+    public ByteArrayOutputStream download(String filePath) {
+        log.info("Downloading file {} from azure blob container", filePath);
 
-    try {
-      ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-      blobContainerClient.getBlobClient(filePath)
-        .downloadStream(outputStream);
-
-      log.info("Successfully downloaded file {}, size: {} bytes", filePath, outputStream.size());
-      return outputStream;
-
-    } catch (BlobStorageException e) {
-      if(e.getStatusCode() == 404) {
-        log.warn("File not found (404) in Azure blob container: {}", filePath);
-        return null;
-      } else {
-        log.error("Error downloading file {} from Azure blob container: {} (Status: {})",
-          filePath, e.getMessage(), e.getStatusCode());
-        throw e;
-      }
-    } catch (Exception e) {
-      log.error("Unexpected error downloading file {} from Azure blob container: {}",
-        filePath, e.getMessage(), e);
-      throw e;
+        try {
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            blobContainerClient.getBlobClient(filePath)
+                    .downloadStream(outputStream);
+            return outputStream;
+        } catch (BlobStorageException e) {
+            if(e.getStatusCode()!=404){
+                throw e;
+            } else {
+                return null;
+            }
+        }
     }
-  }
 
     private static void createDirectoryIfNotExists(Path localFile) {
         Path directory = localFile.getParent();

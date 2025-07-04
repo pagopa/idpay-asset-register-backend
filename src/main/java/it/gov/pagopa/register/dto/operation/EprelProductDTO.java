@@ -11,9 +11,9 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class EprelProductDTO {
 
-  private String registrationNumber;
+  private String eprelRegistrationNumber;
   private String productGroup;
-  private String supplierOrTrademarker;
+  private String supplierOrTrademark;
   private String modelIdentifier;
   private String energyClass;
   private String orgVerificationStatus;

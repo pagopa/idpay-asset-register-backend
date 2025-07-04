@@ -15,6 +15,7 @@ import it.gov.pagopa.register.model.operation.ProductFile;
 import it.gov.pagopa.register.model.role.Product;
 import it.gov.pagopa.register.repository.operation.ProductFileRepository;
 import it.gov.pagopa.register.repository.operation.ProductRepository;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
@@ -33,8 +34,8 @@ import java.util.*;
 import java.util.regex.Matcher;
 
 import static it.gov.pagopa.register.constants.RegisterConstants.*;
-import static it.gov.pagopa.register.constants.enums.UploadCsvStatus.EPREL_ERROR;
-import static it.gov.pagopa.register.constants.enums.UploadCsvStatus.LOADED;
+import static it.gov.pagopa.register.constants.RegisterConstants.CsvRecord.*;
+import static it.gov.pagopa.register.constants.enums.UploadCsvStatus.*;
 
 @Slf4j
 @Service
@@ -82,57 +83,91 @@ public class ProductFileService extends BaseKafkaConsumer<List<StorageEventDTO>>
 
   @Override
   public void execute(List<StorageEventDTO> events, Message<String> message) {
-    for (StorageEventDTO event : events) {
-      if (event == null || event.getData() == null) {
-        log.warn("[PRODUCT_UPLOAD] - Null event or event data, skipping");
-        continue;
+    events.stream()
+      .filter(this::isValidEvent)
+      .forEach(this::processEvent);
+  }
+
+  private boolean isValidEvent(StorageEventDTO event) {
+    if (event == null || event.getData() == null) {
+      log.warn("[PRODUCT_UPLOAD] - Null event or event data, skipping");
+      return false;
+    }
+
+    String url = event.getData().getUrl();
+    if (url == null || url.trim().isEmpty()) {
+      log.warn("[PRODUCT_UPLOAD] - Empty or null URL in event, skipping. Subject: {}", event.getSubject());
+      return false;
+    }
+
+    return true;
+  }
+
+  private void processEvent(StorageEventDTO event) {
+    String subject = event.getSubject();
+    String url = event.getData().getUrl();
+
+    log.info("[PRODUCT_UPLOAD] - Processing event - Subject: {}, URL: {}", subject, url);
+
+    EventDetails eventDetails = parseEventSubject(subject);
+    if (eventDetails == null) {
+      return;
+    }
+
+    String blobPath = extractBlobPath(url);
+    if (blobPath == null) {
+      return;
+    }
+
+    processFileFromStorage(blobPath, url, eventDetails);
+  }
+
+  private EventDetails parseEventSubject(String subject) {
+    Matcher matcher = SUBJECT_PATTERN.matcher(subject);
+    if (!matcher.find() || matcher.groupCount() < 3) {
+      log.warn("[PRODUCT_UPLOAD] - Invalid subject format: {}", subject);
+      return null;
+    }
+
+    String orgId = matcher.group(1).trim();
+    String category = matcher.group(2);
+    String fileName = matcher.group(3);
+
+    log.info("[PRODUCT_UPLOAD] - Processing file: {} for orgId={}, category={}", fileName, orgId, category);
+
+    return new EventDetails(orgId, category, fileName);
+  }
+
+  private String extractBlobPath(String url) {
+    int pathStart = url.indexOf("/CSV/");
+    if (pathStart == -1) {
+      log.error("[PRODUCT_UPLOAD] - Unable to extract file path from URL: {}", url);
+      return null;
+    }
+    return url.substring(pathStart + 1);
+  }
+
+  private void processFileFromStorage(String blobPath, String url, EventDetails eventDetails) {
+    ByteArrayOutputStream downloadedData = null;
+    try {
+      downloadedData = fileStorageClient.download(blobPath);
+      if (downloadedData == null) {
+        log.warn("[PRODUCT_UPLOAD] - File not found or download failed for path: {} (from URL: {})", blobPath, url);
+        setProductFileStatus(eventDetails.getFileName(), String.valueOf(EPREL_ERROR));
+        return;
       }
 
-      String subject = event.getSubject();
-      String url = event.getData().getUrl();
+      processCsvFromStorage(downloadedData, eventDetails.getFileName(), eventDetails.getCategory(), eventDetails.getOrgId());
 
-      if (url == null || url.trim().isEmpty()) {
-        log.warn("[PRODUCT_UPLOAD] - Empty or null URL in event, skipping. Subject: {}", subject);
-        continue;
-      }
-
-      log.info("[PRODUCT_UPLOAD] - Processing event - Subject: {}, URL: {}", subject, url);
-
-      Matcher matcher = SUBJECT_PATTERN.matcher(subject);
-      if (!matcher.find() || matcher.groupCount() < 4) {
-        log.warn("[PRODUCT_UPLOAD] - Invalid subject format: {}", subject);
-        continue;
-      }
-
-      String orgId = matcher.group(1);
-      String category = matcher.group(2);
-      String userId = matcher.group(3);
-      String fileName = matcher.group(4);
-
-      log.info("[PRODUCT_UPLOAD] - Processing file: {} for orgId={}, category={}, userId={}",
-        fileName, orgId, category, userId);
-
-      ByteArrayOutputStream downloadedData = null;
-      try {
-        downloadedData = fileStorageClient.download(url);
-        if (downloadedData == null) {
-          log.warn("[PRODUCT_UPLOAD] - File not found or download failed for URL: {}. " +
-            "This might be a timing issue or the file was already processed.", url);
-          setFinalProductFileStatus(fileName, String.valueOf(EPREL_ERROR));
-          continue;
-        }
-
-        processCsvFromStorage(downloadedData, fileName, category, orgId);
-      } catch (Exception e) {
-        log.error("[PRODUCT_UPLOAD] - Error processing file {}: {}", fileName, e.getMessage(), e);
-        setFinalProductFileStatus(fileName, String.valueOf(EPREL_ERROR));
-      } finally {
-        if (downloadedData != null) {
-          try {
-            downloadedData.close();
-          } catch (IOException e) {
-            log.warn("[PRODUCT_UPLOAD] - Error closing ByteArrayOutputStream for file {}: {}", fileName, e.getMessage());
-          }
+    } catch (Exception e) {
+      log.error("[PRODUCT_UPLOAD] - Error processing file {}: {}", eventDetails.getFileName(), e.getMessage(), e);
+      setProductFileStatus(eventDetails.getFileName(), String.valueOf(EPREL_ERROR));
+    } finally {
+      if (downloadedData != null) {
+        try {
+          downloadedData.close();
+        } catch (IOException e) {
+          log.warn("[PRODUCT_UPLOAD] - Error closing ByteArrayOutputStream for file {}: {}", eventDetails.getFileName(), e.getMessage());
         }
       }
     }
@@ -142,11 +177,10 @@ public class ProductFileService extends BaseKafkaConsumer<List<StorageEventDTO>>
                                     String fileName,
                                     String category,
                                     String orgId) {
-
-    List<Product> validProducts = new ArrayList<>();
-    List<List<String>> errorRows = new ArrayList<>();
-    boolean isCookingHob = "COOKINGHOBS".equalsIgnoreCase(category);
+    CsvProcessingResult result = new CsvProcessingResult();
+    boolean isCookingHob = CATEGORY_COOKINGHOBS.equalsIgnoreCase(category);
     String productFileId = fileName.replace(".csv", "");
+    setProductFileStatus(fileName, String.valueOf(UPLOADED));
 
     try (BufferedReader reader = new BufferedReader(new InputStreamReader(
       new ByteArrayInputStream(byteArrayOutputStream.toByteArray()), StandardCharsets.UTF_8));
@@ -160,72 +194,89 @@ public class ProductFileService extends BaseKafkaConsumer<List<StorageEventDTO>>
       Set<String> headers = new LinkedHashSet<>(csvParser.getHeaderMap().keySet());
       log.info("[PRODUCT_UPLOAD] - Valid CSV headers: {}", headers);
 
-      for (int i = 0; i < records.size(); i++) {
-        CSVRecord record = records.get(i);
-        List<String> errors = processCsvRecord(record, orgId, category, productFileId, validProducts, isCookingHob);
+      for (CSVRecord csvRecord : records) {
+        List<String> errors = processCsvRecord(csvRecord, orgId, category, productFileId, result.getValidProducts(), isCookingHob);
         if (!errors.isEmpty()) {
-          errorRows.add(buildErrorRow(record, headers, errors));
+          result.addErrorRow(buildErrorRow(csvRecord, headers, errors));
         }
       }
 
-      if (!validProducts.isEmpty()) {
-        productRepository.saveAll(validProducts);
-        log.info("[PRODUCT_UPLOAD] - Saved {} valid products for file {}", validProducts.size(), fileName);
-      }
-
-      if (!errorRows.isEmpty()) {
-        generateErrorReport(fileName, errorRows, headers);
-        setFinalProductFileStatus(fileName, String.valueOf(EPREL_ERROR));
-        log.info("[PRODUCT_UPLOAD] - File {} processed with {} EPREL errors", fileName, errorRows.size());
-      } else {
-        setFinalProductFileStatus(fileName, String.valueOf(LOADED));
-        log.info("[PRODUCT_UPLOAD] - File {} processed successfully with no errors", fileName);
-      }
+      handleProcessingResults(result, fileName, headers);
 
     } catch (IOException e) {
       log.error("[PRODUCT_UPLOAD] - Error reading CSV {}: {}", fileName, e.getMessage());
-      setFinalProductFileStatus(fileName, String.valueOf(EPREL_ERROR));
+      setProductFileStatus(fileName, String.valueOf(EPREL_ERROR));
     }
   }
 
-  private List<String> processCsvRecord(CSVRecord record, String orgId, String category, String productFileId,
-                                        List<Product> validProducts, boolean isCookingHob) {
-    List<String> errors = new ArrayList<>();
-
-    if (isCookingHob) {
-      validProducts.add(mapCookingHobToProduct(record, orgId, productFileId));
-      log.debug("[PRODUCT_UPLOAD] - Added cooking hob product: {}", record.get("Codice Prodotto"));
-      return errors;
+  private void handleProcessingResults(CsvProcessingResult result, String fileName, Set<String> headers) {
+    if (!result.getValidProducts().isEmpty()) {
+      productRepository.saveAll(result.getValidProducts());
+      log.info("[PRODUCT_UPLOAD] - Saved {} valid products for file {}", result.getValidProducts().size(), fileName);
     }
 
+    if (!result.getErrorRows().isEmpty()) {
+      generateErrorReport(fileName, result.getErrorRows(), headers);
+      setProductFileStatus(fileName, String.valueOf(EPREL_ERROR));
+      log.info("[PRODUCT_UPLOAD] - File {} processed with {} EPREL errors", fileName, result.getErrorRows().size());
+    } else {
+      setProductFileStatus(fileName, String.valueOf(LOADED));
+      log.info("[PRODUCT_UPLOAD] - File {} processed successfully with no errors", fileName);
+    }
+  }
+
+  private List<String> processCsvRecord(CSVRecord csvRecord, String orgId, String category, String productFileId,
+                                        List<Product> validProducts, boolean isCookingHob) {
+    if (isCookingHob) {
+      return processCookingHobRecord(csvRecord, orgId, productFileId, validProducts);
+    }
+
+    return processEprelRecord(csvRecord, orgId, category, productFileId, validProducts);
+  }
+
+  private List<String> processCookingHobRecord(CSVRecord csvRecord, String orgId, String productFileId,
+                                               List<Product> validProducts) {
+    validProducts.add(mapCookingHobToProduct(csvRecord, orgId, productFileId));
+    log.debug("[PRODUCT_UPLOAD] - Added cooking hob product: {}", csvRecord.get(PRODUCT_CODE));
+    return new ArrayList<>();
+  }
+
+  private List<String> processEprelRecord(CSVRecord csvRecord, String orgId, String category, String productFileId,
+                                          List<Product> validProducts) {
+    List<String> errors = new ArrayList<>();
+
     try {
-      EprelProductDTO eprelData = eprelConnector.callEprel(record.get("Codice EPREL"));
+      String eprelCode = csvRecord.get(EPREL_CODE);
+      EprelProductDTO eprelData = eprelConnector.callEprel(eprelCode);
+      log.info("[PRODUCT_UPLOAD] - EPREL response for {}: {}", eprelCode, eprelData);
+
       List<String> eprelErrors = validateEprelData(eprelData, category);
 
       if (eprelErrors.isEmpty()) {
-        validProducts.add(mapEprelToProduct(record, eprelData, orgId, productFileId));
-        log.debug("[PRODUCT_UPLOAD] - EPREL product validated: {}", record.get("Codice EPREL"));
+        validProducts.add(mapEprelToProduct(csvRecord, eprelData, orgId, productFileId));
+        log.debug("[PRODUCT_UPLOAD] - EPREL product validated: {}", eprelCode);
       } else {
         errors.addAll(eprelErrors);
       }
 
     } catch (Exception e) {
-      log.error("[PRODUCT_UPLOAD] - EPREL error for code {}: {}", record.get("Codice EPREL"), e.getMessage());
+      log.error("[PRODUCT_UPLOAD] - EPREL error for code {}: {}", csvRecord.get(EPREL_CODE), e.getMessage());
       errors.add("EPREL call error: " + e.getMessage());
     }
 
     return errors;
   }
 
-  private List<String> buildErrorRow(CSVRecord record, Set<String> headers, List<String> errors) {
+  private List<String> buildErrorRow(CSVRecord csvRecord, Set<String> headers, List<String> errors) {
     List<String> row = new ArrayList<>();
-    headers.forEach(h -> row.add(record.get(h)));
+    headers.forEach(h -> row.add(csvRecord.get(h)));
     row.add(String.join(", ", errors));
     return row;
   }
 
-  private void setFinalProductFileStatus(String fileName, String status) {
-    Optional<ProductFile> productFile = productFileRepository.findById(fileName.replace(".csv", ""));
+  private void setProductFileStatus(String fileName, String status) {
+    String fileId = fileName.replace(".csv", "");
+    Optional<ProductFile> productFile = productFileRepository.findById(fileId);
     if (productFile.isPresent()) {
       productFile.get().setUploadStatus(status);
       productFileRepository.save(productFile.get());
@@ -233,41 +284,36 @@ public class ProductFileService extends BaseKafkaConsumer<List<StorageEventDTO>>
     }
   }
 
-  private Product mapCookingHobToProduct(CSVRecord record, String orgId, String productFileId) {
+  private Product mapCookingHobToProduct(CSVRecord csvRecord, String orgId, String productFileId) {
     return Product.builder()
       .productFileId(productFileId)
       .organizationId(orgId)
       .registrationDate(LocalDateTime.now())
-      .status("APPROVED")
-      .productCode(record.get("Codice Prodotto"))
-      .gtinCode(record.get("Codice GTIN/EAN"))
-      .category("COOKINGHOBS")
-      .countryOfProduction(record.get("Paese di Produzione"))
-      .brand(record.get("Marca"))
-      .model(record.get("Modello"))
+      .status(STATUS_APPROVED)
+      .productCode(csvRecord.get(PRODUCT_CODE))
+      .gtinCode(csvRecord.get(GTIN_EAN_CODE))
+      .category(CATEGORY_COOKINGHOBS)
+      .countryOfProduction(csvRecord.get(PRODUCTION_COUNTRY))
+      .brand(csvRecord.get(BRAND))
+      .model(csvRecord.get(MODEL))
       .build();
   }
 
-  private Product mapEprelToProduct(CSVRecord record, EprelProductDTO eprelData, String orgId, String productFileId) {
+  private Product mapEprelToProduct(CSVRecord csvRecord, EprelProductDTO eprelData, String orgId, String productFileId) {
     return Product.builder()
       .productFileId(productFileId)
       .organizationId(orgId)
       .registrationDate(LocalDateTime.now())
-      .status("APPROVED")
-      .productCode(record.get("Codice Prodotto"))
-      .gtinCode(record.get("Codice GTIN/EAN"))
-      .eprelCode(record.get("Codice EPREL"))
+      .status(STATUS_APPROVED)
+      .productCode(csvRecord.get(PRODUCT_CODE))
+      .gtinCode(csvRecord.get(GTIN_EAN_CODE))
+      .eprelCode(csvRecord.get(EPREL_CODE))
       .category(eprelData.getProductGroup())
-      .countryOfProduction(record.get("Paese di Produzione"))
-      .brand(eprelData.getSupplierOrTrademarker())
+      .countryOfProduction(csvRecord.get(PRODUCTION_COUNTRY))
+      .brand(eprelData.getSupplierOrTrademark())
       .model(eprelData.getModelIdentifier())
       .energyClass(eprelData.getEnergyClass())
-      .linkEprel(generateEprelUrl(eprelData.getProductGroup(), record.get("Codice EPREL")))
       .build();
-  }
-
-  private String generateEprelUrl(String productGroup, String eprelCode) {
-    return String.format("https://eprel.ec.europa.eu/screen/product/%s/%s", productGroup, eprelCode);
   }
 
   private List<String> validateEprelData(EprelProductDTO eprelData, String expectedCategory) {
@@ -278,6 +324,15 @@ public class ProductFileService extends BaseKafkaConsumer<List<StorageEventDTO>>
       return errors;
     }
 
+    validateVerificationStatuses(eprelData, errors);
+    validateProductStatusAndBlocking(eprelData, errors);
+    validateProductGroup(eprelData, expectedCategory, errors);
+    validateEnergyClassCompliance(eprelData, expectedCategory, errors);
+
+    return errors;
+  }
+
+  private void validateVerificationStatuses(EprelProductDTO eprelData, List<String> errors) {
     if (!"VERIFIED".equalsIgnoreCase(eprelData.getOrgVerificationStatus())) {
       errors.add("orgVerificationStatus is not VERIFIED");
     }
@@ -285,7 +340,9 @@ public class ProductFileService extends BaseKafkaConsumer<List<StorageEventDTO>>
     if (!"VERIFIED".equalsIgnoreCase(eprelData.getTrademarkVerificationStatus())) {
       errors.add("trademarkVerificationStatus is not VERIFIED");
     }
+  }
 
+  private void validateProductStatusAndBlocking(EprelProductDTO eprelData, List<String> errors) {
     if (Boolean.TRUE.equals(eprelData.getBlocked())) {
       errors.add("Product is blocked");
     }
@@ -293,19 +350,21 @@ public class ProductFileService extends BaseKafkaConsumer<List<StorageEventDTO>>
     if (!"PUBLISHED".equalsIgnoreCase(eprelData.getStatus())) {
       errors.add("Status is not PUBLISHED");
     }
+  }
 
+  private void validateProductGroup(EprelProductDTO eprelData, String expectedCategory, List<String> errors) {
     if (eprelData.getProductGroup() == null ||
       !eprelData.getProductGroup().toLowerCase().startsWith(expectedCategory.toLowerCase())) {
       errors.add("Product group from EPREL is not compatible with expected category");
     }
+  }
 
+  private void validateEnergyClassCompliance(EprelProductDTO eprelData, String expectedCategory, List<String> errors) {
     if (!isEnergyClassValid(eprelData.getEnergyClass(), expectedCategory)) {
       String requiredClass = ENERGY_CLASS_REQUIREMENTS.get(expectedCategory.toUpperCase());
       errors.add(String.format("Energy class %s is not compliant. Minimum required: %s",
         eprelData.getEnergyClass(), requiredClass));
     }
-
-    return errors;
   }
 
   private boolean isEnergyClassValid(String energyClass, String category) {
@@ -379,5 +438,27 @@ public class ProductFileService extends BaseKafkaConsumer<List<StorageEventDTO>>
   @Override
   protected void onError(Message<String> message, Throwable e) {
     log.error("[PRODUCT_UPLOAD] - Unexpected error: {}", e.getMessage(), e);
+  }
+
+  @Getter
+  private static class EventDetails {
+    private final String orgId;
+    private final String category;
+    private final String fileName;
+
+    public EventDetails(String orgId, String category, String fileName) {
+      this.orgId = orgId;
+      this.category = category;
+      this.fileName = fileName;
+    }
+
+  }
+
+  @Getter
+  private static class CsvProcessingResult {
+    private final List<Product> validProducts = new ArrayList<>();
+    private final List<List<String>> errorRows = new ArrayList<>();
+
+    public void addErrorRow(List<String> errorRow) { this.errorRows.add(errorRow); }
   }
 }

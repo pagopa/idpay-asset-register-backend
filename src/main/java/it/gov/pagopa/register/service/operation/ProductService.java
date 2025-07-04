@@ -113,7 +113,7 @@ public class ProductService {
           ;
         uploadFile=uploadRepository.save(uploadFile);
 
-        String destination = "CSV/ " + idOrg + "/" + category + "/" + uploadFile.getId() + ".csv";
+        String destination = "CSV/" + idOrg + "/" + category + "/" + uploadFile.getId() + ".csv";
         log.info("destination: {}", destination);
         try {
           azureBlobClient.upload(csv.getResource().getInputStream(),

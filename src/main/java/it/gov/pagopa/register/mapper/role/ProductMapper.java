@@ -2,10 +2,8 @@ package it.gov.pagopa.register.dto.mapper.role;
 
 import it.gov.pagopa.register.dto.ProductDTO;
 import it.gov.pagopa.register.model.role.Product;
-import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.List;
+import static it.gov.pagopa.register.utils.Utils.generateEprelUrl;
 
 
 public class ProductMapper {
@@ -14,6 +12,7 @@ public class ProductMapper {
     ProductDTO dto = new ProductDTO();
 
     if(entity!=null){
+      String linkEprel = generateEprelUrl(entity.getProductGroup(), entity.getEprelCode());
       dto.builder()
         .productFileId(entity.getProductFileId())
         .organizationId(entity.getOrganizationId())
@@ -28,6 +27,7 @@ public class ProductMapper {
         .productCode(entity.getProductCode())
         .countryOfProduction(entity.getCountryOfProduction())
         .energyClass(entity.getEnergyClass())
+        .linkEprel(linkEprel)
         .build();
     }
 

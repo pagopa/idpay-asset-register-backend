@@ -87,8 +87,4 @@ public class ProductDTO {
    */
   private String linkEprel;
 
-
-
-
-
 }
