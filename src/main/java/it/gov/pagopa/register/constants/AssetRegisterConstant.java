@@ -31,6 +31,7 @@ public class AssetRegisterConstant {
   public static final String BRAND = "Marca";
   public static final String MODEL = "Modello";
 
+  // Category
   public static final String WASHINGMACHINES = "WASHINGMACHINES";
   public static final String WASHERDRIERS = "WASHERDRIERS";
   public static final String OVENS = "OVENS";
@@ -61,9 +62,9 @@ public class AssetRegisterConstant {
   public static final String ERROR_CODE_EPREL = "Il Codice EPREL è obbligatorio e deve essere un valore numerico";
   public static final String ERROR_CATEGORY_PRODUCTS = "Il campo Categoria è obbligatorio e deve contenere il valore fisso ";
 
+
   public static final class UploadKeyConstant {
     private UploadKeyConstant(){}
-
     public static final String EXTENSION_FILE_ERROR_KEY = "product.invalid.file.extension";
     public static final String MAX_ROW_FILE_ERROR_KEY = "product.invalid.file.maxrow";
     public static final String HEADER_FILE_ERROR_KEY = "product.invalid.file.header";
@@ -72,9 +73,9 @@ public class AssetRegisterConstant {
     public static final String EMPTY_FILE_ERROR_KEY = "product.invalid.file.empty";
   }
 
+
   public static final class ValidationRules {
     private ValidationRules() {}
-    // Regole di validazione
     public static final ColumnValidationRule GTIN_EAN_RULE =
       new ColumnValidationRule((v, z) -> v != null && v.matches(CODE_GTIN_EAN_REGEX), ERROR_GTIN_EAN);
 
