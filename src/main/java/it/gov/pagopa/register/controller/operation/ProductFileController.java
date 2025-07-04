@@ -6,6 +6,7 @@ import it.gov.pagopa.register.service.operation.ProductFileService;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -15,6 +16,7 @@ import java.io.ByteArrayOutputStream;
 @RestController
 @RequestMapping("/idpay/register")
 public class ProductFileController {
+
   private final ProductFileService productFileService;
 
   public ProductFileController(ProductFileService productFileService) {
@@ -31,7 +33,7 @@ public class ProductFileController {
 
   @PostMapping(value = "/product-files", consumes = "multipart/form-data")
   public ResponseEntity<ProductFileResult> uploadProductFile(@RequestHeader("x-organization-id") String organizationId, @RequestHeader("x-user-id") String userId,
-                                           @RequestParam(value = "category") String category, @RequestPart("csv") MultipartFile csv) {
+                                                             @RequestParam(value = "category") String category, @RequestPart("csv") MultipartFile csv) {
     ProductFileResult productFileResult = productFileService.processFile(csv, category, organizationId, userId);
     return ResponseEntity.ok().body(productFileResult);
   }
@@ -47,7 +49,7 @@ public class ProductFileController {
 
     return ResponseEntity.ok()
       .header("Content-Disposition", "attachment; filename=test.csv") //TODO fix filename
-      .contentType(org.springframework.http.MediaType.APPLICATION_OCTET_STREAM)
+      .contentType(MediaType.APPLICATION_JSON) //force to json because of FE client spec
       .body(zipBytes);
   }
 

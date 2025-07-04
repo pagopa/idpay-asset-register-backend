@@ -10,6 +10,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.*;
 
+import static it.gov.pagopa.register.constants.AssetRegisterConstant.CATEGORIES;
+
 @Component
 @RequiredArgsConstructor
 public class ProductFileValidator {
@@ -25,7 +27,11 @@ public class ProductFileValidator {
     }
 
     // 1. load configuration
-    LinkedHashMap<String, ColumnValidationRule> columnDefinitions = validationConfig.getSchemas().getOrDefault(category, validationConfig.getSchemas().get(DEFAULT_CATEGORY));
+    if(!CATEGORIES.contains(category)) {
+      return ValidationResultDTO.ko(AssetRegisterConstant.UploadKeyConstant.UNKNOWN_CATEGORY_ERROR_KEY);
+    }
+
+    LinkedHashMap<String, ColumnValidationRule> columnDefinitions = validationConfig.getSchemas().getOrDefault(category.toLowerCase(), validationConfig.getSchemas().get(DEFAULT_CATEGORY));
     if (columnDefinitions == null || columnDefinitions.isEmpty()) {
       return ValidationResultDTO.ko(AssetRegisterConstant.UploadKeyConstant.UNKNOWN_CATEGORY_ERROR_KEY);
     }
@@ -54,7 +60,8 @@ public class ProductFileValidator {
 
   public ValidationResultDTO validateRecords(List<CSVRecord> records, List<String> headers, String category) {
 
-    Map<String, ColumnValidationRule> rules = validationConfig.getSchemas().get(category);
+
+    Map<String, ColumnValidationRule> rules = validationConfig.getSchemas().getOrDefault(category.toLowerCase(), validationConfig.getSchemas().get(DEFAULT_CATEGORY));
     if (rules == null || rules.isEmpty()) {
       throw new IllegalArgumentException("No validation rules found for category: " + category);
     }
@@ -62,22 +69,22 @@ public class ProductFileValidator {
     List<CSVRecord> invalidRecords = new ArrayList<>();
     Map<CSVRecord, String> errorMessages = new HashMap<>();
 
-    for (CSVRecord record : records) {
+    for (CSVRecord csvRow : records) {
       List<String> errors = new ArrayList<>();
 
       for (String header : headers) {
         ColumnValidationRule rule = rules.get(header);
         if (rule != null) {
-          String value = record.get(header);
-          if (!rule.isValid(value)) {
+          String value = csvRow.get(header);
+          if (!rule.isValid(value,category)) {
             errors.add(rule.getMessage());
           }
         }
       }
 
       if (!errors.isEmpty()) {
-        invalidRecords.add(record);
-        errorMessages.put(record, String.join(", ", errors));
+        invalidRecords.add(csvRow);
+        errorMessages.put(csvRow, String.join(", ", errors));
       }
     }
 
