@@ -1,6 +1,6 @@
 package it.gov.pagopa.register.repository.operation;
 
-import it.gov.pagopa.register.model.role.Product;
+import it.gov.pagopa.register.model.operation.Product;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -10,7 +10,7 @@ import org.springframework.data.mongodb.core.query.Query;
 
 import java.util.List;
 
-public class ProductSpecificRepositoryImpl implements ProductSpecificRepository{
+public class ProductSpecificRepositoryImpl implements ProductSpecificRepository {
 
   private final MongoTemplate mongoTemplate;
 
@@ -57,7 +57,7 @@ public class ProductSpecificRepositoryImpl implements ProductSpecificRepository{
 
   private Pageable getPageable(Pageable pageable) {
     if (pageable == null) {
-      return PageRequest.of(0, 15, Sort.by("registrationDate"));
+      return PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), pageable.getSort());
     }
     return pageable;
   }

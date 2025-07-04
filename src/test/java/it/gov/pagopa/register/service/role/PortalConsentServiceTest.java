@@ -1,4 +1,4 @@
-package it.gov.pagopa.register.service;
+package it.gov.pagopa.register.service.role;
 
 import it.gov.pagopa.register.exception.role.VersionNotMatchedException;
 import it.gov.pagopa.register.connector.onetrust.OneTrustRestService;
@@ -7,9 +7,7 @@ import it.gov.pagopa.register.mapper.role.PrivacyNotices2PortalConsentDTOMapper;
 import it.gov.pagopa.register.dto.onetrust.PrivacyNoticesDTO;
 import it.gov.pagopa.register.dto.onetrust.PrivacyNoticesVersion;
 import it.gov.pagopa.register.model.role.PortalConsent;
-import it.gov.pagopa.register.repository.operation.PortalConsentRepository;
-import it.gov.pagopa.register.service.role.PortalConsentService;
-import it.gov.pagopa.register.service.role.PortalConsentServiceImpl;
+import it.gov.pagopa.register.repository.role.PortalConsentRepository;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -23,7 +21,7 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 
 @ExtendWith(MockitoExtension.class)
-class PortalConsentServiceImplTest {
+class PortalConsentServiceTest {
     public static final LocalDateTime NOW = LocalDateTime.now();
     private static final String USER_ID = "USER_ID";
     private static final String TOS_ID = "TOS_ID";

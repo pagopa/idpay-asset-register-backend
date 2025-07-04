@@ -1,4 +1,4 @@
-package it.gov.pagopa.register.repository.operation;
+package it.gov.pagopa.register.repository.role;
 
 import it.gov.pagopa.register.model.role.PortalConsent;
 import org.springframework.data.mongodb.repository.MongoRepository;

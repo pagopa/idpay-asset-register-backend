@@ -6,35 +6,43 @@ import com.fasterxml.jackson.databind.ObjectReader;
 import it.gov.pagopa.common.kafka.BaseKafkaConsumer;
 import it.gov.pagopa.register.connector.eprel.EprelConnector;
 import it.gov.pagopa.register.connector.storage.FileStorageClient;
-import it.gov.pagopa.register.dto.operation.EprelProductDTO;
-import it.gov.pagopa.register.dto.operation.ProductFileDTO;
-import it.gov.pagopa.register.dto.operation.ProductFileResponseDTO;
-import it.gov.pagopa.register.dto.operation.StorageEventDTO;
+import it.gov.pagopa.register.constants.AssetRegisterConstant;
+import it.gov.pagopa.register.constants.enums.UploadCsvStatus;
+import it.gov.pagopa.register.dto.operation.*;
+import it.gov.pagopa.register.exception.operation.ReportNotFoundException;
 import it.gov.pagopa.register.mapper.operation.ProductFileMapper;
+import it.gov.pagopa.register.model.operation.Product;
 import it.gov.pagopa.register.model.operation.ProductFile;
-import it.gov.pagopa.register.model.role.Product;
 import it.gov.pagopa.register.repository.operation.ProductFileRepository;
 import it.gov.pagopa.register.repository.operation.ProductRepository;
+import it.gov.pagopa.register.utils.CsvUtils;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.csv.CSVRecord;
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.messaging.Message;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.regex.Matcher;
 
-import static it.gov.pagopa.register.constants.RegisterConstants.*;
 import static it.gov.pagopa.register.constants.RegisterConstants.CsvRecord.*;
+import static it.gov.pagopa.register.constants.RegisterConstants.*;
 import static it.gov.pagopa.register.constants.enums.UploadCsvStatus.*;
 
 @Slf4j
@@ -46,28 +54,32 @@ public class ProductFileService extends BaseKafkaConsumer<List<StorageEventDTO>>
   private final EprelConnector eprelConnector;
   private final FileStorageClient fileStorageClient;
   private final ObjectReader objectReader;
+  private final ProductFileValidator productFileValidator;
 
   public ProductFileService(ProductFileRepository productFileRepository,
                             ProductRepository productRepository,
                             FileStorageClient fileStorageClient,
                             ObjectMapper objectMapper,
                             @Value("${spring.application.name}") String applicationName,
-                            EprelConnector eprelConnector) {
+                            EprelConnector eprelConnector,
+                            ProductFileValidator productFileValidator) {
     super(applicationName);
     this.productFileRepository = productFileRepository;
+    this.productFileValidator = productFileValidator;
     this.productRepository = productRepository;
     this.eprelConnector = eprelConnector;
     this.fileStorageClient = fileStorageClient;
     this.objectReader = objectMapper.readerFor(new TypeReference<List<StorageEventDTO>>() {});
   }
 
-  public ProductFileResponseDTO downloadFilesByPage(String organizationId, Pageable pageable) {
+  public ProductFileResponseDTO getFilesByPage(String organizationId, Pageable pageable) {
+
     if (organizationId == null) {
       throw new IllegalArgumentException("OrganizationId must not be null");
     }
 
     Page<ProductFile> filesPage = productFileRepository.findByOrganizationIdAndUploadStatusNot(
-      organizationId, "FORMAL_ERROR", pageable);
+      organizationId, UploadCsvStatus.FORMAL_ERROR.name(), pageable);
 
     Page<ProductFileDTO> filesPageDTO = filesPage.map(ProductFileMapper::toDTO);
 
@@ -78,6 +90,92 @@ public class ProductFileService extends BaseKafkaConsumer<List<StorageEventDTO>>
       .totalElements(filesPageDTO.getTotalElements())
       .totalPages(filesPageDTO.getTotalPages())
       .build();
+  }
+
+  public FileReportDTO downloadReport(String id, String organizationId) {
+    ProductFile productFile = productFileRepository.findByIdAndOrganizationId(id, organizationId)
+      .orElseThrow(() -> new ReportNotFoundException("Report not found with id: " + id));
+
+    String filePath;
+
+    if (AssetRegisterConstant.EPREL_ERROR.equals(productFile.getUploadStatus())) {
+      filePath = "Report/Eprel_Error/" + productFile.getId() + ".csv";
+    } else if (AssetRegisterConstant.FORMAL_ERROR.equals(productFile.getUploadStatus())) {
+      filePath = "Report/Formal_Error/" + productFile.getId() + ".csv";
+    } else {
+      throw new ReportNotFoundException("Report not available for file: " + productFile.getFileName());
+    }
+
+    ByteArrayOutputStream result = fileStorageClient.download(filePath);
+
+    if (result == null) {
+      throw new ReportNotFoundException("Report not found on Azure for path: " + filePath);
+    }
+
+    return FileReportDTO.builder().data(result.toByteArray()).filename(FilenameUtils.getBaseName(productFile.getFileName()) + "_errors.csv").build();
+  }
+
+  public ProductFileResult processFile(MultipartFile file, String category, String organizationId, String userId) {
+
+    try {
+
+      String originalFileName = file.getOriginalFilename();
+      List<String> headers = CsvUtils.readHeader(file);
+      List<CSVRecord> records = CsvUtils.readCsvRecords(file);
+
+      //TODO check if for the specified organization there are some file uploaded or in progress and stop the upload of new file
+
+      ValidationResultDTO validation = productFileValidator.validateFile(file, category, headers, records.size());
+      if ("KO".equals(validation.getStatus())) {
+        return ProductFileResult.ko(validation.getErrorKey());
+      }
+
+      ValidationResultDTO result = productFileValidator.validateRecords(records, headers, category);
+
+      if (result != null && !CollectionUtils.isEmpty(result.getInvalidRecords())) {
+        String errorFileName = FilenameUtils.getBaseName(file.getOriginalFilename()) + "_errors.csv";
+        CsvUtils.writeCsvWithErrors(result.getInvalidRecords(), headers, result.getErrorMessages(), errorFileName);
+
+        //TODO verify if really needed
+        ProductFile productFile = productFileRepository.save(ProductFile.builder()
+          .fileName(originalFileName)
+          .uploadStatus(FORMAL_ERROR.name())
+          .category(category)
+          .findedProductsNumber(records.size())
+          .addedProductNumber(NumberUtils.INTEGER_ZERO)
+          .userId(userId)
+          .organizationId(organizationId)
+          .dateUpload(LocalDateTime.now())
+          .build());
+
+        Path tempFilePath = Paths.get("/tmp/", errorFileName);
+        String destination = "Report/Formal_Error/" + productFile.getId() + ".csv";
+        fileStorageClient.upload(Files.newInputStream(tempFilePath), destination, file.getContentType());
+
+        return ProductFileResult.ko(AssetRegisterConstant.UploadKeyConstant.REPORT_FORMAL_FILE_ERROR_KEY, productFile.getId());
+      }
+
+      // Upload on Azure
+      fileStorageClient.upload(file.getInputStream(), "CSV/"+organizationId+"/"+category+"/"+originalFileName, file.getContentType());
+
+      // Log OK
+      productFileRepository.save(ProductFile.builder()
+        .fileName(originalFileName)
+        .uploadStatus(UPLOADED.name())
+        .category(category)
+        .findedProductsNumber(records.size())
+        .addedProductNumber(NumberUtils.INTEGER_ZERO)
+        .userId(userId)
+        .organizationId(organizationId)
+        .dateUpload(LocalDateTime.now())
+        .build());
+
+      return ProductFileResult.ok();
+
+    } catch (Exception e) {
+      log.error("[UPLOAD_PRODUCT_FILE] - Generic Error ", e);
+      return ProductFileResult.ko("GENERIC_ERROR");
+    }
   }
 
 

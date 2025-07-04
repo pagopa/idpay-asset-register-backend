@@ -1,6 +1,6 @@
 package it.gov.pagopa.register.repository.operation;
 
-import it.gov.pagopa.register.model.role.Product;
+import it.gov.pagopa.register.model.operation.Product;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.core.query.Criteria;
 

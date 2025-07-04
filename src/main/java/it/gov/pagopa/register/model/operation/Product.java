@@ -4,55 +4,35 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.experimental.FieldNameConstants;
+import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
+
+import java.time.LocalDateTime;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@FieldNameConstants
 @Document(collection = "product")
+
 public class Product {
 
-    private String eprelRegistrationNumber;
-    private String gtinCode;
-    private String productCode;
-    private String linkEprel;
-    private boolean eprelControl;
-    private String supplierOrTrademark;
-    private String modelIdentifier;
-    private String energyClass;
-    private String productGroup;
-    private String registranNature;
+  private String productFileId;
+  private String organizationId;
+  private LocalDateTime registrationDate;
+  private String status;
+  private String model;
+  private String productGroup;
+  private String category;
+  private String brand;
+  private String eprelCode;
+  @Id
+  private String gtinCode;
+  private String productCode;
+  private String countryOfProduction;
+  private String energyClass;
+  private String linkEprel;
 
-    /*
-
-        ###PIANO COTTURA###
-
-        Codice EAN/GTIN
-        Categoria
-        Marca
-        Modello
-        Codice Prodotto
-
-        ###################
-
-        ###EPREL####
-
-        Codice EPREL
-        Codice GTIN/EAN
-        Categoria
-        Codice Prodotto
-
-        Da recuperare tramite API
-        Link di redirect su EPREL = https://eprel.ec.europa.eu/screen/product/{productGroup}/{Codice Prodotto}
-        Marca = supplierOrTrademark
-        Modello = modelIdentifier
-        Classe Energetica  = energyClass
-        productGroup = categoria per creare l'url
-        registranNaturare =
-        Esito del controllo di esistenza su EPRAL
-        ###################
-
-
-     */
 }

@@ -1,4 +1,4 @@
-package it.gov.pagopa.register.service;
+package it.gov.pagopa.register.service.role;
 
 
 import it.gov.pagopa.register.constants.RoleConstants;
@@ -8,7 +8,6 @@ import it.gov.pagopa.register.exception.role.PermissionNotFoundException;
 import it.gov.pagopa.register.model.role.Permission;
 import it.gov.pagopa.register.model.role.RolePermission;
 import it.gov.pagopa.register.repository.role.RolePermissionRepository;
-import it.gov.pagopa.register.service.role.RolePermissionService;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -30,7 +29,7 @@ import static org.mockito.Mockito.verify;
 @ExtendWith(MockitoExtension.class)
 @WebMvcTest(value = {RolePermissionService.class})
 @Slf4j
-class RolePermissionServiceImplTest {
+class RolePermissionServiceTest {
 
     @Autowired
     RolePermissionService rolePermissionService;

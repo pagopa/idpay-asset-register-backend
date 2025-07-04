@@ -1,13 +1,13 @@
 package it.gov.pagopa.register.controller.operation;
 
-
-import it.gov.pagopa.register.dto.mapper.operation.AssetProductDTO;
+import it.gov.pagopa.register.dto.operation.ProductListDTO;
 import it.gov.pagopa.register.service.operation.ProductService;
+import jakarta.annotation.Nullable;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
-
-import java.io.ByteArrayOutputStream;
 
 
 @RestController
@@ -15,40 +15,32 @@ import java.io.ByteArrayOutputStream;
 public class ProductController {
 
 
-    private final ProductService productService;
+  private final ProductService productService;
 
-
-
-    public ProductController(ProductService productService) {
-        this.productService = productService;
-    }
-
-    @PostMapping(value = "upload", consumes = "multipart/form-data")
-    public ResponseEntity<AssetProductDTO> uploadCsv(@RequestParam(required = false) String idUser,
-                                                     @RequestParam(required = false) String idOrg,
-                                                     @RequestParam(required = false) String role,
-                                                     @RequestPart("category") String category,
-                                                     @RequestPart("csv") MultipartFile csv) {
-
-      AssetProductDTO assetProductDTO = productService.saveCsv(csv, category, idOrg, idUser);
-        return ResponseEntity.ok().body(assetProductDTO);
-    }
-
-  @GetMapping("/download/report/{idUpload}")
-  public ResponseEntity<byte[]> downloadCsv(
-    @RequestParam(required = false) String idProducer,
-    @RequestParam(required = false) String orgName,
-    @PathVariable("idUpload") String idUpload) {
-
-    ByteArrayOutputStream file = productService.downloadReport(idUpload);
-
-    byte[] zipBytes = file.toByteArray();
-
-    return ResponseEntity.ok()
-      .header("Content-Disposition", "attachment; filename=test.csv")
-      .contentType(org.springframework.http.MediaType.APPLICATION_OCTET_STREAM)
-      .body(zipBytes);
+  public ProductController(ProductService productService) {
+    this.productService = productService;
   }
 
+  @GetMapping("/products")
+  public ResponseEntity<ProductListDTO> getProductList(@RequestHeader("x-organization-id") String organizationId,
+                                                       @RequestParam @Nullable String category,
+                                                       @RequestParam @Nullable String productCode,
+                                                       @RequestParam @Nullable String productFileId,
+                                                       @RequestParam @Nullable String eprelCode,
+                                                       @RequestParam @Nullable String gtinCode,
+                                                       @PageableDefault(size = 10,
+                                                         sort = "registrationDate",
+                                                         direction = Sort.Direction.DESC) Pageable pageable) {
 
+    ProductListDTO result = productService.getProducts(organizationId,
+      category,
+      productCode,
+      productFileId,
+      eprelCode,
+      gtinCode,
+      pageable);
+
+    return ResponseEntity.ok(result);
+
+  }
 }

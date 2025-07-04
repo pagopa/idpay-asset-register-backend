@@ -8,6 +8,4 @@ public enum UploadCsvStatus {
   EPREL_ERROR,
   UPLOADED,
   LOADED
-
-
 }

@@ -10,7 +10,8 @@ public class ProductFileMapper {
   public static ProductFileDTO toDTO(ProductFile productFile){
     return ProductFileDTO.builder()
       .productFileId(productFile.getId())
-      .userId(productFile.getUserId())
+      .category(productFile.getCategory())
+      .batchName(productFile.getCategory()+"-"+productFile.getId())
       .fileName(productFile.getFileName())
       .uploadStatus(productFile.getUploadStatus())
       .dateUpload(productFile.getDateUpload())

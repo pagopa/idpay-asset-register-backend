@@ -1,24 +1,35 @@
 package it.gov.pagopa.register.dto.operation;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.data.annotation.Id;
+
+import java.time.LocalDateTime;
 
 @Data
 @Builder
-@AllArgsConstructor
 @NoArgsConstructor
+@AllArgsConstructor
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class ProductDTO {
-    private String codiceGTIN;
-    private String categoria;
-    private String marca;
-    private String modello;
-    private String codiceProdotto;
 
-    // Campi opzionali per EPREL
-    private String codiceEprel;
-    private String classeEnergetica;
-    private String linkEprel;
+  @Id
+  private String gtinCode;
+  private String organizationId;
+  private LocalDateTime registrationDate;
+  private String status;
+  private String model;
+  private String productGroup;
+  private String category;
+  private String brand;
+  private String eprelCode;
+  private String productCode;
+  private String countryOfProduction;
+  private String energyClass;
+  private String linkEprel;
+  private String batchName;
 
 }

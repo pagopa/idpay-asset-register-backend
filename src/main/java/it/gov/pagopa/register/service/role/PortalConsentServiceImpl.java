@@ -6,7 +6,7 @@ import it.gov.pagopa.register.mapper.role.PrivacyNotices2PortalConsentDTOMapper;
 import it.gov.pagopa.register.dto.onetrust.PrivacyNoticesDTO;
 import it.gov.pagopa.register.exception.role.VersionNotMatchedException;
 import it.gov.pagopa.register.model.role.PortalConsent;
-import it.gov.pagopa.register.repository.operation.PortalConsentRepository;
+import it.gov.pagopa.register.repository.role.PortalConsentRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;

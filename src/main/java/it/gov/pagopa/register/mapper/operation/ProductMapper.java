@@ -8,56 +8,54 @@ import static it.gov.pagopa.register.utils.Utils.generateEprelUrl;
 
 public class ProductMapper {
 
-  public static ProductDTO toDTO(Product entity){
-    ProductDTO dto = new ProductDTO();
+  private ProductMapper() {}
 
-    if(entity!=null){
-      String linkEprel = generateEprelUrl(entity.getProductGroup(), entity.getEprelCode());
-      dto.builder()
-        .productFileId(entity.getProductFileId())
-        .organizationId(entity.getOrganizationId())
-        .registrationDate(entity.getRegistrationDate())
-        .status(entity.getStatus())
-        .model(entity.getModel())
-        .productGroup(entity.getProductGroup())
-        .category(entity.getCategory())
-        .brand(entity.getBrand())
-        .eprelCode(entity.getEprelCode())
-        .gtinCode(entity.getGtinCode())
-        .productCode(entity.getProductCode())
-        .countryOfProduction(entity.getCountryOfProduction())
-        .energyClass(entity.getEnergyClass())
-        .linkEprel(linkEprel)
-        .build();
+  public static ProductDTO toDTO(Product entity){
+
+    if(entity==null){
+      return null;
     }
 
 
-    return dto;
+    return ProductDTO.builder()
+      .organizationId(entity.getOrganizationId())
+      .registrationDate(entity.getRegistrationDate())
+      .status(entity.getStatus())
+      .model(entity.getModel())
+      .productGroup(entity.getProductGroup())
+      .category(entity.getCategory())
+      .brand(entity.getBrand())
+      .eprelCode(entity.getEprelCode())
+      .gtinCode(entity.getGtinCode())
+      .productCode(entity.getProductCode())
+      .countryOfProduction(entity.getCountryOfProduction())
+      .energyClass(entity.getEnergyClass())
+      .linkEprel(generateEprelUrl(entity.getProductGroup(), entity.getEprelCode()))
+      .batchName(entity.getCategory()+"_"+entity.getProductFileId()+".csv")
+      .build();
   }
 
   public static Product toEntity(ProductDTO dto){
-    Product entity = new Product();
 
-    if(dto!=null){
-      entity.builder()
-        .productFileId(dto.getProductFileId())
-        .organizationId(dto.getOrganizationId())
-        .registrationDate(dto.getRegistrationDate())
-        .status(dto.getStatus())
-        .model(dto.getModel())
-        .productGroup(dto.getProductGroup())
-        .category(dto.getCategory())
-        .brand(dto.getBrand())
-        .eprelCode(dto.getEprelCode())
-        .gtinCode(dto.getGtinCode())
-        .productCode(dto.getProductCode())
-        .countryOfProduction(dto.getCountryOfProduction())
-        .energyClass(dto.getEnergyClass())
-        .build();
+    if(dto==null){
+      return null;
     }
 
-
-    return entity;
+    return Product.builder()
+      .organizationId(dto.getOrganizationId())
+      .registrationDate(dto.getRegistrationDate())
+      .status(dto.getStatus())
+      .model(dto.getModel())
+      .productGroup(dto.getProductGroup())
+      .category(dto.getCategory())
+      .brand(dto.getBrand())
+      .eprelCode(dto.getEprelCode())
+      .gtinCode(dto.getGtinCode())
+      .productCode(dto.getProductCode())
+      .countryOfProduction(dto.getCountryOfProduction())
+      .energyClass(dto.getEnergyClass())
+      .linkEprel(dto.getLinkEprel())
+      .build();
   }
 
 

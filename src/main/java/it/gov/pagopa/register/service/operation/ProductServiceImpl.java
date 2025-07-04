@@ -1,9 +1,9 @@
-package it.gov.pagopa.register.service.role;
+package it.gov.pagopa.register.service.operation;
 
-import it.gov.pagopa.register.dto.ProductDTO;
-import it.gov.pagopa.register.dto.ProductListDTO;
+import it.gov.pagopa.register.dto.operation.ProductDTO;
+import it.gov.pagopa.register.dto.operation.ProductListDTO;
 import it.gov.pagopa.register.mapper.operation.ProductMapper;
-import it.gov.pagopa.register.model.role.Product;
+import it.gov.pagopa.register.model.operation.Product;
 import it.gov.pagopa.register.repository.operation.ProductRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -47,8 +47,12 @@ public class ProductServiceImpl implements ProductService {
 
     return ProductListDTO.builder()
       .content(result.getContent())
+      .pageNo(result.getNumber())
+      .pageSize(result.getSize())
       .totalElements(result.getTotalElements())
+      .totalPages(result.getTotalPages())
       .build();
+
   }
 
   private Pageable getPageable(Pageable pageable) {

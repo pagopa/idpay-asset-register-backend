@@ -7,6 +7,9 @@ import java.util.regex.Pattern;
 
 public class RegisterConstants {
 
+  private RegisterConstants(){
+  }
+
   public static final Pattern SUBJECT_PATTERN = Pattern.compile(".*/blobs/CSV/([^/]+)/([^/]+)/([^/]+\\.csv)$");
 
   public static final Map<String, String> ENERGY_CLASS_REQUIREMENTS = Map.of(
