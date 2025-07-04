@@ -352,7 +352,7 @@ public class ProductFileService extends BaseKafkaConsumer<List<StorageEventDTO>>
       List<String> eprelErrors = validateEprelData(eprelData, category);
 
       if (eprelErrors.isEmpty()) {
-        validProducts.add(mapEprelToProduct(csvRecord, eprelData, orgId, productFileId));
+        validProducts.add(mapEprelToProduct(csvRecord, eprelData, orgId, productFileId,category));
         log.debug("[PRODUCT_UPLOAD] - EPREL product validated: {}", eprelCode);
       } else {
         errors.addAll(eprelErrors);
@@ -398,7 +398,7 @@ public class ProductFileService extends BaseKafkaConsumer<List<StorageEventDTO>>
       .build();
   }
 
-  private Product mapEprelToProduct(CSVRecord csvRecord, EprelProductDTO eprelData, String orgId, String productFileId) {
+  private Product mapEprelToProduct(CSVRecord csvRecord, EprelProductDTO eprelData, String orgId, String productFileId, String category) {
     return Product.builder()
       .productFileId(productFileId)
       .organizationId(orgId)
@@ -407,7 +407,8 @@ public class ProductFileService extends BaseKafkaConsumer<List<StorageEventDTO>>
       .productCode(csvRecord.get(PRODUCT_CODE))
       .gtinCode(csvRecord.get(GTIN_EAN_CODE))
       .eprelCode(csvRecord.get(EPREL_CODE))
-      .category(eprelData.getProductGroup())
+      .category(category)
+      .productGroup(eprelData.getProductGroup())
       .countryOfProduction(csvRecord.get(PRODUCTION_COUNTRY))
       .brand(eprelData.getSupplierOrTrademark())
       .model(eprelData.getModelIdentifier())
