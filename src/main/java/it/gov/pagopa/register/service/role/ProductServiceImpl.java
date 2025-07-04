@@ -2,7 +2,7 @@ package it.gov.pagopa.register.service.role;
 
 import it.gov.pagopa.register.dto.ProductDTO;
 import it.gov.pagopa.register.dto.ProductListDTO;
-import it.gov.pagopa.register.dto.mapper.role.ProductMapper;
+import it.gov.pagopa.register.mapper.operation.ProductMapper;
 import it.gov.pagopa.register.model.role.Product;
 import it.gov.pagopa.register.repository.operation.ProductRepository;
 import lombok.extern.slf4j.Slf4j;

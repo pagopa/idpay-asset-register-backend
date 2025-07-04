@@ -1,7 +1,7 @@
-package it.gov.pagopa.register.dto.mapper.role;
+package it.gov.pagopa.register.mapper.operation;
 
-import it.gov.pagopa.register.dto.ProductDTO;
-import it.gov.pagopa.register.model.role.Product;
+import it.gov.pagopa.register.dto.operation.ProductDTO;
+import it.gov.pagopa.register.model.operation.Product;
 
 import static it.gov.pagopa.register.utils.Utils.generateEprelUrl;
 
