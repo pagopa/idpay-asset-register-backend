@@ -155,11 +155,9 @@ public class ProductFileService extends BaseKafkaConsumer<List<StorageEventDTO>>
         return ProductFileResult.ko(AssetRegisterConstant.UploadKeyConstant.REPORT_FORMAL_FILE_ERROR_KEY, productFile.getId());
       }
 
-      // Upload on Azure
-      fileStorageClient.upload(file.getInputStream(), "CSV/"+organizationId+"/"+category+"/"+originalFileName, file.getContentType());
 
       // Log OK
-      productFileRepository.save(ProductFile.builder()
+      ProductFile productFile = productFileRepository.save(ProductFile.builder()
         .fileName(originalFileName)
         .uploadStatus(UPLOADED.name())
         .category(category)
@@ -169,6 +167,9 @@ public class ProductFileService extends BaseKafkaConsumer<List<StorageEventDTO>>
         .organizationId(organizationId)
         .dateUpload(LocalDateTime.now())
         .build());
+
+      // Upload on Azure
+      fileStorageClient.upload(file.getInputStream(), "CSV/"+organizationId+"/"+category+"/"+productFile.getId()+".csv", file.getContentType());
 
       return ProductFileResult.ok();
 
