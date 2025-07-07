@@ -1,6 +1,6 @@
 package it.gov.pagopa.register.connector.eprel;
 
-import it.gov.pagopa.register.dto.operation.EprelProductDTO;
+import it.gov.pagopa.register.utils.EprelProduct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
@@ -20,13 +20,13 @@ public class EprelConnector {
         this.restTemplate = new RestTemplate();
     }
 
-    public EprelProductDTO callEprel(String registrationNumber) {
+    public EprelProduct callEprel(String registrationNumber) {
         try {
             URI uri = UriComponentsBuilder
                     .fromUriString(EPREL_URL)
                     .buildAndExpand(registrationNumber)
                     .toUri();
-            ResponseEntity<EprelProductDTO> response = restTemplate.getForEntity(uri, EprelProductDTO.class);
+            ResponseEntity<EprelProduct> response = restTemplate.getForEntity(uri, EprelProduct.class);
             return response.getBody();
         } catch (Exception e) {
             log.error(e.getMessage());

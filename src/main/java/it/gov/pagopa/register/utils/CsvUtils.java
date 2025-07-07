@@ -42,6 +42,30 @@ public class CsvUtils {
     }
   }
 
+  public static List<CSVRecord> readCsvRecords(ByteArrayOutputStream file) throws IOException {
+    try (BufferedReader reader = new BufferedReader(new InputStreamReader(
+      new ByteArrayInputStream(file.toByteArray()), StandardCharsets.UTF_8));
+         CSVParser parser = new CSVParser(reader, CSVFormat.Builder.create()
+           .setHeader()
+           .setTrim(true)
+           .setDelimiter(';')
+           .build())) {
+      return parser.getRecords();
+    }
+  }
+
+  public static List<String> readHeader(ByteArrayOutputStream file) throws IOException {
+    try (BufferedReader reader = new BufferedReader(new InputStreamReader(
+      new ByteArrayInputStream(file.toByteArray()), StandardCharsets.UTF_8));
+         CSVParser parser = new CSVParser(reader, CSVFormat.Builder.create()
+           .setHeader()
+           .setTrim(true)
+           .setDelimiter(';')
+           .build())) {
+      return parser.getHeaderNames();
+    }
+  }
+
   public static void writeCsvWithErrors(List<CSVRecord> invalidRecords, List<String> headers, Map<CSVRecord, String> errorMap, String filename) throws IOException {
     List<String> finalHeaders = new ArrayList<>(headers);
     finalHeaders.add("Validation Errors");

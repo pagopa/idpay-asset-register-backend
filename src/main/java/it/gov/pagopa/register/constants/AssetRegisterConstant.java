@@ -1,10 +1,13 @@
 package it.gov.pagopa.register.constants;
 
-import it.gov.pagopa.register.service.operation.ColumnValidationRule;
+import it.gov.pagopa.register.utils.ColumnValidationRule;
+import it.gov.pagopa.register.utils.EprelValidationRule;
 
 import java.util.Arrays;
 import java.util.Locale;
 import java.util.Set;
+
+import static it.gov.pagopa.register.utils.Utils.isEnergyClassValid;
 
 public class AssetRegisterConstant {
 
@@ -12,6 +15,9 @@ public class AssetRegisterConstant {
   private AssetRegisterConstant(){
   }
 
+  public static final String REPORT_EPREL_ERROR = "Report/Eprel_Error/";
+  public static final String REPORT_FORMAL_ERROR = "Report/Formal_Error/";
+  public static final String CSV = ".csv";
   public static final String EPREL_ERROR = "EPREL_ERROR";
   public static final String FORMAL_ERROR = "FORMAL_ERROR";
 
@@ -52,7 +58,26 @@ public class AssetRegisterConstant {
     COOKINGHOBS
   );
 
-  // Errors
+  // Eprel Value
+
+  public static final String ORG_VERIFICATION_STATUS = "orgVerificationStatus";
+  public static final String TRADE_MARKER_VERIFICATION_STATUS = "trademarkVerificationStatus";
+  public static final String BLOCKED = "blocked";
+  public static final String STATUS = "status";
+  public static final String PRODUCT_GROUP = "productGroup";
+  public static final String ENERGY_CLASS = "energyClass";
+
+  public static final Set<String> EPREL_FIELDS = Set.of(
+    ORG_VERIFICATION_STATUS,
+    TRADE_MARKER_VERIFICATION_STATUS,
+    BLOCKED,
+    STATUS,
+    PRODUCT_GROUP,
+    ENERGY_CLASS
+  );
+
+
+  // Csv Errors
   public static final String ERROR_GTIN_EAN = "Il Codice GTIN/EAN è obbligatorio e deve essere univoco ed alfanumerico e lungo al massimo 14 caratteri";
   public static final String ERROR_CATEGORY_COOKINGHOBS = "Il campo Categoria è obbligatorio e deve contenere il valore fisso 'COOKINGHOBS'";
   public static final String ERROR_BRAND = "Il campo Marca è obbligatorio e deve contenere una stringa lunga al massimo 100 caratteri";
@@ -62,6 +87,7 @@ public class AssetRegisterConstant {
   public static final String ERROR_CODE_EPREL = "Il Codice EPREL è obbligatorio e deve essere un valore numerico";
   public static final String ERROR_CATEGORY_PRODUCTS = "Il campo Categoria è obbligatorio e deve essere coerente con la categoria selezionata";
 
+  // Eprel Errors
 
   public static final class UploadKeyConstant {
     private UploadKeyConstant(){}
@@ -74,8 +100,8 @@ public class AssetRegisterConstant {
   }
 
 
-  public static final class ValidationRules {
-    private ValidationRules() {}
+  public static final class CsvValidationRules {
+    private CsvValidationRules() {}
     public static final ColumnValidationRule GTIN_EAN_RULE =
       new ColumnValidationRule((v, z) -> v != null && v.matches(CODE_GTIN_EAN_REGEX), ERROR_GTIN_EAN);
 
@@ -99,6 +125,37 @@ public class AssetRegisterConstant {
 
     public static final ColumnValidationRule CODE_EPREL_RULE =
       new ColumnValidationRule((v, z) -> v != null && v.matches(CODE_EPREL_REGEX), ERROR_CODE_EPREL);
+  }
+
+
+  //Eprel Messages Error
+  public static final String  ERROR_ORG = "orgVerificationStatus is not VERIFIED";
+  public static final String  ERROR_TRADEMARK = "trademarkVerificationStatus is not VERIFIED";
+  public static final String  ERROR_BLOCKED = "Product is blocked";
+  public static final String  ERROR_STATUS = "Status is not PUBLISHED";
+  public static final String  ERROR_PRODUCT_GROU = "Product group from EPREL is not compatible with expected category";
+  public static final String  ERROR_ENERGY_CLASS= "Energy class %s is not compliant. Minimum required: %s";
+
+  public static final class EprelValidationRules {
+    private EprelValidationRules() {}
+
+    public static final EprelValidationRule ORG_VERIFICATION_STATUS_RULE =
+        new EprelValidationRule((v, z) -> v != null && v.equalsIgnoreCase("VERIFIED"), ERROR_ORG);
+
+    public static final EprelValidationRule TRADE_MARKER_VERIFICATION_STATUS_RULE =
+      new EprelValidationRule((v, z) -> v != null &&  v.equalsIgnoreCase("VERIFIED"), ERROR_TRADEMARK);
+
+    public static final EprelValidationRule BLOCKED_RULE =
+      new EprelValidationRule((v, z) -> v != null && v.equalsIgnoreCase("TRUE"), ERROR_BLOCKED);
+
+    public static final EprelValidationRule STATUS_RULE =
+      new EprelValidationRule((v, z) -> v != null && v.equalsIgnoreCase("PUBLISHED"), ERROR_STATUS);
+
+    public static final EprelValidationRule PRODUCT_GROUP_RULE =
+      new EprelValidationRule((v, z) -> v != null && v.toLowerCase().startsWith(z.toLowerCase()), ERROR_PRODUCT_GROU);
+
+    public static final EprelValidationRule ENERGY_CLASS_RULE =
+      new EprelValidationRule((v, z) -> v != null && isEnergyClassValid(v,z), ERROR_ENERGY_CLASS);
   }
 
 }

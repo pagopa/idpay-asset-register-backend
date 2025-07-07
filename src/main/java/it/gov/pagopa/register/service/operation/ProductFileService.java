@@ -26,6 +26,7 @@ import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import static it.gov.pagopa.register.constants.AssetRegisterConstant.*;
 import static it.gov.pagopa.register.constants.enums.UploadCsvStatus.FORMAL_ERROR;
 import static it.gov.pagopa.register.constants.enums.UploadCsvStatus.UPLOADED;
 
@@ -33,15 +34,16 @@ import static it.gov.pagopa.register.constants.enums.UploadCsvStatus.UPLOADED;
 @Service
 public class ProductFileService {
 
+
   private final ProductFileRepository productFileRepository;
 
   private final FileStorageClient fileStorageClient;
 
-  private final ProductFileValidator productFileValidator;
+  private final ProductFileValidatorService productFileValidator;
 
   public ProductFileService(ProductFileRepository productFileRepository,
                             FileStorageClient fileStorageClient,
-                            ProductFileValidator productFileValidator) {
+                            ProductFileValidatorService productFileValidator) {
     this.productFileRepository = productFileRepository;
     this.productFileValidator = productFileValidator;
     this.fileStorageClient = fileStorageClient;
@@ -74,9 +76,9 @@ public class ProductFileService {
     String filePath;
 
     if (AssetRegisterConstant.EPREL_ERROR.equals(productFile.getUploadStatus())) {
-      filePath = "Report/Eprel_Error/" + productFile.getId() + ".csv";
+      filePath = REPORT_EPREL_ERROR + productFile.getId() + CSV;
     } else if (AssetRegisterConstant.FORMAL_ERROR.equals(productFile.getUploadStatus())) {
-      filePath = "Report/Formal_Error/" + productFile.getId() + ".csv";
+      filePath = REPORT_FORMAL_ERROR + productFile.getId() + CSV;
     } else {
       throw new ReportNotFoundException("Report not available for file: " + productFile.getFileName());
     }

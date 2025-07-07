@@ -3,6 +3,7 @@ package it.gov.pagopa.register.service.operation;
 import it.gov.pagopa.register.config.ProductFileValidationConfig;
 import it.gov.pagopa.register.constants.AssetRegisterConstant;
 import it.gov.pagopa.register.dto.operation.ValidationResultDTO;
+import it.gov.pagopa.register.utils.ColumnValidationRule;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -20,20 +21,20 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration(classes = {
-  ProductFileValidator.class,
+  ProductFileValidatorService.class,
   ProductFileValidationConfig.class
 })
 @TestPropertySource(properties = "product-file-validation.maxRows=100")
-class ProductFileValidatorTest {
+class ProductFileValidatorServiceTest {
 
   @Autowired
-  ProductFileValidator productFileValidator;
+  ProductFileValidatorService productFileValidator;
   ProductFileValidationConfig validationConfig;
 
   @BeforeEach
   void setUp() {
     validationConfig = Mockito.mock(ProductFileValidationConfig.class);
-    productFileValidator = new ProductFileValidator(validationConfig);
+    productFileValidator = new ProductFileValidatorService(validationConfig);
   }
 
   @Test

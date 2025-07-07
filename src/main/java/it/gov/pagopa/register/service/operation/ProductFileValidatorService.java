@@ -3,6 +3,7 @@ package it.gov.pagopa.register.service.operation;
 import it.gov.pagopa.register.config.ProductFileValidationConfig;
 import it.gov.pagopa.register.constants.AssetRegisterConstant;
 import it.gov.pagopa.register.dto.operation.ValidationResultDTO;
+import it.gov.pagopa.register.utils.ColumnValidationRule;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.csv.CSVRecord;
 import org.springframework.stereotype.Component;
@@ -14,7 +15,7 @@ import static it.gov.pagopa.register.constants.AssetRegisterConstant.CATEGORIES;
 
 @Component
 @RequiredArgsConstructor
-public class ProductFileValidator {
+public class ProductFileValidatorService {
 
   public static final String DEFAULT_CATEGORY = "eprel";
   private final ProductFileValidationConfig validationConfig;
