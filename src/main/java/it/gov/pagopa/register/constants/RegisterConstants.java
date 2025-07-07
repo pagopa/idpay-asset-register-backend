@@ -19,7 +19,7 @@ public class RegisterConstants {
     "RANGEHOODS", "B",
     "DISHWASHERS", "C",
     "TUMBLEDRIERS", "C",
-    "REFRIGERATINGAPPLIANCES", "D"
+    "REFRIGERATINGAPPL", "D"
   );
 
   public static final List<String> ENERGY_CLASS_ORDER = Arrays.asList(
