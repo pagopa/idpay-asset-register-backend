@@ -58,9 +58,9 @@ public class AssetRegisterConstant {
   public static final String ERROR_BRAND = "Il campo Marca è obbligatorio e deve contenere una stringa lunga al massimo 100 caratteri";
   public static final String ERROR_MODEL = "Il campo Modello è obbligatorio e deve contenere una stringa lunga al massimo 100 caratteri";
   public static final String ERROR_CODE_PRODUCT = "Il Codice prodotto non deve contenere caratteri speciali o lettere accentate e deve essere lungo al massimo 100 caratteri";
-  public static final String ERROR_COUNTRY_OF_PRODUCTION = "Il Paese di Produzione è obbligatorio e deve essere composto da esattamente 2 caratteri";
+  public static final String ERROR_COUNTRY_OF_PRODUCTION = "Paese di Produzione non è un ISO 3166 valido";
   public static final String ERROR_CODE_EPREL = "Il Codice EPREL è obbligatorio e deve essere un valore numerico";
-  public static final String ERROR_CATEGORY_PRODUCTS = "Il campo Categoria è obbligatorio e deve contenere il valore fisso ";
+  public static final String ERROR_CATEGORY_PRODUCTS = "Il campo Categoria è obbligatorio e deve essere coerente con la categoria selezionata";
 
 
   public static final class UploadKeyConstant {
