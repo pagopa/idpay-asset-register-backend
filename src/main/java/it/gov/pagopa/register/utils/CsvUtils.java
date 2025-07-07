@@ -7,12 +7,15 @@ import org.apache.commons.csv.CSVRecord;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 public class CsvUtils {
+
+  private CsvUtils(){}
 
   public static final String DELIMITER = ";";
 
@@ -44,15 +47,15 @@ public class CsvUtils {
     finalHeaders.add("Validation Errors");
 
     File output = new File("/tmp/" + filename);
-    try (BufferedWriter writer = Files.newBufferedWriter(output.toPath());
+    try (BufferedWriter writer = Files.newBufferedWriter(output.toPath(),StandardCharsets.UTF_8);
          CSVPrinter printer = new CSVPrinter(writer, CSVFormat.Builder.create().setHeader(finalHeaders.toArray(new String[0])).setTrim(Boolean.TRUE).setDelimiter(DELIMITER).build())) {
 
-      for (CSVRecord record : invalidRecords) {
+      for (CSVRecord csvRow : invalidRecords) {
         List<String> row = new ArrayList<>();
         for (String h : headers) {
-          row.add(record.get(h));
+          row.add(csvRow.get(h));
         }
-        row.add(errorMap.get(record));
+        row.add(errorMap.get(csvRow));
         printer.printRecord(row);
       }
     }
