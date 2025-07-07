@@ -28,6 +28,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.regex.Matcher;
 
+import static com.azure.core.util.polling.LongRunningOperationStatus.IN_PROGRESS;
 import static it.gov.pagopa.register.constants.RegisterConstants.*;
 import static it.gov.pagopa.register.constants.RegisterConstants.CsvRecord.*;
 import static it.gov.pagopa.register.constants.RegisterConstants.CsvRecord.PRODUCTION_COUNTRY;
@@ -145,7 +146,7 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
       downloadedData = fileStorageClient.download(blobPath);
       if (downloadedData == null) {
         log.warn("[PRODUCT_UPLOAD] - File not found or download failed for path: {} (from URL: {})", blobPath, url);
-        setProductFileStatus(eventDetails.getFileName(), String.valueOf(EPREL_ERROR));
+        setProductFileStatus(eventDetails.getFileName(), String.valueOf(EPREL_ERROR),0);
         return;
       }
 
@@ -153,7 +154,7 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
 
     } catch (Exception e) {
       log.error("[PRODUCT_UPLOAD] - Error processing file {}: {}", eventDetails.getFileName(), e.getMessage(), e);
-      setProductFileStatus(eventDetails.getFileName(), String.valueOf(EPREL_ERROR));
+      setProductFileStatus(eventDetails.getFileName(), String.valueOf(EPREL_ERROR),0);
     } finally {
       if (downloadedData != null) {
         try {
@@ -172,7 +173,7 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
     CsvProcessingResult result = new CsvProcessingResult();
     boolean isCookingHob = CATEGORY_COOKINGHOBS.equalsIgnoreCase(category);
     String productFileId = fileName.replace(".csv", "");
-    setProductFileStatus(fileName, String.valueOf(UPLOADED));
+    setProductFileStatus(fileName, String.valueOf(IN_PROGRESS),0);
 
     try (BufferedReader reader = new BufferedReader(new InputStreamReader(
       new ByteArrayInputStream(byteArrayOutputStream.toByteArray()), StandardCharsets.UTF_8));
@@ -197,7 +198,7 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
 
     } catch (IOException e) {
       log.error("[PRODUCT_UPLOAD] - Error reading CSV {}: {}", fileName, e.getMessage());
-      setProductFileStatus(fileName, String.valueOf(EPREL_ERROR));
+      setProductFileStatus(fileName, String.valueOf(EPREL_ERROR),0);
     }
   }
 
@@ -210,10 +211,10 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
     if (!result.getErrorRows().isEmpty()) {
       headers.add("Errori");
       generateErrorReport(fileName, result.getErrorRows(),headers);
-      setProductFileStatus(fileName, String.valueOf(EPREL_ERROR));
+      setProductFileStatus(fileName, String.valueOf(EPREL_ERROR), result.getValidProducts().size());
       log.info("[PRODUCT_UPLOAD] - File {} processed with {} EPREL errors", fileName, result.getErrorRows().size());
     } else {
-      setProductFileStatus(fileName, String.valueOf(LOADED));
+      setProductFileStatus(fileName, String.valueOf(LOADED), result.getValidProducts().size());
       log.info("[PRODUCT_UPLOAD] - File {} processed successfully with no errors", fileName);
     }
   }
@@ -267,11 +268,12 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
     return row;
   }
 
-  private void setProductFileStatus(String fileName, String status) {
+  private void setProductFileStatus(String fileName, String status, int added) {
     String fileId = fileName.replace(".csv", "");
     Optional<ProductFile> productFile = productFileRepository.findById(fileId);
     if (productFile.isPresent()) {
       productFile.get().setUploadStatus(status);
+      productFile.get().setAddedProductNumber(added);
       productFileRepository.save(productFile.get());
       log.info("[PRODUCT_UPLOAD] - Final status for file {} set to: {}", fileName, status);
     }

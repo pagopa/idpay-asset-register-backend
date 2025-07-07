@@ -26,10 +26,16 @@ public class ProductFileValidator {
       return ValidationResultDTO.ko(AssetRegisterConstant.UploadKeyConstant.EXTENSION_FILE_ERROR_KEY);
     }
 
+    // 4. check record count in file
+    if (recordCount == 0 && actualHeader.isEmpty()) {
+      return ValidationResultDTO.ko(AssetRegisterConstant.UploadKeyConstant.EMPTY_FILE_ERROR_KEY);
+    }
+
     // 1. load configuration
     if(!CATEGORIES.contains(category)) {
       return ValidationResultDTO.ko(AssetRegisterConstant.UploadKeyConstant.UNKNOWN_CATEGORY_ERROR_KEY);
     }
+
 
     LinkedHashMap<String, ColumnValidationRule> columnDefinitions = validationConfig.getSchemas().getOrDefault(category.toLowerCase(), validationConfig.getSchemas().get(DEFAULT_CATEGORY));
     if (columnDefinitions == null || columnDefinitions.isEmpty()) {
@@ -40,14 +46,12 @@ public class ProductFileValidator {
     List<String> expectedHeader = new ArrayList<>(columnDefinitions.keySet());
 
     // 3. check excepted header
+
     if (!actualHeader.equals(expectedHeader)) {
       return ValidationResultDTO.ko(AssetRegisterConstant.UploadKeyConstant.HEADER_FILE_ERROR_KEY);
     }
 
-    // 4. check record count in file
-    if (recordCount == 1) {
-      return ValidationResultDTO.ko(AssetRegisterConstant.UploadKeyConstant.EMPTY_FILE_ERROR_KEY);
-    }
+
 
     // 5. check if record in file exceed the max expected
     if (recordCount > validationConfig.getMaxRows()) {
