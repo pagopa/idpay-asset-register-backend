@@ -1,13 +1,15 @@
 package it.gov.pagopa.register.dto.operation;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Getter;
 
 @Getter
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class ProductFileResult {
 
-  private String status;     // "OK" o "KO"
-  private String errorKey;   // presente solo se status == "KO"
-  private String productFileId; // id of ko file
+  private final String status;
+  private final String errorKey;
+  private String productFileId;
 
   private ProductFileResult(String status, String errorKey) {
     this.status = status;
