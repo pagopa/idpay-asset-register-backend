@@ -208,7 +208,7 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
     }
 
     if (!result.getErrorRows().isEmpty()) {
-      headers.add("Validaton Erros");
+      headers.add("Errori");
       generateErrorReport(fileName, result.getErrorRows(),headers);
       setProductFileStatus(fileName, String.valueOf(EPREL_ERROR));
       log.info("[PRODUCT_UPLOAD] - File {} processed with {} EPREL errors", fileName, result.getErrorRows().size());
