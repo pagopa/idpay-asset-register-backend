@@ -232,7 +232,7 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
   private List<String> processCookingHobRecord(CSVRecord csvRecord, String orgId, String productFileId,
                                                List<Product> validProducts) {
     validProducts.add(mapCookingHobToProduct(csvRecord, orgId, productFileId));
-    log.debug("[PRODUCT_UPLOAD] - Added cooking hob product: {}", csvRecord.get(PRODUCT_CODE));
+    log.info("[PRODUCT_UPLOAD] - Added cooking hob product: {}", csvRecord.get(PRODUCT_CODE));
     return new ArrayList<>();
   }
 
@@ -249,7 +249,7 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
 
       if (eprelErrors.isEmpty()) {
         validProducts.add(mapEprelToProduct(csvRecord, eprelData, orgId, productFileId,category));
-        log.debug("[PRODUCT_UPLOAD] - EPREL product validated: {}", eprelCode);
+        log.info("[PRODUCT_UPLOAD] - EPREL product validated: {}", eprelCode);
       } else {
         errors.addAll(eprelErrors);
       }
@@ -319,6 +319,10 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
     if (eprelData == null) {
       errors.add("Product not found in EPREL");
       return errors;
+    }
+
+    if(WASHERDRIERS.equalsIgnoreCase(expectedCategory)) {
+      eprelData.setEnergyClass(eprelData.getEnergyClassWash());
     }
 
     validateVerificationStatuses(eprelData, errors);
