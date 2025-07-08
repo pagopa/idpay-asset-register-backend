@@ -2,6 +2,7 @@ package it.gov.pagopa.register.connector.eprel;
 
 import it.gov.pagopa.register.utils.EprelProduct;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
@@ -13,17 +14,19 @@ import java.net.URI;
 @Component
 public class EprelConnector {
 
-    private static final String EPREL_URL = "https://eprel.ec.europa.eu/api/product/{REGISTRATION_NUMBER}";
+    @Value("${EPREL_BASE_UR}")
+    private final String eprelUrl;
     private final RestTemplate restTemplate;
 
-    public EprelConnector() {
-        this.restTemplate = new RestTemplate();
+    public EprelConnector(String eprelUrl) {
+      this.eprelUrl = eprelUrl;
+      this.restTemplate = new RestTemplate();
     }
 
     public EprelProduct callEprel(String registrationNumber) {
         try {
             URI uri = UriComponentsBuilder
-                    .fromUriString(EPREL_URL)
+                    .fromUriString(eprelUrl)
                     .buildAndExpand(registrationNumber)
                     .toUri();
             ResponseEntity<EprelProduct> response = restTemplate.getForEntity(uri, EprelProduct.class);

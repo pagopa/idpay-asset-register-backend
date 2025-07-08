@@ -107,6 +107,8 @@ app:
       service:
         name: notificationClient
         base-url:  ${NOTIFICATION_MS_BASE_URL:https://api-io.dev.cstar.pagopa.it/idpay-itn/mock/api/privacynotice/v2}
-
+    eprel:
+      service:
+        base-url : ${EPREL_BASE_UR:https://eprel.ec.europa.eu/api/product/{REGISTRATION_NUMBER}}
 product-file-validation:
   maxRows: 100
