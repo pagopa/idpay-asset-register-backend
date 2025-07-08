@@ -42,7 +42,7 @@ public class AssetRegisterConstants {
   public static final String OVENS = "OVENS";
   public static final String RANGEHOODS = "RANGEHOODS";
   public static final String DISHWASHERS = "DISHWASHERS";
-  public static final String TUMBLEDRYERS = "TUMBLEDRIERS";
+  public static final String TUMBLEDRYERS = "TUMBLEDRYERS";
   public static final String REFRIGERATINGAPPL = "REFRIGERATINGAPPL";
   public static final String COOKINGHOBS = "COOKINGHOBS";
 
@@ -156,7 +156,7 @@ public class AssetRegisterConstants {
       new EprelValidationRule((v, z) -> v != null &&  v.equalsIgnoreCase("VERIFIED"), ERROR_TRADEMARK);
 
     public static final EprelValidationRule BLOCKED_RULE =
-      new EprelValidationRule((v, z) -> v != null && v.equalsIgnoreCase("TRUE"), ERROR_BLOCKED);
+      new EprelValidationRule((v, z) -> v != null && v.equalsIgnoreCase("FALSE"), ERROR_BLOCKED);
 
     public static final EprelValidationRule STATUS_RULE =
       new EprelValidationRule((v, z) -> v != null && v.equalsIgnoreCase("PUBLISHED"), ERROR_STATUS);

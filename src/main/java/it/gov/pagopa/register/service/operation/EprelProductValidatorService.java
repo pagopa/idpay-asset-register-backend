@@ -77,7 +77,7 @@ public class EprelProductValidatorService {
       EprelValidationRule rule = context.getRules().get(field);
       if (rule != null) {
         String value = eprelData.getFieldValue(field);
-        if (!rule.isValid(value, eprelData.getProductGroup())) {
+        if (!rule.isValid(value, context.getCategory())) {
           errors.add(rule.getMessage());
         }
       }
