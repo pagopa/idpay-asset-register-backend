@@ -3,9 +3,9 @@ package it.gov.pagopa.register.utils;
 import static it.gov.pagopa.register.constants.AssetRegisterConstants.ENERGY_CLASS_ORDER;
 import static it.gov.pagopa.register.constants.AssetRegisterConstants.ENERGY_CLASS_REQUIREMENTS;
 
-public class Utils {
+public class EprelUtils {
 
-  private Utils(){
+  private EprelUtils(){
   }
 
   public static String generateEprelUrl(String productGroup, String eprelCode) {

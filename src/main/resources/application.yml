@@ -109,6 +109,7 @@ app:
         base-url:  ${NOTIFICATION_MS_BASE_URL:https://api-io.dev.cstar.pagopa.it/idpay-itn/mock/api/privacynotice/v2}
     eprel:
       service:
-        base-url : ${EPREL_BASE_UR:https://eprel.ec.europa.eu/api/product/{REGISTRATION_NUMBER}}
+        get-product : ${EPREL_BASE_URL:https://eprel.ec.europa.eu/api/product/{REGISTRATION_NUMBER}}
+      product-page: ${EPREL_PRODUCT_PAGE:https://eprel.ec.europa.eu/screen/product/%s/%s}
 product-file-validation:
   maxRows: 100

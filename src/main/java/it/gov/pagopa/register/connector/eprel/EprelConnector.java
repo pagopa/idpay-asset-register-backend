@@ -14,7 +14,7 @@ import java.net.URI;
 @Component
 public class EprelConnector {
 
-    @Value("${EPREL_BASE_UR}")
+    @Value("${app.rest-client.eprel.service.get-product}")
     private final String eprelUrl;
     private final RestTemplate restTemplate;
 

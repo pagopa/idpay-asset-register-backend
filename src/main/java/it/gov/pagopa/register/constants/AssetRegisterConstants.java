@@ -6,7 +6,7 @@ import it.gov.pagopa.register.utils.EprelValidationRule;
 import java.util.*;
 import java.util.regex.Pattern;
 
-import static it.gov.pagopa.register.utils.Utils.isEnergyClassValid;
+import static it.gov.pagopa.register.utils.EprelUtils.isEnergyClassValid;
 
 public class AssetRegisterConstants {
 
