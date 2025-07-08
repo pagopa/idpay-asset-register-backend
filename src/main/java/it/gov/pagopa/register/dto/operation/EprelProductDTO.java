@@ -20,5 +20,6 @@ public class EprelProductDTO {
   private String trademarkVerificationStatus;
   private Boolean blocked;
   private String status;
+  private String energyClassWash;
 
 }

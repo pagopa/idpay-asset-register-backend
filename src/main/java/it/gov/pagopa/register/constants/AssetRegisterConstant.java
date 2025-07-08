@@ -37,7 +37,7 @@ public class AssetRegisterConstant {
   public static final String OVENS = "OVENS";
   public static final String RANGEHOODS = "RANGEHOODS";
   public static final String DISHWASHERS = "DISHWASHERS";
-  public static final String TUMBLEDRIERS = "TUMBLEDRIERS";
+  public static final String TUMBLEDRYERS = "TUMBLEDRYERS";
   public static final String REFRIGERATINGAPPL = "REFRIGERATINGAPPL";
   public static final String COOKINGHOBS = "COOKINGHOBS";
 
@@ -47,7 +47,7 @@ public class AssetRegisterConstant {
     OVENS,
     RANGEHOODS,
     DISHWASHERS,
-    TUMBLEDRIERS,
+    TUMBLEDRYERS,
     REFRIGERATINGAPPL,
     COOKINGHOBS
   );
