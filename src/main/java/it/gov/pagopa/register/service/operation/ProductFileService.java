@@ -1,7 +1,7 @@
 package it.gov.pagopa.register.service.operation;
 
 import it.gov.pagopa.register.connector.storage.FileStorageClient;
-import it.gov.pagopa.register.constants.AssetRegisterConstant;
+import it.gov.pagopa.register.constants.AssetRegisterConstants;
 import it.gov.pagopa.register.constants.enums.UploadCsvStatus;
 import it.gov.pagopa.register.dto.operation.*;
 import it.gov.pagopa.register.exception.operation.ReportNotFoundException;
@@ -26,7 +26,7 @@ import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import static it.gov.pagopa.register.constants.AssetRegisterConstant.*;
+import static it.gov.pagopa.register.constants.AssetRegisterConstants.*;
 import static it.gov.pagopa.register.constants.enums.UploadCsvStatus.FORMAL_ERROR;
 import static it.gov.pagopa.register.constants.enums.UploadCsvStatus.UPLOADED;
 
@@ -75,9 +75,9 @@ public class ProductFileService {
 
     String filePath;
 
-    if (AssetRegisterConstant.EPREL_ERROR.equals(productFile.getUploadStatus())) {
+    if (AssetRegisterConstants.EPREL_ERROR.equals(productFile.getUploadStatus())) {
       filePath = REPORT_EPREL_ERROR + productFile.getId() + CSV;
-    } else if (AssetRegisterConstant.FORMAL_ERROR.equals(productFile.getUploadStatus())) {
+    } else if (AssetRegisterConstants.FORMAL_ERROR.equals(productFile.getUploadStatus())) {
       filePath = REPORT_FORMAL_ERROR + productFile.getId() + CSV;
     } else {
       throw new ReportNotFoundException("Report not available for file: " + productFile.getFileName());
@@ -129,7 +129,7 @@ public class ProductFileService {
         String destination = "Report/Formal_Error/" + productFile.getId() + ".csv";
         fileStorageClient.upload(Files.newInputStream(tempFilePath), destination, file.getContentType());
 
-        return ProductFileResult.ko(AssetRegisterConstant.UploadKeyConstant.REPORT_FORMAL_FILE_ERROR_KEY, productFile.getId());
+        return ProductFileResult.ko(AssetRegisterConstants.UploadKeyConstant.REPORT_FORMAL_FILE_ERROR_KEY, productFile.getId());
       }
 
 

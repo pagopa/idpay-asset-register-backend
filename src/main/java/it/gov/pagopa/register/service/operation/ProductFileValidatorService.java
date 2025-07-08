@@ -1,7 +1,7 @@
 package it.gov.pagopa.register.service.operation;
 
 import it.gov.pagopa.register.config.ProductFileValidationConfig;
-import it.gov.pagopa.register.constants.AssetRegisterConstant;
+import it.gov.pagopa.register.constants.AssetRegisterConstants;
 import it.gov.pagopa.register.dto.operation.ValidationResultDTO;
 import it.gov.pagopa.register.utils.ColumnValidationRule;
 import lombok.RequiredArgsConstructor;
@@ -11,7 +11,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.*;
 
-import static it.gov.pagopa.register.constants.AssetRegisterConstant.CATEGORIES;
+import static it.gov.pagopa.register.constants.AssetRegisterConstants.CATEGORIES;
 
 @Component
 @RequiredArgsConstructor
@@ -24,17 +24,22 @@ public class ProductFileValidatorService {
 
     // 0. check extension
     if (!Objects.requireNonNull(file.getOriginalFilename()).endsWith(".csv")) {
-      return ValidationResultDTO.ko(AssetRegisterConstant.UploadKeyConstant.EXTENSION_FILE_ERROR_KEY);
+      return ValidationResultDTO.ko(AssetRegisterConstants.UploadKeyConstant.EXTENSION_FILE_ERROR_KEY);
+    }
+
+    // 4. check record count in file
+    if (recordCount == 0) {
+      return ValidationResultDTO.ko(AssetRegisterConstants.UploadKeyConstant.EMPTY_FILE_ERROR_KEY);
     }
 
     // 1. load configuration
     if(!CATEGORIES.contains(category)) {
-      return ValidationResultDTO.ko(AssetRegisterConstant.UploadKeyConstant.UNKNOWN_CATEGORY_ERROR_KEY);
+      return ValidationResultDTO.ko(AssetRegisterConstants.UploadKeyConstant.UNKNOWN_CATEGORY_ERROR_KEY);
     }
 
     LinkedHashMap<String, ColumnValidationRule> columnDefinitions = validationConfig.getSchemas().getOrDefault(category.toLowerCase(), validationConfig.getSchemas().get(DEFAULT_CATEGORY));
     if (columnDefinitions == null || columnDefinitions.isEmpty()) {
-      return ValidationResultDTO.ko(AssetRegisterConstant.UploadKeyConstant.UNKNOWN_CATEGORY_ERROR_KEY);
+      return ValidationResultDTO.ko(AssetRegisterConstants.UploadKeyConstant.UNKNOWN_CATEGORY_ERROR_KEY);
     }
 
     // 2. retrieve excepted header
@@ -42,17 +47,13 @@ public class ProductFileValidatorService {
 
     // 3. check excepted header
     if (!actualHeader.equals(expectedHeader)) {
-      return ValidationResultDTO.ko(AssetRegisterConstant.UploadKeyConstant.HEADER_FILE_ERROR_KEY);
+      return ValidationResultDTO.ko(AssetRegisterConstants.UploadKeyConstant.HEADER_FILE_ERROR_KEY);
     }
 
-    // 4. check record count in file
-    if (recordCount == 0) {
-      return ValidationResultDTO.ko(AssetRegisterConstant.UploadKeyConstant.EMPTY_FILE_ERROR_KEY);
-    }
 
     // 5. check if record in file exceed the max expected
     if (recordCount > validationConfig.getMaxRows()) {
-      return ValidationResultDTO.ko(AssetRegisterConstant.UploadKeyConstant.MAX_ROW_FILE_ERROR_KEY);
+      return ValidationResultDTO.ko(AssetRegisterConstants.UploadKeyConstant.MAX_ROW_FILE_ERROR_KEY);
     }
 
     return ValidationResultDTO.ok();

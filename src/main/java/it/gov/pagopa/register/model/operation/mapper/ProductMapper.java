@@ -6,8 +6,7 @@ import org.apache.commons.csv.CSVRecord;
 
 import java.time.LocalDateTime;
 
-import static it.gov.pagopa.register.constants.RegisterConstants.CsvRecord.*;
-import static it.gov.pagopa.register.constants.RegisterConstants.CsvRecord.PRODUCTION_COUNTRY;
+import static it.gov.pagopa.register.constants.AssetRegisterConstants.*;
 
 public class ProductMapper {
 
@@ -18,10 +17,10 @@ public class ProductMapper {
       .organizationId(orgId)
       .registrationDate(LocalDateTime.now())
       .status(STATUS_APPROVED)
-      .productCode(csvRecord.get(PRODUCT_CODE))
-      .gtinCode(csvRecord.get(GTIN_EAN_CODE))
-      .category(CATEGORY_COOKINGHOBS)
-      .countryOfProduction(csvRecord.get(PRODUCTION_COUNTRY))
+      .productCode(csvRecord.get(CODE_PRODUCT))
+      .gtinCode(csvRecord.get(CODE_GTIN_EAN))
+      .category(COOKINGHOBS)
+      .countryOfProduction(csvRecord.get(COUNTRY_OF_PRODUCTION))
       .brand(csvRecord.get(BRAND))
       .model(csvRecord.get(MODEL))
       .build();
@@ -33,12 +32,12 @@ public class ProductMapper {
       .organizationId(orgId)
       .registrationDate(LocalDateTime.now())
       .status(STATUS_APPROVED)
-      .productCode(csvRecord.get(PRODUCT_CODE))
-      .gtinCode(csvRecord.get(GTIN_EAN_CODE))
-      .eprelCode(csvRecord.get(EPREL_CODE))
+      .productCode(csvRecord.get(CODE_PRODUCT))
+      .gtinCode(csvRecord.get(CODE_GTIN_EAN))
+      .eprelCode(csvRecord.get(CODE_EPREL))
       .category(category)
       .productGroup(eprelData.getProductGroup())
-      .countryOfProduction(csvRecord.get(PRODUCTION_COUNTRY))
+      .countryOfProduction(csvRecord.get(COUNTRY_OF_PRODUCTION))
       .brand(eprelData.getSupplierOrTrademark())
       .model(eprelData.getModelIdentifier())
       .energyClass(eprelData.getEnergyClass())

@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import static it.gov.pagopa.register.constants.AssetRegisterConstant.*;
+import static it.gov.pagopa.register.constants.AssetRegisterConstants.*;
 
 @Component
 @Data

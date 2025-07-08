@@ -14,7 +14,9 @@ import org.springframework.stereotype.Service;
 
 import java.util.*;
 
-import static it.gov.pagopa.register.constants.RegisterConstants.CsvRecord.EPREL_CODE;
+
+import static it.gov.pagopa.register.constants.AssetRegisterConstants.CODE_EPREL;
+import static it.gov.pagopa.register.constants.AssetRegisterConstants.WASHERDRIERS;
 import static it.gov.pagopa.register.model.operation.mapper.ProductMapper.mapEprelToProduct;
 
 @Service
@@ -45,12 +47,15 @@ public class EprelProductValidatorService {
 
   private void validateRecord(CSVRecord csvRow, ValidationContext context, List<Product> validRecords,
                               List<CSVRecord> invalidRecords, Map<CSVRecord, String> errorMessages) {
-    EprelProduct eprelData = eprelConnector.callEprel(csvRow.get(EPREL_CODE));
+    EprelProduct eprelData = eprelConnector.callEprel(csvRow.get(CODE_EPREL));
     List<String> errors = new ArrayList<>();
 
     if (eprelData == null) {
       errors.add("Product not found in EPREL");
     } else {
+      if(WASHERDRIERS.equalsIgnoreCase(context.category)) {
+        eprelData.setEnergyClass(eprelData.getEnergyClassWash());
+      }
       validateFields(context, eprelData, errors);
     }
 

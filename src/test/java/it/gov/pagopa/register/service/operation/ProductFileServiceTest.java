@@ -1,39 +1,7 @@
 package it.gov.pagopa.register.service.operation;
 
-import it.gov.pagopa.register.connector.storage.FileStorageClient;
-import it.gov.pagopa.register.constants.AssetRegisterConstant;
-import it.gov.pagopa.register.constants.enums.UploadCsvStatus;
-import it.gov.pagopa.register.dto.operation.FileReportDTO;
-import it.gov.pagopa.register.dto.operation.ProductFileResponseDTO;
-import it.gov.pagopa.register.dto.operation.ProductFileResult;
-import it.gov.pagopa.register.dto.operation.ValidationResultDTO;
-import it.gov.pagopa.register.exception.operation.ReportNotFoundException;
-import it.gov.pagopa.register.model.operation.ProductFile;
-import it.gov.pagopa.register.repository.operation.ProductFileRepository;
-import it.gov.pagopa.register.utils.CsvUtils;
-import org.apache.commons.csv.CSVRecord;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.MockedStatic;
-import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.mock.web.MockMultipartFile;
-import org.springframework.web.multipart.MultipartFile;
-
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.util.*;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class ProductFileServiceTest {

@@ -1,7 +1,7 @@
 package it.gov.pagopa.register.service.operation;
 
 import it.gov.pagopa.register.config.ProductFileValidationConfig;
-import it.gov.pagopa.register.constants.AssetRegisterConstant;
+import it.gov.pagopa.register.constants.AssetRegisterConstants;
 import it.gov.pagopa.register.dto.operation.ValidationResultDTO;
 import it.gov.pagopa.register.utils.ColumnValidationRule;
 import org.junit.jupiter.api.BeforeEach;
@@ -67,7 +67,7 @@ class ProductFileValidatorServiceTest {
     ValidationResultDTO result = productFileValidator.validateFile(file, category, headers, rowCount);
     System.out.println(result.getErrorKey());
     assertNotNull(result);
-    assertEquals(AssetRegisterConstant.UploadKeyConstant.UNKNOWN_CATEGORY_ERROR_KEY, result.getErrorKey());
+    assertEquals(AssetRegisterConstants.UploadKeyConstant.UNKNOWN_CATEGORY_ERROR_KEY, result.getErrorKey());
   }
 
   @Test
@@ -99,7 +99,7 @@ class ProductFileValidatorServiceTest {
     // Assert
     System.out.println(result.getErrorKey());
     assertNotNull(result);
-    assertEquals(AssetRegisterConstant.UploadKeyConstant.HEADER_FILE_ERROR_KEY, result.getErrorKey());
+    assertEquals(AssetRegisterConstants.UploadKeyConstant.HEADER_FILE_ERROR_KEY, result.getErrorKey());
   }
 
   @Test
@@ -128,7 +128,7 @@ class ProductFileValidatorServiceTest {
     ValidationResultDTO result = productFileValidator.validateFile(file, category, headers, rowCount);
 
     assertNotNull(result);
-    assertEquals(AssetRegisterConstant.UploadKeyConstant.EMPTY_FILE_ERROR_KEY, result.getErrorKey());
+    assertEquals(AssetRegisterConstants.UploadKeyConstant.EMPTY_FILE_ERROR_KEY, result.getErrorKey());
   }
 
 
@@ -160,6 +160,6 @@ class ProductFileValidatorServiceTest {
 
     System.out.println(result.getErrorKey());
     assertNotNull(result);
-    assertEquals(AssetRegisterConstant.UploadKeyConstant.MAX_ROW_FILE_ERROR_KEY, result.getErrorKey());
+    assertEquals(AssetRegisterConstants.UploadKeyConstant.MAX_ROW_FILE_ERROR_KEY, result.getErrorKey());
   }
 }

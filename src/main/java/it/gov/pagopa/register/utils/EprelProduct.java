@@ -5,8 +5,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.lang.reflect.Field;
-
 @Data
 @Builder
 @AllArgsConstructor
@@ -22,6 +20,7 @@ public class EprelProduct {
   private String trademarkVerificationStatus;
   private Boolean blocked;
   private String status;
+  private String energyClassWash;
 
 
   public String getFieldValue(String fieldName) {

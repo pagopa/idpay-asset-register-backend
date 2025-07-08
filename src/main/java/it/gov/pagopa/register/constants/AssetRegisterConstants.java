@@ -3,16 +3,15 @@ package it.gov.pagopa.register.constants;
 import it.gov.pagopa.register.utils.ColumnValidationRule;
 import it.gov.pagopa.register.utils.EprelValidationRule;
 
-import java.util.Arrays;
-import java.util.Locale;
-import java.util.Set;
+import java.util.*;
+import java.util.regex.Pattern;
 
 import static it.gov.pagopa.register.utils.Utils.isEnergyClassValid;
 
-public class AssetRegisterConstant {
+public class AssetRegisterConstants {
 
   //private constructor to avoid instantiation
-  private AssetRegisterConstant(){
+  private AssetRegisterConstants(){
   }
 
   public static final String REPORT_EPREL_ERROR = "Report/Eprel_Error/";
@@ -43,7 +42,7 @@ public class AssetRegisterConstant {
   public static final String OVENS = "OVENS";
   public static final String RANGEHOODS = "RANGEHOODS";
   public static final String DISHWASHERS = "DISHWASHERS";
-  public static final String TUMBLEDRIERS = "TUMBLEDRIERS";
+  public static final String TUMBLEDRYERS = "TUMBLEDRIERS";
   public static final String REFRIGERATINGAPPL = "REFRIGERATINGAPPL";
   public static final String COOKINGHOBS = "COOKINGHOBS";
 
@@ -53,9 +52,19 @@ public class AssetRegisterConstant {
     OVENS,
     RANGEHOODS,
     DISHWASHERS,
-    TUMBLEDRIERS,
+    TUMBLEDRYERS,
     REFRIGERATINGAPPL,
     COOKINGHOBS
+  );
+  public static final Map<String, String> CATEGORIES_ITA = Map.of(
+    "Lavatrici", WASHINGMACHINES,
+    "Lavasciuga", WASHERDRIERS,
+    "Forni", OVENS,
+    "Cappe", RANGEHOODS,
+    "Lavastoviglie", DISHWASHERS,
+    "Asciugatrici", TUMBLEDRYERS,
+    "Frigoriferi", REFRIGERATINGAPPL,
+    "Piani cottura", COOKINGHOBS
   );
 
   // Eprel Value
@@ -129,12 +138,13 @@ public class AssetRegisterConstant {
 
 
   //Eprel Messages Error
-  public static final String  ERROR_ORG = "orgVerificationStatus is not VERIFIED";
-  public static final String  ERROR_TRADEMARK = "trademarkVerificationStatus is not VERIFIED";
-  public static final String  ERROR_BLOCKED = "Product is blocked";
-  public static final String  ERROR_STATUS = "Status is not PUBLISHED";
-  public static final String  ERROR_PRODUCT_GROU = "Product group from EPREL is not compatible with expected category";
-  public static final String  ERROR_ENERGY_CLASS= "Energy class %s is not compliant. Minimum required: %s";
+  public static final String ERROR_ORG = "Lo stato di verifica dell'organizzazione non è VERIFICATO";
+  public static final String ERROR_TRADEMARK = "Lo stato di verifica del marchio non è VERIFICATO";
+  public static final String ERROR_BLOCKED = "Il prodotto è BLOCCATO";
+  public static final String ERROR_STATUS = "Lo stato non è PUBBLICATO";
+  public static final String ERROR_PRODUCT_GROU = "La categoria EPREL non è compatibile con la categoria prevista";
+  public static final String ERROR_ENERGY_CLASS = "La classe energetica non è conforme";
+
 
   public static final class EprelValidationRules {
     private EprelValidationRules() {}
@@ -157,5 +167,23 @@ public class AssetRegisterConstant {
     public static final EprelValidationRule ENERGY_CLASS_RULE =
       new EprelValidationRule((v, z) -> v != null && isEnergyClassValid(v,z), ERROR_ENERGY_CLASS);
   }
+
+  public static final Pattern SUBJECT_PATTERN = Pattern.compile(".*/blobs/CSV/([^/]+)/([^/]+)/([^/]+\\.csv)$");
+
+  public static final Map<String, String> ENERGY_CLASS_REQUIREMENTS = Map.of(
+    WASHINGMACHINES, "A",
+    WASHERDRIERS, "A",
+    OVENS, "A",
+    RANGEHOODS, "B",
+    DISHWASHERS, "C",
+    TUMBLEDRYERS, "C",
+    REFRIGERATINGAPPL, "D"
+  );
+
+  public static final List<String> ENERGY_CLASS_ORDER = List.of(
+    "A+++", "A++", "A+", "A", "B", "C", "D", "E", "F", "G"
+  );
+
+  public static final String STATUS_APPROVED = "APPROVED";
 
 }

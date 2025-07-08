@@ -30,11 +30,9 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.regex.Matcher;
 
-import static it.gov.pagopa.register.constants.AssetRegisterConstant.EPREL_FIELDS;
-import static it.gov.pagopa.register.constants.RegisterConstants.CsvRecord.CATEGORY_COOKINGHOBS;
-import static it.gov.pagopa.register.constants.RegisterConstants.CsvRecord.PRODUCT_CODE;
-import static it.gov.pagopa.register.constants.RegisterConstants.SUBJECT_PATTERN;
+import static it.gov.pagopa.register.constants.AssetRegisterConstants.*;
 import static it.gov.pagopa.register.constants.enums.UploadCsvStatus.*;
+import static it.gov.pagopa.register.constants.enums.UploadCsvStatus.EPREL_ERROR;
 import static it.gov.pagopa.register.model.operation.mapper.ProductMapper.mapCookingHobToProduct;
 
 @Slf4j
@@ -163,7 +161,7 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
                                     String orgId) {
 
     try {
-      boolean isCookingHob = CATEGORY_COOKINGHOBS.equalsIgnoreCase(category);
+      boolean isCookingHob = COOKINGHOBS.equalsIgnoreCase(category);
       String productFileId = fileName.replace(".csv", "");
       setProductFileStatus(fileName, String.valueOf(IN_PROCESS),0);
       List<String> headers = CsvUtils.readHeader(byteArrayOutputStream);
@@ -173,7 +171,7 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
         processCookingHobRecords(records, orgId, productFileId);
       } else {
         EprelResult validationResult = eprelProductValidator.validateRecords(records, EPREL_FIELDS, category, orgId, productFileId);
-        handleProcessingResults(validationResult.validRecords(), validationResult.invalidRecords(), validationResult.errorMessages(), fileName, headers);
+        processEprelResult(validationResult.validRecords(), validationResult.invalidRecords(), validationResult.errorMessages(), fileName, headers);
       }
     } catch (Exception e) {
       log.error("[UPLOAD_PRODUCT_FILE] - Generic Error ", e);
@@ -184,28 +182,26 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
     List<Product> result = new ArrayList<>();
     for (CSVRecord csvRecord : records) {
       result.add(mapCookingHobToProduct(csvRecord, orgId, productFileId));
-      log.debug("[PRODUCT_UPLOAD] - Added cooking hob product: {}", csvRecord.get(PRODUCT_CODE));
+      log.info("[PRODUCT_UPLOAD] - Added cooking hob product: {}", csvRecord.get(CODE_PRODUCT));
     }
     if (!result.isEmpty()) {
-      productRepository.saveAll(result);
-      log.info("[PRODUCT_UPLOAD] - Saved {} valid products for file {}", result.size(), productFileId);
-      setProductFileStatus(productFileId, String.valueOf(LOADED),result.size());
+      List<Product> savedProduct = productRepository.saveAll(result);
+      log.info("[PRODUCT_UPLOAD] - Saved {} valid products for file {}", savedProduct.size(), productFileId);
+      setProductFileStatus(productFileId, String.valueOf(LOADED),savedProduct.size());
       log.info("[PRODUCT_UPLOAD] - File {} processed successfully with no errors", productFileId);
     }
   }
 
-  private void handleProcessingResults(List<Product> validProduct, List<CSVRecord> errors, Map<CSVRecord, String> messages, String productFileId, List<String> headers) {
-    if (!validProduct.isEmpty()) {
-      productRepository.saveAll(validProduct);
-      log.info("[PRODUCT_UPLOAD] - Saved {} valid products for file {}", validProduct.size(), productFileId);
-    }
-
+  private void processEprelResult(List<Product> validProduct, List<CSVRecord> errors, Map<CSVRecord, String> messages, String productFileId, List<String> headers) {
     if (!errors.isEmpty()) {
       processErrorRecords(errors, messages, productFileId, headers);
       setProductFileStatus(productFileId, String.valueOf(EPREL_ERROR),validProduct.size());
       log.info("[PRODUCT_UPLOAD] - File {} processed with {} EPREL errors", productFileId, errors.size());
-    } else {
-      setProductFileStatus(productFileId, String.valueOf(LOADED),validProduct.size());
+    }
+    else if (!validProduct.isEmpty()) {
+      List<Product> savedProduct =productRepository.saveAll(validProduct);
+      log.info("[PRODUCT_UPLOAD] - Saved {} valid products for file {}", savedProduct.size(), productFileId);
+      setProductFileStatus(productFileId, String.valueOf(LOADED),savedProduct.size());
       log.info("[PRODUCT_UPLOAD] - File {} processed successfully with no errors", productFileId);
     }
   }

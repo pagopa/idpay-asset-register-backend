@@ -8,7 +8,7 @@ import org.springframework.messaging.Message;
 import java.util.function.Consumer;
 
 @Configuration
-public class ProductFileConsumerConfig {
+public class ProductFileConsumer {
 
   @Bean
   public Consumer<Message<String>> productFileConsumer(ProductFileConsumerService productFileConsumerService) {
