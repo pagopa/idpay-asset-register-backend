@@ -123,11 +123,10 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
 
     String orgId = matcher.group(1).trim();
     String category = matcher.group(2);
-    String fileName = matcher.group(3);
+    String productFileId =  matcher.group(3).replace(".csv","");
+    log.info("[PRODUCT_UPLOAD] - Processing fileId: {} for orgId={}, category={}", productFileId, orgId, category);
 
-    log.info("[PRODUCT_UPLOAD] - Processing file: {} for orgId={}, category={}", fileName, orgId, category);
-
-    return new EventDetails(orgId, category, fileName);
+    return new EventDetails(orgId, category, productFileId);
   }
 
   private String extractBlobPath(String url) {
@@ -143,35 +142,34 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
     try (ByteArrayOutputStream downloadedData = fileStorageClient.download(blobPath)) {
       if (downloadedData == null) {
         log.warn("[PRODUCT_UPLOAD] - File not found or download failed for path: {} (from URL: {})", blobPath, url);
-        setProductFileStatus(eventDetails.getFileName(), String.valueOf(EPREL_ERROR),0);
+        setProductFileStatus(eventDetails.getProductFileId(), String.valueOf(EPREL_ERROR),0);
         return;
       }
 
-      processCsvFromStorage(downloadedData, eventDetails.getFileName(), eventDetails.getCategory(), eventDetails.getOrgId());
+      processCsvFromStorage(downloadedData, eventDetails.getProductFileId(), eventDetails.getCategory(), eventDetails.getOrgId());
 
     } catch (Exception e) {
-      log.error("[PRODUCT_UPLOAD] - Error processing file {}: {}", eventDetails.getFileName(), e.getMessage(), e);
-      setProductFileStatus(eventDetails.getFileName(), String.valueOf(EPREL_ERROR),0);
+      log.error("[PRODUCT_UPLOAD] - Error processing file {}: {}", eventDetails.getProductFileId(), e.getMessage(), e);
+      setProductFileStatus(eventDetails.getProductFileId(), String.valueOf(EPREL_ERROR),0);
     }
   }
 
   public void processCsvFromStorage(ByteArrayOutputStream byteArrayOutputStream,
-                                    String fileName,
+                                    String fileId,
                                     String category,
                                     String orgId) {
 
     try {
       boolean isCookingHob = COOKINGHOBS.equalsIgnoreCase(category);
-      String productFileId = fileName.replace(".csv", "");
-      setProductFileStatus(fileName, String.valueOf(IN_PROCESS),0);
+      setProductFileStatus(fileId, String.valueOf(IN_PROCESS),0);
       List<String> headers = CsvUtils.readHeader(byteArrayOutputStream);
       List<CSVRecord> records = CsvUtils.readCsvRecords(byteArrayOutputStream);
       log.info("[PRODUCT_UPLOAD] - Valid CSV headers: {}", headers);
       if (isCookingHob) {
-        processCookingHobRecords(records, orgId, productFileId);
+        processCookingHobRecords(records, orgId, fileId);
       } else {
-        EprelResult validationResult = eprelProductValidator.validateRecords(records, EPREL_FIELDS, category, orgId, productFileId);
-        processEprelResult(validationResult.validRecords(), validationResult.invalidRecords(), validationResult.errorMessages(), fileName, headers);
+        EprelResult validationResult = eprelProductValidator.validateRecords(records, EPREL_FIELDS, category, orgId, fileId);
+        processEprelResult(validationResult.validRecords(), validationResult.invalidRecords(), validationResult.errorMessages(), fileId, headers);
       }
     } catch (Exception e) {
       log.error("[UPLOAD_PRODUCT_FILE] - Generic Error ", e);
@@ -218,14 +216,13 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
     }
   }
 
-  private void setProductFileStatus(String fileName, String status, int added) {
-    String fileId = fileName.replace(".csv", "");
+  private void setProductFileStatus(String fileId, String status, int added) {
     Optional<ProductFile> productFile = productFileRepository.findById(fileId);
     productFile.ifPresent(file -> {
       file.setUploadStatus(status);
       file.setAddedProductNumber(added);
       productFileRepository.save(file);
-      log.info("[PRODUCT_UPLOAD] - Final status for file {} set to: {}", fileName, status);
+      log.info("[PRODUCT_UPLOAD] - Final status for file {} set to: {}", fileId, status);
     });
   }
 

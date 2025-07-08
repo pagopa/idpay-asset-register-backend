@@ -6,11 +6,11 @@ import lombok.Getter;
 public class EventDetails {
   private final String orgId;
   private final String category;
-  private final String fileName;
+  private final String productFileId;
 
-  public EventDetails(String orgId, String category, String fileName) {
+  public EventDetails(String orgId, String category, String productFileId) {
     this.orgId = orgId;
     this.category = category;
-    this.fileName = fileName;
+    this.productFileId = productFileId;
   }
 }
