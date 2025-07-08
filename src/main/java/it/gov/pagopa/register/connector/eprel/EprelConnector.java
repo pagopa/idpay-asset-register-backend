@@ -14,11 +14,10 @@ import java.net.URI;
 @Component
 public class EprelConnector {
 
-    @Value("${app.rest-client.eprel.service.get-product}")
     private final String eprelUrl;
     private final RestTemplate restTemplate;
 
-    public EprelConnector(String eprelUrl) {
+    public EprelConnector(@Value("${app.rest-client.eprel.service.get-product}") String eprelUrl) {
       this.eprelUrl = eprelUrl;
       this.restTemplate = new RestTemplate();
     }
