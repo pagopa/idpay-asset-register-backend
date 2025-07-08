@@ -28,6 +28,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.regex.Matcher;
 
+
 import static it.gov.pagopa.register.constants.AssetRegisterConstant.WASHERDRIERS;
 import static it.gov.pagopa.register.constants.RegisterConstants.*;
 import static it.gov.pagopa.register.constants.RegisterConstants.CsvRecord.*;
