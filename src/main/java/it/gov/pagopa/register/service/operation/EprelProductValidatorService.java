@@ -9,6 +9,7 @@ import it.gov.pagopa.register.utils.EprelValidationRule;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.csv.CSVRecord;
 import org.springframework.stereotype.Service;
 
@@ -21,6 +22,7 @@ import static it.gov.pagopa.register.model.operation.mapper.ProductMapper.mapEpr
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class EprelProductValidatorService {
 
 
@@ -48,6 +50,7 @@ public class EprelProductValidatorService {
   private void validateRecord(CSVRecord csvRow, ValidationContext context, List<Product> validRecords,
                               List<CSVRecord> invalidRecords, Map<CSVRecord, String> errorMessages) {
     EprelProduct eprelData = eprelConnector.callEprel(csvRow.get(CODE_EPREL));
+
     List<String> errors = new ArrayList<>();
 
     if (eprelData == null) {
@@ -56,6 +59,7 @@ public class EprelProductValidatorService {
       if(WASHERDRIERS.equalsIgnoreCase(context.category)) {
         eprelData.setEnergyClass(eprelData.getEnergyClassWash());
       }
+      log.info("[PRODUCT_UPLOAD] - EPREL response for {}: {}", eprelData.getEprelRegistrationNumber(), eprelData);
       validateFields(context, eprelData, errors);
     }
 
@@ -63,6 +67,7 @@ public class EprelProductValidatorService {
       invalidRecords.add(csvRow);
       errorMessages.put(csvRow, String.join(", ", errors));
     } else {
+      log.info("[PRODUCT_UPLOAD] - EPREL product valide: {}",eprelData.getEprelRegistrationNumber());
       validRecords.add(mapEprelToProduct(csvRow, eprelData, context.getOrgId(), context.getProductFileId(), context.getCategory()));
     }
   }
