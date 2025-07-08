@@ -41,7 +41,7 @@ public class ProductService{
     Long count = productRepository.getCount(criteria);
 
     final Page<Product> entitiesPage = PageableExecutionUtils.getPage(entities,
-      this.getPageable(pageable), () -> count);
+      pageable, () -> count);
 
     Page<ProductDTO> result = entitiesPage.map(ProductMapper::toDTO);
 
@@ -52,13 +52,6 @@ public class ProductService{
       .totalElements(result.getTotalElements())
       .totalPages(result.getTotalPages())
       .build();
-
   }
 
-  private Pageable getPageable(Pageable pageable) {
-    if (pageable == null) {
-      return PageRequest.of(0, 15, Sort.by("lastUpdate"));
-    }
-    return pageable;
-  }
 }
