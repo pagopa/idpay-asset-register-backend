@@ -28,7 +28,8 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.regex.Matcher;
 
-import static com.azure.core.util.polling.LongRunningOperationStatus.IN_PROGRESS;
+
+import static it.gov.pagopa.register.constants.AssetRegisterConstant.WASHERDRIERS;
 import static it.gov.pagopa.register.constants.RegisterConstants.*;
 import static it.gov.pagopa.register.constants.RegisterConstants.CsvRecord.*;
 import static it.gov.pagopa.register.constants.RegisterConstants.CsvRecord.PRODUCTION_COUNTRY;
@@ -308,7 +309,7 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
       .countryOfProduction(csvRecord.get(PRODUCTION_COUNTRY))
       .brand(eprelData.getSupplierOrTrademark())
       .model(eprelData.getModelIdentifier())
-      .energyClass(eprelData.getEnergyClass())
+      .energyClass(WASHERDRIERS.equalsIgnoreCase(category) ?  eprelData.getEnergyClassWash() :  eprelData.getEnergyClass())
       .build();
   }
 

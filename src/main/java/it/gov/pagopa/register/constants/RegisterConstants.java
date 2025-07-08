@@ -18,7 +18,7 @@ public class RegisterConstants {
     "OVENS", "A",
     "RANGEHOODS", "B",
     "DISHWASHERS", "C",
-    "TUMBLEDRIERS", "C",
+    "TUMBLEDRYERS", "C",
     "REFRIGERATINGAPPL", "D"
   );
 

@@ -45,15 +45,18 @@ public class CsvUtils {
     finalHeaders.add("Validation Errors");
 
     File output = new File("/tmp/" + filename);
-    try (BufferedWriter writer = Files.newBufferedWriter(output.toPath(), StandardCharsets.UTF_8);
-         CSVPrinter printer = new CSVPrinter(writer, CSVFormat.Builder.create().setHeader(finalHeaders.toArray(new String[0])).setTrim(Boolean.TRUE).setDelimiter(DELIMITER).build())) {
-      for (CSVRecord record : invalidRecords) {
-        List<String> row = new ArrayList<>();
-        for (String h : headers) {
-          row.add(record.get(h));
+    try (BufferedWriter writer = Files.newBufferedWriter(output.toPath(), StandardCharsets.UTF_8)) {
+      writer.write("\uFEFF");
+      try(CSVPrinter printer = new CSVPrinter(writer,
+        CSVFormat.Builder.create().setHeader(finalHeaders.toArray(new String[0])).setTrim(Boolean.TRUE).setDelimiter(DELIMITER).build())) {
+        for (CSVRecord record : invalidRecords) {
+          List<String> row = new ArrayList<>();
+          for (String h : headers) {
+            row.add(record.get(h));
+          }
+          row.add(errorMap.get(record));
+          printer.printRecord(row);
         }
-        row.add(errorMap.get(record));
-        printer.printRecord(row);
       }
     }
   }
