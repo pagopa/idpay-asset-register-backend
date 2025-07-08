@@ -54,7 +54,6 @@ public class ProductMapper {
       .productCode(dto.getProductCode())
       .countryOfProduction(dto.getCountryOfProduction())
       .energyClass(dto.getEnergyClass())
-      .linkEprel(dto.getLinkEprel())
       .build();
   }
 

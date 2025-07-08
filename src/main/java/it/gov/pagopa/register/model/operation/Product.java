@@ -33,6 +33,5 @@ public class Product {
   private String productCode;
   private String countryOfProduction;
   private String energyClass;
-  private String linkEprel;
 
 }

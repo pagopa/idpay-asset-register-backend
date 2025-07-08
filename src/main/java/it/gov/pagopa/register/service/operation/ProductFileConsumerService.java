@@ -309,7 +309,7 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
       .countryOfProduction(csvRecord.get(PRODUCTION_COUNTRY))
       .brand(eprelData.getSupplierOrTrademark())
       .model(eprelData.getModelIdentifier())
-      .energyClass(WASHERDRIERS.equalsIgnoreCase(category) ?  eprelData.getEnergyClassWash() :  eprelData.getEnergyClass())
+      .energyClass(eprelData.getEnergyClass())
       .build();
   }
 
@@ -319,6 +319,10 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
     if (eprelData == null) {
       errors.add("Product not found in EPREL");
       return errors;
+    }
+
+    if(WASHERDRIERS.equalsIgnoreCase(expectedCategory)) {
+      eprelData.setEnergyClass(eprelData.getEnergyClassWash());
     }
 
     validateVerificationStatuses(eprelData, errors);
