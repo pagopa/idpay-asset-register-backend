@@ -27,7 +27,7 @@ public class ProductFileValidator {
     }
 
     // 4. check record count in file
-    if (recordCount == 0 && actualHeader.isEmpty()) {
+    if (recordCount == 0) {
       return ValidationResultDTO.ko(AssetRegisterConstant.UploadKeyConstant.EMPTY_FILE_ERROR_KEY);
     }
 
