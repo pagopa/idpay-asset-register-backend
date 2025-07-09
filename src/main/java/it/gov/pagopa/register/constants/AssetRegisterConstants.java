@@ -181,7 +181,7 @@ public class AssetRegisterConstants {
   );
 
   public static final List<String> ENERGY_CLASS_ORDER = List.of(
-    "A+++", "A++", "A+", "A", "B", "C", "D", "E", "F", "G"
+    "APPP", "APP", "AP", "A", "B", "C", "D", "E", "F", "G"
   );
 
   public static final String STATUS_APPROVED = "APPROVED";
