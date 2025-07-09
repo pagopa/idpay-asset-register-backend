@@ -8,6 +8,7 @@ import it.gov.pagopa.register.exception.operation.ReportNotFoundException;
 import it.gov.pagopa.register.mapper.operation.ProductFileMapper;
 import it.gov.pagopa.register.model.operation.ProductFile;
 import it.gov.pagopa.register.repository.operation.ProductFileRepository;
+import it.gov.pagopa.register.service.validator.ProductFileValidatorService;
 import it.gov.pagopa.register.utils.CsvUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.csv.CSVRecord;

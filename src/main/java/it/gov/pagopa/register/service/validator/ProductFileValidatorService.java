@@ -1,4 +1,4 @@
-package it.gov.pagopa.register.service.operation;
+package it.gov.pagopa.register.service.validator;
 
 import it.gov.pagopa.register.config.ProductFileValidationConfig;
 import it.gov.pagopa.register.constants.AssetRegisterConstants;

@@ -1,10 +1,12 @@
-package it.gov.pagopa.register.service.operation;
+package it.gov.pagopa.register.service.consumer;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 import it.gov.pagopa.common.kafka.BaseKafkaConsumer;
+import it.gov.pagopa.register.connector.notification.NotificationServiceImpl;
 import it.gov.pagopa.register.connector.storage.FileStorageClient;
+import it.gov.pagopa.register.service.validator.EprelProductValidatorService;
 import it.gov.pagopa.register.utils.EprelResult;
 import it.gov.pagopa.register.dto.operation.StorageEventDTO;
 import it.gov.pagopa.register.model.operation.Product;
@@ -44,19 +46,22 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
   private final ProductFileRepository productFileRepository;
   private final FileStorageClient fileStorageClient;
   private final EprelProductValidatorService eprelProductValidator;
+  private final NotificationServiceImpl notificationService;
 
   protected ProductFileConsumerService(@Value("${spring.application.name}") String applicationName,
                                        ProductRepository productRepository,
                                        FileStorageClient fileStorageClient,
                                        ObjectMapper objectMapper,
                                        ProductFileRepository productFileRepository,
-                                       EprelProductValidatorService eprelProductValidator){
+                                       EprelProductValidatorService eprelProductValidator,
+                                       NotificationServiceImpl notificationService){
     super(applicationName);
     this.productRepository = productRepository;
     this.fileStorageClient = fileStorageClient;
     this.objectReader = objectMapper.readerFor(new TypeReference<List<StorageEventDTO>>() {});
     this.productFileRepository = productFileRepository;
     this.eprelProductValidator = eprelProductValidator;
+    this.notificationService = notificationService;
   }
 
   @Override
@@ -169,7 +174,7 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
         processCookingHobRecords(records, orgId, fileId);
       } else {
         EprelResult validationResult = eprelProductValidator.validateRecords(records, EPREL_FIELDS, category, orgId, fileId);
-        processEprelResult(validationResult.validRecords(), validationResult.invalidRecords(), validationResult.errorMessages(), fileId, headers);
+        processEprelResult(validationResult.getValidRecords(), validationResult.getInvalidRecords(), validationResult.getErrorMessages(), fileId, headers);
       }
     } catch (Exception e) {
       log.error("[UPLOAD_PRODUCT_FILE] - Generic Error ", e);

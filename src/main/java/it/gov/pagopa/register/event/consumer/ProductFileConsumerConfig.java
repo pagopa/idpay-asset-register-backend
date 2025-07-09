@@ -1,6 +1,6 @@
 package it.gov.pagopa.register.event.consumer;
 
-import it.gov.pagopa.register.service.operation.ProductFileConsumerService;
+import it.gov.pagopa.register.service.consumer.ProductFileConsumerService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.Message;

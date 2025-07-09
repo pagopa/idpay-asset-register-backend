@@ -17,9 +17,10 @@ public class EprelConnector {
     private final String eprelUrl;
     private final RestTemplate restTemplate;
 
-    public EprelConnector(@Value("${app.rest-client.eprel.service.get-product}") String eprelUrl) {
+    public EprelConnector(@Value("${app.rest-client.eprel.service.get-product}") String eprelUrl,
+                          RestTemplate restTemplate) {
       this.eprelUrl = eprelUrl;
-      this.restTemplate = new RestTemplate();
+      this.restTemplate = restTemplate;
     }
 
     public EprelProduct callEprel(String registrationNumber) {

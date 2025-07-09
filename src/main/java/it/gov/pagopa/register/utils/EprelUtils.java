@@ -24,8 +24,8 @@ public class EprelUtils {
       return false;
     }
 
-    int requiredIndex = ENERGY_CLASS_ORDER.indexOf(requiredMinClass);
-    int productIndex = ENERGY_CLASS_ORDER.indexOf(energyClass.toUpperCase());
+    int requiredIndex = ENERGY_CLASS_ORDER.indexOf(requiredMinClass);    int productIndex = ENERGY_CLASS_ORDER.indexOf(energyClass.toUpperCase());
+
 
 
     if (requiredIndex == -1 || productIndex == -1) {

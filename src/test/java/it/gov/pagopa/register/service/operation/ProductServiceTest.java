@@ -32,7 +32,6 @@ class ProductServiceTest {
     MockitoAnnotations.openMocks(this);
   }
 
-  //Test con esito positivo dell'api
   @Test
   void testGetProductsByPage_Success() {
     String organizationId = "org123";
@@ -85,7 +84,6 @@ class ProductServiceTest {
 
   }
 
-  //Test con nessun risultato dell'api
   @Test
   void testGetProductsByPage_EmptyPage() {
     String organizationId = "org123";
@@ -120,7 +118,6 @@ class ProductServiceTest {
 
   }
 
-  //Test con eccezioni da parte del repository
   @Test
   void testGetProductsByPage_RepositoryThrowsException() {
     String organizationId = "org123";
@@ -130,9 +127,7 @@ class ProductServiceTest {
     when(productRepository.findByFilter(any(), any()))
       .thenThrow(new RuntimeException("Database error"));
 
-    RuntimeException exception = assertThrows(RuntimeException.class, () -> {
-      productService.getProducts(organizationId, null, null, null, null, null, pageable);
-    });
+    RuntimeException exception = assertThrows(RuntimeException.class, () -> productService.getProducts(organizationId, null, null, null, null, null, pageable));
 
     assertEquals("Database error", exception.getMessage());
 

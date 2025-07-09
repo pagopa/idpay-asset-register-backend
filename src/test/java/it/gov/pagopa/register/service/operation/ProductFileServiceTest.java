@@ -10,6 +10,7 @@ import it.gov.pagopa.register.dto.operation.ValidationResultDTO;
 import it.gov.pagopa.register.exception.operation.ReportNotFoundException;
 import it.gov.pagopa.register.model.operation.ProductFile;
 import it.gov.pagopa.register.repository.operation.ProductFileRepository;
+import it.gov.pagopa.register.service.validator.ProductFileValidatorService;
 import it.gov.pagopa.register.utils.CsvUtils;
 import org.apache.commons.csv.CSVRecord;
 import org.junit.jupiter.api.BeforeEach;
@@ -53,9 +54,6 @@ class ProductFileServiceTest {
     productFileService = new ProductFileService(productFileRepository, fileStorageClient, productFileValidator);
   }
 
-
-  //--------------------------Test per metodo getFilesByPage----------------------------------------
-  //Test con esito positivo dell'api
   @Test
   void testGetFilesByPage_Success() {
     String org = "org";
@@ -78,8 +76,6 @@ class ProductFileServiceTest {
     verify(productFileRepository).findByOrganizationIdAndUploadStatusNot(org, UploadCsvStatus.FORMAL_ERROR.name(), page);
   }
 
-
-  //Test con nessun risultato dell'api
   @Test
   void testGetFilesByPage_Empty() {
     String org = "org";
@@ -94,8 +90,6 @@ class ProductFileServiceTest {
     assertEquals(0, resp.getTotalPages());
   }
 
-
-  //Test con eccezioni da parte del repository
   @Test
   void testGetFilesByPage_RepoThrows() {
     Pageable page = PageRequest.of(0,1);
@@ -106,17 +100,13 @@ class ProductFileServiceTest {
     assertEquals("DB", ex.getMessage());
   }
 
-
-  //Test con mancato organizationId
   @Test
   void testGetFilesByPage_NullOrg() {
     Pageable page = PageRequest.of(0,1);
     assertThrows(IllegalArgumentException.class, () -> productFileService.getFilesByPage(null, page));
   }
 
-  //-------------------------Test su metodo downloadReport--------------------
 
-  //Test con errori Eprel
   @Test
   void downloadReport_eprelError() throws IOException {
     ProductFile pf = new ProductFile();
@@ -133,7 +123,7 @@ class ProductFileServiceTest {
   }
 
 
-  //Test con errori formali
+
   @Test
   void downloadReport_formalError() throws IOException {
     ProductFile pf = new ProductFile();
@@ -149,7 +139,6 @@ class ProductFileServiceTest {
     assertArrayEquals(os.toByteArray(), res.getData());
   }
 
-  //Test con idUpload errato -> ritorna un'eccezione
   @Test
   void downloadReport_notFoundId() {
     when(productFileRepository.findByIdAndOrganizationId(any(), any())).thenReturn(Optional.empty());
@@ -158,7 +147,7 @@ class ProductFileServiceTest {
     assertTrue(ex.getMessage().contains("Report not found with id: 1"));
   }
 
-  //Test con status errato -> ritorna un'eccezione
+
   @Test
   void downloadReport_unsupportedStatus() {
     ProductFile pf = new ProductFile(); pf.setId("1"); pf.setOrganizationId("o"); pf.setUploadStatus("UNKNOWN"); pf.setFileName("f");
@@ -168,7 +157,6 @@ class ProductFileServiceTest {
     assertTrue(ex.getMessage().contains("Report not available for file: f"));
   }
 
-  //Test quando Azure fallisce -> ritorna un'eccezione
   @Test
   void downloadReport_azureNull() {
     ProductFile pf = new ProductFile(); pf.setId("1"); pf.setOrganizationId("o"); pf.setUploadStatus("FORMAL_ERROR");
@@ -180,7 +168,7 @@ class ProductFileServiceTest {
   }
 
 
-  //-------------------------Test processFile method--------------------
+
 
   private MultipartFile createMockFile() {
     return new MockMultipartFile("file", "test.csv", "text/csv", "test content".getBytes());

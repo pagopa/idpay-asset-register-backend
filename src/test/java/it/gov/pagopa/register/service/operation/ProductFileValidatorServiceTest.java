@@ -3,6 +3,7 @@ package it.gov.pagopa.register.service.operation;
 import it.gov.pagopa.register.config.ProductFileValidationConfig;
 import it.gov.pagopa.register.constants.AssetRegisterConstants;
 import it.gov.pagopa.register.dto.operation.ValidationResultDTO;
+import it.gov.pagopa.register.service.validator.ProductFileValidatorService;
 import it.gov.pagopa.register.utils.ColumnValidationRule;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
