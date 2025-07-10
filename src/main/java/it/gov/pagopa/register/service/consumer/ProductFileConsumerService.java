@@ -206,18 +206,24 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
   }
 
   private void processEprelResult(List<Product> validProduct, List<CSVRecord> errors, Map<CSVRecord, String> messages, String productFileId, List<String> headers, String category) {
-    if (!errors.isEmpty()) {
-      processErrorRecords(errors, messages, productFileId, headers);
-      setProductFileStatus(productFileId, String.valueOf(EPREL_ERROR), validProduct.size());
-      log.info("[PRODUCT_UPLOAD] - File {} processed with {} EPREL errors", productFileId, errors.size());
-      notificationService.sendEmailPartial(category + "_" + productFileId + ".csv", null);
-    }
     if (!validProduct.isEmpty()) {
       List<Product> savedProduct = productRepository.saveAll(validProduct);
       log.info("[PRODUCT_UPLOAD] - Saved {} valid products for file {}", savedProduct.size(), productFileId);
-      setProductFileStatus(productFileId, String.valueOf(LOADED), savedProduct.size());
-      log.info("[PRODUCT_UPLOAD] - File {} processed successfully", productFileId);
-      notificationService.sendEmailOk(category + "_" + productFileId + ".csv", null);
+      if (!errors.isEmpty()) {
+        processErrorRecords(errors, messages, productFileId, headers);
+        setProductFileStatus(productFileId, String.valueOf(EPREL_ERROR), validProduct.size());
+        log.info("[PRODUCT_UPLOAD] - File {} processed with {} EPREL errors", productFileId, errors.size());
+        notificationService.sendEmailPartial(category + "_" + productFileId + ".csv", null);
+      } else {
+        setProductFileStatus(productFileId, String.valueOf(LOADED), savedProduct.size());
+        log.info("[PRODUCT_UPLOAD] - File {} processed successfully with no errors", productFileId);
+        notificationService.sendEmailOk(category + "_" + productFileId + ".csv", null);
+      }
+    } else if (!errors.isEmpty()) {
+      processErrorRecords(errors, messages, productFileId, headers);
+      setProductFileStatus(productFileId, String.valueOf(EPREL_ERROR), 0);
+      log.info("[PRODUCT_UPLOAD] - File {} processed with {} EPREL errors", productFileId, errors.size());
+      notificationService.sendEmailPartial(category + "_" + productFileId + ".csv", null);
     }
   }
 
@@ -243,5 +249,4 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
       log.info("[PRODUCT_UPLOAD] - Final status for file {} set to: {}", fileId, status);
     });
   }
-
 }
