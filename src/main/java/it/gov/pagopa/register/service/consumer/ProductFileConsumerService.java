@@ -174,7 +174,7 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
         processCookingHobRecords(records, orgId, fileId);
       } else {
         EprelResult validationResult = eprelProductValidator.validateRecords(records, EPREL_FIELDS, category, orgId, fileId);
-        processEprelResult(validationResult.getValidRecords(), validationResult.getInvalidRecords(), validationResult.getErrorMessages(), fileId, headers);
+        processEprelResult(validationResult.getValidRecords(), validationResult.getInvalidRecords(), validationResult.getErrorMessages(), fileId, headers,category);
       }
     } catch (Exception e) {
       log.error("[UPLOAD_PRODUCT_FILE] - Generic Error ", e);
@@ -192,20 +192,23 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
       log.info("[PRODUCT_UPLOAD] - Saved {} valid products for file {}", savedProduct.size(), productFileId);
       setProductFileStatus(productFileId, String.valueOf(LOADED),savedProduct.size());
       log.info("[PRODUCT_UPLOAD] - File {} processed successfully with no errors", productFileId);
+      notificationService.sendEmailOk(COOKINGHOBS+"_"+productFileId+".csv",null);
     }
   }
 
-  private void processEprelResult(List<Product> validProduct, List<CSVRecord> errors, Map<CSVRecord, String> messages, String productFileId, List<String> headers) {
+  private void processEprelResult(List<Product> validProduct, List<CSVRecord> errors, Map<CSVRecord, String> messages, String productFileId, List<String> headers, String category) {
     if (!errors.isEmpty()) {
       processErrorRecords(errors, messages, productFileId, headers);
       setProductFileStatus(productFileId, String.valueOf(EPREL_ERROR),validProduct.size());
       log.info("[PRODUCT_UPLOAD] - File {} processed with {} EPREL errors", productFileId, errors.size());
+      notificationService.sendEmailPartial(category+"_"+productFileId+".csv", null);
     }
     else if (!validProduct.isEmpty()) {
       List<Product> savedProduct =productRepository.saveAll(validProduct);
       log.info("[PRODUCT_UPLOAD] - Saved {} valid products for file {}", savedProduct.size(), productFileId);
       setProductFileStatus(productFileId, String.valueOf(LOADED),savedProduct.size());
       log.info("[PRODUCT_UPLOAD] - File {} processed successfully with no errors", productFileId);
+      notificationService.sendEmailOk(category+"_"+productFileId+".csv",null);
     }
   }
 
