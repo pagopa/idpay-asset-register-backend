@@ -1,10 +1,7 @@
 package it.gov.pagopa.register.controller.operation;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import it.gov.pagopa.register.dto.operation.FileReportDTO;
-import it.gov.pagopa.register.dto.operation.ProductFileDTO;
-import it.gov.pagopa.register.dto.operation.ProductFileResponseDTO;
-import it.gov.pagopa.register.dto.operation.ProductFileResult;
+import it.gov.pagopa.register.dto.operation.*;
 import it.gov.pagopa.register.service.operation.ProductFileService;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -18,6 +15,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.io.ByteArrayOutputStream;
 import java.util.Collections;
+import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -38,7 +36,6 @@ class ProductFileControllerTest {
 
   private static final  String TEST_ID_UPLOAD = "example_upload";
 
-  //Test con esito positivo
   @Test
   void testDownloadListUpload_Success() throws Exception {
     ProductFileDTO fileDTO = new ProductFileDTO();
@@ -202,6 +199,34 @@ class ProductFileControllerTest {
       .andExpect(jsonPath("$.status").value("OK"));
   }
 
+@Test
+void shouldReturn200AndListWhenOrganizationIdIsValid() throws Exception {
+  List<ProductBatchDTO> mockResult = List.of(
+    new ProductBatchDTO("file123", "DISHWASHERS_file123.csv")
+  );
+
+  Mockito.when(productFileService.getProductFilesByOrganizationId("org123"))
+    .thenReturn(mockResult);
+
+  mockMvc.perform(get("/idpay/register/product-files/batch-list")
+      .param("organizationId", "org123")
+      .accept(MediaType.APPLICATION_JSON))
+    .andExpect(status().isOk())
+    .andExpect(jsonPath("$[0].productFileId").value("file123"))
+    .andExpect(jsonPath("$[0].batchName").value("DISHWASHERS_file123.csv"));
+}
+
+  @Test
+  void shouldReturn200WithEmptyListWhenNoFilesFound() throws Exception {
+    Mockito.when(productFileService.getProductFilesByOrganizationId("org123"))
+      .thenReturn(List.of());
+
+    mockMvc.perform(get("/idpay/register/product-files/batch-list")
+        .param("organizationId", "org123")
+        .accept(MediaType.APPLICATION_JSON))
+      .andExpect(status().isOk())
+      .andExpect(content().json("[]"));
+  }
 
 
 

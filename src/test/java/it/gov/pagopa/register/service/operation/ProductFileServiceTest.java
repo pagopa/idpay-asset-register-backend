@@ -3,10 +3,7 @@ package it.gov.pagopa.register.service.operation;
 import it.gov.pagopa.register.connector.storage.FileStorageClient;
 import it.gov.pagopa.register.constants.AssetRegisterConstants;
 import it.gov.pagopa.register.constants.enums.UploadCsvStatus;
-import it.gov.pagopa.register.dto.operation.FileReportDTO;
-import it.gov.pagopa.register.dto.operation.ProductFileResponseDTO;
-import it.gov.pagopa.register.dto.operation.ProductFileResult;
-import it.gov.pagopa.register.dto.operation.ValidationResultDTO;
+import it.gov.pagopa.register.dto.operation.*;
 import it.gov.pagopa.register.exception.operation.ReportNotFoundException;
 import it.gov.pagopa.register.model.operation.ProductFile;
 import it.gov.pagopa.register.repository.operation.ProductFileRepository;
@@ -330,5 +327,67 @@ class ProductFileServiceTest {
       throw new RuntimeException(e);
     }
   }
+  @Test
+  void shouldThrowExceptionWhenOrganizationIdIsNull() {
+    ReportNotFoundException ex = assertThrows(ReportNotFoundException.class,
+      () -> productFileService.getProductFilesByOrganizationId(null));
+    assertEquals("Organization Id is null or empty", ex.getMessage());
+  }
 
+  @Test
+  void shouldThrowExceptionWhenOrganizationIdIsEmpty() {
+    ReportNotFoundException ex = assertThrows(ReportNotFoundException.class,
+      () -> productFileService.getProductFilesByOrganizationId(""));
+    assertEquals("Organization Id is null or empty", ex.getMessage());
+  }
+
+  @Test
+  void shouldReturnEmptyListWhenRepositoryReturnsEmptyOptional() {
+    when(productFileRepository.findByOrganizationIdAndUploadStatusNotIn(eq("org123"), anyList()))
+      .thenReturn(Optional.empty());
+
+    List<ProductBatchDTO> result = productFileService.getProductFilesByOrganizationId("org123");
+
+    assertNotNull(result);
+    assertTrue(result.isEmpty());
+  }
+
+  @Test
+  void shouldReturnEmptyListWhenRepositoryReturnsEmptyList() {
+    when(productFileRepository.findByOrganizationIdAndUploadStatusNotIn(eq("org123"), anyList()))
+      .thenReturn(Optional.of(List.of()));
+
+    List<ProductBatchDTO> result = productFileService.getProductFilesByOrganizationId("org123");
+
+    assertNotNull(result);
+    assertTrue(result.isEmpty());
+  }
+
+  @Test
+  void shouldReturnMappedDTOListWhenValidDataIsPresent() {
+    ProductFile file = ProductFile.builder()
+      .id("file123")
+      .category("DISHWASHERS")
+      .build();
+
+    when(productFileRepository.findByOrganizationIdAndUploadStatusNotIn(eq("org123"), anyList()))
+      .thenReturn(Optional.of(List.of(file)));
+
+    List<ProductBatchDTO> result = productFileService.getProductFilesByOrganizationId("org123");
+
+    assertEquals(1, result.size());
+    assertEquals("file123", result.get(0).getProductFileId());
+    assertEquals("DISHWASHERS_file123.csv", result.get(0).getBatchName());
+  }
+
+  @Test
+  void shouldThrowGenericException() {
+    when(productFileRepository.findByOrganizationIdAndUploadStatusNotIn(anyString(), anyList()))
+      .thenThrow(new RuntimeException("DB failure"));
+
+    RuntimeException ex = assertThrows(RuntimeException.class,
+      () -> productFileService.getProductFilesByOrganizationId("org123"));
+
+    assertEquals("DB failure", ex.getMessage());
+  }
 }
