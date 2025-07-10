@@ -36,6 +36,7 @@ public class EprelUtils {
   }
 
   public static String mapEnergyClass(String value) {
+    if (value == null) return null;
     return switch (value) {
       case "AP" -> "A+";
       case "APP" -> "A++";
@@ -43,7 +44,5 @@ public class EprelUtils {
       default -> value;
     };
   }
-
-
 
 }

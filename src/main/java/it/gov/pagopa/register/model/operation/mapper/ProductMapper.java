@@ -7,6 +7,7 @@ import org.apache.commons.csv.CSVRecord;
 import java.time.LocalDateTime;
 
 import static it.gov.pagopa.register.constants.AssetRegisterConstants.*;
+import static it.gov.pagopa.register.utils.EprelUtils.mapEnergyClass;
 
 public class ProductMapper {
 
@@ -40,7 +41,7 @@ public class ProductMapper {
       .countryOfProduction(csvRecord.get(COUNTRY_OF_PRODUCTION))
       .brand(eprelData.getSupplierOrTrademark())
       .model(eprelData.getModelIdentifier())
-      .energyClass(eprelData.getEnergyClass())
+      .energyClass(mapEnergyClass(eprelData.getEnergyClass()))
       .build();
   }
 }
