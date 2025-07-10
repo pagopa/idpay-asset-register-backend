@@ -211,7 +211,8 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
       setProductFileStatus(productFileId, String.valueOf(EPREL_ERROR), validProduct.size());
       log.info("[PRODUCT_UPLOAD] - File {} processed with {} EPREL errors", productFileId, errors.size());
       notificationService.sendEmailPartial(category + "_" + productFileId + ".csv", null);
-    } else if (!validProduct.isEmpty()) {
+    }
+    if (!validProduct.isEmpty()) {
       List<Product> savedProduct = productRepository.saveAll(validProduct);
       log.info("[PRODUCT_UPLOAD] - Saved {} valid products for file {}", savedProduct.size(), productFileId);
       setProductFileStatus(productFileId, String.valueOf(LOADED), savedProduct.size());

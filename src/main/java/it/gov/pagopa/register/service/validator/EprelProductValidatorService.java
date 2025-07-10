@@ -54,7 +54,7 @@ public class EprelProductValidatorService {
                               List<CSVRecord> invalidRecords, Map<CSVRecord, String> errorMessages) {
     log.info("[VALIDATE_RECORD] - Validating record with EPREL code: {}", csvRow.get(CODE_EPREL));
     EprelProduct eprelData = eprelConnector.callEprel(csvRow.get(CODE_EPREL));
-
+    log.info("[VALIDATE_RECORD] - EPREL response: {}", eprelData);
     List<String> errors = new ArrayList<>();
 
     if (eprelData == null) {
