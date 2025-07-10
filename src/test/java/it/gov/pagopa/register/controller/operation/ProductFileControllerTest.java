@@ -209,7 +209,7 @@ void shouldReturn200AndListWhenOrganizationIdIsValid() throws Exception {
     .thenReturn(mockResult);
 
   mockMvc.perform(get("/idpay/register/product-files/batch-list")
-      .param("organizationId", "org123")
+      .header("x-organization-id", "org123")
       .accept(MediaType.APPLICATION_JSON))
     .andExpect(status().isOk())
     .andExpect(jsonPath("$[0].productFileId").value("file123"))
@@ -222,7 +222,7 @@ void shouldReturn200AndListWhenOrganizationIdIsValid() throws Exception {
       .thenReturn(List.of());
 
     mockMvc.perform(get("/idpay/register/product-files/batch-list")
-        .param("organizationId", "org123")
+        .header("x-organization-id", "org123")
         .accept(MediaType.APPLICATION_JSON))
       .andExpect(status().isOk())
       .andExpect(content().json("[]"));
