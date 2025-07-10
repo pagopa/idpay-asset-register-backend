@@ -1,0 +1,211 @@
+package it.gov.pagopa.register.service.operation;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import it.gov.pagopa.register.connector.storage.FileStorageClient;
+import it.gov.pagopa.register.dto.operation.StorageEventDTO;
+import it.gov.pagopa.register.dto.operation.StorageEventDTO.StorageEventData;
+import it.gov.pagopa.register.model.operation.ProductFile;
+import it.gov.pagopa.register.repository.operation.ProductFileRepository;
+import it.gov.pagopa.register.repository.operation.ProductRepository;
+import it.gov.pagopa.register.utils.CsvUtils;
+import it.gov.pagopa.register.utils.EventDetails;
+import org.apache.commons.csv.CSVRecord;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockedStatic;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.io.ByteArrayOutputStream;
+import java.util.*;
+import java.util.regex.Pattern;
+
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectReader;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+@ExtendWith(MockitoExtension.class)
+class ProductFileConsumerServiceTest {
+
+  @InjectMocks
+  private ProductFileConsumerService service;
+
+  @Mock
+  private ProductRepository productRepository;
+  @Mock
+  private FileStorageClient fileStorageClient;
+  @Mock
+  private ProductFileRepository productFileRepository;
+  @Mock
+  private EprelProductValidatorService eprelProductValidator;
+  @Mock
+  private ObjectMapper objectMapper;
+
+  private static final String ORG_ID = "ORG123";
+  private static final String CATEGORY = "COOKINGHOBS";
+  private static final String PRODUCT_FILE_ID = "file123";
+  public static final Pattern SUBJECT_PATTERN =
+    Pattern.compile(".*/blobs/CSV/([^/]+)/([^/]+)/([^/]+\\.csv)$");
+
+  @BeforeEach
+  void setUp() throws Exception {
+    when(objectMapper.readerFor(any(TypeReference.class)))
+      .thenReturn(mock(ObjectReader.class));
+
+    service = new ProductFileConsumerService(
+      "test-app",
+      productRepository,
+      fileStorageClient,
+      objectMapper,
+      productFileRepository,
+      eprelProductValidator
+    );
+  }
+
+  // Test: evento valido deve attivare il flusso completo di elaborazione
+  @Test
+  void testExecute_validEvent_shouldProcessFile() throws Exception {
+    StorageEventData data = StorageEventData.builder()
+      .url("/CSV/ORG123/COOKINGHOBS/file123.csv")
+      .build();
+
+    StorageEventDTO event = StorageEventDTO.builder()
+      .subject("/blobs/CSV/ORG123/COOKINGHOBS/file123.csv")
+      .data(data)
+      .build();
+
+    ByteArrayOutputStream stream = new ByteArrayOutputStream();
+    when(fileStorageClient.download(anyString())).thenReturn(stream);
+    when(productFileRepository.findById(anyString()))
+      .thenReturn(Optional.of(new ProductFile()));
+    when(productRepository.saveAll(any())).thenReturn(List.of());
+
+    try (MockedStatic<CsvUtils> utils = mockStatic(CsvUtils.class)) {
+      CSVRecord record = mock(CSVRecord.class);
+      utils.when(() -> CsvUtils.readHeader(any(ByteArrayOutputStream.class)))
+        .thenReturn(List.of("HEADER"));
+      utils.when(() -> CsvUtils.readCsvRecords(any(ByteArrayOutputStream.class)))
+        .thenReturn(List.of(record));
+
+      assertDoesNotThrow(() -> service.execute(List.of(event), null));
+    }
+  }
+
+  // Test: URL non contenente /CSV/ deve restituire null
+  @Test
+  void testExtractBlobPath_invalidUrl_shouldReturnNull() {
+    String url = "/wrongprefix/file.csv";
+    assertNull(service.extractBlobPath(url));
+  }
+
+  // Test: file non trovato nel repository non deve generare errori
+  @Test
+  void testSetProductFileStatus_fileNotFound_shouldDoNothing() {
+    when(productFileRepository.findById("missing-file")).thenReturn(Optional.empty());
+    service.setProductFileStatus("missing-file", "EPREL_ERROR", 0);
+    verify(productFileRepository, never()).save(any());
+  }
+
+  // Test: subject valido viene correttamente parsato in EventDetails
+  @Test
+  void testParseEventSubject_validSubject_shouldReturnDetails() {
+    String subject = "/blobs/CSV/ORG123/COOKINGHOBS/file123.csv";
+    EventDetails details = service.parseEventSubject(subject);
+    assertNotNull(details);
+    assertEquals("ORG123", details.getOrgId());
+    assertEquals("COOKINGHOBS", details.getCategory());
+    assertEquals("file123", details.getProductFileId());
+  }
+
+  // Test: subject non conforme restituisce null
+  @Test
+  void testParseEventSubject_invalidSubject_shouldReturnNull() {
+    String subject = "invalid-subject";
+    assertNull(service.parseEventSubject(subject));
+  }
+
+  // Test: eccezione durante il download imposta stato EPREL_ERROR
+  @Test
+  void testProcessFileFromStorage_downloadThrowsException_setsEprelError() throws Exception {
+    when(fileStorageClient.download(anyString())).thenThrow(new RuntimeException("boom"));
+    when(productFileRepository.findById(anyString()))
+      .thenReturn(Optional.of(new ProductFile()));
+
+    StorageEventDTO event = StorageEventDTO.builder()
+      .subject("/blobs/CSV/ORG123/COOKINGHOBS/file123.csv")
+      .data(StorageEventData.builder().url("/CSV/ORG123/COOKINGHOBS/file123.csv").build())
+      .build();
+
+    service.execute(List.of(event), null);
+    verify(productFileRepository).save(any());
+  }
+
+  // Test: se il file non viene scaricato, viene comunque gestito correttamente
+  @Test
+  void testProcessFileFromStorage_downloadReturnsNull_setsEprelError() throws Exception {
+    when(fileStorageClient.download(anyString())).thenReturn(null);
+    when(productFileRepository.findById(anyString()))
+      .thenReturn(Optional.of(new ProductFile()));
+
+    StorageEventDTO event = StorageEventDTO.builder()
+      .subject("/blobs/CSV/ORG123/COOKINGHOBS/file123.csv")
+      .data(StorageEventData.builder().url("/CSV/ORG123/COOKINGHOBS/file123.csv").build())
+      .build();
+
+    service.execute(List.of(event), null);
+    verify(productFileRepository).save(any());
+  }
+
+  // Test: subject invalido non deve generare eccezioni
+  @Test
+  void testExecute_invalidSubject_shouldSkip() {
+    StorageEventDTO event = StorageEventDTO.builder()
+      .subject("invalid_subject")
+      .data(StorageEventData.builder().url("/CSV/ORG123/COOKINGHOBS/file.csv").build())
+      .build();
+
+    assertDoesNotThrow(() -> service.execute(List.of(event), null));
+  }
+
+  // Test: evento con data nulla viene ignorato
+  @Test
+  void testExecute_eventWithNullData_shouldSkip() {
+    StorageEventDTO event = StorageEventDTO.builder()
+      .data(null)
+      .subject("ORGID_CAT_file.csv")
+      .build();
+
+    assertDoesNotThrow(() -> service.execute(List.of(event), null));
+  }
+
+  // Test: evento con URL vuoto viene ignorato
+  @Test
+  void testExecute_eventWithEmptyUrl_shouldSkip() {
+    StorageEventData data = StorageEventData.builder().url("").build();
+
+    StorageEventDTO event = StorageEventDTO.builder()
+      .subject("ORGID_CAT_file.csv")
+      .data(data)
+      .build();
+
+    assertDoesNotThrow(() -> service.execute(List.of(event), null));
+  }
+
+  // Test: eccezione nel parsing CSV non deve generare errori
+  @Test
+  void testProcessCsvFromStorage_withExceptionInCsvParsing() {
+    ByteArrayOutputStream csvContent = new ByteArrayOutputStream();
+
+    try (MockedStatic<CsvUtils> utils = mockStatic(CsvUtils.class)) {
+      utils.when(() -> CsvUtils.readHeader(any(ByteArrayOutputStream.class)))
+        .thenThrow(new RuntimeException("CSV read error"));
+
+      assertDoesNotThrow(() -> service.processCsvFromStorage(csvContent, PRODUCT_FILE_ID, "OTHER", ORG_ID));
+    }
+  }
+}

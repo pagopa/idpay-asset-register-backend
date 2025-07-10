@@ -114,7 +114,7 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
     processFileFromStorage(blobPath, url, eventDetails);
   }
 
-  private EventDetails parseEventSubject(String subject) {
+  protected EventDetails parseEventSubject(String subject) {
     Matcher matcher = SUBJECT_PATTERN.matcher(subject);
     if (!matcher.find() || matcher.groupCount() < 3) {
       log.warn("[PRODUCT_UPLOAD] - Invalid subject format: {}", subject);
@@ -129,7 +129,7 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
     return new EventDetails(orgId, category, productFileId);
   }
 
-  private String extractBlobPath(String url) {
+  protected String extractBlobPath(String url) {
     int pathStart = url.indexOf("/CSV/");
     if (pathStart == -1) {
       log.error("[PRODUCT_UPLOAD] - Unable to extract file path from URL: {}", url);
@@ -216,7 +216,7 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
     }
   }
 
-  private void setProductFileStatus(String fileId, String status, int added) {
+  protected void setProductFileStatus(String fileId, String status, int added) {
     Optional<ProductFile> productFile = productFileRepository.findById(fileId);
     productFile.ifPresent(file -> {
       file.setUploadStatus(status);
