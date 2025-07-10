@@ -35,6 +35,14 @@ public class EprelUtils {
     return productIndex <= requiredIndex;
   }
 
+  public static String mapEnergyClass(String value) {
+    return switch (value) {
+      case "AP" -> "A+";
+      case "APP" -> "A++";
+      case "APPP" -> "A+++";
+      default -> value;
+    };
+  }
 
 
 
