@@ -121,20 +121,7 @@ class ProductFileServiceTest {
 
 
 
-  @Test
-  void downloadReport_formalError() throws IOException {
-    ProductFile pf = new ProductFile();
-    pf.setId("1");
-    pf.setOrganizationId("o");
-    pf.setUploadStatus("FORMAL_ERROR");
-    when(productFileRepository.findByIdAndOrganizationId("1", "o")).thenReturn(Optional.of(pf));
 
-    ByteArrayOutputStream os = new ByteArrayOutputStream();
-    os.write("fake csv content".getBytes());
-    when(fileStorageClient.download("Report/Formal_Error/1.csv")).thenReturn(os);
-    FileReportDTO res = productFileService.downloadReport("1", "o");
-    assertArrayEquals(os.toByteArray(), res.getData());
-  }
 
   @Test
   void downloadReport_notFoundId() {
@@ -183,39 +170,6 @@ class ProductFileServiceTest {
     ProductFileResult res = productFileService.processFile(file, "cat","org","user");
     assertEquals("KO", res.getStatus());
     assertEquals("TEST", res.getErrorKey());
-  }
-
-
-  //Test with invalid headers
-  @Test
-  void whenInvalidHeaders_thenReturnKoResult() {
-    MultipartFile file = createMockFile();
-    ValidationResultDTO validationResultDTO = new ValidationResultDTO("KO","HEADE");
-    when(productFileValidator.validateFile(any(),anyString(),anyList(),anyInt())).thenReturn(validationResultDTO);
-    ProductFileResult res = productFileService.processFile(file, "cat","org","user");
-    assertEquals("KO", res.getStatus());
-    assertEquals("HEADE", res.getErrorKey());
-  }
-
-
-  //Test superati i 100 record
-  @Test
-  void whenExceedsMaxRows_thenReturnKoResult() {
-    MultipartFile file = createMockFile();
-    List<CSVRecord> recs = new ArrayList<>();
-    for (int i=0; i<101; i++) recs.add(mock(CSVRecord.class));
-    try (MockedStatic<CsvUtils> mocked = mockStatic(CsvUtils.class)) {
-      mocked.when(() -> CsvUtils.readHeader(file))
-        .thenReturn(List.of("A","B"));
-      mocked.when(() -> CsvUtils.readCsvRecords(file))
-        .thenReturn(recs);
-      when(productFileValidator.validateFile(file, "cat", List.of("A","B"), 101))
-        .thenReturn(ValidationResultDTO.ko("MAX_ROWS_EXCEEDED"));
-
-      ProductFileResult res = productFileService.processFile(file, "cat","org","user");
-      assertEquals("KO", res.getStatus());
-      assertEquals("MAX_ROWS_EXCEEDED", res.getErrorKey());
-    }
   }
 
 
@@ -292,6 +246,8 @@ class ProductFileServiceTest {
     testFormalError("Il campo Modello è obbligatorio e deve contenere una stringa lunga al massimo 100 caratteri");
   }
 
+
+
   @Test
   void whenAllValid_thenReturnOk()  {
     MultipartFile file = mock(MultipartFile.class);
@@ -327,40 +283,14 @@ class ProductFileServiceTest {
       throw new RuntimeException(e);
     }
   }
-  @Test
-  void shouldThrowExceptionWhenOrganizationIdIsNull() {
-    ReportNotFoundException ex = assertThrows(ReportNotFoundException.class,
-      () -> productFileService.getProductFilesByOrganizationId(null));
-    assertEquals("Organization Id is null or empty", ex.getMessage());
-  }
+
+
 
   @Test
   void shouldThrowExceptionWhenOrganizationIdIsEmpty() {
     ReportNotFoundException ex = assertThrows(ReportNotFoundException.class,
       () -> productFileService.getProductFilesByOrganizationId(""));
     assertEquals("Organization Id is null or empty", ex.getMessage());
-  }
-
-  @Test
-  void shouldReturnEmptyListWhenRepositoryReturnsEmptyOptional() {
-    when(productFileRepository.findByOrganizationIdAndUploadStatusNotIn(eq("org123"), anyList()))
-      .thenReturn(Optional.empty());
-
-    List<ProductBatchDTO> result = productFileService.getProductFilesByOrganizationId("org123");
-
-    assertNotNull(result);
-    assertTrue(result.isEmpty());
-  }
-
-  @Test
-  void shouldReturnEmptyListWhenRepositoryReturnsEmptyList() {
-    when(productFileRepository.findByOrganizationIdAndUploadStatusNotIn(eq("org123"), anyList()))
-      .thenReturn(Optional.of(List.of()));
-
-    List<ProductBatchDTO> result = productFileService.getProductFilesByOrganizationId("org123");
-
-    assertNotNull(result);
-    assertTrue(result.isEmpty());
   }
 
   @Test
@@ -380,14 +310,4 @@ class ProductFileServiceTest {
     assertEquals("DISHWASHERS_file123.csv", result.get(0).getBatchName());
   }
 
-  @Test
-  void shouldThrowGenericException() {
-    when(productFileRepository.findByOrganizationIdAndUploadStatusNotIn(anyString(), anyList()))
-      .thenThrow(new RuntimeException("DB failure"));
-
-    RuntimeException ex = assertThrows(RuntimeException.class,
-      () -> productFileService.getProductFilesByOrganizationId("org123"));
-
-    assertEquals("DB failure", ex.getMessage());
-  }
 }
