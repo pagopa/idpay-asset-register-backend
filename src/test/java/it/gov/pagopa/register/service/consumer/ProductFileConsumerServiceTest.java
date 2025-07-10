@@ -1,12 +1,14 @@
-package it.gov.pagopa.register.service.operation;
+package it.gov.pagopa.register.service.consumer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import it.gov.pagopa.register.connector.notification.NotificationServiceImpl;
 import it.gov.pagopa.register.connector.storage.FileStorageClient;
 import it.gov.pagopa.register.dto.operation.StorageEventDTO;
 import it.gov.pagopa.register.dto.operation.StorageEventDTO.StorageEventData;
 import it.gov.pagopa.register.model.operation.ProductFile;
 import it.gov.pagopa.register.repository.operation.ProductFileRepository;
 import it.gov.pagopa.register.repository.operation.ProductRepository;
+import it.gov.pagopa.register.service.validator.EprelProductValidatorService;
 import it.gov.pagopa.register.utils.CsvUtils;
 import it.gov.pagopa.register.utils.EventDetails;
 import org.apache.commons.csv.CSVRecord;
@@ -45,6 +47,8 @@ class ProductFileConsumerServiceTest {
   private EprelProductValidatorService eprelProductValidator;
   @Mock
   private ObjectMapper objectMapper;
+  @Mock
+  private NotificationServiceImpl notificationService;
 
   private static final String ORG_ID = "ORG123";
   private static final String CATEGORY = "COOKINGHOBS";
@@ -63,7 +67,8 @@ class ProductFileConsumerServiceTest {
       fileStorageClient,
       objectMapper,
       productFileRepository,
-      eprelProductValidator
+      eprelProductValidator,
+      notificationService
     );
   }
 
