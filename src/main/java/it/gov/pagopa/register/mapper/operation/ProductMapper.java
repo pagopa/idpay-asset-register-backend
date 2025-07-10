@@ -30,7 +30,7 @@ public class ProductMapper {
       .gtinCode(entity.getGtinCode())
       .productCode(entity.getProductCode())
       .countryOfProduction(entity.getCountryOfProduction())
-      .energyClass(mapEnergyClass(entity.getEnergyClass()))
+      .energyClass(entity.getEnergyClass())
       .linkEprel(generateEprelUrl(entity.getProductGroup(), entity.getEprelCode()))
       .batchName(entity.getCategory()+"_"+entity.getProductFileId()+".csv")
       .build();
