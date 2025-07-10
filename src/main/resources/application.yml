@@ -107,6 +107,12 @@ app:
       service:
         name: notificationClient
         base-url:  ${NOTIFICATION_MS_BASE_URL:https://api-io.dev.cstar.pagopa.it/idpay-itn/mock/api/privacynotice/v2}
+      template:
+        ok: Email_RDB_EsitoProdottiOK
+        partial: Email_RDB_EsitoProdottiParziale
+      subject:
+        ok: Prodotti elaborati con successo
+        partial:  Elaborazione parziale dei prodotti
     eprel:
       service:
         get-product : ${EPREL_BASE_URL:https://eprel.ec.europa.eu/api/product/{REGISTRATION_NUMBER}}

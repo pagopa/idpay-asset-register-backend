@@ -3,7 +3,6 @@ package it.gov.pagopa.common.storage;
 import com.azure.core.http.rest.PagedIterable;
 import com.azure.core.http.rest.Response;
 import com.azure.storage.blob.BlobContainerClient;
-import com.azure.storage.blob.BlobServiceClientBuilder;
 import com.azure.storage.blob.models.*;
 import com.azure.storage.blob.options.BlobDownloadToFileOptions;
 import com.azure.storage.blob.options.BlobParallelUploadOptions;
@@ -29,14 +28,8 @@ public class AzureBlobClientImpl implements AzureBlobClient {
 
     private final BlobContainerClient blobContainerClient;
 
-    protected AzureBlobClientImpl(
-            String storageConnectionString,
-            String blobContainerName
-    ) {
-        this.blobContainerClient = new BlobServiceClientBuilder()
-                .connectionString(storageConnectionString)
-                .buildClient()
-                .getBlobContainerClient(blobContainerName);
+   protected AzureBlobClientImpl(BlobContainerClient blobContainerClient) {
+      this.blobContainerClient = blobContainerClient;
     }
 
     @Override

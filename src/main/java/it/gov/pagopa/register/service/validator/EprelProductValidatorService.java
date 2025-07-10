@@ -1,4 +1,4 @@
-package it.gov.pagopa.register.service.operation;
+package it.gov.pagopa.register.service.validator;
 
 import it.gov.pagopa.register.config.EprelValidationConfig;
 import it.gov.pagopa.register.connector.eprel.EprelConnector;
@@ -29,8 +29,10 @@ public class EprelProductValidatorService {
   private final EprelValidationConfig eprelValidationConfig;
   private final EprelConnector eprelConnector;
   public EprelResult validateRecords(List<CSVRecord> records, Set<String> fields, String category, String orgId, String productFileId) {
+    log.info("[VALIDATE_RECORDS] - Validating records for organizationId: {}, category: {}, productFileId: {}", orgId, category, productFileId);
     Map<String, EprelValidationRule> rules = eprelValidationConfig.getSchemas();
     if (rules == null || rules.isEmpty()) {
+      log.error("[VALIDATE_RECORDS] - No validation rules found");
       throw new IllegalArgumentException("No validation rules found");
     }
 
@@ -44,30 +46,34 @@ public class EprelProductValidatorService {
       validateRecord(csvRow, context, validRecords, invalidRecords, errorMessages);
     }
 
+    log.info("[VALIDATE_RECORDS] - Validation completed. Valid records: {}, Invalid records: {}", validRecords.size(), invalidRecords.size());
     return new EprelResult(validRecords, invalidRecords, errorMessages);
   }
 
   private void validateRecord(CSVRecord csvRow, ValidationContext context, List<Product> validRecords,
                               List<CSVRecord> invalidRecords, Map<CSVRecord, String> errorMessages) {
+    log.info("[VALIDATE_RECORD] - Validating record with EPREL code: {}", csvRow.get(CODE_EPREL));
     EprelProduct eprelData = eprelConnector.callEprel(csvRow.get(CODE_EPREL));
-
+    log.info("[VALIDATE_RECORD] - EPREL response: {}", eprelData);
     List<String> errors = new ArrayList<>();
 
     if (eprelData == null) {
+      log.warn("[VALIDATE_RECORD] - Product not found in EPREL for code: {}", csvRow.get(CODE_EPREL));
       errors.add("Product not found in EPREL");
     } else {
-      if(WASHERDRIERS.equalsIgnoreCase(context.category)) {
+      if (WASHERDRIERS.equalsIgnoreCase(context.getCategory())) {
         eprelData.setEnergyClass(eprelData.getEnergyClassWash());
       }
-      log.info("[PRODUCT_UPLOAD] - EPREL response for {}: {}", eprelData.getEprelRegistrationNumber(), eprelData);
+      log.info("[VALIDATE_RECORD] - EPREL response for {}: {}", eprelData.getEprelRegistrationNumber(), eprelData);
       validateFields(context, eprelData, errors);
     }
 
     if (!errors.isEmpty()) {
+      log.warn("[VALIDATE_RECORD] - Validation errors for record with EPREL code: {}: {}", csvRow.get(CODE_EPREL), String.join(", ", errors));
       invalidRecords.add(csvRow);
       errorMessages.put(csvRow, String.join(", ", errors));
     } else {
-      log.info("[PRODUCT_UPLOAD] - EPREL product valide: {}",eprelData.getEprelRegistrationNumber());
+      log.info("[VALIDATE_RECORD] - EPREL product valid: {}", eprelData.getEprelRegistrationNumber());
       validRecords.add(mapEprelToProduct(csvRow, eprelData, context.getOrgId(), context.getProductFileId(), context.getCategory()));
     }
   }
@@ -83,6 +89,7 @@ public class EprelProductValidatorService {
       }
     }
   }
+
 
   @Getter
   @AllArgsConstructor
