@@ -167,7 +167,7 @@ class ProductFileServiceTest {
     MultipartFile file = createMockFile_InvalidFileType();
     ValidationResultDTO validationResultDTO = new ValidationResultDTO("KO","TEST");
     when(productFileValidator.validateFile(any(),anyString(),anyList(),anyInt())).thenReturn(validationResultDTO);
-    ProductFileResult res = productFileService.processFile(file, "cat","org","user");
+    ProductFileResult res = productFileService.processFile(file, "cat","org","user","email");
     assertEquals("KO", res.getStatus());
     assertEquals("TEST", res.getErrorKey());
   }
@@ -208,7 +208,7 @@ class ProductFileServiceTest {
       ProductFile savedProductFile = ProductFile.builder().id("123").build();
       when(productFileRepository.save(any())).thenReturn(savedProductFile);
 
-      ProductFileResult result = productFileService.processFile(file, "cookinghobs", "org1", "user1");
+      ProductFileResult result = productFileService.processFile(file, "cookinghobs", "org1", "user1","email");
 
       assertEquals("KO", result.getStatus());
       assertEquals(AssetRegisterConstants.UploadKeyConstant.REPORT_FORMAL_FILE_ERROR_KEY, result.getErrorKey());
@@ -275,7 +275,7 @@ class ProductFileServiceTest {
 
       when(fileStorageClient.upload(any(), any(), any())).thenReturn(null);
 
-      ProductFileResult res = productFileService.processFile(file, "cat", "org", "user");
+      ProductFileResult res = productFileService.processFile(file, "cat", "org", "user","email");
 
       assertEquals("OK", res.getStatus());
       assertNull(res.getErrorKey());
