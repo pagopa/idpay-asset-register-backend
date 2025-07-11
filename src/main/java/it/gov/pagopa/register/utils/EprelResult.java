@@ -14,7 +14,7 @@ import java.util.Map;
 @Getter
 @Setter
 public class EprelResult {
-  private final List<Product> validRecords;
+  private final Map<String, Product> validRecords;
   private final List<CSVRecord> invalidRecords;
   private final Map<CSVRecord, String> errorMessages;
 

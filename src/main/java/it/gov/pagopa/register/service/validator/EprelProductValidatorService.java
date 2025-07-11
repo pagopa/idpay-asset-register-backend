@@ -16,9 +16,9 @@ import org.springframework.stereotype.Service;
 import java.util.*;
 
 
-import static it.gov.pagopa.register.constants.AssetRegisterConstants.CODE_EPREL;
-import static it.gov.pagopa.register.constants.AssetRegisterConstants.WASHERDRIERS;
+import static it.gov.pagopa.register.constants.AssetRegisterConstants.*;
 import static it.gov.pagopa.register.model.operation.mapper.ProductMapper.mapEprelToProduct;
+import static it.gov.pagopa.register.model.operation.mapper.ProductMapper.mapProductToCsvRow;
 
 @Service
 @RequiredArgsConstructor
@@ -38,7 +38,7 @@ public class EprelProductValidatorService {
 
     ValidationContext context = new ValidationContext(fields, category, orgId, productFileId, rules);
 
-    List<Product> validRecords = new ArrayList<>();
+    Map<String, Product> validRecords = new LinkedHashMap<>();
     List<CSVRecord> invalidRecords = new ArrayList<>();
     Map<CSVRecord, String> errorMessages = new HashMap<>();
 
@@ -50,13 +50,12 @@ public class EprelProductValidatorService {
     return new EprelResult(validRecords, invalidRecords, errorMessages);
   }
 
-  private void validateRecord(CSVRecord csvRow, ValidationContext context, List<Product> validRecords,
+  private void validateRecord(CSVRecord csvRow, ValidationContext context,  Map<String, Product> validRecords,
                               List<CSVRecord> invalidRecords, Map<CSVRecord, String> errorMessages) {
     log.info("[VALIDATE_RECORD] - Validating record with EPREL code: {}", csvRow.get(CODE_EPREL));
     EprelProduct eprelData = eprelConnector.callEprel(csvRow.get(CODE_EPREL));
     log.info("[VALIDATE_RECORD] - EPREL response: {}", eprelData);
     List<String> errors = new ArrayList<>();
-
     if (eprelData == null) {
       log.warn("[VALIDATE_RECORD] - Product not found in EPREL for code: {}", csvRow.get(CODE_EPREL));
       errors.add("Product not found in EPREL");
@@ -74,7 +73,14 @@ public class EprelProductValidatorService {
       errorMessages.put(csvRow, String.join(", ", errors));
     } else {
       log.info("[VALIDATE_RECORD] - EPREL product valid: {}", eprelData.getEprelRegistrationNumber());
-      validRecords.add(mapEprelToProduct(csvRow, eprelData, context.getOrgId(), context.getProductFileId(), context.getCategory()));
+      if(validRecords.containsKey(csvRow.get(CODE_GTIN_EAN))){
+        Product product = validRecords.remove(CODE_GTIN_EAN);
+        CSVRecord duplicateGtinRow = mapProductToCsvRow(product,context.getCategory());
+        invalidRecords.add(duplicateGtinRow);
+        errorMessages.put(duplicateGtinRow, DUPLICATE_GTIN_EAN);
+        validRecords.put(csvRow.get(CODE_GTIN_EAN),mapEprelToProduct(csvRow, eprelData, context.getOrgId(), context.getProductFileId(), context.getCategory()));
+      }
+      validRecords.put(csvRow.get(CODE_GTIN_EAN),mapEprelToProduct(csvRow, eprelData, context.getOrgId(), context.getProductFileId(), context.getCategory()));
     }
   }
 

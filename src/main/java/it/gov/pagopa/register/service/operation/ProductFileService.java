@@ -26,11 +26,12 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 
 import static it.gov.pagopa.register.constants.AssetRegisterConstants.*;
 import static it.gov.pagopa.register.constants.enums.UploadCsvStatus.FORMAL_ERROR;
 import static it.gov.pagopa.register.constants.enums.UploadCsvStatus.UPLOADED;
-import static it.gov.pagopa.register.constants.enums.UploadCsvStatus.EPREL_ERROR;
+import static it.gov.pagopa.register.constants.enums.UploadCsvStatus.PARTIAL;
 
 @Slf4j
 @Service
@@ -104,7 +105,7 @@ public class ProductFileService {
     return FileReportDTO.builder().data(result.toByteArray()).filename(FilenameUtils.getBaseName(productFile.getFileName()) + "_errors.csv").build();
   }
 
-  public ProductFileResult processFile(MultipartFile file, String category, String organizationId, String userId) {
+  public ProductFileResult processFile(MultipartFile file, String category, String organizationId, String userId, String userEmail) {
 
     try {
       String originalFileName = file.getOriginalFilename();
@@ -136,6 +137,7 @@ public class ProductFileService {
           .userId(userId)
           .organizationId(organizationId)
           .dateUpload(LocalDateTime.now())
+          .userEmail(userEmail)
           .build());
 
         Path tempFilePath = Paths.get("/tmp/", errorFileName);
@@ -156,6 +158,7 @@ public class ProductFileService {
         .userId(userId)
         .organizationId(organizationId)
         .dateUpload(LocalDateTime.now())
+        .userEmail(userEmail)
         .build());
 
       // Upload on Azure
@@ -171,7 +174,7 @@ public class ProductFileService {
   }
 
   public List<ProductBatchDTO> getProductFilesByOrganizationId(String organizationId) {
-    if (organizationId == null || organizationId.isEmpty()) {
+    if (Objects.isNull(organizationId) || organizationId.isEmpty()) {
       log.error("[GET_PRODUCT_FILES] - Organization Id is null or empty");
       throw new ReportNotFoundException("Organization Id is null or empty");
     }
@@ -179,7 +182,7 @@ public class ProductFileService {
     log.info("[GET_PRODUCT_FILES] - Fetching product files for organizationId: {}", organizationId);
     List<String> excludedStatuses = List.of(
       FORMAL_ERROR.name(),
-      EPREL_ERROR.name()
+      PARTIAL.name()
     );
 
     List<ProductBatchDTO> productFiles = productFileRepository

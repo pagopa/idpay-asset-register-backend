@@ -2,16 +2,23 @@ package it.gov.pagopa.register.model.operation.mapper;
 
 import it.gov.pagopa.register.utils.EprelProduct;
 import it.gov.pagopa.register.model.operation.Product;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.csv.CSVRecord;
 
+import java.io.StringReader;
+import java.io.StringWriter;
 import java.time.LocalDateTime;
 
 import static it.gov.pagopa.register.constants.AssetRegisterConstants.*;
 import static it.gov.pagopa.register.utils.EprelUtils.mapEnergyClass;
 
+
 public class ProductMapper {
 
-  private ProductMapper(){}
+  private ProductMapper() {
+  }
+
   public static Product mapCookingHobToProduct(CSVRecord csvRecord, String orgId, String productFileId) {
     return Product.builder()
       .productFileId(productFileId)
@@ -44,4 +51,38 @@ public class ProductMapper {
       .energyClass(mapEnergyClass(eprelData.getEnergyClass()))
       .build();
   }
+
+
+  public static CSVRecord mapProductToCsvRow(Product product, String category) {
+    try {
+      StringWriter out = new StringWriter();
+      CSVPrinter printer = new CSVPrinter(out, CSVFormat.DEFAULT);
+
+      if (category.equals(COOKINGHOBS)) {
+        printer.printRecord(
+          product.getEprelCode(),
+          product.getGtinCode(),
+          product.getProductCode(),
+          product.getCategory(),
+          product.getModel(),
+          product.getBrand()
+        );
+      } else{
+        printer.printRecord(
+          product.getEprelCode(),
+          product.getGtinCode(),
+          product.getProductCode(),
+          product.getCategory()
+        );
+      }
+
+      printer.flush();
+      String csvString = out.toString();
+      return CSVFormat.DEFAULT.parse(new StringReader(csvString)).getRecords().get(0);
+    } catch (Exception e) {
+      return null;
+    }
+  }
 }
+
+

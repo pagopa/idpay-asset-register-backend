@@ -26,16 +26,14 @@ import java.io.ByteArrayOutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.regex.Matcher;
 
 import static it.gov.pagopa.register.constants.AssetRegisterConstants.*;
 import static it.gov.pagopa.register.constants.enums.UploadCsvStatus.*;
-import static it.gov.pagopa.register.constants.enums.UploadCsvStatus.EPREL_ERROR;
+import static it.gov.pagopa.register.constants.enums.UploadCsvStatus.PARTIAL;
 import static it.gov.pagopa.register.model.operation.mapper.ProductMapper.mapCookingHobToProduct;
+import static it.gov.pagopa.register.model.operation.mapper.ProductMapper.mapProductToCsvRow;
 
 @Slf4j
 @Service
@@ -155,7 +153,7 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
     try (ByteArrayOutputStream downloadedData = fileStorageClient.download(blobPath)) {
       if (downloadedData == null) {
         log.warn("[PRODUCT_UPLOAD] - File not found or download failed for path: {} (from URL: {})", blobPath, url);
-        setProductFileStatus(eventDetails.getProductFileId(), String.valueOf(EPREL_ERROR), 0);
+        setProductFileStatus(eventDetails.getProductFileId(), String.valueOf(PARTIAL), 0);
         return;
       }
 
@@ -164,7 +162,7 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
 
     } catch (Exception e) {
       log.error("[PRODUCT_UPLOAD] - Error processing file {}: {}", eventDetails.getProductFileId(), e.getMessage(), e);
-      setProductFileStatus(eventDetails.getProductFileId(), String.valueOf(EPREL_ERROR), 0);
+      setProductFileStatus(eventDetails.getProductFileId(), String.valueOf(PARTIAL), 0);
     }
   }
 
@@ -180,28 +178,50 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
       List<CSVRecord> records = CsvUtils.readCsvRecords(byteArrayOutputStream);
       log.info("[PRODUCT_UPLOAD] - Valid CSV headers: {}", headers);
       if (isCookingHob) {
-        processCookingHobRecords(records, orgId, fileId);
+        processCookingHobRecords(records, orgId, fileId,headers);
       } else {
         EprelResult validationResult = eprelProductValidator.validateRecords(records, EPREL_FIELDS, category, orgId, fileId);
-        processEprelResult(validationResult.getValidRecords(), validationResult.getInvalidRecords(), validationResult.getErrorMessages(), fileId, headers, category);
+        processEprelResult(validationResult.getValidRecords().values().stream().toList(), validationResult.getInvalidRecords(), validationResult.getErrorMessages(), fileId, headers, category);
       }
     } catch (Exception e) {
       log.error("[UPLOAD_PRODUCT_FILE] - Generic Error ", e);
     }
   }
 
-  private void processCookingHobRecords(List<CSVRecord> records, String orgId, String productFileId) {
-    List<Product> result = new ArrayList<>();
+  private void processCookingHobRecords(List<CSVRecord> records, String orgId, String productFileId, List<String> headers) {
+    Map<String,Product> validProduct = new LinkedHashMap<>();
+    List<CSVRecord> invalidRecords = new ArrayList<>();
+    Map<CSVRecord, String> errorMessages = new HashMap<>();
     for (CSVRecord csvRecord : records) {
-      result.add(mapCookingHobToProduct(csvRecord, orgId, productFileId));
-      log.info("[PRODUCT_UPLOAD] - Added cooking hob product: {}", csvRecord.get(CODE_PRODUCT));
+      if(validProduct.containsKey(CODE_GTIN_EAN)) {
+        Product duplicateGtin = validProduct.remove(csvRecord.get(CODE_GTIN_EAN));
+        CSVRecord duplicateGtinRow = mapProductToCsvRow(duplicateGtin,COOKINGHOBS);
+        invalidRecords.add(duplicateGtinRow);
+        errorMessages.put(duplicateGtinRow,DUPLICATE_GTIN_EAN);
+        log.info("[PRODUCT_UPLOAD] - Added cooking hob product: {}", csvRecord.get(CODE_PRODUCT));
+      } else {
+        validProduct.put(csvRecord.get(CODE_GTIN_EAN),mapCookingHobToProduct(csvRecord, orgId, productFileId));
+        log.info("[PRODUCT_UPLOAD] - Added cooking hob product: {}", csvRecord.get(CODE_PRODUCT));
+      }
     }
-    if (!result.isEmpty()) {
-      List<Product> savedProduct = productRepository.saveAll(result);
+    if (!validProduct.isEmpty()) {
+      List<Product> savedProduct = productRepository.saveAll(validProduct.values().stream().toList());
       log.info("[PRODUCT_UPLOAD] - Saved {} valid products for file {}", savedProduct.size(), productFileId);
-      setProductFileStatus(productFileId, String.valueOf(LOADED), savedProduct.size());
-      log.info("[PRODUCT_UPLOAD] - File {} processed successfully with no errors", productFileId);
-      notificationService.sendEmailOk(COOKINGHOBS + "_" + productFileId + ".csv", null);
+      if (!invalidRecords.isEmpty()) {
+        processErrorRecords(invalidRecords, errorMessages, productFileId, headers);
+        String userEmail = setProductFileStatus(productFileId, String.valueOf(PARTIAL), validProduct.size());
+        log.info("[PRODUCT_UPLOAD] - File {} processed with {} duplicate rows", productFileId, errorMessages.size());
+        notificationService.sendEmailPartial(COOKINGHOBS + "_" + productFileId + ".csv", userEmail);
+      } else {
+        String userEmail = setProductFileStatus(productFileId, String.valueOf(LOADED), savedProduct.size());
+        log.info("[PRODUCT_UPLOAD] - File {} processed successfully with no errors", productFileId);
+        notificationService.sendEmailOk(COOKINGHOBS + "_" + productFileId + ".csv", userEmail);
+      }
+    } else if (!invalidRecords.isEmpty()) {
+      processErrorRecords(invalidRecords, errorMessages, productFileId, headers);
+      String userEmail = setProductFileStatus(productFileId, String.valueOf(PARTIAL), 0);
+      log.info("[PRODUCT_UPLOAD] - File {} processed with {} duplicate row", productFileId, invalidRecords.size());
+      notificationService.sendEmailPartial(COOKINGHOBS + "_" + productFileId + ".csv", userEmail);
     }
   }
 
@@ -211,19 +231,19 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
       log.info("[PRODUCT_UPLOAD] - Saved {} valid products for file {}", savedProduct.size(), productFileId);
       if (!errors.isEmpty()) {
         processErrorRecords(errors, messages, productFileId, headers);
-        setProductFileStatus(productFileId, String.valueOf(EPREL_ERROR), validProduct.size());
+        String userEmail = setProductFileStatus(productFileId, String.valueOf(PARTIAL), validProduct.size());
         log.info("[PRODUCT_UPLOAD] - File {} processed with {} EPREL errors", productFileId, errors.size());
-        notificationService.sendEmailPartial(category + "_" + productFileId + ".csv", null);
+        notificationService.sendEmailPartial(category + "_" + productFileId + ".csv", userEmail);
       } else {
-        setProductFileStatus(productFileId, String.valueOf(LOADED), savedProduct.size());
+        String userEmail = setProductFileStatus(productFileId, String.valueOf(LOADED), savedProduct.size());
         log.info("[PRODUCT_UPLOAD] - File {} processed successfully with no errors", productFileId);
-        notificationService.sendEmailOk(category + "_" + productFileId + ".csv", null);
+        notificationService.sendEmailOk(category + "_" + productFileId + ".csv", userEmail);
       }
     } else if (!errors.isEmpty()) {
       processErrorRecords(errors, messages, productFileId, headers);
-      setProductFileStatus(productFileId, String.valueOf(EPREL_ERROR), 0);
+      String userEmail = setProductFileStatus(productFileId, String.valueOf(PARTIAL), 0);
       log.info("[PRODUCT_UPLOAD] - File {} processed with {} EPREL errors", productFileId, errors.size());
-      notificationService.sendEmailPartial(category + "_" + productFileId + ".csv", null);
+      notificationService.sendEmailPartial(category + "_" + productFileId + ".csv", userEmail);
     }
   }
 
@@ -240,13 +260,20 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
     }
   }
 
-  protected void setProductFileStatus(String fileId, String status, int added) {
-    Optional<ProductFile> productFile = productFileRepository.findById(fileId);
-    productFile.ifPresent(file -> {
-      file.setUploadStatus(status);
-      file.setAddedProductNumber(added);
-      productFileRepository.save(file);
+  protected String setProductFileStatus(String fileId, String status, int added) {
+    Optional<ProductFile> productFileOptional = productFileRepository.findById(fileId);
+
+    if (productFileOptional.isPresent()) {
+      ProductFile productFile = productFileOptional.get();
+      productFile.setUploadStatus(status);
+      productFile.setAddedProductNumber(added);
+      productFileRepository.save(productFile);
       log.info("[PRODUCT_UPLOAD] - Final status for file {} set to: {}", fileId, status);
-    });
+      return productFile.getUserEmail();
+    } else {
+      log.warn("[PRODUCT_UPLOAD] - No product file found with id: {}", fileId);
+      return null;
+    }
   }
+
 }

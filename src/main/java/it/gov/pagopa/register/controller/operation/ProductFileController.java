@@ -34,9 +34,12 @@ public class ProductFileController {
   }
 
   @PostMapping(value = "/product-files", consumes = "multipart/form-data")
-  public ResponseEntity<ProductFileResult> uploadProductFile(@RequestHeader("x-organization-id") String organizationId, @RequestHeader("x-user-id") String userId,
-                                                             @RequestParam(value = "category") String category, @RequestPart("csv") MultipartFile csv) {
-    ProductFileResult productFileResult = productFileService.processFile(csv, category, organizationId, userId);
+  public ResponseEntity<ProductFileResult> uploadProductFile(@RequestHeader("x-organization-id") String organizationId,
+                                                             @RequestHeader("x-user-id") String userId,
+                                                             @RequestHeader("x-user-email") String userEmail,
+                                                             @RequestParam(value = "category") String category,
+                                                             @RequestPart("csv") MultipartFile csv) {
+    ProductFileResult productFileResult = productFileService.processFile(csv, category, organizationId, userId, userEmail);
     return ResponseEntity.ok().body(productFileResult);
   }
 
