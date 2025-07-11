@@ -55,37 +55,41 @@ public class ProductMapper {
   }
 
 
-  public static CSVRecord mapProductToCsvRow(Product product, String category, List<String> headers) {
+  public static CSVRecord mapProductToCsvRow(Product product, String category,List<String> headers) {
     try {
       StringWriter out = new StringWriter();
-      CSVPrinter printer = new CSVPrinter(out, CSVFormat.Builder.create()
+      try (CSVPrinter printer = new CSVPrinter(out, CSVFormat.Builder.create()
         .setHeader(headers.toArray(new String[0]))
         .setDelimiter(DELIMITER)
-        .build());
-
-      if (category.equals(COOKINGHOBS)) {
-        printer.printRecord(
-          product.getEprelCode(),
-          product.getGtinCode(),
-          product.getProductCode(),
-          product.getCategory(),
-          product.getCountryOfProduction(),
-          product.getModel(),
-          product.getBrand()
-        );
-      } else{
-        printer.printRecord(
-          product.getEprelCode(),
-          product.getGtinCode(),
-          product.getProductCode(),
-          product.getCategory(),
-          product.getCountryOfProduction()
-        );
+        .build())) {
+        if (COOKINGHOBS.equals(category)) {
+          printer.printRecord(
+            product.getEprelCode(),
+            product.getGtinCode(),
+            product.getProductCode(),
+            product.getCategory(),
+            product.getCountryOfProduction(),
+            product.getModel(),
+            product.getBrand()
+          );
+        } else {
+          printer.printRecord(
+            product.getEprelCode(),
+            product.getGtinCode(),
+            product.getProductCode(),
+            product.getCategory(),
+            product.getCountryOfProduction()
+          );
+        }
       }
-
-      printer.flush();
-      String csvString = out.toString();
-      return CSVFormat.DEFAULT.parse(new StringReader(csvString)).getRecords().get(0);
+      CSVFormat format = CSVFormat.Builder.create()
+        .setHeader(headers.toArray(new String[0]))
+        .setSkipHeaderRecord(false)
+        .setDelimiter(DELIMITER)
+        .setTrim(true)
+        .build();
+      List<CSVRecord> records = format.parse(new StringReader(out.toString())).getRecords();
+      return records.isEmpty() ? null : records.get(0);
     } catch (Exception e) {
       return null;
     }
