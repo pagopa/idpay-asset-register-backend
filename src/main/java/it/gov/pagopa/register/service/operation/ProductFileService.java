@@ -29,9 +29,7 @@ import java.util.List;
 import java.util.Objects;
 
 import static it.gov.pagopa.register.constants.AssetRegisterConstants.*;
-import static it.gov.pagopa.register.constants.enums.UploadCsvStatus.FORMAL_ERROR;
-import static it.gov.pagopa.register.constants.enums.UploadCsvStatus.UPLOADED;
-import static it.gov.pagopa.register.constants.enums.UploadCsvStatus.PARTIAL;
+import static it.gov.pagopa.register.constants.enums.UploadCsvStatus.*;
 
 @Slf4j
 @Service
@@ -182,7 +180,8 @@ public class ProductFileService {
     log.info("[GET_PRODUCT_FILES] - Fetching product files for organizationId: {}", organizationId);
     List<String> excludedStatuses = List.of(
       FORMAL_ERROR.name(),
-      PARTIAL.name()
+      UPLOADED.name(),
+      IN_PROCESS.name()
     );
 
     List<ProductBatchDTO> productFiles = productFileRepository
