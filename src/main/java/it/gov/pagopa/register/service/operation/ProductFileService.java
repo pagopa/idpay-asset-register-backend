@@ -85,9 +85,9 @@ public class ProductFileService {
 
     String filePath;
 
-    if (AssetRegisterConstants.EPREL_ERROR.equals(productFile.getUploadStatus())) {
-      filePath = REPORT_EPREL_ERROR + productFile.getId() + CSV;
-    } else if (AssetRegisterConstants.FORMAL_ERROR.equals(productFile.getUploadStatus())) {
+    if (PARTIAL.name().equals(productFile.getUploadStatus())) {
+      filePath = REPORT_PARTIAL_ERROR + productFile.getId() + CSV;
+    } else if (FORMAL_ERROR.name().equals(productFile.getUploadStatus())) {
       filePath = REPORT_FORMAL_ERROR + productFile.getId() + CSV;
     } else {
       log.error("[DOWNLOAD_REPORT] - Report not available for file: {}", productFile.getFileName());

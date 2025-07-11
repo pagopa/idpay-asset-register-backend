@@ -14,11 +14,9 @@ public class AssetRegisterConstants {
   private AssetRegisterConstants(){
   }
 
-  public static final String REPORT_EPREL_ERROR = "Report/Eprel_Error/";
-  public static final String REPORT_FORMAL_ERROR = "Report/Formal_Error/";
+  public static final String REPORT_PARTIAL_ERROR = "Report/Partial/";
+  public static final String REPORT_FORMAL_ERROR = "Report/Formal/";
   public static final String CSV = ".csv";
-  public static final String EPREL_ERROR = "EPREL_ERROR";
-  public static final String FORMAL_ERROR = "FORMAL_ERROR";
 
   // Regex
   public static final String CODE_GTIN_EAN_REGEX = "^[a-zA-Z0-9]{1,14}$";
