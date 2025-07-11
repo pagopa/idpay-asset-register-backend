@@ -39,15 +39,15 @@ public class NotificationServiceImpl implements  NotificationService {
     notificationRestClient.sendEmail(email);
   }
 
-  private EmailMessageDTO getEmailMessageDTO(String productFileId, String templatePartial, String senderEmail, String subjectPartial) {
+  private EmailMessageDTO getEmailMessageDTO(String productFileId, String templatePartial, String recipientEmail, String subjectPartial) {
       return EmailMessageDTO.builder()
       .templateValues(Map.of(
         PRODUC_FILE_ID, productFileId))
       .templateName(templatePartial)
-      .senderEmail(senderEmail)
+      .senderEmail(null)
       .subject(subjectPartial)
       .content(null)
-      .recipientEmail(null)
+      .recipientEmail(recipientEmail)
       .build();
   }
 }
