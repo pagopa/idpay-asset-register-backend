@@ -1,6 +1,7 @@
 package it.gov.pagopa.register.controller.operation;
 
 import it.gov.pagopa.register.dto.operation.FileReportDTO;
+import it.gov.pagopa.register.dto.operation.ProductBatchDTO;
 import it.gov.pagopa.register.dto.operation.ProductFileResponseDTO;
 import it.gov.pagopa.register.dto.operation.ProductFileResult;
 import it.gov.pagopa.register.service.operation.ProductFileService;
@@ -11,6 +12,8 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/idpay/register")
@@ -25,15 +28,18 @@ public class ProductFileController {
   @GetMapping("/product-files")
   public ResponseEntity<ProductFileResponseDTO> downloadProductFileList(
     @RequestHeader("x-organization-id") String organizationId,
-    @PageableDefault(size = 10, sort = "dateUpload", direction = Sort.Direction.DESC) Pageable pageable) {
+    @PageableDefault(size = 8, sort = "dateUpload", direction = Sort.Direction.DESC) Pageable pageable) {
 
     return ResponseEntity.ok().body(productFileService.getFilesByPage(organizationId, pageable));
   }
 
   @PostMapping(value = "/product-files", consumes = "multipart/form-data")
-  public ResponseEntity<ProductFileResult> uploadProductFile(@RequestHeader("x-organization-id") String organizationId, @RequestHeader("x-user-id") String userId,
-                                                             @RequestParam(value = "category") String category, @RequestPart("csv") MultipartFile csv) {
-    ProductFileResult productFileResult = productFileService.processFile(csv, category, organizationId, userId);
+  public ResponseEntity<ProductFileResult> uploadProductFile(@RequestHeader("x-organization-id") String organizationId,
+                                                             @RequestHeader("x-user-id") String userId,
+                                                             @RequestHeader("x-user-email") String userEmail,
+                                                             @RequestParam(value = "category") String category,
+                                                             @RequestPart("csv") MultipartFile csv) {
+    ProductFileResult productFileResult = productFileService.processFile(csv, category, organizationId, userId, userEmail);
     return ResponseEntity.ok().body(productFileResult);
   }
 
@@ -50,4 +56,10 @@ public class ProductFileController {
       .body(file.getData());
   }
 
+  @GetMapping("/product-files/batch-list")
+  public ResponseEntity<List<ProductBatchDTO>> getFileteredProductFiles(
+    @RequestHeader("x-organization-id") String organizationId
+  ) {
+    return ResponseEntity.ok().body(productFileService.getProductFilesByOrganizationId(organizationId));
+  }
 }

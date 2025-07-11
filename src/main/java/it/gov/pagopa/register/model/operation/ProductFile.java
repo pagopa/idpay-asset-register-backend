@@ -24,6 +24,5 @@ public class ProductFile {
   private LocalDateTime dateUpload;
   private Integer findedProductsNumber;
   private Integer addedProductNumber;
-
-
+  private String userEmail;
 }

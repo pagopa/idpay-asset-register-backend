@@ -15,6 +15,8 @@ import java.util.Map;
 
 public class CsvUtils {
 
+  private CsvUtils(){}
+
   public static final String DELIMITER = ";";
 
   public static List<CSVRecord> readCsvRecords(MultipartFile file) throws IOException {
@@ -36,6 +38,30 @@ public class CsvUtils {
            .setDelimiter(DELIMITER)
            .build()
            .parse(reader)) {
+      return parser.getHeaderNames();
+    }
+  }
+
+  public static List<CSVRecord> readCsvRecords(ByteArrayOutputStream file) throws IOException {
+    try (BufferedReader reader = new BufferedReader(new InputStreamReader(
+      new ByteArrayInputStream(file.toByteArray()), StandardCharsets.UTF_8));
+         CSVParser parser = new CSVParser(reader, CSVFormat.Builder.create()
+           .setHeader()
+           .setTrim(true)
+           .setDelimiter(';')
+           .build())) {
+      return parser.getRecords();
+    }
+  }
+
+  public static List<String> readHeader(ByteArrayOutputStream file) throws IOException {
+    try (BufferedReader reader = new BufferedReader(new InputStreamReader(
+      new ByteArrayInputStream(file.toByteArray()), StandardCharsets.UTF_8));
+         CSVParser parser = new CSVParser(reader, CSVFormat.Builder.create()
+           .setHeader()
+           .setTrim(true)
+           .setDelimiter(';')
+           .build())) {
       return parser.getHeaderNames();
     }
   }

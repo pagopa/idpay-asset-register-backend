@@ -1,5 +1,6 @@
 package it.gov.pagopa.register.mapper.operation;
 
+import it.gov.pagopa.register.dto.operation.ProductBatchDTO;
 import it.gov.pagopa.register.dto.operation.ProductFileDTO;
 import it.gov.pagopa.register.model.operation.ProductFile;
 
@@ -19,4 +20,12 @@ public class ProductFileMapper {
       .addedProductNumber(productFile.getAddedProductNumber())
       .build();
   }
+
+  public static ProductBatchDTO toBatchDTO(ProductFile productFile) {
+    return new ProductBatchDTO(
+      productFile.getId(),
+      productFile.getCategory() + "_" + productFile.getId() + ".csv"
+    );
+  }
+
 }

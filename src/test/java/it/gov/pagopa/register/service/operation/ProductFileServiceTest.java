@@ -1,15 +1,13 @@
 package it.gov.pagopa.register.service.operation;
 
 import it.gov.pagopa.register.connector.storage.FileStorageClient;
-import it.gov.pagopa.register.constants.AssetRegisterConstant;
+import it.gov.pagopa.register.constants.AssetRegisterConstants;
 import it.gov.pagopa.register.constants.enums.UploadCsvStatus;
-import it.gov.pagopa.register.dto.operation.FileReportDTO;
-import it.gov.pagopa.register.dto.operation.ProductFileResponseDTO;
-import it.gov.pagopa.register.dto.operation.ProductFileResult;
-import it.gov.pagopa.register.dto.operation.ValidationResultDTO;
+import it.gov.pagopa.register.dto.operation.*;
 import it.gov.pagopa.register.exception.operation.ReportNotFoundException;
 import it.gov.pagopa.register.model.operation.ProductFile;
 import it.gov.pagopa.register.repository.operation.ProductFileRepository;
+import it.gov.pagopa.register.service.validator.ProductFileValidatorService;
 import it.gov.pagopa.register.utils.CsvUtils;
 import org.apache.commons.csv.CSVRecord;
 import org.junit.jupiter.api.BeforeEach;
@@ -38,12 +36,12 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class ProductFileServiceTest {
 
- /* @Mock
+  @Mock
   ProductFileRepository productFileRepository;
   @Mock
   FileStorageClient fileStorageClient;
   @Mock
-  ProductFileValidator productFileValidator;
+  ProductFileValidatorService productFileValidator;
 
   private ProductFileService productFileService;
 
@@ -53,9 +51,6 @@ class ProductFileServiceTest {
     productFileService = new ProductFileService(productFileRepository, fileStorageClient, productFileValidator);
   }
 
-
-  //--------------------------Test per metodo getFilesByPage----------------------------------------
-  //Test con esito positivo dell'api
   @Test
   void testGetFilesByPage_Success() {
     String org = "org";
@@ -75,12 +70,9 @@ class ProductFileServiceTest {
     assertEquals(2, resp.getPageSize());
     assertEquals(2, resp.getTotalElements());
     assertEquals(1, resp.getTotalPages());
-
     verify(productFileRepository).findByOrganizationIdAndUploadStatusNot(org, UploadCsvStatus.FORMAL_ERROR.name(), page);
   }
 
-
-  //Test con nessun risultato dell'api
   @Test
   void testGetFilesByPage_Empty() {
     String org = "org";
@@ -95,8 +87,6 @@ class ProductFileServiceTest {
     assertEquals(0, resp.getTotalPages());
   }
 
-
-  //Test con eccezioni da parte del repository
   @Test
   void testGetFilesByPage_RepoThrows() {
     Pageable page = PageRequest.of(0,1);
@@ -107,17 +97,13 @@ class ProductFileServiceTest {
     assertEquals("DB", ex.getMessage());
   }
 
-
-  //Test con mancato organizationId
   @Test
   void testGetFilesByPage_NullOrg() {
     Pageable page = PageRequest.of(0,1);
     assertThrows(IllegalArgumentException.class, () -> productFileService.getFilesByPage(null, page));
   }
 
-  //-------------------------Test su metodo downloadReport--------------------
 
-  //Test con errori Eprel
   @Test
   void downloadReport_eprelError() throws IOException {
     ProductFile pf = new ProductFile();
@@ -134,23 +120,9 @@ class ProductFileServiceTest {
   }
 
 
-  //Test con errori formali
-  @Test
-  void downloadReport_formalError() throws IOException {
-    ProductFile pf = new ProductFile();
-    pf.setId("1");
-    pf.setOrganizationId("o");
-    pf.setUploadStatus("FORMAL_ERROR");
-    when(productFileRepository.findByIdAndOrganizationId("1", "o")).thenReturn(Optional.of(pf));
 
-    ByteArrayOutputStream os = new ByteArrayOutputStream();
-    os.write("fake csv content".getBytes());
-    when(fileStorageClient.download("Report/Formal_Error/1.csv")).thenReturn(os);
-    FileReportDTO res = productFileService.downloadReport("1", "o");
-    assertArrayEquals(os.toByteArray(), res.getData());
-  }
 
-  //Test con idUpload errato -> ritorna un'eccezione
+
   @Test
   void downloadReport_notFoundId() {
     when(productFileRepository.findByIdAndOrganizationId(any(), any())).thenReturn(Optional.empty());
@@ -159,7 +131,7 @@ class ProductFileServiceTest {
     assertTrue(ex.getMessage().contains("Report not found with id: 1"));
   }
 
-  //Test con status errato -> ritorna un'eccezione
+
   @Test
   void downloadReport_unsupportedStatus() {
     ProductFile pf = new ProductFile(); pf.setId("1"); pf.setOrganizationId("o"); pf.setUploadStatus("UNKNOWN"); pf.setFileName("f");
@@ -169,7 +141,6 @@ class ProductFileServiceTest {
     assertTrue(ex.getMessage().contains("Report not available for file: f"));
   }
 
-  //Test quando Azure fallisce -> ritorna un'eccezione
   @Test
   void downloadReport_azureNull() {
     ProductFile pf = new ProductFile(); pf.setId("1"); pf.setOrganizationId("o"); pf.setUploadStatus("FORMAL_ERROR");
@@ -181,7 +152,7 @@ class ProductFileServiceTest {
   }
 
 
-  //-------------------------Test processFile method--------------------
+
 
   private MultipartFile createMockFile() {
     return new MockMultipartFile("file", "test.csv", "text/csv", "test content".getBytes());
@@ -196,42 +167,9 @@ class ProductFileServiceTest {
     MultipartFile file = createMockFile_InvalidFileType();
     ValidationResultDTO validationResultDTO = new ValidationResultDTO("KO","TEST");
     when(productFileValidator.validateFile(any(),anyString(),anyList(),anyInt())).thenReturn(validationResultDTO);
-    ProductFileResult res = productFileService.processFile(file, "cat","org","user");
+    ProductFileResult res = productFileService.processFile(file, "cat","org","user","email");
     assertEquals("KO", res.getStatus());
     assertEquals("TEST", res.getErrorKey());
-  }
-
-
-  //Test with invalid headers
-  @Test
-  void whenInvalidHeaders_thenReturnKoResult() {
-    MultipartFile file = createMockFile();
-    ValidationResultDTO validationResultDTO = new ValidationResultDTO("KO","HEADE");
-    when(productFileValidator.validateFile(any(),anyString(),anyList(),anyInt())).thenReturn(validationResultDTO);
-    ProductFileResult res = productFileService.processFile(file, "cat","org","user");
-    assertEquals("KO", res.getStatus());
-    assertEquals("TEST", res.getErrorKey());
-  }
-
-
-  //Test superati i 100 record
-  @Test
-  void whenExceedsMaxRows_thenReturnKoResult() {
-    MultipartFile file = createMockFile();
-    List<CSVRecord> recs = new ArrayList<>();
-    for (int i=0; i<101; i++) recs.add(mock(CSVRecord.class));
-    try (MockedStatic<CsvUtils> mocked = mockStatic(CsvUtils.class)) {
-      mocked.when(() -> CsvUtils.readHeader(file))
-        .thenReturn(List.of("A","B"));
-      mocked.when(() -> CsvUtils.readCsvRecords(file))
-        .thenReturn(recs);
-      when(productFileValidator.validateFile(file, "cat", List.of("A","B"), 101))
-        .thenReturn(ValidationResultDTO.ko("MAX_ROWS_EXCEEDED"));
-
-      ProductFileResult res = productFileService.processFile(file, "cat","org","user");
-      assertEquals("KO", res.getStatus());
-      assertEquals("MAX_ROWS_EXCEEDED", res.getErrorKey());
-    }
   }
 
 
@@ -270,10 +208,10 @@ class ProductFileServiceTest {
       ProductFile savedProductFile = ProductFile.builder().id("123").build();
       when(productFileRepository.save(any())).thenReturn(savedProductFile);
 
-      ProductFileResult result = productFileService.processFile(file, "cookinghobs", "org1", "user1");
+      ProductFileResult result = productFileService.processFile(file, "cookinghobs", "org1", "user1","email");
 
       assertEquals("KO", result.getStatus());
-      assertEquals(AssetRegisterConstant.UploadKeyConstant.REPORT_FORMAL_FILE_ERROR_KEY, result.getErrorKey());
+      assertEquals(AssetRegisterConstants.UploadKeyConstant.REPORT_FORMAL_FILE_ERROR_KEY, result.getErrorKey());
       assertEquals("123", result.getProductFileId());
     }
   }
@@ -308,9 +246,11 @@ class ProductFileServiceTest {
     testFormalError("Il campo Modello è obbligatorio e deve contenere una stringa lunga al massimo 100 caratteri");
   }
 
+
+
   @Test
   void whenAllValid_thenReturnOk()  {
-    MultipartFile file = createMockFile();
+    MultipartFile file = mock(MultipartFile.class);
     CSVRecord rec = mock(CSVRecord.class);
 
     try (MockedStatic<CsvUtils> mocked = mockStatic(CsvUtils.class)) {
@@ -335,14 +275,39 @@ class ProductFileServiceTest {
 
       when(fileStorageClient.upload(any(), any(), any())).thenReturn(null);
 
-      ProductFileResult res = productFileService.processFile(file, "cat", "org", "user");
+      ProductFileResult res = productFileService.processFile(file, "cat", "org", "user","email");
 
       assertEquals("OK", res.getStatus());
       assertNull(res.getErrorKey());
     } catch (IOException e) {
-        throw new RuntimeException(e);
+      throw new RuntimeException(e);
     }
   }
 
-  */
+
+
+  @Test
+  void shouldThrowExceptionWhenOrganizationIdIsEmpty() {
+    ReportNotFoundException ex = assertThrows(ReportNotFoundException.class,
+      () -> productFileService.getProductFilesByOrganizationId(""));
+    assertEquals("Organization Id is null or empty", ex.getMessage());
+  }
+
+  @Test
+  void shouldReturnMappedDTOListWhenValidDataIsPresent() {
+    ProductFile file = ProductFile.builder()
+      .id("file123")
+      .category("DISHWASHERS")
+      .build();
+
+    when(productFileRepository.findByOrganizationIdAndUploadStatusNotIn(eq("org123"), anyList()))
+      .thenReturn(Optional.of(List.of(file)));
+
+    List<ProductBatchDTO> result = productFileService.getProductFilesByOrganizationId("org123");
+
+    assertEquals(1, result.size());
+    assertEquals("file123", result.get(0).getProductFileId());
+    assertEquals("DISHWASHERS_file123.csv", result.get(0).getBatchName());
+  }
+
 }

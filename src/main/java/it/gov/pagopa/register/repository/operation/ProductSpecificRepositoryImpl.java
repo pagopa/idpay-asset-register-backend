@@ -46,18 +46,19 @@ public class ProductSpecificRepositoryImpl implements ProductSpecificRepository 
       criteria.and(Product.Fields.productFileId).is(productFileId);
     }
     if(eprelCode != null){
-      criteria.and(Product.Fields.eprelCode).is(eprelCode);
+      criteria.and(Product.Fields.eprelCode).regex(".*" + eprelCode + ".*", "i"); // Contains, case-insensitive
     }
     if(gtinCode != null){
-      criteria.and(Product.Fields.gtinCode).is(gtinCode);
+      criteria.and(Product.Fields.gtinCode).regex(".*" + gtinCode + ".*", "i"); // Contains, case-insensitive
     }
+
 
     return criteria;
   }
 
   private Pageable getPageable(Pageable pageable) {
     if (pageable == null) {
-      return PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), pageable.getSort());
+      return PageRequest.of(0, 10, Sort.unsorted());
     }
     return pageable;
   }

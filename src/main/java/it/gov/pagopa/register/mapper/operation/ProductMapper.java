@@ -3,7 +3,8 @@ package it.gov.pagopa.register.mapper.operation;
 import it.gov.pagopa.register.dto.operation.ProductDTO;
 import it.gov.pagopa.register.model.operation.Product;
 
-import static it.gov.pagopa.register.utils.Utils.generateEprelUrl;
+import static it.gov.pagopa.register.utils.EprelUtils.generateEprelUrl;
+import static it.gov.pagopa.register.utils.EprelUtils.mapEnergyClass;
 
 
 public class ProductMapper {
