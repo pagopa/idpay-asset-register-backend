@@ -252,7 +252,7 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
       String errorFileName = FilenameUtils.getBaseName(productFileId + ".csv");
       CsvUtils.writeCsvWithErrors(errors, headers, messages, errorFileName);
       Path tempFilePath = Paths.get("/tmp/", errorFileName);
-      String destination = "Report/Eprel_Error/" + productFileId + ".csv";
+      String destination = REPORT_PARTIAL_ERROR + productFileId + CSV;
       fileStorageClient.upload(Files.newInputStream(tempFilePath), destination, "text/csv");
       log.info("[PRODUCT_UPLOAD] - Error file uploaded to {}", destination);
     } catch (Exception e) {
