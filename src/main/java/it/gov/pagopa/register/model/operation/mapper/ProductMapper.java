@@ -58,33 +58,33 @@ public class ProductMapper {
   public static CSVRecord mapProductToCsvRow(Product product, String category,List<String> headers) {
     try {
       StringWriter out = new StringWriter();
-      try (CSVPrinter printer = new CSVPrinter(out, CSVFormat.Builder.create()
+      CSVPrinter printer = new CSVPrinter(out, CSVFormat.Builder.create()
         .setHeader(headers.toArray(new String[0]))
         .setDelimiter(DELIMITER)
-        .build())) {
-        if (COOKINGHOBS.equals(category)) {
-          printer.printRecord(
-            product.getEprelCode(),
-            product.getGtinCode(),
-            product.getProductCode(),
-            product.getCategory(),
-            product.getCountryOfProduction(),
-            product.getModel(),
-            product.getBrand()
-          );
-        } else {
-          printer.printRecord(
-            product.getEprelCode(),
-            product.getGtinCode(),
-            product.getProductCode(),
-            product.getCategory(),
-            product.getCountryOfProduction()
-          );
-        }
+        .build());
+
+      if (COOKINGHOBS.equals(category)) {
+        printer.printRecord(
+          product.getEprelCode(),
+          product.getGtinCode(),
+          product.getProductCode(),
+          product.getCategory(),
+          product.getCountryOfProduction(),
+          product.getModel(),
+          product.getBrand()
+        );
+      } else {
+        printer.printRecord(
+          product.getEprelCode(),
+          product.getGtinCode(),
+          product.getProductCode(),
+          product.getCategory(),
+          product.getCountryOfProduction()
+        );
       }
       CSVFormat format = CSVFormat.Builder.create()
         .setHeader(headers.toArray(new String[0]))
-        .setSkipHeaderRecord(false)
+        .setSkipHeaderRecord(true)
         .setDelimiter(DELIMITER)
         .setTrim(true)
         .build();
