@@ -46,10 +46,10 @@ public class ProductSpecificRepositoryImpl implements ProductSpecificRepository 
       criteria.and(Product.Fields.productFileId).is(productFileId);
     }
     if(eprelCode != null){
-      criteria.and(Product.Fields.eprelCode).regex("^" + eprelCode); // Starts with
+      criteria.and(Product.Fields.eprelCode).regex(".*" + eprelCode + ".*", "i"); // Contains, case-insensitive
     }
     if(gtinCode != null){
-      criteria.and(Product.Fields.gtinCode).regex("^" + gtinCode); // Starts with
+      criteria.and(Product.Fields.gtinCode).regex(".*" + gtinCode + ".*", "i"); // Contains, case-insensitive
     }
 
 
