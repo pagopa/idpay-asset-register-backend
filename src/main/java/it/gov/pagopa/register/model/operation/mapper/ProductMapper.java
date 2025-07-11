@@ -9,8 +9,10 @@ import org.apache.commons.csv.CSVRecord;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.time.LocalDateTime;
+import java.util.List;
 
 import static it.gov.pagopa.register.constants.AssetRegisterConstants.*;
+import static it.gov.pagopa.register.utils.CsvUtils.DELIMITER;
 import static it.gov.pagopa.register.utils.EprelUtils.mapEnergyClass;
 
 
@@ -53,10 +55,13 @@ public class ProductMapper {
   }
 
 
-  public static CSVRecord mapProductToCsvRow(Product product, String category) {
+  public static CSVRecord mapProductToCsvRow(Product product, String category, List<String> headers) {
     try {
       StringWriter out = new StringWriter();
-      CSVPrinter printer = new CSVPrinter(out, CSVFormat.DEFAULT);
+      CSVPrinter printer = new CSVPrinter(out, CSVFormat.Builder.create()
+        .setHeader(headers.toArray(new String[0]))
+        .setDelimiter(DELIMITER)
+        .build());
 
       if (category.equals(COOKINGHOBS)) {
         printer.printRecord(
@@ -64,6 +69,7 @@ public class ProductMapper {
           product.getGtinCode(),
           product.getProductCode(),
           product.getCategory(),
+          product.getCountryOfProduction(),
           product.getModel(),
           product.getBrand()
         );
@@ -72,7 +78,8 @@ public class ProductMapper {
           product.getEprelCode(),
           product.getGtinCode(),
           product.getProductCode(),
-          product.getCategory()
+          product.getCategory(),
+          product.getCountryOfProduction()
         );
       }
 

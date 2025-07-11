@@ -28,7 +28,7 @@ public class EprelProductValidatorService {
 
   private final EprelValidationConfig eprelValidationConfig;
   private final EprelConnector eprelConnector;
-  public EprelResult validateRecords(List<CSVRecord> records, Set<String> fields, String category, String orgId, String productFileId) {
+  public EprelResult validateRecords(List<CSVRecord> records, Set<String> fields, String category, String orgId, String productFileId, List<String> headers) {
     log.info("[VALIDATE_RECORDS] - Validating records for organizationId: {}, category: {}, productFileId: {}", orgId, category, productFileId);
     Map<String, EprelValidationRule> rules = eprelValidationConfig.getSchemas();
     if (rules == null || rules.isEmpty()) {
@@ -36,7 +36,7 @@ public class EprelProductValidatorService {
       throw new IllegalArgumentException("No validation rules found");
     }
 
-    ValidationContext context = new ValidationContext(fields, category, orgId, productFileId, rules);
+    ValidationContext context = new ValidationContext(fields, category, orgId, productFileId, headers, rules);
 
     Map<String, Product> validRecords = new LinkedHashMap<>();
     List<CSVRecord> invalidRecords = new ArrayList<>();
@@ -74,14 +74,15 @@ public class EprelProductValidatorService {
     } else {
       log.info("[VALIDATE_RECORD] - EPREL product valid: {}", eprelData.getEprelRegistrationNumber());
       if(validRecords.containsKey(csvRow.get(CODE_GTIN_EAN))){
-        Product product = validRecords.remove(CODE_GTIN_EAN);
-        CSVRecord duplicateGtinRow = mapProductToCsvRow(product,context.getCategory());
+        Product product = validRecords.remove(csvRow.get(CODE_GTIN_EAN));
+        CSVRecord duplicateGtinRow = mapProductToCsvRow(product,context.getCategory(), context.getHeaders());
         invalidRecords.add(duplicateGtinRow);
         errorMessages.put(duplicateGtinRow, DUPLICATE_GTIN_EAN);
         log.warn("[VALIDATE_RECORD] - Duplicate error for record with GTIN code: {}", csvRow.get(CODE_GTIN_EAN));
         validRecords.put(csvRow.get(CODE_GTIN_EAN),mapEprelToProduct(csvRow, eprelData, context.getOrgId(), context.getProductFileId(), context.getCategory()));
+      } else {
+        validRecords.put(csvRow.get(CODE_GTIN_EAN), mapEprelToProduct(csvRow, eprelData, context.getOrgId(), context.getProductFileId(), context.getCategory()));
       }
-      validRecords.put(csvRow.get(CODE_GTIN_EAN),mapEprelToProduct(csvRow, eprelData, context.getOrgId(), context.getProductFileId(), context.getCategory()));
     }
   }
 
@@ -105,6 +106,7 @@ public class EprelProductValidatorService {
     private String category;
     private String orgId;
     private String productFileId;
+    private List<String> headers;
     private Map<String, EprelValidationRule> rules;
   }
 

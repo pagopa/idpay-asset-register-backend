@@ -180,7 +180,7 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
       if (isCookingHob) {
         processCookingHobRecords(records, orgId, fileId,headers);
       } else {
-        EprelResult validationResult = eprelProductValidator.validateRecords(records, EPREL_FIELDS, category, orgId, fileId);
+        EprelResult validationResult = eprelProductValidator.validateRecords(records, EPREL_FIELDS, category, orgId, fileId, headers);
         processEprelResult(validationResult.getValidRecords().values().stream().toList(), validationResult.getInvalidRecords(), validationResult.getErrorMessages(), fileId, headers, category);
       }
     } catch (Exception e) {
@@ -195,7 +195,7 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
     for (CSVRecord csvRecord : records) {
       if(validProduct.containsKey(CODE_GTIN_EAN)) {
         Product duplicateGtin = validProduct.remove(csvRecord.get(CODE_GTIN_EAN));
-        CSVRecord duplicateGtinRow = mapProductToCsvRow(duplicateGtin,COOKINGHOBS);
+        CSVRecord duplicateGtinRow = mapProductToCsvRow(duplicateGtin,COOKINGHOBS, headers);
         invalidRecords.add(duplicateGtinRow);
         errorMessages.put(duplicateGtinRow,DUPLICATE_GTIN_EAN);
         log.info("[PRODUCT_UPLOAD] - Added cooking hob product: {}", csvRecord.get(CODE_PRODUCT));
