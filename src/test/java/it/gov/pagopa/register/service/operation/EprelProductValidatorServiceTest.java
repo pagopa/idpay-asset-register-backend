@@ -80,7 +80,7 @@ class EprelProductValidatorServiceTest {
 
     List<CSVRecord> records = List.of(validProductCsv, invalidProductCsv,nullProductCsv);
 
-    EprelResult result = validatorService.validateRecords(records, EPREL_FIELDS, category, orgId, productFileId);
+    EprelResult result = validatorService.validateRecords(records, EPREL_FIELDS, category, orgId, productFileId, null);
 
     assertEquals(1, result.getValidRecords().size());
     assertEquals(2, result.getInvalidRecords().size());
