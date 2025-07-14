@@ -111,23 +111,14 @@ public class ProductFileService {
       List<CSVRecord> records = CsvUtils.readCsvRecords(file);
       String originalFileName = file.getOriginalFilename();
 
-      ProductFileResult result = verifyFile(file, category, organizationId, userId, userEmail);
+      ProductFileResult result = validateFile(file, category, organizationId, userId, userEmail);
       if("KO".equals(result.getStatus())){
         return result;
       }
 
       // Log OK
-      ProductFile productFile = productFileRepository.save(ProductFile.builder()
-        .fileName(originalFileName)
-        .uploadStatus(UPLOADED.name())
-        .category(category)
-        .findedProductsNumber(records.size())
-        .addedProductNumber(NumberUtils.INTEGER_ZERO)
-        .userId(userId)
-        .organizationId(organizationId)
-        .dateUpload(LocalDateTime.now())
-        .userEmail(userEmail)
-        .build());
+      ProductFile productFile = saveProductFile(category, organizationId, userId, userEmail, originalFileName, records);
+
 
       // Upload on Azure
       fileStorageClient.upload(file.getInputStream(), "CSV/" + organizationId + "/" + category + "/" + productFile.getId() + ".csv", file.getContentType());
@@ -142,12 +133,9 @@ public class ProductFileService {
 
   }
 
-  public ProductFileResult validateFile(MultipartFile file, String category, String organizationId, String userId, String userEmail){
-    verifyFile(file, category, organizationId, userId, userEmail);
-    return ProductFileResult.ok();
-  }
 
-  private ProductFileResult verifyFile(MultipartFile file, String category, String organizationId, String userId, String userEmail) {
+
+  public ProductFileResult validateFile(MultipartFile file, String category, String organizationId, String userId, String userEmail) {
 
     try {
       String originalFileName = file.getOriginalFilename();
