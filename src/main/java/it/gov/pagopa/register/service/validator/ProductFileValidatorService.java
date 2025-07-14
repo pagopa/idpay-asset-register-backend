@@ -12,7 +12,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.*;
 
-import static it.gov.pagopa.register.constants.AssetRegisterConstants.CATEGORIES;
+import static it.gov.pagopa.register.constants.AssetRegisterConstants.*;
 
 @Component
 @RequiredArgsConstructor
@@ -25,9 +25,14 @@ public class ProductFileValidatorService {
   public ValidationResultDTO validateFile(MultipartFile file, String category, List<String> actualHeader, int recordCount) {
     log.info("[VALIDATE_FILE] - Validating file: {}, category: {}, recordCount: {}", file.getOriginalFilename(), category, recordCount);
 
-    if (!Objects.requireNonNull(file.getOriginalFilename()).endsWith(".csv")) {
+    if (!Objects.requireNonNull(file.getOriginalFilename()).endsWith(CSV)) {
       log.error("[VALIDATE_FILE] - Invalid file extension for file: {}", file.getOriginalFilename());
       return ValidationResultDTO.ko(AssetRegisterConstants.UploadKeyConstant.EXTENSION_FILE_ERROR_KEY);
+    }
+
+    if (file.getSize() > CSV_SIZE) {
+      log.error("[VALIDATE_FILE] - Invalid size for file: {}", file.getOriginalFilename());
+      return ValidationResultDTO.ko(AssetRegisterConstants.UploadKeyConstant.MAX_SIZE_FILE_ERROR_KEY);
     }
 
     if (recordCount == 0) {

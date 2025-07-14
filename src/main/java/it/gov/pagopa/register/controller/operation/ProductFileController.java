@@ -39,7 +39,17 @@ public class ProductFileController {
                                                              @RequestHeader("x-user-email") String userEmail,
                                                              @RequestParam(value = "category") String category,
                                                              @RequestPart("csv") MultipartFile csv) {
-    ProductFileResult productFileResult = productFileService.processFile(csv, category, organizationId, userId, userEmail);
+    ProductFileResult productFileResult = productFileService.uploadFile(csv, category, organizationId, userId, userEmail);
+    return ResponseEntity.ok().body(productFileResult);
+  }
+
+  @PostMapping(value = "/product-files/verify", consumes = "multipart/form-data")
+  public ResponseEntity<ProductFileResult> verifyProductFile(@RequestHeader("x-organization-id") String organizationId,
+                                                             @RequestHeader("x-user-id") String userId,
+                                                             @RequestHeader("x-user-email") String userEmail,
+                                                             @RequestParam(value = "category") String category,
+                                                             @RequestPart("csv") MultipartFile csv) {
+    ProductFileResult productFileResult = productFileService.validateFile(csv, category, organizationId, userId, userEmail);
     return ResponseEntity.ok().body(productFileResult);
   }
 
