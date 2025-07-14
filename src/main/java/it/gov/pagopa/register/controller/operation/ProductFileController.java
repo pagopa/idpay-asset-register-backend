@@ -8,6 +8,7 @@ import it.gov.pagopa.register.service.operation.ProductFileService;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -39,9 +40,11 @@ public class ProductFileController {
                                                              @RequestHeader("x-user-email") String userEmail,
                                                              @RequestParam(value = "category") String category,
                                                              @RequestPart("csv") MultipartFile csv) {
-    ProductFileResult productFileResult = productFileService.processFile(csv, category, organizationId, userId, userEmail);
-    return ResponseEntity.ok().body(productFileResult);
+    ProductFileResult result = productFileService.processFile(csv, category, organizationId, userId, userEmail);
+
+    return ResponseEntity.ok().body(result);
   }
+
 
   @GetMapping("/product-files/{productFileId}/report")
   public ResponseEntity<byte[]> downloadProductFileReport(
