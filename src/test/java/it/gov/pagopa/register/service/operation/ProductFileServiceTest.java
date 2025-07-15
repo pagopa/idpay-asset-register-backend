@@ -120,7 +120,7 @@ class ProductFileServiceTest {
     when(fileStorageClient.download("Report/Partial/1.csv")).thenReturn(os);
     FileReportDTO res = productFileService.downloadReport("1", "o");
     assertArrayEquals(os.toByteArray(), res.getData());
-  }
+
 
     String productFileId = "1";
     String organizationId = "org1";
