@@ -109,13 +109,25 @@ public class ProductFileService {
 
   public ProductFileResult processFile(MultipartFile file, String category, String organizationId, String userId, String userEmail) {
 
+    List<String> blockingStatuses = List.of(
+      UploadCsvStatus.IN_PROCESS.name(),
+      UploadCsvStatus.UPLOADED.name()
+    );
+
+    boolean alreadyBlocked = productFileRepository.existsByOrganizationIdAndUploadStatusIn(
+      organizationId, blockingStatuses
+    );
+
+    if (alreadyBlocked) {
+      log.warn("[PROCESS_FILE] - Existing file in UPLOADED or IN_PROCESS state for org: {}", organizationId);
+      return ProductFileResult.ko(AssetRegisterConstants.UploadKeyConstant.UPLOAD_ALREADY_IN_PROGRESS);
+    }
+
     try {
       String originalFileName = file.getOriginalFilename();
       log.info("[PROCESS_FILE] - Processing file: {} for organizationId: {}", originalFileName, organizationId);
       List<String> headers = CsvUtils.readHeader(file);
       List<CSVRecord> records = CsvUtils.readCsvRecords(file);
-
-      //TODO check if for the specified organization there are some file uploaded or in progress and stop the upload of new file
 
       ValidationResultDTO validation = productFileValidator.validateFile(file, category, headers, records.size());
       if ("KO".equals(validation.getStatus())) {

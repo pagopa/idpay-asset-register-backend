@@ -104,6 +104,7 @@ public class AssetRegisterConstants {
     public static final String REPORT_FORMAL_FILE_ERROR_KEY = "product.invalid.file.report";
     public static final String UNKNOWN_CATEGORY_ERROR_KEY = "product.invalid.file.category";
     public static final String EMPTY_FILE_ERROR_KEY = "product.invalid.file.empty";
+    public static final String UPLOAD_ALREADY_IN_PROGRESS = "product.invalid.file.already_in_progress";
   }
 
 

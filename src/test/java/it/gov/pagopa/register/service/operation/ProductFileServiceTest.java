@@ -107,7 +107,6 @@ class ProductFileServiceTest {
     assertThrows(IllegalArgumentException.class, () -> productFileService.getFilesByPage(null, page));
   }
 
-
   @Test
   void downloadReport_partialLoad() throws IOException {
     ProductFile pf = new ProductFile();
@@ -121,11 +120,38 @@ class ProductFileServiceTest {
     when(fileStorageClient.download("Report/Partial/1.csv")).thenReturn(os);
     FileReportDTO res = productFileService.downloadReport("1", "o");
     assertArrayEquals(os.toByteArray(), res.getData());
+
+
+    String productFileId = "1";
+    String organizationId = "org1";
+    String fileName = "eprel_report.csv";
+
+    ProductFile productFile = ProductFile.builder()
+      .id(productFileId)
+      .organizationId(organizationId)
+      .uploadStatus("PARTIAL")
+      .fileName(fileName)
+      .build();
+
+    ByteArrayOutputStream mockedOutput = new ByteArrayOutputStream();
+    mockedOutput.write("dummy report content".getBytes());
+
+    when(productFileRepository.findByIdAndOrganizationId(productFileId, organizationId))
+      .thenReturn(Optional.of(productFile));
+
+    when(fileStorageClient.download("Report/Partial/1.csv"))
+      .thenReturn(mockedOutput);
+
+    FileReportDTO reportDTO = productFileService.downloadReport(productFileId, organizationId);
+
+    // Assert
+    assertNotNull(reportDTO);
+    assertArrayEquals("dummy report content".getBytes(), reportDTO.getData());
+    assertEquals("eprel_report_errors.csv", reportDTO.getFilename());
+
+    verify(productFileRepository).findByIdAndOrganizationId(productFileId, organizationId);
+    verify(fileStorageClient).download("Report/Partial/1.csv");
   }
-
-
-
-
 
   @Test
   void downloadReport_notFoundId() {
@@ -134,7 +160,6 @@ class ProductFileServiceTest {
       () -> productFileService.downloadReport("1","o"));
     assertTrue(ex.getMessage().contains("Report not found with id: 1"));
   }
-
 
   @Test
   void downloadReport_unsupportedStatus() {
@@ -155,9 +180,6 @@ class ProductFileServiceTest {
     assertTrue(ex.getMessage().contains("Report not found on Azure"));
   }
 
-
-
-
   private MultipartFile createMockFile() {
     return new MockMultipartFile("file", "test.csv", "text/csv", "test content".getBytes());
   }
@@ -175,7 +197,6 @@ class ProductFileServiceTest {
     assertEquals("KO", res.getStatus());
     assertEquals("TEST", res.getErrorKey());
   }
-
 
   //Test con controlli formali falliti
   private void testFormalError(String errorMessage) {
@@ -250,8 +271,6 @@ class ProductFileServiceTest {
     testFormalError("Il campo Modello è obbligatorio e deve contenere una stringa lunga al massimo 100 caratteri");
   }
 
-
-
   @Test
   void whenAllValid_thenReturnOk()  {
     MultipartFile file = mock(MultipartFile.class);
@@ -288,8 +307,6 @@ class ProductFileServiceTest {
     }
   }
 
-
-
   @Test
   void shouldThrowExceptionWhenOrganizationIdIsEmpty() {
     ReportNotFoundException ex = assertThrows(ReportNotFoundException.class,
@@ -313,5 +330,20 @@ class ProductFileServiceTest {
     assertEquals("file123", result.get(0).getProductFileId());
     assertEquals("DISHWASHERS_file123.csv", result.get(0).getBatchName());
   }
+
+  @Test
+  void whenFileAlreadyInProgressOrUploaded_thenReturnKoAlreadyInProgress() {
+    MultipartFile file = new MockMultipartFile("file", "test.csv", "text/csv", "dummy".getBytes());
+
+    // Simula presenza di un file già in stato IN_PROCESS o UPLOADED
+    when(productFileRepository.existsByOrganizationIdAndUploadStatusIn(eq("org"), anyList()))
+      .thenReturn(true);
+
+    ProductFileResult result = productFileService.processFile(file, "cat", "org", "user", "email");
+
+    assertEquals("KO", result.getStatus());
+    assertEquals(AssetRegisterConstants.UploadKeyConstant.UPLOAD_ALREADY_IN_PROGRESS, result.getErrorKey());
+  }
+
 
 }
