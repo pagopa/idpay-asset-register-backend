@@ -86,7 +86,7 @@ public class ProductMapper {
       .build();
   }
 
-  private static String mapCapacity(String category, EprelProduct eprelData) {
+  public static String mapCapacity(String category, EprelProduct eprelData) {
     if (eprelData == null) {
       return "N\\A";
     }
