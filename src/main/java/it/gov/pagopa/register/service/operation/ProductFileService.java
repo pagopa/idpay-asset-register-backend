@@ -119,7 +119,6 @@ public class ProductFileService {
       // Log OK
       ProductFile productFile = saveProductFile(category, organizationId, userId, userEmail, originalFileName, records);
 
-
       // Upload on Azure
       fileStorageClient.upload(file.getInputStream(), "CSV/" + organizationId + "/" + category + "/" + productFile.getId() + ".csv", file.getContentType());
 
@@ -129,8 +128,6 @@ public class ProductFileService {
       log.error("[PROCESS_FILE] - Generic Error processing file: {}", file.getOriginalFilename(), e);
       return ProductFileResult.ko("GENERIC_ERROR");
     }
-
-
   }
 
 
