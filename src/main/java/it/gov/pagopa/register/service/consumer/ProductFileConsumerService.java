@@ -24,6 +24,9 @@ import org.springframework.stereotype.Service;
 import java.io.ByteArrayOutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.FileAttribute;
+import java.nio.file.attribute.PosixFilePermission;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.util.*;
 import java.util.regex.Matcher;
 
@@ -246,7 +249,10 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
 
   private void processErrorRecords(List<CSVRecord> errors, Map<CSVRecord, String> messages, String productFileId, List<String> headers) {
     try {
-      Path tempFilePath = Files.createTempFile("errors-", ".csv");
+
+      Set<PosixFilePermission> perms = PosixFilePermissions.fromString("rw-------");
+      FileAttribute<Set<PosixFilePermission>> attr = PosixFilePermissions.asFileAttribute(perms);
+      Path tempFilePath = Files.createTempFile("errors-", ".csv", attr);
       CsvUtils.writeCsvWithErrors(errors, headers, messages,  tempFilePath);
       String destination = REPORT_PARTIAL_ERROR + productFileId + CSV;
       fileStorageClient.upload(Files.newInputStream(tempFilePath), destination, "text/csv");

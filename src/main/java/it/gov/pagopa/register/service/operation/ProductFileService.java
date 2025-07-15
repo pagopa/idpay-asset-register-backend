@@ -25,9 +25,13 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.FileAttribute;
+import java.nio.file.attribute.PosixFilePermission;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 import static it.gov.pagopa.register.constants.AssetRegisterConstants.*;
 import static it.gov.pagopa.register.enums.UploadCsvStatus.FORMAL_ERROR;
@@ -185,7 +189,9 @@ public class ProductFileService {
   }
 
   private void uploadFormalErrorFile(MultipartFile file, ValidationResultDTO validationRecords, List<String> headers, ProductFile productFile) throws IOException {
-    Path tempFilePath = Files.createTempFile("errors-", ".csv");
+    Set<PosixFilePermission> perms = PosixFilePermissions.fromString("rw-------");
+    FileAttribute<Set<PosixFilePermission>> attr = PosixFilePermissions.asFileAttribute(perms);
+    Path tempFilePath = Files.createTempFile("errors-", ".csv", attr);
 
     CsvUtils.writeCsvWithErrors(
       validationRecords.getInvalidRecords(),
