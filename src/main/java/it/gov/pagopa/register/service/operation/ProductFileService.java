@@ -2,7 +2,7 @@ package it.gov.pagopa.register.service.operation;
 
 import it.gov.pagopa.register.connector.storage.FileStorageClient;
 import it.gov.pagopa.register.constants.AssetRegisterConstants;
-import it.gov.pagopa.register.constants.enums.UploadCsvStatus;
+import it.gov.pagopa.register.enums.UploadCsvStatus;
 import it.gov.pagopa.register.dto.operation.*;
 import it.gov.pagopa.register.exception.operation.ReportNotFoundException;
 import it.gov.pagopa.register.mapper.operation.ProductFileMapper;
@@ -19,10 +19,10 @@ import org.apache.commons.lang3.math.NumberUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import org.springframework.util.CollectionUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -31,7 +31,7 @@ import java.util.List;
 import java.util.Objects;
 
 import static it.gov.pagopa.register.constants.AssetRegisterConstants.*;
-import static it.gov.pagopa.register.constants.enums.UploadCsvStatus.*;
+import static it.gov.pagopa.register.enums.UploadCsvStatus.*;
 
 @Slf4j
 @Service
@@ -107,7 +107,36 @@ public class ProductFileService {
     return FileReportDTO.builder().data(result.toByteArray()).filename(FilenameUtils.getBaseName(productFile.getFileName()) + "_errors.csv").build();
   }
 
-  public ProductFileResult processFile(MultipartFile file, String category, String organizationId, String userId, String userEmail) {
+
+
+  public ProductFileResult uploadFile(MultipartFile file, String category, String organizationId, String userId, String userEmail){
+
+    try {
+      List<CSVRecord> records = CsvUtils.readCsvRecords(file);
+      String originalFileName = file.getOriginalFilename();
+
+      ProductFileResult result = validateFile(file, category, organizationId, userId, userEmail);
+      if("KO".equals(result.getStatus())){
+        return result;
+      }
+
+      // Log OK
+      ProductFile productFile = saveProductFile(category, organizationId, userId, userEmail, originalFileName, records);
+
+      // Upload on Azure
+      fileStorageClient.upload(file.getInputStream(), "CSV/" + organizationId + "/" + category + "/" + productFile.getId() + ".csv", file.getContentType());
+
+      log.info("[PROCESS_FILE] - File processed and uploaded successfully: {}", originalFileName);
+      return ProductFileResult.ok();
+    } catch (Exception e) {
+      log.error("[PROCESS_FILE] - Generic Error processing file: {}", file.getOriginalFilename(), e);
+      return ProductFileResult.ko("GENERIC_ERROR");
+    }
+  }
+
+
+
+  public ProductFileResult validateFile(MultipartFile file, String category, String organizationId, String userId, String userEmail) {
 
     List<String> blockingStatuses = List.of(
       UploadCsvStatus.IN_PROCESS.name(),
@@ -132,53 +161,21 @@ public class ProductFileService {
       ValidationResultDTO validation = productFileValidator.validateFile(file, category, headers, records.size());
       if ("KO".equals(validation.getStatus())) {
         log.warn("[PROCESS_FILE] - Validation failed for file: {}", originalFileName);
+
         return ProductFileResult.ko(validation.getErrorKey());
       }
 
-      ValidationResultDTO result = productFileValidator.validateRecords(records, headers, category);
+      ValidationResultDTO validationRecords = productFileValidator.validateRecords(records, headers, category);
+      if ("KO".equals(validationRecords.getStatus())) {
+        log.warn("[PROCESS_FILE] - Validation failed for file: {}", originalFileName);
 
-      if (result != null && !CollectionUtils.isEmpty(result.getInvalidRecords())) {
-        String errorFileName = FilenameUtils.getBaseName(file.getOriginalFilename()) + "_errors.csv";
-        CsvUtils.writeCsvWithErrors(result.getInvalidRecords(), headers, result.getErrorMessages(), errorFileName);
-
-        //TODO verify if really needed
-        ProductFile productFile = productFileRepository.save(ProductFile.builder()
-          .fileName(originalFileName)
-          .uploadStatus(FORMAL_ERROR.name())
-          .category(category)
-          .findedProductsNumber(records.size())
-          .addedProductNumber(NumberUtils.INTEGER_ZERO)
-          .userId(userId)
-          .organizationId(organizationId)
-          .dateUpload(LocalDateTime.now())
-          .userEmail(userEmail)
-          .build());
-
-        Path tempFilePath = Paths.get("/tmp/", errorFileName);
-        String destination = REPORT_FORMAL_ERROR + productFile.getId() + CSV;
-        fileStorageClient.upload(Files.newInputStream(tempFilePath), destination, file.getContentType());
+        ProductFile productFile = saveProductFile(category, organizationId, userId, userEmail, originalFileName, records);
+        uploadFormalErrorFile(file, validationRecords, headers, productFile);
 
         log.warn("[PROCESS_FILE] - File processed with formal errors: {}", originalFileName);
         return ProductFileResult.ko(AssetRegisterConstants.UploadKeyConstant.REPORT_FORMAL_FILE_ERROR_KEY, productFile.getId());
+
       }
-
-      // Log OK
-      ProductFile productFile = productFileRepository.save(ProductFile.builder()
-        .fileName(originalFileName)
-        .uploadStatus(UPLOADED.name())
-        .category(category)
-        .findedProductsNumber(records.size())
-        .addedProductNumber(NumberUtils.INTEGER_ZERO)
-        .userId(userId)
-        .organizationId(organizationId)
-        .dateUpload(LocalDateTime.now())
-        .userEmail(userEmail)
-        .build());
-
-      // Upload on Azure
-      fileStorageClient.upload(file.getInputStream(), "CSV/" + organizationId + "/" + category + "/" + productFile.getId() + ".csv", file.getContentType());
-
-      log.info("[PROCESS_FILE] - File processed and uploaded successfully: {}", originalFileName);
       return ProductFileResult.ok();
 
     } catch (Exception e) {
@@ -186,6 +183,31 @@ public class ProductFileService {
       return ProductFileResult.ko("GENERIC_ERROR");
     }
   }
+
+  private void uploadFormalErrorFile(MultipartFile file, ValidationResultDTO validationRecords, List<String> headers, ProductFile productFile) throws IOException {
+    String errorFileName = FilenameUtils.getBaseName(file.getOriginalFilename()) + "_errors.csv";
+    CsvUtils.writeCsvWithErrors(validationRecords.getInvalidRecords(), headers, validationRecords.getErrorMessages(), errorFileName);
+
+    Path tempFilePath = Paths.get("/tmp/", errorFileName);
+    String destination = REPORT_FORMAL_ERROR + productFile.getId() + CSV;
+    fileStorageClient.upload(Files.newInputStream(tempFilePath), destination, file.getContentType());
+  }
+
+  private ProductFile saveProductFile(String category, String organizationId, String userId, String userEmail, String originalFileName, List<CSVRecord> records) {
+
+    return productFileRepository.save(ProductFile.builder()
+      .fileName(originalFileName)
+      .uploadStatus(FORMAL_ERROR.name())
+      .category(category)
+      .findedProductsNumber(records.size())
+      .addedProductNumber(NumberUtils.INTEGER_ZERO)
+      .userId(userId)
+      .organizationId(organizationId)
+      .dateUpload(LocalDateTime.now())
+      .userEmail(userEmail)
+      .build());
+  }
+
 
   public List<ProductBatchDTO> getProductFilesByOrganizationId(String organizationId) {
     if (Objects.isNull(organizationId) || organizationId.isEmpty()) {

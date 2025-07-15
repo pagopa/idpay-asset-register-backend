@@ -1,4 +1,4 @@
-package it.gov.pagopa.register.config;
+package it.gov.pagopa.register.configuration;
 
 import it.gov.pagopa.common.web.dto.ErrorDTO;
 import it.gov.pagopa.register.constants.RoleConstants;

@@ -1,4 +1,4 @@
-package it.gov.pagopa.common.mongo.config;
+package it.gov.pagopa.common.mongo.configuration;
 
 import com.mongodb.lang.NonNull;
 import it.gov.pagopa.common.mongo.repository.MongoRepositoryImpl;

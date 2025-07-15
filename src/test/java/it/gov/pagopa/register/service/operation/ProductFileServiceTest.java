@@ -2,7 +2,7 @@ package it.gov.pagopa.register.service.operation;
 
 import it.gov.pagopa.register.connector.storage.FileStorageClient;
 import it.gov.pagopa.register.constants.AssetRegisterConstants;
-import it.gov.pagopa.register.constants.enums.UploadCsvStatus;
+import it.gov.pagopa.register.enums.UploadCsvStatus;
 import it.gov.pagopa.register.dto.operation.*;
 import it.gov.pagopa.register.exception.operation.ReportNotFoundException;
 import it.gov.pagopa.register.model.operation.Product;
@@ -109,19 +109,6 @@ class ProductFileServiceTest {
 
   @Test
   void downloadReport_partialLoad() throws IOException {
-    ProductFile pf = new ProductFile();
-    pf.setId("1");
-    pf.setOrganizationId("o");
-    pf.setUploadStatus("PARTIAL");
-    when(productFileRepository.findByIdAndOrganizationId("1", "o")).thenReturn(Optional.of(pf));
-
-    ByteArrayOutputStream os = new ByteArrayOutputStream();
-    os.write("fake csv content".getBytes());
-    when(fileStorageClient.download("Report/Partial/1.csv")).thenReturn(os);
-    FileReportDTO res = productFileService.downloadReport("1", "o");
-    assertArrayEquals(os.toByteArray(), res.getData());
-
-
     String productFileId = "1";
     String organizationId = "org1";
     String fileName = "eprel_report.csv";
@@ -193,7 +180,7 @@ class ProductFileServiceTest {
     MultipartFile file = createMockFile_InvalidFileType();
     ValidationResultDTO validationResultDTO = new ValidationResultDTO("KO","TEST");
     when(productFileValidator.validateFile(any(),anyString(),anyList(),anyInt())).thenReturn(validationResultDTO);
-    ProductFileResult res = productFileService.processFile(file, "cat","org","user","email");
+    ProductFileResult res = productFileService.uploadFile(file, "cat","org","user","email");
     assertEquals("KO", res.getStatus());
     assertEquals("TEST", res.getErrorKey());
   }
@@ -233,7 +220,7 @@ class ProductFileServiceTest {
       ProductFile savedProductFile = ProductFile.builder().id("123").build();
       when(productFileRepository.save(any())).thenReturn(savedProductFile);
 
-      ProductFileResult result = productFileService.processFile(file, "cookinghobs", "org1", "user1","email");
+      ProductFileResult result = productFileService.uploadFile(file, "cookinghobs", "org1", "user1","email");
 
       assertEquals("KO", result.getStatus());
       assertEquals(AssetRegisterConstants.UploadKeyConstant.REPORT_FORMAL_FILE_ERROR_KEY, result.getErrorKey());
@@ -298,7 +285,7 @@ class ProductFileServiceTest {
 
       when(fileStorageClient.upload(any(), any(), any())).thenReturn(null);
 
-      ProductFileResult res = productFileService.processFile(file, "cat", "org", "user","email");
+      ProductFileResult res = productFileService.uploadFile(file, "cat", "org", "user","email");
 
       assertEquals("OK", res.getStatus());
       assertNull(res.getErrorKey());
@@ -327,8 +314,8 @@ class ProductFileServiceTest {
     List<ProductBatchDTO> result = productFileService.getProductFilesByOrganizationId("org123");
 
     assertEquals(1, result.size());
-    assertEquals("file123", result.get(0).getProductFileId());
-    assertEquals("DISHWASHERS_file123.csv", result.get(0).getBatchName());
+    assertEquals("file123", result.getFirst().getProductFileId());
+    assertEquals("DISHWASHERS_file123.csv", result.getFirst().getBatchName());
   }
 
   @Test
@@ -339,7 +326,7 @@ class ProductFileServiceTest {
     when(productFileRepository.existsByOrganizationIdAndUploadStatusIn(eq("org"), anyList()))
       .thenReturn(true);
 
-    ProductFileResult result = productFileService.processFile(file, "cat", "org", "user", "email");
+    ProductFileResult result = productFileService.uploadFile(file, "cat", "org", "user", "email");
 
     assertEquals("KO", result.getStatus());
     assertEquals(AssetRegisterConstants.UploadKeyConstant.UPLOAD_ALREADY_IN_PROGRESS, result.getErrorKey());

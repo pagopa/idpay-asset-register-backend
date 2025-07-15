@@ -11,7 +11,7 @@ import com.azure.storage.blob.models.BlockBlobItem;
 import com.azure.storage.blob.options.BlobDownloadToFileOptions;
 import com.azure.storage.blob.options.BlobParallelUploadOptions;
 import com.azure.storage.blob.options.BlobUploadFromFileOptions;
-import it.gov.pagopa.register.config.FileStorageConfig;
+import it.gov.pagopa.register.configuration.FileStorageConfig;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;

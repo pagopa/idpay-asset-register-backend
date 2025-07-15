@@ -17,6 +17,7 @@ public class AssetRegisterConstants {
   public static final String REPORT_PARTIAL_ERROR = "Report/Partial/";
   public static final String REPORT_FORMAL_ERROR = "Report/Formal/";
   public static final String CSV = ".csv";
+  public static final Integer CSV_SIZE = 2 * 1024 * 1024;
 
   // Regex
   public static final String CODE_GTIN_EAN_REGEX = "^[a-zA-Z0-9]{1,14}$";
@@ -100,6 +101,7 @@ public class AssetRegisterConstants {
     private UploadKeyConstant(){}
     public static final String EXTENSION_FILE_ERROR_KEY = "product.invalid.file.extension";
     public static final String MAX_ROW_FILE_ERROR_KEY = "product.invalid.file.maxrow";
+    public static final String MAX_SIZE_FILE_ERROR_KEY = "product.invalid.file.maxsize";
     public static final String HEADER_FILE_ERROR_KEY = "product.invalid.file.header";
     public static final String REPORT_FORMAL_FILE_ERROR_KEY = "product.invalid.file.report";
     public static final String UNKNOWN_CATEGORY_ERROR_KEY = "product.invalid.file.category";

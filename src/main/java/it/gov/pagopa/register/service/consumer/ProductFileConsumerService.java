@@ -30,8 +30,8 @@ import java.util.*;
 import java.util.regex.Matcher;
 
 import static it.gov.pagopa.register.constants.AssetRegisterConstants.*;
-import static it.gov.pagopa.register.constants.enums.UploadCsvStatus.*;
-import static it.gov.pagopa.register.constants.enums.UploadCsvStatus.PARTIAL;
+import static it.gov.pagopa.register.enums.UploadCsvStatus.*;
+import static it.gov.pagopa.register.enums.UploadCsvStatus.PARTIAL;
 import static it.gov.pagopa.register.model.operation.mapper.ProductMapper.mapCookingHobToProduct;
 import static it.gov.pagopa.register.model.operation.mapper.ProductMapper.mapProductToCsvRow;
 

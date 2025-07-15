@@ -1,4 +1,4 @@
-package it.gov.pagopa.register.constants.enums;
+package it.gov.pagopa.register.enums;
 
 
 public enum UploadCsvStatus {

@@ -1,4 +1,4 @@
-package it.gov.pagopa.common.mongo.config;
+package it.gov.pagopa.common.mongo.configuration;
 
 import it.gov.pagopa.common.config.CustomMongoHealthIndicator;
 import org.springframework.context.annotation.Bean;

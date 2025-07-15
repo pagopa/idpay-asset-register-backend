@@ -1,4 +1,4 @@
-package it.gov.pagopa.register.config;
+package it.gov.pagopa.register.configuration;
 
 import it.gov.pagopa.common.web.exception.ServiceException;
 import it.gov.pagopa.register.exception.operation.CsvValidationException;

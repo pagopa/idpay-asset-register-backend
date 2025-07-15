@@ -1,6 +1,6 @@
 package it.gov.pagopa.register.controller.role;
 
-import it.gov.pagopa.register.config.ServiceExceptionConfig;
+import it.gov.pagopa.register.configuration.ServiceExceptionConfig;
 import it.gov.pagopa.register.constants.RoleConstants;
 import it.gov.pagopa.register.controller.role.authorization.AuthorizationController;
 import it.gov.pagopa.register.dto.role.PermissionDTO;
@@ -18,8 +18,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
@@ -44,7 +44,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Slf4j
 class AuthorizationControllerTest {
 
-    @MockBean
+    @MockitoBean
     RolePermissionService rolePermissionServiceMock;
 
     @Autowired

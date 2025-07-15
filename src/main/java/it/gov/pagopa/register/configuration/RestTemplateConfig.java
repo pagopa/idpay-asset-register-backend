@@ -1,4 +1,4 @@
-package it.gov.pagopa.register.config;
+package it.gov.pagopa.register.configuration;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

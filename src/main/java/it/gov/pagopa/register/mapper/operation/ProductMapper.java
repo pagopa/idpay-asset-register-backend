@@ -37,7 +37,7 @@ public class ProductMapper {
         entity.getCategory() +" " +
         entity.getBrand()+" "+
         entity.getModel()+" "+
-        (entity.getCapacity().equals("N\\A") ? "" : entity.getCapacity())
+        (("N\\A").equals(entity.getCapacity()) ? "" : entity.getCapacity())
       )
       .capacity(entity.getCapacity())
       .build();
