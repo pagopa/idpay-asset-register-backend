@@ -33,6 +33,7 @@ public class ProductMapper {
       .countryOfProduction(csvRecord.get(COUNTRY_OF_PRODUCTION))
       .brand(csvRecord.get(BRAND))
       .model(csvRecord.get(MODEL))
+      .capacity("N\\A")
       .build();
   }
 

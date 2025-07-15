@@ -33,7 +33,12 @@ public class ProductMapper {
       .energyClass(mapEnergyClassInverse(entity.getEnergyClass()))
       .linkEprel(generateEprelUrl(entity.getProductGroup(), entity.getEprelCode()))
       .batchName(entity.getCategory()+"_"+entity.getProductFileId()+".csv")
-      .productName(entity.getCategory() +" "+entity.getBrand()+" "+entity.getModel()+" "+entity.getCapacity())
+      .productName(
+        entity.getCategory() +" " +
+        entity.getBrand()+" "+
+        entity.getModel()+" "+
+        (entity.getCapacity().equals("N\\A") ? "" : entity.getCapacity())
+      )
       .capacity(entity.getCapacity())
       .build();
   }
