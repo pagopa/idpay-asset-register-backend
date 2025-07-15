@@ -140,8 +140,6 @@ public class ProductFileService {
       List<String> headers = CsvUtils.readHeader(file);
       List<CSVRecord> records = CsvUtils.readCsvRecords(file);
 
-      //TODO check if for the specified organization there are some file uploaded or in progress and stop the upload of new file
-
       ValidationResultDTO validation = productFileValidator.validateFile(file, category, headers, records.size());
       if ("KO".equals(validation.getStatus())) {
         log.warn("[PROCESS_FILE] - Validation failed for file: {}", originalFileName);
