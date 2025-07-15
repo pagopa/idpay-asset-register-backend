@@ -7,7 +7,6 @@ import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.data.mongodb.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import java.util.List;
 import java.util.Optional;
 
 public interface ProductFileRepository extends MongoRepository<ProductFile, String> {
@@ -16,7 +15,6 @@ public interface ProductFileRepository extends MongoRepository<ProductFile, Stri
 
   Optional<ProductFile> findByIdAndOrganizationId(String id, String organizationId);
 
-  Optional<List<ProductFile>> findByOrganizationIdAndUploadStatusNotIn(String organizationId, List<String> excludedStatuses);
-
   boolean existsByOrganizationIdAndUploadStatusIn(String organizationId, List<String> uploadStatuses);
+
 }

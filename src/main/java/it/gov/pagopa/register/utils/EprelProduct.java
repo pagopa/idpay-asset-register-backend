@@ -21,14 +21,18 @@ public class EprelProduct {
   private Boolean blocked;
   private String status;
   private String energyClassWash;
+  private String ratedCapacity;
+  private String ratedCapacityWash;
+  private String totalVolume;
+  private Cavities cavities;
 
-
+  @Data
+  public class Cavities{
+    private String volume;
+  }
   public String getFieldValue(String fieldName) {
       return switch (fieldName) {
-          case "eprelRegistrationNumber" -> eprelRegistrationNumber;
           case "productGroup" -> productGroup;
-          case "supplierOrTrademark" -> supplierOrTrademark;
-          case "modelIdentifier" -> modelIdentifier;
           case "energyClass" -> energyClass;
           case "orgVerificationStatus" -> orgVerificationStatus;
           case "trademarkVerificationStatus" -> trademarkVerificationStatus;

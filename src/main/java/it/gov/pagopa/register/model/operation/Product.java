@@ -19,6 +19,8 @@ import java.time.LocalDateTime;
 
 public class Product {
 
+  @Id
+  private String gtinCode;
   private String productFileId;
   private String organizationId;
   private LocalDateTime registrationDate;
@@ -28,10 +30,8 @@ public class Product {
   private String category;
   private String brand;
   private String eprelCode;
-  @Id
-  private String gtinCode;
   private String productCode;
   private String countryOfProduction;
   private String energyClass;
-
+  private String capacity;
 }

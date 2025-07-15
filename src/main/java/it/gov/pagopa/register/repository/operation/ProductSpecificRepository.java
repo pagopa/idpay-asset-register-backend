@@ -18,4 +18,7 @@ public interface ProductSpecificRepository {
                        String gtinCode);
 
   Long getCount(Criteria criteria);
+
+  List<Product> findDistinctProductFileIdAndCategoryByOrganizationId(String organizationId);
+
 }

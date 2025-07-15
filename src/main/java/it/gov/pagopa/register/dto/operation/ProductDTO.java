@@ -31,5 +31,6 @@ public class ProductDTO {
   private String energyClass;
   private String linkEprel;
   private String batchName;
-
+  private String productName;
+  private String capacity;
 }
