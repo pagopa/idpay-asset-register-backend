@@ -10,7 +10,7 @@ import it.gov.pagopa.register.repository.operation.ProductFileRepository;
 import it.gov.pagopa.register.repository.operation.ProductRepository;
 import it.gov.pagopa.register.service.validator.EprelProductValidatorService;
 import it.gov.pagopa.register.utils.CsvUtils;
-import it.gov.pagopa.register.utils.EventDetails;
+import it.gov.pagopa.register.dto.utils.EventDetails;
 import org.apache.commons.csv.CSVRecord;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -56,7 +56,7 @@ class ProductFileConsumerServiceTest {
     Pattern.compile(".*/blobs/CSV/([^/]+)/([^/]+)/([^/]+\\.csv)$");
 
   @BeforeEach
-  void setUp() throws Exception {
+  void setUp() {
     when(objectMapper.readerFor(any(TypeReference.class)))
       .thenReturn(mock(ObjectReader.class));
 
@@ -73,7 +73,7 @@ class ProductFileConsumerServiceTest {
 
   // Test: evento valido deve attivare il flusso completo di elaborazione
   @Test
-  void testExecute_validEvent_shouldProcessFile() throws Exception {
+  void testExecute_validEvent_shouldProcessFile()  {
     StorageEventData data = StorageEventData.builder()
       .url("/CSV/ORG123/COOKINGHOBS/file123.csv")
       .build();
@@ -135,7 +135,7 @@ class ProductFileConsumerServiceTest {
 
   // Test: eccezione durante il download imposta stato
   @Test
-  void testProcessFileFromStorage_downloadThrowsException_setsEprelError() throws Exception {
+  void testProcessFileFromStorage_downloadThrowsException_setsEprelError() {
     when(fileStorageClient.download(anyString())).thenThrow(new RuntimeException("boom"));
     when(productFileRepository.findById(anyString()))
       .thenReturn(Optional.of(new ProductFile()));
@@ -151,7 +151,7 @@ class ProductFileConsumerServiceTest {
 
   // Test: se il file non viene scaricato, viene comunque gestito correttamente
   @Test
-  void testProcessFileFromStorage_downloadReturnsNull_setsEprelError() throws Exception {
+  void testProcessFileFromStorage_downloadReturnsNull_setsEprelError() {
     when(fileStorageClient.download(anyString())).thenReturn(null);
     when(productFileRepository.findById(anyString()))
       .thenReturn(Optional.of(new ProductFile()));

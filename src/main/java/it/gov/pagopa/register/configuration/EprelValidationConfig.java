@@ -1,6 +1,6 @@
 package it.gov.pagopa.register.configuration;
 
-import it.gov.pagopa.register.utils.EprelValidationRule;
+import it.gov.pagopa.register.dto.utils.EprelValidationRule;
 import lombok.Data;
 import org.springframework.stereotype.Component;
 

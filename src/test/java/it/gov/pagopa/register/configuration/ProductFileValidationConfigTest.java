@@ -1,6 +1,6 @@
 package it.gov.pagopa.register.configuration;
 
-import it.gov.pagopa.register.utils.ColumnValidationRule;
+import it.gov.pagopa.register.dto.utils.ColumnValidationRule;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.test.context.junit.jupiter.SpringExtension;

@@ -1,7 +1,7 @@
 package it.gov.pagopa.register.connector.eprel;
 
 import it.gov.pagopa.register.configuration.RestTemplateConfig;
-import it.gov.pagopa.register.utils.EprelProduct;
+import it.gov.pagopa.register.dto.utils.EprelProduct;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,8 +44,7 @@ class EprelConnectorTest {
 
     EprelProduct result = eprelConnector.callEprel(REGISTRATION_NUMBER);
 
-    assertThat(result).isNotNull();
-    assertThat(result).isEqualTo(mockProduct);
+    assertThat(result).isNotNull().isEqualTo(mockProduct);
   }
 
   @Test

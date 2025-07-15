@@ -1,7 +1,7 @@
 package it.gov.pagopa.register.configuration;
 
 
-import it.gov.pagopa.register.utils.ColumnValidationRule;
+import it.gov.pagopa.register.dto.utils.ColumnValidationRule;
 import lombok.Data;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;

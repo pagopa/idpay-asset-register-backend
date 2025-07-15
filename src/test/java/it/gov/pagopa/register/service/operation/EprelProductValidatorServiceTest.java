@@ -3,8 +3,8 @@ package it.gov.pagopa.register.service.operation;
 import it.gov.pagopa.register.configuration.EprelValidationConfig;
 import it.gov.pagopa.register.connector.eprel.EprelConnector;
 import it.gov.pagopa.register.service.validator.EprelProductValidatorService;
-import it.gov.pagopa.register.utils.EprelProduct;
-import it.gov.pagopa.register.utils.EprelResult;
+import it.gov.pagopa.register.dto.utils.EprelProduct;
+import it.gov.pagopa.register.dto.utils.EprelResult;
 import org.apache.commons.csv.CSVRecord;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -29,7 +29,6 @@ import static org.mockito.Mockito.when;
 class EprelProductValidatorServiceTest {
 
 
-  private EprelValidationConfig eprelValidationConfig;
 
   @MockitoBean
   private EprelConnector eprelConnector;

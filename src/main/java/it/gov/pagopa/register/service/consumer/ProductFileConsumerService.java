@@ -7,14 +7,14 @@ import it.gov.pagopa.common.kafka.BaseKafkaConsumer;
 import it.gov.pagopa.register.connector.notification.NotificationServiceImpl;
 import it.gov.pagopa.register.connector.storage.FileStorageClient;
 import it.gov.pagopa.register.service.validator.EprelProductValidatorService;
-import it.gov.pagopa.register.utils.EprelResult;
+import it.gov.pagopa.register.dto.utils.EprelResult;
 import it.gov.pagopa.register.dto.operation.StorageEventDTO;
 import it.gov.pagopa.register.model.operation.Product;
 import it.gov.pagopa.register.model.operation.ProductFile;
 import it.gov.pagopa.register.repository.operation.ProductFileRepository;
 import it.gov.pagopa.register.repository.operation.ProductRepository;
 import it.gov.pagopa.register.utils.CsvUtils;
-import it.gov.pagopa.register.utils.EventDetails;
+import it.gov.pagopa.register.dto.utils.EventDetails;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.io.FilenameUtils;
@@ -32,8 +32,8 @@ import java.util.regex.Matcher;
 import static it.gov.pagopa.register.constants.AssetRegisterConstants.*;
 import static it.gov.pagopa.register.enums.UploadCsvStatus.*;
 import static it.gov.pagopa.register.enums.UploadCsvStatus.PARTIAL;
-import static it.gov.pagopa.register.model.operation.mapper.ProductMapper.mapCookingHobToProduct;
-import static it.gov.pagopa.register.model.operation.mapper.ProductMapper.mapProductToCsvRow;
+import static it.gov.pagopa.register.mapper.operation.ProductMapper.mapCookingHobToProduct;
+import static it.gov.pagopa.register.mapper.operation.ProductMapper.mapProductToCsvRow;
 
 @Slf4j
 @Service

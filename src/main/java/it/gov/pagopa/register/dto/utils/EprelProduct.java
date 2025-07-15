@@ -1,4 +1,4 @@
-package it.gov.pagopa.register.utils;
+package it.gov.pagopa.register.dto.utils;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

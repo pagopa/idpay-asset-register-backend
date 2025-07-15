@@ -2,10 +2,10 @@ package it.gov.pagopa.register.service.validator;
 
 import it.gov.pagopa.register.configuration.EprelValidationConfig;
 import it.gov.pagopa.register.connector.eprel.EprelConnector;
-import it.gov.pagopa.register.utils.EprelProduct;
-import it.gov.pagopa.register.utils.EprelResult;
+import it.gov.pagopa.register.dto.utils.EprelProduct;
+import it.gov.pagopa.register.dto.utils.EprelResult;
 import it.gov.pagopa.register.model.operation.Product;
-import it.gov.pagopa.register.utils.EprelValidationRule;
+import it.gov.pagopa.register.dto.utils.EprelValidationRule;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -17,8 +17,8 @@ import java.util.*;
 
 
 import static it.gov.pagopa.register.constants.AssetRegisterConstants.*;
-import static it.gov.pagopa.register.model.operation.mapper.ProductMapper.mapEprelToProduct;
-import static it.gov.pagopa.register.model.operation.mapper.ProductMapper.mapProductToCsvRow;
+import static it.gov.pagopa.register.mapper.operation.ProductMapper.mapEprelToProduct;
+import static it.gov.pagopa.register.mapper.operation.ProductMapper.mapProductToCsvRow;
 
 @Service
 @RequiredArgsConstructor

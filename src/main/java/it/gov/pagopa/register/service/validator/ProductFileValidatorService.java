@@ -3,7 +3,7 @@ package it.gov.pagopa.register.service.validator;
 import it.gov.pagopa.register.configuration.ProductFileValidationConfig;
 import it.gov.pagopa.register.constants.AssetRegisterConstants;
 import it.gov.pagopa.register.dto.operation.ValidationResultDTO;
-import it.gov.pagopa.register.utils.ColumnValidationRule;
+import it.gov.pagopa.register.dto.utils.ColumnValidationRule;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.csv.CSVRecord;
