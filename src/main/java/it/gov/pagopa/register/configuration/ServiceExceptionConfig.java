@@ -1,7 +1,6 @@
 package it.gov.pagopa.register.configuration;
 
 import it.gov.pagopa.common.web.exception.ServiceException;
-import it.gov.pagopa.register.exception.operation.CsvValidationException;
 import it.gov.pagopa.register.exception.operation.ReportNotFoundException;
 import it.gov.pagopa.register.exception.role.PermissionNotFoundException;
 import it.gov.pagopa.register.exception.role.VersionNotMatchedException;
@@ -25,7 +24,6 @@ public class ServiceExceptionConfig {
 
     //BadRequest
     exceptionMap.put(VersionNotMatchedException.class, HttpStatus.BAD_REQUEST);
-    exceptionMap.put(CsvValidationException.class,HttpStatus.BAD_REQUEST);
 
     return exceptionMap;
   }
