@@ -51,7 +51,6 @@ class ProductFileConsumerServiceTest {
   private NotificationServiceImpl notificationService;
 
   private static final String ORG_ID = "ORG123";
-  private static final String CATEGORY = "COOKINGHOBS";
   private static final String PRODUCT_FILE_ID = "file123";
   public static final Pattern SUBJECT_PATTERN =
     Pattern.compile(".*/blobs/CSV/([^/]+)/([^/]+)/([^/]+\\.csv)$");
@@ -91,11 +90,11 @@ class ProductFileConsumerServiceTest {
     when(productRepository.saveAll(any())).thenReturn(List.of());
 
     try (MockedStatic<CsvUtils> utils = mockStatic(CsvUtils.class)) {
-      CSVRecord record = mock(CSVRecord.class);
+      CSVRecord csvRecord = mock(CSVRecord.class);
       utils.when(() -> CsvUtils.readHeader(any(ByteArrayOutputStream.class)))
         .thenReturn(List.of("HEADER"));
       utils.when(() -> CsvUtils.readCsvRecords(any(ByteArrayOutputStream.class)))
-        .thenReturn(List.of(record));
+        .thenReturn(List.of(csvRecord));
 
       assertDoesNotThrow(() -> service.execute(List.of(event), null));
     }
@@ -112,7 +111,7 @@ class ProductFileConsumerServiceTest {
   @Test
   void testSetProductFileStatus_fileNotFound_shouldDoNothing() {
     when(productFileRepository.findById("missing-file")).thenReturn(Optional.empty());
-    service.setProductFileStatus("missing-file", "EPREL_ERROR", 0);
+    service.setProductFileStatus("missing-file", "PARTIAL", 0);
     verify(productFileRepository, never()).save(any());
   }
 
@@ -134,7 +133,7 @@ class ProductFileConsumerServiceTest {
     assertNull(service.parseEventSubject(subject));
   }
 
-  // Test: eccezione durante il download imposta stato EPREL_ERROR
+  // Test: eccezione durante il download imposta stato
   @Test
   void testProcessFileFromStorage_downloadThrowsException_setsEprelError() throws Exception {
     when(fileStorageClient.download(anyString())).thenThrow(new RuntimeException("boom"));

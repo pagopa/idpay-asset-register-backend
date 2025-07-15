@@ -24,7 +24,8 @@ public class EprelUtils {
       return false;
     }
 
-    int requiredIndex = ENERGY_CLASS_ORDER.indexOf(requiredMinClass);    int productIndex = ENERGY_CLASS_ORDER.indexOf(energyClass.toUpperCase());
+    int requiredIndex = ENERGY_CLASS_ORDER.indexOf(requiredMinClass);
+    int productIndex = ENERGY_CLASS_ORDER.indexOf(energyClass.toUpperCase());
 
 
 
@@ -38,9 +39,33 @@ public class EprelUtils {
   public static String mapEnergyClass(String value) {
     if (value == null) return null;
     return switch (value) {
-      case "AP" -> "A+";
-      case "APP" -> "A++";
-      case "APPP" -> "A+++";
+      case "G" -> "L";
+      case "F" -> "I";
+      case "E" -> "H";
+      case "D" -> "G";
+      case "C" -> "F";
+      case "B" -> "E";
+      case "A" -> "D";
+      case "AP" -> "C";
+      case "APP" -> "B";
+      case "APPP" -> "A";
+      default -> value;
+    };
+  }
+
+  public static String mapEnergyClassInverse(String value) {
+    if (value == null) return null;
+    return switch (value) {
+      case "L" -> "G";
+      case "I" -> "F";
+      case "H" -> "E";
+      case "G" -> "D";
+      case "F" -> "C";
+      case "E" -> "B";
+      case "D" -> "A";
+      case "C" -> "A+";
+      case "B" -> "A++";
+      case "A" -> "A+++";
       default -> value;
     };
   }

@@ -6,8 +6,10 @@ import it.gov.pagopa.register.constants.enums.UploadCsvStatus;
 import it.gov.pagopa.register.dto.operation.*;
 import it.gov.pagopa.register.exception.operation.ReportNotFoundException;
 import it.gov.pagopa.register.mapper.operation.ProductFileMapper;
+import it.gov.pagopa.register.model.operation.Product;
 import it.gov.pagopa.register.model.operation.ProductFile;
 import it.gov.pagopa.register.repository.operation.ProductFileRepository;
+import it.gov.pagopa.register.repository.operation.ProductRepository;
 import it.gov.pagopa.register.service.validator.ProductFileValidatorService;
 import it.gov.pagopa.register.utils.CsvUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -37,15 +39,17 @@ public class ProductFileService {
 
 
   private final ProductFileRepository productFileRepository;
+  private final ProductRepository productRepository;
 
   private final FileStorageClient fileStorageClient;
 
   private final ProductFileValidatorService productFileValidator;
 
   public ProductFileService(ProductFileRepository productFileRepository,
-                            FileStorageClient fileStorageClient,
+                            ProductRepository productRepository, FileStorageClient fileStorageClient,
                             ProductFileValidatorService productFileValidator) {
     this.productFileRepository = productFileRepository;
+    this.productRepository = productRepository;
     this.productFileValidator = productFileValidator;
     this.fileStorageClient = fileStorageClient;
   }
@@ -134,6 +138,20 @@ public class ProductFileService {
 
   public ProductFileResult validateFile(MultipartFile file, String category, String organizationId, String userId, String userEmail) {
 
+    List<String> blockingStatuses = List.of(
+      UploadCsvStatus.IN_PROCESS.name(),
+      UploadCsvStatus.UPLOADED.name()
+    );
+
+    boolean alreadyBlocked = productFileRepository.existsByOrganizationIdAndUploadStatusIn(
+      organizationId, blockingStatuses
+    );
+
+    if (alreadyBlocked) {
+      log.warn("[PROCESS_FILE] - Existing file in UPLOADED or IN_PROCESS state for org: {}", organizationId);
+      return ProductFileResult.ko(AssetRegisterConstants.UploadKeyConstant.UPLOAD_ALREADY_IN_PROGRESS);
+    }
+
     try {
       String originalFileName = file.getOriginalFilename();
       log.info("[PROCESS_FILE] - Processing file: {} for organizationId: {}", originalFileName, organizationId);
@@ -150,7 +168,7 @@ public class ProductFileService {
       ValidationResultDTO validationRecords = productFileValidator.validateRecords(records, headers, category);
       if ("KO".equals(validationRecords.getStatus())) {
         log.warn("[PROCESS_FILE] - Validation failed for file: {}", originalFileName);
-        //TODO verify if really needed
+
         ProductFile productFile = saveProductFile(category, organizationId, userId, userEmail, originalFileName, records);
         uploadFormalErrorFile(file, validationRecords, headers, productFile);
 
@@ -198,21 +216,17 @@ public class ProductFileService {
     }
 
     log.info("[GET_PRODUCT_FILES] - Fetching product files for organizationId: {}", organizationId);
-    List<String> excludedStatuses = List.of(
-      FORMAL_ERROR.name(),
-      UPLOADED.name(),
-      IN_PROCESS.name()
-    );
+     List<Product> productFiles = productRepository
+      .findDistinctProductFileIdAndCategoryByOrganizationId(organizationId);
 
-    List<ProductBatchDTO> productFiles = productFileRepository
-      .findByOrganizationIdAndUploadStatusNotIn(organizationId, excludedStatuses)
-      .orElse(List.of())
-      .stream()
+
+    log.info("[GET_PRODUCT_FILES] - Fetched {} product files for organizationId: {}", productFiles.size(), organizationId);
+
+
+    return productFiles.stream()
       .map(ProductFileMapper::toBatchDTO)
       .toList();
 
-    log.info("[GET_PRODUCT_FILES] - Fetched {} product files for organizationId: {}", productFiles.size(), organizationId);
-    return productFiles;
   }
 
 }

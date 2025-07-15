@@ -5,8 +5,10 @@ import it.gov.pagopa.register.constants.AssetRegisterConstants;
 import it.gov.pagopa.register.constants.enums.UploadCsvStatus;
 import it.gov.pagopa.register.dto.operation.*;
 import it.gov.pagopa.register.exception.operation.ReportNotFoundException;
+import it.gov.pagopa.register.model.operation.Product;
 import it.gov.pagopa.register.model.operation.ProductFile;
 import it.gov.pagopa.register.repository.operation.ProductFileRepository;
+import it.gov.pagopa.register.repository.operation.ProductRepository;
 import it.gov.pagopa.register.service.validator.ProductFileValidatorService;
 import it.gov.pagopa.register.utils.CsvUtils;
 import org.apache.commons.csv.CSVRecord;
@@ -39,6 +41,8 @@ class ProductFileServiceTest {
   @Mock
   ProductFileRepository productFileRepository;
   @Mock
+  ProductRepository productRepository;
+  @Mock
   FileStorageClient fileStorageClient;
   @Mock
   ProductFileValidatorService productFileValidator;
@@ -48,7 +52,7 @@ class ProductFileServiceTest {
   @BeforeEach
   void setUp() {
     MockitoAnnotations.openMocks(this);
-    productFileService = new ProductFileService(productFileRepository, fileStorageClient, productFileValidator);
+    productFileService = new ProductFileService(productFileRepository, productRepository, fileStorageClient, productFileValidator);
   }
 
   @Test
@@ -103,25 +107,51 @@ class ProductFileServiceTest {
     assertThrows(IllegalArgumentException.class, () -> productFileService.getFilesByPage(null, page));
   }
 
-
   @Test
-  void downloadReport_eprelError() throws IOException {
+  void downloadReport_partialLoad() throws IOException {
     ProductFile pf = new ProductFile();
     pf.setId("1");
     pf.setOrganizationId("o");
-    pf.setUploadStatus("EPREL_ERROR");
+    pf.setUploadStatus("PARTIAL");
     when(productFileRepository.findByIdAndOrganizationId("1", "o")).thenReturn(Optional.of(pf));
 
     ByteArrayOutputStream os = new ByteArrayOutputStream();
     os.write("fake csv content".getBytes());
-    when(fileStorageClient.download("Report/Eprel_Error/1.csv")).thenReturn(os);
+    when(fileStorageClient.download("Report/Partial/1.csv")).thenReturn(os);
     FileReportDTO res = productFileService.downloadReport("1", "o");
     assertArrayEquals(os.toByteArray(), res.getData());
+
+
+    String productFileId = "1";
+    String organizationId = "org1";
+    String fileName = "eprel_report.csv";
+
+    ProductFile productFile = ProductFile.builder()
+      .id(productFileId)
+      .organizationId(organizationId)
+      .uploadStatus("PARTIAL")
+      .fileName(fileName)
+      .build();
+
+    ByteArrayOutputStream mockedOutput = new ByteArrayOutputStream();
+    mockedOutput.write("dummy report content".getBytes());
+
+    when(productFileRepository.findByIdAndOrganizationId(productFileId, organizationId))
+      .thenReturn(Optional.of(productFile));
+
+    when(fileStorageClient.download("Report/Partial/1.csv"))
+      .thenReturn(mockedOutput);
+
+    FileReportDTO reportDTO = productFileService.downloadReport(productFileId, organizationId);
+
+    // Assert
+    assertNotNull(reportDTO);
+    assertArrayEquals("dummy report content".getBytes(), reportDTO.getData());
+    assertEquals("eprel_report_errors.csv", reportDTO.getFilename());
+
+    verify(productFileRepository).findByIdAndOrganizationId(productFileId, organizationId);
+    verify(fileStorageClient).download("Report/Partial/1.csv");
   }
-
-
-
-
 
   @Test
   void downloadReport_notFoundId() {
@@ -130,7 +160,6 @@ class ProductFileServiceTest {
       () -> productFileService.downloadReport("1","o"));
     assertTrue(ex.getMessage().contains("Report not found with id: 1"));
   }
-
 
   @Test
   void downloadReport_unsupportedStatus() {
@@ -145,14 +174,11 @@ class ProductFileServiceTest {
   void downloadReport_azureNull() {
     ProductFile pf = new ProductFile(); pf.setId("1"); pf.setOrganizationId("o"); pf.setUploadStatus("FORMAL_ERROR");
     when(productFileRepository.findByIdAndOrganizationId("1","o")).thenReturn(Optional.of(pf));
-    when(fileStorageClient.download("Report/Formal_Error/1.csv")).thenReturn(null);
+    when(fileStorageClient.download("Report/Formal/1.csv")).thenReturn(null);
     ReportNotFoundException ex = assertThrows(ReportNotFoundException.class,
       () -> productFileService.downloadReport("1","o"));
     assertTrue(ex.getMessage().contains("Report not found on Azure"));
   }
-
-
-
 
   private MultipartFile createMockFile() {
     return new MockMultipartFile("file", "test.csv", "text/csv", "test content".getBytes());
@@ -171,7 +197,6 @@ class ProductFileServiceTest {
     assertEquals("KO", res.getStatus());
     assertEquals("TEST", res.getErrorKey());
   }
-
 
   //Test con controlli formali falliti
   private void testFormalError(String errorMessage) {
@@ -246,8 +271,6 @@ class ProductFileServiceTest {
     testFormalError("Il campo Modello è obbligatorio e deve contenere una stringa lunga al massimo 100 caratteri");
   }
 
-
-
   @Test
   void whenAllValid_thenReturnOk()  {
     MultipartFile file = mock(MultipartFile.class);
@@ -284,8 +307,6 @@ class ProductFileServiceTest {
     }
   }
 
-
-
   @Test
   void shouldThrowExceptionWhenOrganizationIdIsEmpty() {
     ReportNotFoundException ex = assertThrows(ReportNotFoundException.class,
@@ -295,13 +316,13 @@ class ProductFileServiceTest {
 
   @Test
   void shouldReturnMappedDTOListWhenValidDataIsPresent() {
-    ProductFile file = ProductFile.builder()
-      .id("file123")
+    Product file = Product.builder()
+      .productFileId("file123")
       .category("DISHWASHERS")
       .build();
 
-    when(productFileRepository.findByOrganizationIdAndUploadStatusNotIn(eq("org123"), anyList()))
-      .thenReturn(Optional.of(List.of(file)));
+    when(productRepository.findDistinctProductFileIdAndCategoryByOrganizationId("org123"))
+      .thenReturn(List.of(file));
 
     List<ProductBatchDTO> result = productFileService.getProductFilesByOrganizationId("org123");
 
@@ -309,5 +330,20 @@ class ProductFileServiceTest {
     assertEquals("file123", result.getFirst().getProductFileId());
     assertEquals("DISHWASHERS_file123.csv", result.getFirst().getBatchName());
   }
+
+  @Test
+  void whenFileAlreadyInProgressOrUploaded_thenReturnKoAlreadyInProgress() {
+    MultipartFile file = new MockMultipartFile("file", "test.csv", "text/csv", "dummy".getBytes());
+
+    // Simula presenza di un file già in stato IN_PROCESS o UPLOADED
+    when(productFileRepository.existsByOrganizationIdAndUploadStatusIn(eq("org"), anyList()))
+      .thenReturn(true);
+
+    ProductFileResult result = productFileService.processFile(file, "cat", "org", "user", "email");
+
+    assertEquals("KO", result.getStatus());
+    assertEquals(AssetRegisterConstants.UploadKeyConstant.UPLOAD_ALREADY_IN_PROGRESS, result.getErrorKey());
+  }
+
 
 }
