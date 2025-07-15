@@ -27,7 +27,7 @@ public class EprelProduct {
   private Cavities cavities;
 
   @Data
-  public class Cavities{
+  public static class Cavities{
     private String volume;
   }
   public String getFieldValue(String fieldName) {
