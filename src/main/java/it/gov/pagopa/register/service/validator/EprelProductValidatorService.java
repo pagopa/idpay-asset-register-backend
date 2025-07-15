@@ -4,8 +4,8 @@ import it.gov.pagopa.register.configuration.EprelValidationConfig;
 import it.gov.pagopa.register.connector.eprel.EprelConnector;
 import it.gov.pagopa.register.dto.utils.EprelProduct;
 import it.gov.pagopa.register.dto.utils.EprelResult;
-import it.gov.pagopa.register.model.operation.Product;
 import it.gov.pagopa.register.dto.utils.EprelValidationRule;
+import it.gov.pagopa.register.model.operation.Product;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -14,7 +14,6 @@ import org.apache.commons.csv.CSVRecord;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
-
 
 import static it.gov.pagopa.register.constants.AssetRegisterConstants.*;
 import static it.gov.pagopa.register.mapper.operation.ProductMapper.mapEprelToProduct;
@@ -72,7 +71,8 @@ public class EprelProductValidatorService {
       invalidRecords.add(csvRow);
       errorMessages.put(csvRow, String.join(", ", errors));
     } else {
-      log.info("[VALIDATE_RECORD] - EPREL product valid: {}", eprelData.getEprelRegistrationNumber());
+      log.info("[VALIDATE_RECORD] - EPREL product valid: {}",
+        eprelData.getEprelRegistrationNumber() != null ? eprelData.getEprelRegistrationNumber() : "N\\A");
       if(validRecords.containsKey(csvRow.get(CODE_GTIN_EAN))){
         Product product = validRecords.remove(csvRow.get(CODE_GTIN_EAN));
         CSVRecord duplicateGtinRow = mapProductToCsvRow(product,context.getCategory(), context.getHeaders());

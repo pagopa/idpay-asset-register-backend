@@ -26,6 +26,7 @@ import java.util.regex.Pattern;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectReader;
+
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -73,7 +74,7 @@ class ProductFileConsumerServiceTest {
 
   // Test: evento valido deve attivare il flusso completo di elaborazione
   @Test
-  void testExecute_validEvent_shouldProcessFile()  {
+  void testExecute_validEvent_shouldProcessFile() {
     StorageEventData data = StorageEventData.builder()
       .url("/CSV/ORG123/COOKINGHOBS/file123.csv")
       .build();
