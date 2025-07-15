@@ -12,6 +12,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.aggregation.Aggregation;
+import org.springframework.data.mongodb.core.aggregation.AggregationResults;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 
@@ -88,6 +90,28 @@ class ProductFileSpecificRepositoryTest {
     assertNotNull(capturedQuery.getQueryObject().get("organizationId"));
   }
 
+  @Test
+  void testFindDistinctProductFileIdAndCategoryByOrganizationId() {
+    String orgId = "org123";
+    Product product = Product.builder()
+      .productFileId("file123")
+      .category("catA")
+      .build();
+
+    List<Product> products = List.of(product);
+    AggregationResults<Product> aggregationResults = new AggregationResults<>(products, new org.bson.Document());
+
+    when(mongoTemplate.aggregate(any(Aggregation.class), eq("product"), eq(Product.class)))
+      .thenReturn(aggregationResults);
+
+    List<Product> result = productSpecificRepository.findDistinctProductFileIdAndCategoryByOrganizationId(orgId);
+
+    assertEquals(1, result.size());
+    assertEquals("file123", result.get(0).getProductFileId());
+    assertEquals("catA", result.get(0).getCategory());
+
+    verify(mongoTemplate).aggregate(any(Aggregation.class), eq("product"), eq(Product.class));
+  }
 
 
 
