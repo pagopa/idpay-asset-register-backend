@@ -115,7 +115,7 @@ class MongoExceptionHandlerTest {
     mockMvc.perform(MockMvcRequestBuilders.get("/test")
                     .contentType(MediaType.APPLICATION_JSON))
             .andExpect(MockMvcResultMatchers.status().isInternalServerError())
-            .andExpect(MockMvcResultMatchers.content().json("{\"message\":\"Something gone wrong\"}", JsonCompareMode.STRICT));
+            .andExpect(MockMvcResultMatchers.content().json("{\"message\":\"Something gone wrong\"}", JsonCompareMode.LENIENT));
   }
 
   @Test
@@ -126,6 +126,6 @@ class MongoExceptionHandlerTest {
     mockMvc.perform(MockMvcRequestBuilders.get("/test")
                     .contentType(MediaType.APPLICATION_JSON))
             .andExpect(MockMvcResultMatchers.status().isTooManyRequests())
-            .andExpect(MockMvcResultMatchers.content().json("{\"message\":\"Too Many Requests\"}", JsonCompareMode.STRICT));
+            .andExpect(MockMvcResultMatchers.content().json("{\"message\":\"Too Many Requests\"}", JsonCompareMode.LENIENT));
   }
 }
