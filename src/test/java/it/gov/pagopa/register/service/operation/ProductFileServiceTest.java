@@ -5,8 +5,10 @@ import it.gov.pagopa.register.constants.AssetRegisterConstants;
 import it.gov.pagopa.register.constants.enums.UploadCsvStatus;
 import it.gov.pagopa.register.dto.operation.*;
 import it.gov.pagopa.register.exception.operation.ReportNotFoundException;
+import it.gov.pagopa.register.model.operation.Product;
 import it.gov.pagopa.register.model.operation.ProductFile;
 import it.gov.pagopa.register.repository.operation.ProductFileRepository;
+import it.gov.pagopa.register.repository.operation.ProductRepository;
 import it.gov.pagopa.register.service.validator.ProductFileValidatorService;
 import it.gov.pagopa.register.utils.CsvUtils;
 import org.apache.commons.csv.CSVRecord;
@@ -39,6 +41,8 @@ class ProductFileServiceTest {
   @Mock
   ProductFileRepository productFileRepository;
   @Mock
+  ProductRepository productRepository;
+  @Mock
   FileStorageClient fileStorageClient;
   @Mock
   ProductFileValidatorService productFileValidator;
@@ -48,7 +52,7 @@ class ProductFileServiceTest {
   @BeforeEach
   void setUp() {
     MockitoAnnotations.openMocks(this);
-    productFileService = new ProductFileService(productFileRepository, fileStorageClient, productFileValidator);
+    productFileService = new ProductFileService(productFileRepository, productRepository, fileStorageClient, productFileValidator);
   }
 
   @Test
@@ -105,16 +109,16 @@ class ProductFileServiceTest {
 
 
   @Test
-  void downloadReport_eprelError() throws IOException {
+  void downloadReport_partialLoad() throws IOException {
     ProductFile pf = new ProductFile();
     pf.setId("1");
     pf.setOrganizationId("o");
-    pf.setUploadStatus("EPREL_ERROR");
+    pf.setUploadStatus("PARTIAL");
     when(productFileRepository.findByIdAndOrganizationId("1", "o")).thenReturn(Optional.of(pf));
 
     ByteArrayOutputStream os = new ByteArrayOutputStream();
     os.write("fake csv content".getBytes());
-    when(fileStorageClient.download("Report/Eprel_Error/1.csv")).thenReturn(os);
+    when(fileStorageClient.download("Report/Partial/1.csv")).thenReturn(os);
     FileReportDTO res = productFileService.downloadReport("1", "o");
     assertArrayEquals(os.toByteArray(), res.getData());
   }
@@ -145,7 +149,7 @@ class ProductFileServiceTest {
   void downloadReport_azureNull() {
     ProductFile pf = new ProductFile(); pf.setId("1"); pf.setOrganizationId("o"); pf.setUploadStatus("FORMAL_ERROR");
     when(productFileRepository.findByIdAndOrganizationId("1","o")).thenReturn(Optional.of(pf));
-    when(fileStorageClient.download("Report/Formal_Error/1.csv")).thenReturn(null);
+    when(fileStorageClient.download("Report/Formal/1.csv")).thenReturn(null);
     ReportNotFoundException ex = assertThrows(ReportNotFoundException.class,
       () -> productFileService.downloadReport("1","o"));
     assertTrue(ex.getMessage().contains("Report not found on Azure"));
@@ -295,13 +299,13 @@ class ProductFileServiceTest {
 
   @Test
   void shouldReturnMappedDTOListWhenValidDataIsPresent() {
-    ProductFile file = ProductFile.builder()
-      .id("file123")
+    Product file = Product.builder()
+      .productFileId("file123")
       .category("DISHWASHERS")
       .build();
 
-    when(productFileRepository.findByOrganizationIdAndUploadStatusNotIn(eq("org123"), anyList()))
-      .thenReturn(Optional.of(List.of(file)));
+    when(productRepository.findDistinctProductFileIdAndCategoryByOrganizationId("org123"))
+      .thenReturn(List.of(file));
 
     List<ProductBatchDTO> result = productFileService.getProductFilesByOrganizationId("org123");
 

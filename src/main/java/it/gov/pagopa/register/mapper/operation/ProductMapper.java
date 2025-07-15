@@ -4,7 +4,7 @@ import it.gov.pagopa.register.dto.operation.ProductDTO;
 import it.gov.pagopa.register.model.operation.Product;
 
 import static it.gov.pagopa.register.utils.EprelUtils.generateEprelUrl;
-import static it.gov.pagopa.register.utils.EprelUtils.mapEnergyClass;
+import static it.gov.pagopa.register.utils.EprelUtils.mapEnergyClassInverse;
 
 
 public class ProductMapper {
@@ -30,9 +30,16 @@ public class ProductMapper {
       .gtinCode(entity.getGtinCode())
       .productCode(entity.getProductCode())
       .countryOfProduction(entity.getCountryOfProduction())
-      .energyClass(entity.getEnergyClass())
+      .energyClass(mapEnergyClassInverse(entity.getEnergyClass()))
       .linkEprel(generateEprelUrl(entity.getProductGroup(), entity.getEprelCode()))
       .batchName(entity.getCategory()+"_"+entity.getProductFileId()+".csv")
+      .productName(
+        entity.getCategory() +" " +
+        entity.getBrand()+" "+
+        entity.getModel()+" "+
+        (entity.getCapacity().equals("N\\A") ? "" : entity.getCapacity())
+      )
+      .capacity(entity.getCapacity())
       .build();
   }
 

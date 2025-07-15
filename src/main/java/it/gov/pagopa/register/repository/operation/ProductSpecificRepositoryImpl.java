@@ -5,6 +5,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.aggregation.Aggregation;
+import org.springframework.data.mongodb.core.aggregation.AggregationResults;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 
@@ -12,6 +14,7 @@ import java.util.List;
 
 public class ProductSpecificRepositoryImpl implements ProductSpecificRepository {
 
+  public static final String PRODUCT = "product";
   private final MongoTemplate mongoTemplate;
 
   public ProductSpecificRepositoryImpl(MongoTemplate mongoTemplate){
@@ -69,4 +72,25 @@ public class ProductSpecificRepositoryImpl implements ProductSpecificRepository 
     query.addCriteria(criteria);
     return mongoTemplate.count(query, Product.class);
   }
+
+  @Override
+  public List<Product> findDistinctProductFileIdAndCategoryByOrganizationId(String organizationId) {
+    Aggregation aggregation = Aggregation.newAggregation(
+      Aggregation.match(Criteria.where("organizationId").is(organizationId)),
+      Aggregation.group("productFileId", "category"),
+      Aggregation.project()
+        .and("_id.productFileId").as("productFileId")
+        .and("_id.category").as("category")
+    );
+
+    AggregationResults<Product> results = mongoTemplate.aggregate(
+      aggregation, PRODUCT, Product.class
+    );
+
+    return results.getMappedResults();
+  }
+
+
+
 }
+
