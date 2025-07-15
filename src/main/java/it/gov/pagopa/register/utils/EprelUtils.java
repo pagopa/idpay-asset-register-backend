@@ -15,7 +15,7 @@ public class EprelUtils {
 
 
   public static Boolean isEnergyClassValid(String energyClass, String category) {
-    if (energyClass == null || energyClass.isBlank()) {
+    if (energyClass == null || energyClass.isBlank() || category == null) {
       return false;
     }
 
