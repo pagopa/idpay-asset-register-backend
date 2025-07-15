@@ -6,9 +6,13 @@ import it.gov.pagopa.register.model.operation.Product;
 import it.gov.pagopa.register.dto.utils.EprelProduct;
 import org.apache.commons.csv.CSVRecord;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -77,66 +81,84 @@ class ProductMapperTest {
     assertEquals("BrandX", product.getBrand());
   }
 
-  @Test
-  void testMapCapacity_NullEprel() {
-    assertEquals("N\\A", ProductMapper.mapCapacity("WASHINGMACHINES", null));
+
+  @ParameterizedTest
+  @MethodSource("provideCapacityCases")
+  void testMapCapacity(String category, EprelProduct eprel, String expected) {
+    String result = ProductMapper.mapCapacity(category, eprel);
+    assertEquals(expected, result);
   }
 
-  @Test
-  void testMapCapacity_WashingMachines() {
-    EprelProduct eprel = mock(EprelProduct.class);
-    when(eprel.getRatedCapacity()).thenReturn("8");
-    assertEquals("8 kg", ProductMapper.mapCapacity("WASHINGMACHINES", eprel));
-  }
+  static Stream<Arguments> provideCapacityCases() {
+    // WASHINGMACHINES
+    EprelProduct washingMachine = new EprelProduct();
+    washingMachine.setRatedCapacity("8");
 
-  @Test
-  void testMapCapacity_WashingMachines_WithCapacity() {
-    EprelProduct eprel = new EprelProduct();
-    eprel.setRatedCapacity("8");
-    assertEquals("8 kg", ProductMapper.mapCapacity("WASHINGMACHINES", eprel));
-  }
+    EprelProduct washingMachineNull = new EprelProduct();
+    washingMachineNull.setRatedCapacity(null);
 
-  @Test
-  void testMapCapacity_TumbleDryers_WithCapacity() {
-    EprelProduct eprel = new EprelProduct();
-    eprel.setRatedCapacity("7");
-    assertEquals("7 kg", ProductMapper.mapCapacity("TUMBLEDRYERS", eprel));
-  }
+    // TUMBLEDRYERS
+    EprelProduct tumbleDryer = new EprelProduct();
+    tumbleDryer.setRatedCapacity("7");
 
-  @Test
-  void testMapCapacity_WasherDriers_WithCapacity() {
-    EprelProduct eprel = new EprelProduct();
-    eprel.setRatedCapacityWash("6");
-    assertEquals("6 kg", ProductMapper.mapCapacity("WASHERDRIERS", eprel));
-  }
+    EprelProduct tumbleDryerNull = new EprelProduct();
+    tumbleDryerNull.setRatedCapacity(null);
 
-  @Test
-  void testMapCapacity_Ovens_WithCavityVolume() {
-    EprelProduct eprel = new EprelProduct();
+    // WASHERDRIERS
+    EprelProduct washerDrier = new EprelProduct();
+    washerDrier.setRatedCapacityWash("6");
+
+    EprelProduct washerDrierNull = new EprelProduct();
+    washerDrierNull.setRatedCapacityWash(null);
+
+    // OVENS
+    EprelProduct oven = new EprelProduct();
     EprelProduct.Cavities cavities = new EprelProduct.Cavities();
     cavities.setVolume("65");
-    eprel.setCavities(cavities);
-    assertEquals("65 l", ProductMapper.mapCapacity("OVENS", eprel));
-  }
+    oven.setCavities(cavities);
 
-  @Test
-  void testMapCapacity_Dishwashers_WithCapacity() {
-    EprelProduct eprel = new EprelProduct();
-    eprel.setRatedCapacity("12");
-    assertEquals("12 c", ProductMapper.mapCapacity("DISHWASHERS", eprel));
-  }
+    EprelProduct ovenNullCavities = new EprelProduct();
+    ovenNullCavities.setCavities(null);
 
-  @Test
-  void testMapCapacity_RefrigeratingAppl_WithVolume() {
-    EprelProduct eprel = new EprelProduct();
-    eprel.setTotalVolume("300");
-    assertEquals("300 l", ProductMapper.mapCapacity("REFRIGERATINGAPPL", eprel));
-  }
+    EprelProduct ovenNullVolume = new EprelProduct();
+    EprelProduct.Cavities nullVolume = new EprelProduct.Cavities();
+    nullVolume.setVolume(null);
+    ovenNullVolume.setCavities(nullVolume);
 
-  @Test
-  void testMapCapacity_UnknownCategory() {
-    EprelProduct eprel = new EprelProduct();
-    assertEquals("N\\A", ProductMapper.mapCapacity("UNKNOWN", eprel));
+    // DISHWASHERS
+    EprelProduct dishwasher = new EprelProduct();
+    dishwasher.setRatedCapacity("12");
+
+    EprelProduct dishwasherNull = new EprelProduct();
+    dishwasherNull.setRatedCapacity(null);
+
+    // REFRIGERATINGAPPL
+    EprelProduct fridge = new EprelProduct();
+    fridge.setTotalVolume("300");
+
+    EprelProduct fridgeNull = new EprelProduct();
+    fridgeNull.setTotalVolume(null);
+
+    // UNKNOWN
+    EprelProduct unknown = new EprelProduct();
+
+    return Stream.of(
+      Arguments.of("WASHINGMACHINES", washingMachine, "8 kg"),
+      Arguments.of("WASHINGMACHINES", washingMachineNull, "N\\A"),
+      Arguments.of("TUMBLEDRYERS", tumbleDryer, "7 kg"),
+      Arguments.of("TUMBLEDRYERS", tumbleDryerNull, "N\\A"),
+      Arguments.of("WASHERDRIERS", washerDrier, "6 kg"),
+      Arguments.of("WASHERDRIERS", washerDrierNull, "N\\A"),
+      Arguments.of("OVENS", oven, "65 l"),
+      Arguments.of("OVENS", ovenNullCavities, "N\\A"),
+      Arguments.of("OVENS", ovenNullVolume, "N\\A"),
+      Arguments.of("DISHWASHERS", dishwasher, "12 c"),
+      Arguments.of("DISHWASHERS", dishwasherNull, "N\\A"),
+      Arguments.of("REFRIGERATINGAPPL", fridge, "300 l"),
+      Arguments.of("REFRIGERATINGAPPL", fridgeNull, "N\\A"),
+      Arguments.of("UNKNOWN", unknown, "N\\A"),
+      Arguments.of("WASHINGMACHINES", null, "N\\A")
+    );
   }
 
 
