@@ -1,6 +1,6 @@
 package it.gov.pagopa.register.service.validator;
 
-import it.gov.pagopa.register.config.ProductFileValidationConfig;
+import it.gov.pagopa.register.configuration.ProductFileValidationConfig;
 import it.gov.pagopa.register.constants.AssetRegisterConstants;
 import it.gov.pagopa.register.dto.operation.ValidationResultDTO;
 import it.gov.pagopa.register.utils.ColumnValidationRule;

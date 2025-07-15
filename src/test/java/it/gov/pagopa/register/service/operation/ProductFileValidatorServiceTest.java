@@ -1,6 +1,6 @@
 package it.gov.pagopa.register.service.operation;
 
-import it.gov.pagopa.register.config.ProductFileValidationConfig;
+import it.gov.pagopa.register.configuration.ProductFileValidationConfig;
 import it.gov.pagopa.register.constants.AssetRegisterConstants;
 import it.gov.pagopa.register.dto.operation.ValidationResultDTO;
 import it.gov.pagopa.register.service.validator.ProductFileValidatorService;
@@ -224,16 +224,16 @@ class ProductFileValidatorServiceTest {
 
     List<String> headers = List.of("Codice GTIN/EAN");
 
-    CSVRecord record = Mockito.mock(CSVRecord.class);
-    when(record.get("Codice GTIN/EAN")).thenReturn("123ABC");
+    CSVRecord csvRecord = Mockito.mock(CSVRecord.class);
+    when(csvRecord.get("Codice GTIN/EAN")).thenReturn("123ABC");
 
-    List<CSVRecord> records = List.of(record);
+    List<CSVRecord> records = List.of(csvRecord);
 
     ValidationResultDTO result = productFileValidator.validateRecords(records, headers, category);
 
     assertNotNull(result);
     assertFalse(result.getInvalidRecords().isEmpty());
-    assertTrue(result.getErrorMessages().get(record).contains("Invalid GTIN"));
+    assertTrue(result.getErrorMessages().get(csvRecord).contains("Invalid GTIN"));
   }
 
 

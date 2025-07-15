@@ -1,6 +1,6 @@
 package it.gov.pagopa.register.service.operation;
 
-import it.gov.pagopa.register.config.EprelValidationConfig;
+import it.gov.pagopa.register.configuration.EprelValidationConfig;
 import it.gov.pagopa.register.connector.eprel.EprelConnector;
 import it.gov.pagopa.register.service.validator.EprelProductValidatorService;
 import it.gov.pagopa.register.utils.EprelProduct;

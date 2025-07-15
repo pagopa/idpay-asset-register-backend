@@ -1,6 +1,5 @@
 package it.gov.pagopa.register.configuration;
 
-import it.gov.pagopa.register.config.ProductFileValidationConfig;
 import it.gov.pagopa.register.utils.ColumnValidationRule;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
