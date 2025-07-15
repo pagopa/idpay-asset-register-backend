@@ -198,7 +198,7 @@ class ProductFileServiceTest {
       mockedCsv.when(() -> CsvUtils.readCsvRecords(file))
         .thenReturn(List.of(mock(CSVRecord.class)));
 
-      mockedCsv.when(() -> CsvUtils.writeCsvWithErrors(any(), any(), any(), anyString()))
+      mockedCsv.when(() -> CsvUtils.writeCsvWithErrors(any(), any(), any(), any()))
         .thenAnswer(inv -> null);
 
       mockedFiles.when(() -> Files.newInputStream(any()))
