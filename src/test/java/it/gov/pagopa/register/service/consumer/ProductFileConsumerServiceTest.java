@@ -5,6 +5,8 @@ import it.gov.pagopa.register.connector.notification.NotificationServiceImpl;
 import it.gov.pagopa.register.connector.storage.FileStorageClient;
 import it.gov.pagopa.register.dto.operation.StorageEventDTO;
 import it.gov.pagopa.register.dto.operation.StorageEventDTO.StorageEventData;
+import it.gov.pagopa.register.dto.utils.EprelResult;
+import it.gov.pagopa.register.model.operation.Product;
 import it.gov.pagopa.register.model.operation.ProductFile;
 import it.gov.pagopa.register.repository.operation.ProductFileRepository;
 import it.gov.pagopa.register.repository.operation.ProductRepository;
@@ -213,4 +215,38 @@ class ProductFileConsumerServiceTest {
       assertDoesNotThrow(() -> service.processCsvFromStorage(csvContent, PRODUCT_FILE_ID, "OTHER", ORG_ID));
     }
   }
+
+  @Test
+  void testExecute_validEvent_shouldProcessFile_Eprel() {
+    StorageEventData data = StorageEventData.builder()
+      .url("/CSV/ORG123/WASHINGMACHINES/file123.csv")
+      .build();
+    StorageEventDTO event = StorageEventDTO.builder()
+      .subject("/blobs/CSV/ORG123/WASHINGMACHINES/file123.csv")
+      .data(data)
+      .build();
+    ByteArrayOutputStream stream = new ByteArrayOutputStream();
+    when(fileStorageClient.download(anyString())).thenReturn(stream);
+    when(productFileRepository.findById(anyString()))
+      .thenReturn(Optional.of(new ProductFile()));
+    when(productRepository.saveAll(any())).thenReturn(List.of());
+    Map<String, Product> validRecords = new HashMap<>();
+    validRecords.put("model123", new Product());
+
+    List<CSVRecord> invalidRecords = new ArrayList<>();
+    Map<CSVRecord, String> errorMessages = new HashMap<>();
+
+    when(eprelProductValidator.validateRecords(any(), any(), any(), any(), any(), any()))
+      .thenReturn(new EprelResult(validRecords, invalidRecords, errorMessages));
+
+    try (MockedStatic<CsvUtils> utils = mockStatic(CsvUtils.class)) {
+      CSVRecord csvRecord = mock(CSVRecord.class);
+      utils.when(() -> CsvUtils.readHeader(any(ByteArrayOutputStream.class)))
+        .thenReturn(List.of("HEADER"));
+      utils.when(() -> CsvUtils.readCsvRecords(any(ByteArrayOutputStream.class)))
+        .thenReturn(List.of(csvRecord));
+      assertDoesNotThrow(() -> service.execute(List.of(event), null));
+    }}
+
+
 }
