@@ -127,7 +127,8 @@ class ProductFileControllerTest {
         .file(wrongFile)
         .param("category", "eprel")
         .header("x-organization-id", "org-id")
-        .header("x-user-id", "user-id"))
+        .header("x-user-id", "user-id")
+        .header("x-user-email", "x-user-email"))
       .andExpect(status().isOk())
       .andExpect(jsonPath("$.status").value("KO"))
       .andExpect(jsonPath("$.errorKey").value("EXTENSION_FILE_ERROR"));
@@ -147,7 +148,8 @@ class ProductFileControllerTest {
         .file(file)
         .param("category", "eprel")
         .header("x-organization-id", "org-id")
-        .header("x-user-id", "user-id"))
+        .header("x-user-id", "user-id")
+        .header("x-user-email", "x-user-email"))
       .andExpect(status().isOk())
       .andExpect(jsonPath("$.status").value("KO"))
       .andExpect(jsonPath("$.errorKey").value("HEADER_FILE_ERROR"));
@@ -174,7 +176,8 @@ class ProductFileControllerTest {
         .file(file)
         .param("category", "eprel")
         .header("x-organization-id", "org-id")
-        .header("x-user-id", "user-id"))
+        .header("x-user-id", "user-id")
+        .header("x-user-email", "x-user-email"))
       .andExpect(status().isOk())
       .andExpect(jsonPath("$.status").value("KO"))
       .andExpect(jsonPath("$.errorKey").value("MAX_ROW_FILE_ERROR"));
@@ -194,7 +197,8 @@ class ProductFileControllerTest {
         .file(file)
         .param("category", "eprel")
         .header("x-organization-id", "org-id")
-        .header("x-user-id", "user-id"))
+        .header("x-user-id", "user-id")
+        .header("x-user-email", "x-user-email"))
       .andExpect(status().isOk())
       .andExpect(jsonPath("$.status").value("OK"));
   }

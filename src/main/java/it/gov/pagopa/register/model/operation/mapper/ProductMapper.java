@@ -51,9 +51,29 @@ public class ProductMapper {
       .brand(eprelData.getSupplierOrTrademark())
       .model(eprelData.getModelIdentifier())
       .energyClass(mapEnergyClass(eprelData.getEnergyClass()))
+      .capacity(mapCapacity(category,eprelData))
       .build();
   }
 
+  private static String mapCapacity(String category, EprelProduct eprelData) {
+    if (eprelData == null) {
+      return "N\\A";
+    }
+
+    return switch (category) {
+      case WASHINGMACHINES, TUMBLEDRYERS ->
+        eprelData.getRatedCapacity() != null ? eprelData.getRatedCapacity() + " kg" : "N\\A";
+      case WASHERDRIERS ->
+        eprelData.getRatedCapacityWash() != null ? eprelData.getRatedCapacityWash() + " kg" : "N\\A";
+      case OVENS ->
+        eprelData.getCavities() != null && eprelData.getCavities().getVolume() != null ? eprelData.getCavities().getVolume() + " l" : "N\\A";
+      case DISHWASHERS ->
+        eprelData.getRatedCapacity() != null ? eprelData.getRatedCapacity() + " c" : "N\\A";
+      case REFRIGERATINGAPPL ->
+        eprelData.getTotalVolume() != null ? eprelData.getTotalVolume() + " l" : "N\\A";
+      default -> "N\\A";
+    };
+  }
 
   public static CSVRecord mapProductToCsvRow(Product product, String category,List<String> headers) {
     try {
