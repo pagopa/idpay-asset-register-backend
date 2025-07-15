@@ -232,6 +232,48 @@ void shouldReturn200AndListWhenOrganizationIdIsValid() throws Exception {
       .andExpect(content().json("[]"));
   }
 
+  @Test
+  void verifyProductFile_shouldReturnSuccess() throws Exception {
+    MockMultipartFile file = new MockMultipartFile(
+      "csv", "verify.csv", "text/csv", "id,name\n1,Prod".getBytes()
+    );
+
+    ProductFileResult result = ProductFileResult.ok();
+
+    Mockito.when(productFileService.validateFile(any(), any(), any(), any(), any()))
+      .thenReturn(result);
+
+    mockMvc.perform(multipart("/idpay/register/product-files/verify")
+        .file(file)
+        .param("category", "eprel")
+        .header("x-organization-id", "org-id")
+        .header("x-user-id", "user-id")
+        .header("x-user-email", "user@email"))
+      .andExpect(status().isOk())
+      .andExpect(jsonPath("$.status").value("OK"));
+  }
+
+  @Test
+  void verifyProductFile_shouldReturnKoStatus_whenValidationFails() throws Exception {
+    MockMultipartFile file = new MockMultipartFile(
+      "csv", "verify.csv", "text/csv", "bad,header".getBytes()
+    );
+
+    ProductFileResult result = ProductFileResult.ko("INVALID_HEADER");
+
+    Mockito.when(productFileService.validateFile(any(), any(), any(), any(), any()))
+      .thenReturn(result);
+
+    mockMvc.perform(multipart("/idpay/register/product-files/verify")
+        .file(file)
+        .param("category", "eprel")
+        .header("x-organization-id", "org-id")
+        .header("x-user-id", "user-id")
+        .header("x-user-email", "user@email"))
+      .andExpect(status().isOk())
+      .andExpect(jsonPath("$.status").value("KO"))
+      .andExpect(jsonPath("$.errorKey").value("INVALID_HEADER"));
+  }
 
 
 }
