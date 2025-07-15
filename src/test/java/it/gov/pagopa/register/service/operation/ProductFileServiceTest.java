@@ -145,7 +145,6 @@ class ProductFileServiceTest {
     assertTrue(ex.getMessage().contains("Report not found with id: 1"));
   }
 
-
   @Test
   void downloadReport_unsupportedStatus() {
     ProductFile pf = new ProductFile(); pf.setId("1"); pf.setOrganizationId("o"); pf.setUploadStatus("UNKNOWN"); pf.setFileName("f");
@@ -165,9 +164,6 @@ class ProductFileServiceTest {
     assertTrue(ex.getMessage().contains("Report not found on Azure"));
   }
 
-
-
-
   private MultipartFile createMockFile() {
     return new MockMultipartFile("file", "test.csv", "text/csv", "test content".getBytes());
   }
@@ -185,7 +181,6 @@ class ProductFileServiceTest {
     assertEquals("KO", res.getStatus());
     assertEquals("TEST", res.getErrorKey());
   }
-
 
   //Test con controlli formali falliti
   private void testFormalError(String errorMessage) {
@@ -260,8 +255,6 @@ class ProductFileServiceTest {
     testFormalError("Il campo Modello è obbligatorio e deve contenere una stringa lunga al massimo 100 caratteri");
   }
 
-
-
   @Test
   void whenAllValid_thenReturnOk()  {
     MultipartFile file = mock(MultipartFile.class);
@@ -297,8 +290,6 @@ class ProductFileServiceTest {
       throw new RuntimeException(e);
     }
   }
-
-
 
   @Test
   void shouldThrowExceptionWhenOrganizationIdIsEmpty() {
