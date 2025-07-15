@@ -40,10 +40,12 @@ class ProductServiceTest {
     Product product1 = Product.builder()
       .organizationId("organizationId")
       .productFileId("product1")
+      .capacity("N\\A")
       .build();
     Product product2 = Product.builder()
       .organizationId("organizationId")
       .productFileId("product2")
+      .capacity("N\\A")
       .build();
 
     List<Product> productList = Arrays.asList(product1, product2);

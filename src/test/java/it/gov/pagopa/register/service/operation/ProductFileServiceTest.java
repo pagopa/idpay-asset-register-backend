@@ -109,19 +109,6 @@ class ProductFileServiceTest {
 
   @Test
   void downloadReport_partialLoad() throws IOException {
-    ProductFile pf = new ProductFile();
-    pf.setId("1");
-    pf.setOrganizationId("o");
-    pf.setUploadStatus("PARTIAL");
-    when(productFileRepository.findByIdAndOrganizationId("1", "o")).thenReturn(Optional.of(pf));
-
-    ByteArrayOutputStream os = new ByteArrayOutputStream();
-    os.write("fake csv content".getBytes());
-    when(fileStorageClient.download("Report/Partial/1.csv")).thenReturn(os);
-    FileReportDTO res = productFileService.downloadReport("1", "o");
-    assertArrayEquals(os.toByteArray(), res.getData());
-
-
     String productFileId = "1";
     String organizationId = "org1";
     String fileName = "eprel_report.csv";
@@ -339,7 +326,7 @@ class ProductFileServiceTest {
     when(productFileRepository.existsByOrganizationIdAndUploadStatusIn(eq("org"), anyList()))
       .thenReturn(true);
 
-    ProductFileResult result = productFileService.processFile(file, "cat", "org", "user", "email");
+    ProductFileResult result = productFileService.uploadFile(file, "cat", "org", "user", "email");
 
     assertEquals("KO", result.getStatus());
     assertEquals(AssetRegisterConstants.UploadKeyConstant.UPLOAD_ALREADY_IN_PROGRESS, result.getErrorKey());
