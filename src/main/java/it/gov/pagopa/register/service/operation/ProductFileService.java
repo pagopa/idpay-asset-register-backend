@@ -178,7 +178,6 @@ public class ProductFileService {
 
         log.warn("[PROCESS_FILE] - File processed with formal errors: {}", originalFileName);
         return ProductFileResult.ko(AssetRegisterConstants.UploadKeyConstant.REPORT_FORMAL_FILE_ERROR_KEY, productFile.getId());
-
       }
       return ProductFileResult.ok();
 

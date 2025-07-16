@@ -13,6 +13,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.*;
 
 import static it.gov.pagopa.register.constants.AssetRegisterConstants.*;
+import static it.gov.pagopa.register.constants.AssetRegisterConstants.UploadKeyConstant.REPORT_FORMAL_FILE_ERROR_KEY;
 
 @Component
 @RequiredArgsConstructor
@@ -102,7 +103,9 @@ public class ProductFileValidatorService {
     }
 
     log.info("[VALIDATE_RECORDS] - Validation completed. Invalid records: {}", invalidRecords.size());
-    return new ValidationResultDTO(invalidRecords, errorMessages);
+    if(invalidRecords.isEmpty())
+      return ValidationResultDTO.ok();
+    return new ValidationResultDTO("KO",REPORT_FORMAL_FILE_ERROR_KEY,invalidRecords, errorMessages);
   }
 
 }
