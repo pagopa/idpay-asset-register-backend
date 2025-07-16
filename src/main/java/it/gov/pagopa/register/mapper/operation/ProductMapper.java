@@ -11,6 +11,8 @@ import java.io.StringReader;
 import java.io.StringWriter;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 import static it.gov.pagopa.register.constants.AssetRegisterConstants.*;
 import static it.gov.pagopa.register.utils.CsvUtils.DELIMITER;
@@ -96,8 +98,16 @@ public class ProductMapper {
         eprelData.getRatedCapacity() != null ? eprelData.getRatedCapacity() + " kg" : "N\\A";
       case WASHERDRIERS ->
         eprelData.getRatedCapacityWash() != null ? eprelData.getRatedCapacityWash() + " kg" : "N\\A";
-      case OVENS ->
-        eprelData.getCavities() != null && eprelData.getCavities().getVolume() != null ? eprelData.getCavities().getVolume() + " l" : "N\\A";
+      case OVENS -> {
+        if (eprelData.getCavities() != null && !eprelData.getCavities().isEmpty()) {
+          yield eprelData.getCavities().stream()
+            .map(cavity -> cavity.getVolume() != null ? cavity.getVolume() + " l" : null)
+            .filter(Objects::nonNull)
+            .collect(Collectors.joining(" / "));
+        } else {
+          yield "N\\A";
+        }
+      }
       case DISHWASHERS ->
         eprelData.getRatedCapacity() != null ? eprelData.getRatedCapacity() + " c" : "N\\A";
       case REFRIGERATINGAPPL ->

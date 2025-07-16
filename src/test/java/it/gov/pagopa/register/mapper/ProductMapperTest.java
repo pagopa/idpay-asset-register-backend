@@ -111,19 +111,21 @@ class ProductMapperTest {
     EprelProduct washerDrierNull = new EprelProduct();
     washerDrierNull.setRatedCapacityWash(null);
 
+
     // OVENS
     EprelProduct oven = new EprelProduct();
-    EprelProduct.Cavities cavities = new EprelProduct.Cavities();
-    cavities.setVolume("65");
-    oven.setCavities(cavities);
+    EprelProduct.Cavity cavity1 = new EprelProduct.Cavity();
+    cavity1.setVolume(65);
+    oven.setCavities(List.of(cavity1));
 
     EprelProduct ovenNullCavities = new EprelProduct();
     ovenNullCavities.setCavities(null);
 
     EprelProduct ovenNullVolume = new EprelProduct();
-    EprelProduct.Cavities nullVolume = new EprelProduct.Cavities();
-    nullVolume.setVolume(null);
-    ovenNullVolume.setCavities(nullVolume);
+    EprelProduct.Cavity nullVolumeCavity = new EprelProduct.Cavity();
+    nullVolumeCavity.setVolume(null);
+    ovenNullVolume.setCavities(List.of(nullVolumeCavity));
+
 
     // DISHWASHERS
     EprelProduct dishwasher = new EprelProduct();
