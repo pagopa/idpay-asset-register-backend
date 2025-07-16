@@ -13,8 +13,6 @@ import it.gov.pagopa.register.repository.operation.ProductRepository;
 import it.gov.pagopa.register.service.validator.EprelProductValidatorService;
 import it.gov.pagopa.register.utils.CsvUtils;
 import it.gov.pagopa.register.dto.utils.EventDetails;
-import org.apache.commons.csv.CSVFormat;
-import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -25,8 +23,6 @@ import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.io.ByteArrayOutputStream;
-import java.io.Reader;
-import java.io.StringReader;
 import java.util.*;
 import java.util.regex.Pattern;
 
