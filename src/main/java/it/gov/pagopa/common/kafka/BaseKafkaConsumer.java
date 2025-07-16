@@ -2,7 +2,7 @@ package it.gov.pagopa.common.kafka;
 
 import com.fasterxml.jackson.databind.ObjectReader;
 import it.gov.pagopa.common.kafka.utils.CommonUtilities;
-import it.gov.pagopa.common.kafka.utils.KafkaConstants;
+import it.gov.pagopa.common.kafka.constants.KafkaConstants;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.kafka.support.KafkaHeaders;
