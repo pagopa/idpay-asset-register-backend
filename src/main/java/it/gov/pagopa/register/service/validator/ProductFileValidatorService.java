@@ -103,9 +103,10 @@ public class ProductFileValidatorService {
     }
 
     log.info("[VALIDATE_RECORDS] - Validation completed. Invalid records: {}", invalidRecords.size());
-    if(invalidRecords.isEmpty())
-      return ValidationResultDTO.ok();
-    return new ValidationResultDTO("KO",REPORT_FORMAL_FILE_ERROR_KEY,invalidRecords, errorMessages);
+    if(!invalidRecords.isEmpty()) {
+      return new ValidationResultDTO("KO",REPORT_FORMAL_FILE_ERROR_KEY,invalidRecords, errorMessages);
+    }
+    return ValidationResultDTO.ok();
   }
 
 }

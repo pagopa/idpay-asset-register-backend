@@ -28,7 +28,7 @@ public class ProductFileController {
   @GetMapping("/product-files")
   public ResponseEntity<ProductFileResponseDTO> getProductFileList(
     @RequestHeader("x-organization-id") String organizationId,
-    @PageableDefault(size = 8, sort = "dateUpload", direction = Sort.Direction.DESC) Pageable pageable) {
+    @PageableDefault(size = 20, sort = "dateUpload", direction = Sort.Direction.DESC) Pageable pageable) {
 
     return ResponseEntity.ok().body(productFileService.getFilesByPage(organizationId, pageable));
   }
