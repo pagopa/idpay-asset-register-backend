@@ -1,6 +1,7 @@
-package it.gov.pagopa.common.config;
+package it.gov.pagopa.common.configuration;
 
 import com.mongodb.MongoException;
+import it.gov.pagopa.common.config.CustomMongoHealthIndicator;
 import org.bson.Document;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.actuate.health.Health;

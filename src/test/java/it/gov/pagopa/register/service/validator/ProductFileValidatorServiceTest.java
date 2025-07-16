@@ -1,9 +1,8 @@
-package it.gov.pagopa.register.service.operation;
+package it.gov.pagopa.register.service.validator;
 
 import it.gov.pagopa.register.configuration.ProductFileValidationConfig;
 import it.gov.pagopa.register.constants.AssetRegisterConstants;
 import it.gov.pagopa.register.dto.operation.ValidationResultDTO;
-import it.gov.pagopa.register.service.validator.ProductFileValidatorService;
 import it.gov.pagopa.register.dto.utils.ColumnValidationRule;
 import org.apache.commons.csv.CSVRecord;
 import org.junit.jupiter.api.BeforeEach;
