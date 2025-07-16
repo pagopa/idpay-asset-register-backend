@@ -123,7 +123,6 @@ class ProductMapperTest {
 
     EprelProduct ovenNullVolume = new EprelProduct();
     EprelProduct.Cavity nullVolumeCavity = new EprelProduct.Cavity();
-    nullVolumeCavity.setVolume(null);
     ovenNullVolume.setCavities(List.of(nullVolumeCavity));
 
 

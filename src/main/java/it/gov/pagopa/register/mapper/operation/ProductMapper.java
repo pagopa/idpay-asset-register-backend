@@ -11,7 +11,7 @@ import java.io.StringReader;
 import java.io.StringWriter;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Objects;
+
 import java.util.stream.Collectors;
 
 import static it.gov.pagopa.register.constants.AssetRegisterConstants.*;
@@ -101,8 +101,7 @@ public class ProductMapper {
       case OVENS -> {
         if (eprelData.getCavities() != null && !eprelData.getCavities().isEmpty()) {
           yield eprelData.getCavities().stream()
-            .map(cavity -> cavity.getVolume() != null ? cavity.getVolume() + " l" : null)
-            .filter(Objects::nonNull)
+            .map(cavity -> cavity.getVolume() != null ? cavity.getVolume() + " l" : "N\\A")
             .collect(Collectors.joining(" / "));
         } else {
           yield "N\\A";
