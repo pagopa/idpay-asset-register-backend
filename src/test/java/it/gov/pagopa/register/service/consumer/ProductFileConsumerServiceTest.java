@@ -249,4 +249,42 @@ class ProductFileConsumerServiceTest {
     }}
 
 
+  @Test
+  void testExecute_notValidEvent_shouldProcessFile_Eprel() {
+    StorageEventData data = StorageEventData.builder()
+      .url("/CSV/ORG123/WASHINGMACHINES/file123.csv")
+      .build();
+    StorageEventDTO event = StorageEventDTO.builder()
+      .subject("/blobs/CSV/ORG123/WASHINGMACHINES/file123.csv")
+      .data(data)
+      .build();
+    ByteArrayOutputStream stream = new ByteArrayOutputStream();
+    when(fileStorageClient.download(anyString())).thenReturn(stream);
+    when(productFileRepository.findById(anyString()))
+      .thenReturn(Optional.of(new ProductFile()));
+    when(productRepository.saveAll(any())).thenReturn(List.of());
+    Map<String, Product> validRecords = new HashMap<>();
+    validRecords.put("model123", new Product());
+
+    CSVRecord record1 = mock(CSVRecord.class);
+    CSVRecord record2 = mock(CSVRecord.class);
+
+    List<CSVRecord> invalidRecords = List.of(record1, record2);
+    Map<CSVRecord, String> errorMessages = new HashMap<>();
+
+    when(eprelProductValidator.validateRecords(any(), any(), any(), any(), any(), any()))
+      .thenReturn(new EprelResult(validRecords, invalidRecords, errorMessages));
+
+    try (MockedStatic<CsvUtils> utils = mockStatic(CsvUtils.class)) {
+      CSVRecord csvRecord = mock(CSVRecord.class);
+      utils.when(() -> CsvUtils.readHeader(any(ByteArrayOutputStream.class)))
+        .thenReturn(List.of("HEADER"));
+      utils.when(() -> CsvUtils.readCsvRecords(any(ByteArrayOutputStream.class)))
+        .thenReturn(List.of(csvRecord));
+      assertDoesNotThrow(() -> service.execute(List.of(event), null));
+    }}
+
+
+
+
 }
