@@ -13,6 +13,8 @@ import it.gov.pagopa.register.repository.operation.ProductRepository;
 import it.gov.pagopa.register.service.validator.EprelProductValidatorService;
 import it.gov.pagopa.register.utils.CsvUtils;
 import it.gov.pagopa.register.dto.utils.EventDetails;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -23,6 +25,8 @@ import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.io.ByteArrayOutputStream;
+import java.io.Reader;
+import java.io.StringReader;
 import java.util.*;
 import java.util.regex.Pattern;
 
@@ -247,6 +251,44 @@ class ProductFileConsumerServiceTest {
         .thenReturn(List.of(csvRecord));
       assertDoesNotThrow(() -> service.execute(List.of(event), null));
     }}
+
+
+  @Test
+  void testExecute_notValidEvent_shouldProcessFile_Eprel() {
+    StorageEventData data = StorageEventData.builder()
+      .url("/CSV/ORG123/WASHINGMACHINES/file123.csv")
+      .build();
+    StorageEventDTO event = StorageEventDTO.builder()
+      .subject("/blobs/CSV/ORG123/WASHINGMACHINES/file123.csv")
+      .data(data)
+      .build();
+    ByteArrayOutputStream stream = new ByteArrayOutputStream();
+    when(fileStorageClient.download(anyString())).thenReturn(stream);
+    when(productFileRepository.findById(anyString()))
+      .thenReturn(Optional.of(new ProductFile()));
+    when(productRepository.saveAll(any())).thenReturn(List.of());
+    Map<String, Product> validRecords = new HashMap<>();
+    validRecords.put("model123", new Product());
+
+    CSVRecord record1 = mock(CSVRecord.class);
+    CSVRecord record2 = mock(CSVRecord.class);
+
+    List<CSVRecord> invalidRecords = List.of(record1, record2);
+    Map<CSVRecord, String> errorMessages = new HashMap<>();
+
+    when(eprelProductValidator.validateRecords(any(), any(), any(), any(), any(), any()))
+      .thenReturn(new EprelResult(validRecords, invalidRecords, errorMessages));
+
+    try (MockedStatic<CsvUtils> utils = mockStatic(CsvUtils.class)) {
+      CSVRecord csvRecord = mock(CSVRecord.class);
+      utils.when(() -> CsvUtils.readHeader(any(ByteArrayOutputStream.class)))
+        .thenReturn(List.of("HEADER"));
+      utils.when(() -> CsvUtils.readCsvRecords(any(ByteArrayOutputStream.class)))
+        .thenReturn(List.of(csvRecord));
+      assertDoesNotThrow(() -> service.execute(List.of(event), null));
+    }}
+
+
 
 
 }
