@@ -71,7 +71,7 @@ public class EprelProductValidatorService {
       invalidRecords.add(csvRow);
       errorMessages.put(csvRow, String.join(", ", errors));
     } else {
-      // NOSONAR: eprelData is checked for null above
+
       log.info("[VALIDATE_RECORD] - EPREL product valid: {}", csvRow.get(CODE_EPREL));
       if(validRecords.containsKey(csvRow.get(CODE_GTIN_EAN))){
         Product product = validRecords.remove(csvRow.get(CODE_GTIN_EAN));
@@ -79,8 +79,10 @@ public class EprelProductValidatorService {
         invalidRecords.add(duplicateGtinRow);
         errorMessages.put(duplicateGtinRow, DUPLICATE_GTIN_EAN);
         log.warn("[VALIDATE_RECORD] - Duplicate error for record with GTIN code: {}", csvRow.get(CODE_GTIN_EAN));
+        // NOSONAR: eprelData is checked for null above
         validRecords.put(csvRow.get(CODE_GTIN_EAN),mapEprelToProduct(csvRow, eprelData, context.getOrgId(), context.getProductFileId(), context.getCategory()));
       } else {
+        // NOSONAR: eprelData is checked for null above
         validRecords.put(csvRow.get(CODE_GTIN_EAN), mapEprelToProduct(csvRow, eprelData, context.getOrgId(), context.getProductFileId(), context.getCategory()));
       }
     }
