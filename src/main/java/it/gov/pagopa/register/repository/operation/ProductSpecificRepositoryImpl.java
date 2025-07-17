@@ -15,6 +15,10 @@ import java.util.List;
 public class ProductSpecificRepositoryImpl implements ProductSpecificRepository {
 
   public static final String PRODUCT = "product";
+  public static final String CATEGORY = "category";
+  public static final String PRODUCT_FILE_ID = "productFileId";
+  public static final String BATCH_NAME = "batchName";
+  public static final String ORGANIZATION_ID = "organizationId";
   private final MongoTemplate mongoTemplate;
 
   public ProductSpecificRepositoryImpl(MongoTemplate mongoTemplate){
@@ -23,10 +27,28 @@ public class ProductSpecificRepositoryImpl implements ProductSpecificRepository 
 
   @Override
   public List<Product> findByFilter (Criteria criteria, Pageable pageable) {
+    Pageable resolvedPageable = resolveSort(pageable);
     return mongoTemplate.find(
       Query.query(criteria)
-        .with(this.getPageable(pageable)),
+        .with(this.getPageable(resolvedPageable)),
       Product.class);
+  }
+
+  private Pageable resolveSort(Pageable pageable) {
+    Sort.Order order = pageable.getSort().getOrderFor(BATCH_NAME);
+    if (order == null) {
+      return pageable;
+    }
+
+    Sort newSort = Sort.by(order.isAscending()
+      ? List.of(
+      Sort.Order.asc(CATEGORY),
+      Sort.Order.asc(PRODUCT_FILE_ID))
+      : List.of(
+      Sort.Order.desc(CATEGORY),
+      Sort.Order.desc(PRODUCT_FILE_ID)));
+
+    return PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), newSort);
   }
 
   @Override
@@ -76,11 +98,11 @@ public class ProductSpecificRepositoryImpl implements ProductSpecificRepository 
   @Override
   public List<Product> findDistinctProductFileIdAndCategoryByOrganizationId(String organizationId) {
     Aggregation aggregation = Aggregation.newAggregation(
-      Aggregation.match(Criteria.where("organizationId").is(organizationId)),
-      Aggregation.group("productFileId", "category"),
+      Aggregation.match(Criteria.where(ORGANIZATION_ID).is(organizationId)),
+      Aggregation.group(PRODUCT_FILE_ID, CATEGORY),
       Aggregation.project()
-        .and("_id.productFileId").as("productFileId")
-        .and("_id.category").as("category")
+        .and("_id"+PRODUCT_FILE_ID).as(PRODUCT_FILE_ID)
+        .and("_id"+CATEGORY).as(CATEGORY)
     );
 
     AggregationResults<Product> results = mongoTemplate.aggregate(

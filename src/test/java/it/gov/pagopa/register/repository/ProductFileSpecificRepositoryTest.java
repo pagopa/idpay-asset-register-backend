@@ -11,11 +11,13 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.aggregation.Aggregation;
 import org.springframework.data.mongodb.core.aggregation.AggregationResults;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
 
@@ -113,6 +115,80 @@ class ProductFileSpecificRepositoryTest {
     verify(mongoTemplate).aggregate(any(Aggregation.class), eq("product"), eq(Product.class));
   }
 
+  @Test
+  void testFindByFilter_SortByBatchNameAsc() {
+    Criteria criteria = Criteria.where("organizationId").is("org1");
+    Pageable pageable = PageRequest.of(0, 10, Sort.by("batchName").ascending());
+
+    when(mongoTemplate.find(any(Query.class), eq(Product.class)))
+      .thenReturn(List.of(Product.builder().build()));
+
+    productSpecificRepository.findByFilter(criteria, pageable);
+
+    ArgumentCaptor<Query> queryCaptor = ArgumentCaptor.forClass(Query.class);
+    verify(mongoTemplate).find(queryCaptor.capture(), eq(Product.class));
+    Query queryUsed = queryCaptor.getValue();
+
+    Sort sort = (Sort) ReflectionTestUtils.getField(queryUsed, "sort");
+    assertNotNull(sort);
+
+    List<Sort.Order> orders = sort.toList();
+    assertEquals(2, orders.size());
+    assertEquals("category", orders.get(0).getProperty());
+    assertTrue(orders.get(0).isAscending());
+    assertEquals("productFileId", orders.get(1).getProperty());
+    assertTrue(orders.get(1).isAscending());
+  }
+
+
+  @Test
+  void testFindByFilter_SortByBatchNameDesc() {
+    Criteria criteria = Criteria.where("organizationId").is("org1");
+    Pageable pageable = PageRequest.of(0, 10, Sort.by("batchName").descending());
+
+    when(mongoTemplate.find(any(Query.class), eq(Product.class)))
+      .thenReturn(List.of(Product.builder().build()));
+
+    productSpecificRepository.findByFilter(criteria, pageable);
+
+    ArgumentCaptor<Query> queryCaptor = ArgumentCaptor.forClass(Query.class);
+    verify(mongoTemplate).find(queryCaptor.capture(), eq(Product.class));
+    Query queryUsed = queryCaptor.getValue();
+
+    Sort sort = (Sort) ReflectionTestUtils.getField(queryUsed, "sort");
+    assertNotNull(sort);
+
+    List<Sort.Order> orders = sort.toList();
+    assertEquals(2, orders.size());
+    assertEquals("category", orders.get(0).getProperty());
+    assertTrue(orders.get(0).isDescending());
+    assertEquals("productFileId", orders.get(1).getProperty());
+    assertTrue(orders.get(1).isDescending());
+  }
+
+
+  @Test
+  void testFindByFilter_SortByOtherField() {
+    Criteria criteria = Criteria.where("organizationId").is("org1");
+    Pageable pageable = PageRequest.of(0, 10, Sort.by("registrationDate").ascending());
+
+    when(mongoTemplate.find(any(Query.class), eq(Product.class)))
+      .thenReturn(List.of(Product.builder().build()));
+
+    productSpecificRepository.findByFilter(criteria, pageable);
+
+    ArgumentCaptor<Query> queryCaptor = ArgumentCaptor.forClass(Query.class);
+    verify(mongoTemplate).find(queryCaptor.capture(), eq(Product.class));
+    Query queryUsed = queryCaptor.getValue();
+
+    Sort sort = (Sort) ReflectionTestUtils.getField(queryUsed, "sort");
+    assertNotNull(sort);
+
+    List<Sort.Order> orders = sort.toList();
+    assertEquals(1, orders.size());
+    assertEquals("registrationDate", orders.get(0).getProperty());
+    assertTrue(orders.get(0).isAscending());
+  }
 
 
 }

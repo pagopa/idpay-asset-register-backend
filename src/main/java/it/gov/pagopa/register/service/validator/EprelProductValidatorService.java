@@ -49,42 +49,51 @@ public class EprelProductValidatorService {
     return new EprelResult(validRecords, invalidRecords, errorMessages);
   }
 
-  private void validateRecord(CSVRecord csvRow, ValidationContext context,  Map<String, Product> validRecords,
-                              List<CSVRecord> invalidRecords, Map<CSVRecord, String> errorMessages) {
+  private void validateRecord(CSVRecord csvRow, ValidationContext context,
+                              Map<String, Product> validRecords,
+                              List<CSVRecord> invalidRecords,
+                              Map<CSVRecord, String> errorMessages) {
+
     log.info("[VALIDATE_RECORD] - Validating record with EPREL code: {}", csvRow.get(CODE_EPREL));
     EprelProduct eprelData = eprelConnector.callEprel(csvRow.get(CODE_EPREL));
     log.info("[VALIDATE_RECORD] - EPREL response: {}", eprelData);
-    List<String> errors = new ArrayList<>();
+
     if (eprelData == null) {
       log.warn("[VALIDATE_RECORD] - Product not found in EPREL for code: {}", csvRow.get(CODE_EPREL));
-      errors.add("Product not found in EPREL");
-    } else {
-      if (WASHERDRIERS.equalsIgnoreCase(context.getCategory())) {
-        eprelData.setEnergyClass(eprelData.getEnergyClassWash());
-      }
-      log.info("[VALIDATE_RECORD] - EPREL response for {}: {}", eprelData.getEprelRegistrationNumber(), eprelData);
-      validateFields(context, eprelData, errors);
+      invalidRecords.add(csvRow);
+      errorMessages.put(csvRow, "Product not found in EPREL");
+      return;
     }
+
+    if (WASHERDRIERS.equalsIgnoreCase(context.getCategory())) {
+      eprelData.setEnergyClass(eprelData.getEnergyClassWash());
+    }
+
+    List<String> errors = new ArrayList<>();
+    validateFields(context, eprelData, errors);
 
     if (!errors.isEmpty()) {
       log.warn("[VALIDATE_RECORD] - Validation errors for record with EPREL code: {}: {}", csvRow.get(CODE_EPREL), String.join(", ", errors));
       invalidRecords.add(csvRow);
       errorMessages.put(csvRow, String.join(", ", errors));
-    } else {
-      log.info("[VALIDATE_RECORD] - EPREL product valid: {}",
-        eprelData.getEprelRegistrationNumber() != null ? eprelData.getEprelRegistrationNumber() : "N\\A");
-      if(validRecords.containsKey(csvRow.get(CODE_GTIN_EAN))){
-        Product product = validRecords.remove(csvRow.get(CODE_GTIN_EAN));
-        CSVRecord duplicateGtinRow = mapProductToCsvRow(product,context.getCategory(), context.getHeaders());
-        invalidRecords.add(duplicateGtinRow);
-        errorMessages.put(duplicateGtinRow, DUPLICATE_GTIN_EAN);
-        log.warn("[VALIDATE_RECORD] - Duplicate error for record with GTIN code: {}", csvRow.get(CODE_GTIN_EAN));
-        validRecords.put(csvRow.get(CODE_GTIN_EAN),mapEprelToProduct(csvRow, eprelData, context.getOrgId(), context.getProductFileId(), context.getCategory()));
-      } else {
-        validRecords.put(csvRow.get(CODE_GTIN_EAN), mapEprelToProduct(csvRow, eprelData, context.getOrgId(), context.getProductFileId(), context.getCategory()));
-      }
+      return;
     }
+
+    log.info("[VALIDATE_RECORD] - EPREL product valid: {}", csvRow.get(CODE_EPREL));
+    String gtin = csvRow.get(CODE_GTIN_EAN);
+
+    if (validRecords.containsKey(gtin)) {
+      Product product = validRecords.remove(gtin);
+      CSVRecord duplicateGtinRow = mapProductToCsvRow(product, context.getCategory(), context.getHeaders());
+      invalidRecords.add(duplicateGtinRow);
+      errorMessages.put(duplicateGtinRow, DUPLICATE_GTIN_EAN);
+      log.warn("[VALIDATE_RECORD] - Duplicate error for record with GTIN code: {}", gtin);
+    }
+
+    Product product = mapEprelToProduct(csvRow, eprelData, context.getOrgId(), context.getProductFileId(), context.getCategory());
+    validRecords.put(gtin, product);
   }
+
 
   private void validateFields(ValidationContext context, EprelProduct eprelData, List<String> errors) {
     for (String field : context.getFields()) {

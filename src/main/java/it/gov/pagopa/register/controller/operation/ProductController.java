@@ -22,18 +22,17 @@ public class ProductController {
   }
 
   @GetMapping("/products")
-  public ResponseEntity<ProductListDTO> getProductList(@RequestHeader("x-organization-id") String organizationId,
-                                                       @RequestParam @Nullable String category,
-                                                       @RequestParam @Nullable String productCode,
-                                                       @RequestParam @Nullable String productFileId,
-                                                       @RequestParam @Nullable String eprelCode,
-                                                       @RequestParam @Nullable String gtinCode,
-                                                       @PageableDefault(size = 20,
-                                                         sort = "registrationDate",
-                                                         direction = Sort.Direction.DESC) Pageable pageable) {
+  public ResponseEntity<ProductListDTO> getProductList(
+    @RequestHeader("x-organization-id") String organizationId,
+    @RequestParam @Nullable String category,
+    @RequestParam @Nullable String productCode,
+    @RequestParam @Nullable String productFileId,
+    @RequestParam @Nullable String eprelCode,
+    @RequestParam @Nullable String gtinCode,
+    @PageableDefault(size = 20, sort = "registrationDate", direction = Sort.Direction.DESC) Pageable pageable) {
 
-
-    ProductListDTO result = productService.getProducts(organizationId,
+    ProductListDTO result = productService.getProducts(
+      organizationId,
       category,
       productCode,
       productFileId,
@@ -42,6 +41,8 @@ public class ProductController {
       pageable);
 
     return ResponseEntity.ok(result);
-
   }
+
+
+
 }
