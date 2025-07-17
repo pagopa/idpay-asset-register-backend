@@ -14,18 +14,21 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.mongodb.UncategorizedMongoDbException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.test.json.JsonCompareMode;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 @ExtendWith(SpringExtension.class)
 @WebMvcTest(value = {
@@ -37,7 +40,7 @@ class MongoExceptionHandlerTest {
   @Autowired
   private MockMvc mockMvc;
 
-  @SpyBean
+  @MockitoSpyBean
   private TestController testControllerSpy;
 
 
@@ -89,7 +92,7 @@ class MongoExceptionHandlerTest {
             """;
 
     final MongoWriteException mongoWriteException = new MongoWriteException(
-            new WriteError(16500, writeErrorMessage, BsonDocument.parse("{}")), new ServerAddress());
+            new WriteError(16500, writeErrorMessage, BsonDocument.parse("{}")), new ServerAddress(), List.of("error-label"));
     doThrow(
             new DataIntegrityViolationException(mongoWriteException.getMessage(), mongoWriteException))
             .when(testControllerSpy).testEndpoint();
@@ -112,7 +115,7 @@ class MongoExceptionHandlerTest {
     mockMvc.perform(MockMvcRequestBuilders.get("/test")
                     .contentType(MediaType.APPLICATION_JSON))
             .andExpect(MockMvcResultMatchers.status().isInternalServerError())
-            .andExpect(MockMvcResultMatchers.content().json("{\"message\":\"Something gone wrong\"}", false));
+            .andExpect(MockMvcResultMatchers.content().json("{\"message\":\"Something gone wrong\"}", JsonCompareMode.LENIENT));
   }
 
   @Test
@@ -123,6 +126,6 @@ class MongoExceptionHandlerTest {
     mockMvc.perform(MockMvcRequestBuilders.get("/test")
                     .contentType(MediaType.APPLICATION_JSON))
             .andExpect(MockMvcResultMatchers.status().isTooManyRequests())
-            .andExpect(MockMvcResultMatchers.content().json("{\"message\":\"Too Many Requests\"}", false));
+            .andExpect(MockMvcResultMatchers.content().json("{\"message\":\"Too Many Requests\"}", JsonCompareMode.LENIENT));
   }
 }

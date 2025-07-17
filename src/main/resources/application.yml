@@ -6,7 +6,7 @@ management:
       probes.enabled: true
       group:
         readiness.include: "*"
-        liveness.include: livenessState,diskSpace,ping # streams, binders REMOVE COMMENT AFTER BINDERS IMPLEMENTATION
+        liveness.include: livenessState,diskSpace,ping,streams,binders
       logging.slow-indicator-threshold: ${HEALTH_ACTUATOR_LOGGER_TIMEOUT_DURATION:PT1S}
   endpoints:
     jmx:
@@ -23,6 +23,9 @@ mongo:
       enabled: ${MONGO_REQUEST_RATE_TOO_LARGE_BATCH_ENABLED:true}
       max-retry: ${MONGO_REQUEST_RATE_TOO_LARGE_BATCH_MAX_RETRY:5}
       max-millis-elapsed: ${MONGO_REQUEST_RATE_TOO_LARGE_BATCH_MAX_MILLIS_ELAPSED:0}
+
+blobStorage.connectionString: ${BLOB_STORAGE_CONNECTION_STRING:}
+blobStorage.initiative.logo.containerReference: ${BLOB_STORAGE_CONTAINER_REFERENCE:}
 
 spring:
   application:
@@ -45,6 +48,51 @@ spring:
           maxConnectionLifeTimeMS: ${MONGODB_CONNECTIONPOOL_MAX_CONNECTION_LIFE_MS:0}
           maxConnectionIdleTimeMS: ${MONGODB_CONNECTIONPOOL_MAX_CONNECTION_IDLE_MS:120000}
           maxConnecting: ${MONGODB_CONNECTIONPOOL_MAX_CONNECTING:2}
+  cloud:
+    function:
+      definition: productFileConsumer
+    stream:
+      binders:
+        kafka-asset-notification:
+          type: kafka
+          environment:
+            spring.cloud.stream:
+              kafka.binder:
+                brokers: ${KAFKA_BROKER:}
+                configuration:
+                  sasl.jaas.config: ${KAFKA_REGISTER_PRODUCT_FILE_UPLOAD_SASL_JAAS_CONFIG:}
+      bindings:
+        productFileConsumer-in-0:
+          binder: kafka-asset-notification
+          content-type: ${KAFKA_CONTENT_TYPE:application/json}
+          destination: ${KAFKA_ASSET_REGISTER:idpay-asset-register}
+          group: ${KAFKA_COMMANDS_GROUP_IN:idpay-asset-register-consumer-group}
+      kafka:
+        binder:
+          auto-create-topics: false
+          configuration:
+            heartbeat.interval.ms: ${KAFKA_CONFIG_HEARTBEAT_INTERVAL_MS:3000}
+            session.timeout.ms: ${KAFKA_CONFIG_SESSION_TIMEOUT_MS:60000}
+            request.timeout.ms: ${KAFKA_CONFIG_REQUEST_TIMEOUT_MS:60000}
+            sasl.mechanism: ${KAFKA_CONFIG_SASL_MECHANISM:PLAIN}
+            security.protocol: ${KAFKA_CONFIG_SECURITY_PROTOCOL:SASL_SSL}
+            connections.max.idle.ms: ${KAFKA_GROUP_CONFIG_CONNECTION_MAX_IDLE_TIME:180000}
+            metadata.max.age.ms: ${KAFKA_GROUP_CONFIG_METADATA_MAX_AGE_INTERVAL:180000}
+            max.request.size: ${KAFKA_GROUP_CONFIG_METADATA_MAX_REQUEST_SIZE:1000000}
+        bindings:
+          productFileConsumer-in-0:
+            consumer:
+              autoCommitOffset: ${KAFKA_COMMANDS_AUTO_COMMIT:${KAFKA_CONSUMER_CONFIG_AUTO_COMMIT:true}}
+              configuration:
+                connections.max.idle.ms: ${KAFKA_COMMANDS_REQUEST_CONNECTIONS_MAX_IDLE_MS:${KAFKA_CONSUMER_CONFIG_CONNECTIONS_MAX_IDLE_MS:180000}}
+                max.poll:
+                  interval.ms: ${KAFKA_COMMANDS_INTERVAL_TIMEOUT_MS:${KAFKA_CONFIG_MAX_POLL_INTERVAL_TIMEOUT_MS:300000}}
+                  records: ${KAFKA_COMMANDS_MAX_POLL_SIZE:${KAFKA_CONSUMER_CONFIG_MAX_POLL_SIZE:500}}
+                socket.connection.setup.timeout:
+                  max.ms: ${KAFKA_COMMANDS_REQUEST_CONNECTION_TIMEOUT_MAX_MS:${KAFKA_CONSUMER_CONFIG_CONNECTION_TIMEOUT_MAX_MS:200000}}
+                  ms: ${KAFKA_COMMANDS_REQUEST_CONNECTION_TIMEOUT_MS:${KAFKA_CONSUMER_CONFIG_CONNECTION_TIMEOUT_MS:100000}}
+              standardHeaders: ${KAFKA_COMMANDS_STANDARD_HEADERS:${KAFKA_CONSUMER_CONFIG_STANDARD_HEADERS:both}}
+              startOffset: ${KAFKA_COMMANDS_REQUEST_START_OFFSET:${KAFKA_CONSUMER_CONFIG_START_OFFSET:earliest}}
 
 app:
   rest-client:
@@ -55,4 +103,19 @@ app:
           base-url: ${ONE_TRUST_PRIVACYNOTICES_BASE_URL:https://api-io.dev.cstar.pagopa.it/idpay-itn/mock/api/privacynotice/v2}
           tosId: ${ONE_TRUST_TOS_ID:}
           apiKey: ${ONE_TRUST_API_KEY:}
-
+    email-notification:
+      service:
+        name: notificationClient
+        base-url:  ${NOTIFICATION_MS_BASE_URL:https://api-io.dev.cstar.pagopa.it/idpay-itn/mock/api/privacynotice/v2}
+      template:
+        ok: Email_RDB_EsitoProdottiOK
+        partial: Email_RDB_EsitoProdottiParziale
+      subject:
+        ok: Prodotti elaborati con successo
+        partial:  Elaborazione parziale dei prodotti
+    eprel:
+      service:
+        get-product : ${EPREL_BASE_URL:https://eprel.ec.europa.eu/api/product/{REGISTRATION_NUMBER}}
+      product-page: ${EPREL_PRODUCT_PAGE:https://eprel.ec.europa.eu/screen/product/%s/%s}
+product-file-validation:
+  maxRows: 100

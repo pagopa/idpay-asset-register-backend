@@ -11,6 +11,10 @@ on:
       - edited
       - synchronize
 
+permissions:
+  contents: read
+  pull-requests: write
+
 jobs:
   sonarcloud:
     name: SonarCloud Analysis
@@ -35,7 +39,6 @@ jobs:
           key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
           restore-keys: |
             ${{ runner.os }}-maven-
-
 
       - name: Build and test with Maven
         run: mvn clean org.jacoco:jacoco-maven-plugin:0.8.12:prepare-agent verify org.jacoco:jacoco-maven-plugin:0.8.12:report org.jacoco:jacoco-maven-plugin:0.8.12:report-aggregate -B
