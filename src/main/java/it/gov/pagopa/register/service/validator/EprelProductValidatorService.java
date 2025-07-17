@@ -80,6 +80,7 @@ public class EprelProductValidatorService {
         log.warn("[VALIDATE_RECORD] - Duplicate error for record with GTIN code: {}", csvRow.get(CODE_GTIN_EAN));
         validRecords.put(csvRow.get(CODE_GTIN_EAN),mapEprelToProduct(csvRow, eprelData, context.getOrgId(), context.getProductFileId(), context.getCategory()));
       } else {
+        // NOSONAR: eprelData is checked for null above
         validRecords.put(csvRow.get(CODE_GTIN_EAN), mapEprelToProduct(csvRow, eprelData, context.getOrgId(), context.getProductFileId(), context.getCategory()));
       }
     }
