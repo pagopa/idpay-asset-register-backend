@@ -6,18 +6,17 @@ import com.fasterxml.jackson.databind.ObjectReader;
 import it.gov.pagopa.common.kafka.BaseKafkaConsumer;
 import it.gov.pagopa.register.connector.notification.NotificationServiceImpl;
 import it.gov.pagopa.register.connector.storage.FileStorageClient;
-import it.gov.pagopa.register.service.validator.EprelProductValidatorService;
-import it.gov.pagopa.register.utils.EprelResult;
 import it.gov.pagopa.register.dto.operation.StorageEventDTO;
+import it.gov.pagopa.register.dto.utils.EprelResult;
+import it.gov.pagopa.register.dto.utils.EventDetails;
 import it.gov.pagopa.register.model.operation.Product;
 import it.gov.pagopa.register.model.operation.ProductFile;
 import it.gov.pagopa.register.repository.operation.ProductFileRepository;
 import it.gov.pagopa.register.repository.operation.ProductRepository;
+import it.gov.pagopa.register.service.validator.EprelProductValidatorService;
 import it.gov.pagopa.register.utils.CsvUtils;
-import it.gov.pagopa.register.utils.EventDetails;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.csv.CSVRecord;
-import org.apache.commons.io.FilenameUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.messaging.Message;
 import org.springframework.stereotype.Service;
@@ -25,15 +24,16 @@ import org.springframework.stereotype.Service;
 import java.io.ByteArrayOutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.attribute.FileAttribute;
+import java.nio.file.attribute.PosixFilePermission;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.util.*;
 import java.util.regex.Matcher;
 
 import static it.gov.pagopa.register.constants.AssetRegisterConstants.*;
 import static it.gov.pagopa.register.enums.UploadCsvStatus.*;
-import static it.gov.pagopa.register.enums.UploadCsvStatus.PARTIAL;
-import static it.gov.pagopa.register.model.operation.mapper.ProductMapper.mapCookingHobToProduct;
-import static it.gov.pagopa.register.model.operation.mapper.ProductMapper.mapProductToCsvRow;
+import static it.gov.pagopa.register.mapper.operation.ProductMapper.mapCookingHobToProduct;
+import static it.gov.pagopa.register.mapper.operation.ProductMapper.mapProductToCsvRow;
 
 @Slf4j
 @Service
@@ -249,11 +249,14 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
 
   private void processErrorRecords(List<CSVRecord> errors, Map<CSVRecord, String> messages, String productFileId, List<String> headers) {
     try {
-      String errorFileName = FilenameUtils.getBaseName(productFileId + ".csv");
-      CsvUtils.writeCsvWithErrors(errors, headers, messages, errorFileName);
-      Path tempFilePath = Paths.get("/tmp/", errorFileName);
+
+      Set<PosixFilePermission> perms = PosixFilePermissions.fromString("rw-------");
+      FileAttribute<Set<PosixFilePermission>> attr = PosixFilePermissions.asFileAttribute(perms);
+      Path tempFilePath = Files.createTempFile("errors-", ".csv", attr);
+      CsvUtils.writeCsvWithErrors(errors, headers, messages,  tempFilePath);
       String destination = REPORT_PARTIAL_ERROR + productFileId + CSV;
       fileStorageClient.upload(Files.newInputStream(tempFilePath), destination, "text/csv");
+      Files.deleteIfExists(tempFilePath);
       log.info("[PRODUCT_UPLOAD] - Error file uploaded to {}", destination);
     } catch (Exception e) {
       log.error("[UPLOAD_PRODUCT_FILE] - Generic Error ", e);

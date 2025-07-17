@@ -1,6 +1,6 @@
 package it.gov.pagopa.register.connector.eprel;
 
-import it.gov.pagopa.register.utils.EprelProduct;
+import it.gov.pagopa.register.dto.utils.EprelProduct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;

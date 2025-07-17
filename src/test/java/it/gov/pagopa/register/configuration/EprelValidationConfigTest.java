@@ -1,6 +1,6 @@
 package it.gov.pagopa.register.configuration;
 
-import it.gov.pagopa.register.utils.EprelValidationRule;
+import it.gov.pagopa.register.dto.utils.EprelValidationRule;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;

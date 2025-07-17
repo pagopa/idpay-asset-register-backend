@@ -28,9 +28,10 @@ public class ProductController {
                                                        @RequestParam @Nullable String productFileId,
                                                        @RequestParam @Nullable String eprelCode,
                                                        @RequestParam @Nullable String gtinCode,
-                                                       @PageableDefault(size = 10,
+                                                       @PageableDefault(size = 20,
                                                          sort = "registrationDate",
                                                          direction = Sort.Direction.DESC) Pageable pageable) {
+
 
     ProductListDTO result = productService.getProducts(organizationId,
       category,

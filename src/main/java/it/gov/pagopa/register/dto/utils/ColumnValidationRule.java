@@ -1,4 +1,4 @@
-package it.gov.pagopa.register.utils;
+package it.gov.pagopa.register.dto.utils;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -7,7 +7,7 @@ import java.util.function.BiPredicate;
 
 @Data
 @AllArgsConstructor
-public class EprelValidationRule {
+public class ColumnValidationRule {
 
   private BiPredicate<String,String> rule;
   private String message;

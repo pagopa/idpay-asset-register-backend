@@ -2,8 +2,8 @@ package it.gov.pagopa.register.service.operation;
 
 import it.gov.pagopa.register.connector.storage.FileStorageClient;
 import it.gov.pagopa.register.constants.AssetRegisterConstants;
-import it.gov.pagopa.register.enums.UploadCsvStatus;
 import it.gov.pagopa.register.dto.operation.*;
+import it.gov.pagopa.register.enums.UploadCsvStatus;
 import it.gov.pagopa.register.exception.operation.ReportNotFoundException;
 import it.gov.pagopa.register.mapper.operation.ProductFileMapper;
 import it.gov.pagopa.register.model.operation.Product;
@@ -25,13 +25,17 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.attribute.FileAttribute;
+import java.nio.file.attribute.PosixFilePermission;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 import static it.gov.pagopa.register.constants.AssetRegisterConstants.*;
-import static it.gov.pagopa.register.enums.UploadCsvStatus.*;
+import static it.gov.pagopa.register.enums.UploadCsvStatus.FORMAL_ERROR;
+import static it.gov.pagopa.register.enums.UploadCsvStatus.PARTIAL;
 
 @Slf4j
 @Service
@@ -174,7 +178,6 @@ public class ProductFileService {
 
         log.warn("[PROCESS_FILE] - File processed with formal errors: {}", originalFileName);
         return ProductFileResult.ko(AssetRegisterConstants.UploadKeyConstant.REPORT_FORMAL_FILE_ERROR_KEY, productFile.getId());
-
       }
       return ProductFileResult.ok();
 
@@ -185,13 +188,24 @@ public class ProductFileService {
   }
 
   private void uploadFormalErrorFile(MultipartFile file, ValidationResultDTO validationRecords, List<String> headers, ProductFile productFile) throws IOException {
-    String errorFileName = FilenameUtils.getBaseName(file.getOriginalFilename()) + "_errors.csv";
-    CsvUtils.writeCsvWithErrors(validationRecords.getInvalidRecords(), headers, validationRecords.getErrorMessages(), errorFileName);
+    Set<PosixFilePermission> perms = PosixFilePermissions.fromString("rw-------");
+    FileAttribute<Set<PosixFilePermission>> attr = PosixFilePermissions.asFileAttribute(perms);
+    Path tempFilePath = Files.createTempFile("errors-", ".csv", attr);
 
-    Path tempFilePath = Paths.get("/tmp/", errorFileName);
+    CsvUtils.writeCsvWithErrors(
+      validationRecords.getInvalidRecords(),
+      headers,
+      validationRecords.getErrorMessages(),
+      tempFilePath
+    );
+
     String destination = REPORT_FORMAL_ERROR + productFile.getId() + CSV;
     fileStorageClient.upload(Files.newInputStream(tempFilePath), destination, file.getContentType());
+
+    Files.deleteIfExists(tempFilePath);
   }
+
+
 
   private ProductFile saveProductFile(String category, String organizationId, String userId, String userEmail, String originalFileName, List<CSVRecord> records) {
 

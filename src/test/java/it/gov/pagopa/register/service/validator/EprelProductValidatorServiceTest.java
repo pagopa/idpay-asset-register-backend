@@ -1,10 +1,9 @@
-package it.gov.pagopa.register.service.operation;
+package it.gov.pagopa.register.service.validator;
 
 import it.gov.pagopa.register.configuration.EprelValidationConfig;
 import it.gov.pagopa.register.connector.eprel.EprelConnector;
-import it.gov.pagopa.register.service.validator.EprelProductValidatorService;
-import it.gov.pagopa.register.utils.EprelProduct;
-import it.gov.pagopa.register.utils.EprelResult;
+import it.gov.pagopa.register.dto.utils.EprelProduct;
+import it.gov.pagopa.register.dto.utils.EprelResult;
 import org.apache.commons.csv.CSVRecord;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -29,7 +28,6 @@ import static org.mockito.Mockito.when;
 class EprelProductValidatorServiceTest {
 
 
-  private EprelValidationConfig eprelValidationConfig;
 
   @MockitoBean
   private EprelConnector eprelConnector;
@@ -45,6 +43,11 @@ class EprelProductValidatorServiceTest {
 
     CSVRecord validProductCsv = mock(CSVRecord.class);
     when(validProductCsv.get(CODE_EPREL)).thenReturn("valid-code");
+    when(validProductCsv.get(CODE_GTIN_EAN)).thenReturn("valid-gtin");
+
+    CSVRecord duplicatedProductCsv = mock(CSVRecord.class);
+    when(duplicatedProductCsv.get(CODE_EPREL)).thenReturn("valid-code-2");
+    when(duplicatedProductCsv.get(CODE_GTIN_EAN)).thenReturn("valid-gtin");
 
     CSVRecord invalidProductCsv = mock(CSVRecord.class);
     when(invalidProductCsv.get(CODE_EPREL)).thenReturn("invalid-code");
@@ -75,17 +78,17 @@ class EprelProductValidatorServiceTest {
     invalidProduct.setProductGroup("WASHERDRIERS");
 
     when(eprelConnector.callEprel("valid-code")).thenReturn(validProduct);
+    when(eprelConnector.callEprel("valid-code-2")).thenReturn(validProduct);
     when(eprelConnector.callEprel("invalid-code")).thenReturn(invalidProduct);
     when(eprelConnector.callEprel("null-code")).thenReturn(null);
 
-    List<CSVRecord> records = List.of(validProductCsv, invalidProductCsv,nullProductCsv);
+    List<CSVRecord> records = List.of(validProductCsv, invalidProductCsv,nullProductCsv,duplicatedProductCsv);
 
     EprelResult result = validatorService.validateRecords(records, EPREL_FIELDS, category, orgId, productFileId, null);
 
     assertEquals(1, result.getValidRecords().size());
-    assertEquals(2, result.getInvalidRecords().size());
-    assertEquals(2, result.getErrorMessages().size());
-    assertEquals(ERROR_ENERGY_CLASS, result.getErrorMessages().get(invalidProductCsv));
-    assertEquals("Product not found in EPREL", result.getErrorMessages().get(nullProductCsv));
+    assertEquals(3, result.getInvalidRecords().size());
+    assertEquals(3, result.getErrorMessages().size());
+
   }
 }

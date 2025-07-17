@@ -9,6 +9,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -66,25 +67,30 @@ public class CsvUtils {
     }
   }
 
-  public static void writeCsvWithErrors(List<CSVRecord> invalidRecords, List<String> headers, Map<CSVRecord, String> errorMap, String filename) throws IOException {
+  public static void writeCsvWithErrors(List<CSVRecord> invalidRecords, List<String> headers, Map<CSVRecord, String> errorMap, Path outputPath) throws IOException {
     List<String> finalHeaders = new ArrayList<>(headers);
     finalHeaders.add("Validation Errors");
 
-    File output = new File("/tmp/" + filename);
-    try (BufferedWriter writer = Files.newBufferedWriter(output.toPath(), StandardCharsets.UTF_8)) {
-      writer.write("\uFEFF");
-      try(CSVPrinter printer = new CSVPrinter(writer,
-        CSVFormat.Builder.create().setHeader(finalHeaders.toArray(new String[0])).setTrim(Boolean.TRUE).setDelimiter(DELIMITER).build())) {
-        for (CSVRecord record : invalidRecords) {
+    try (BufferedWriter writer = Files.newBufferedWriter(outputPath, StandardCharsets.UTF_8)) {
+      writer.write("\uFEFF"); // BOM
+      try (CSVPrinter printer = new CSVPrinter(writer,
+        CSVFormat.Builder.create()
+          .setHeader(finalHeaders.toArray(new String[0]))
+          .setTrim(true)
+          .setDelimiter(DELIMITER)
+          .build())) {
+
+        for (CSVRecord csvRecord : invalidRecords) {
           List<String> row = new ArrayList<>();
           for (String h : headers) {
-            row.add(record.get(h));
+            row.add(csvRecord.get(h));
           }
-          row.add(errorMap.get(record));
+          row.add(errorMap.get(csvRecord));
           printer.printRecord(row);
         }
       }
     }
   }
+
 
 }

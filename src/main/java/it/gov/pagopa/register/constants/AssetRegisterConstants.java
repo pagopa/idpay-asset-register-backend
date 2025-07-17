@@ -1,7 +1,7 @@
 package it.gov.pagopa.register.constants;
 
-import it.gov.pagopa.register.utils.ColumnValidationRule;
-import it.gov.pagopa.register.utils.EprelValidationRule;
+import it.gov.pagopa.register.dto.utils.ColumnValidationRule;
+import it.gov.pagopa.register.dto.utils.EprelValidationRule;
 
 import java.util.*;
 import java.util.regex.Pattern;

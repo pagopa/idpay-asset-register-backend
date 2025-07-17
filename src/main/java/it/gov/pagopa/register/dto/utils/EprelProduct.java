@@ -1,9 +1,11 @@
-package it.gov.pagopa.register.utils;
+package it.gov.pagopa.register.dto.utils;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.util.List;
 
 @Data
 @Builder
@@ -24,12 +26,16 @@ public class EprelProduct {
   private String ratedCapacity;
   private String ratedCapacityWash;
   private String totalVolume;
-  private Cavities cavities;
+  private List<Cavity> cavities;
 
   @Data
-  public class Cavities{
-    private String volume;
+  @Builder
+  @AllArgsConstructor
+  @NoArgsConstructor
+  public static class Cavity {
+    private Integer volume;
   }
+
   public String getFieldValue(String fieldName) {
       return switch (fieldName) {
           case "productGroup" -> productGroup;
