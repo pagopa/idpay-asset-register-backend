@@ -101,8 +101,8 @@ public class ProductSpecificRepositoryImpl implements ProductSpecificRepository 
       Aggregation.match(Criteria.where(ORGANIZATION_ID).is(organizationId)),
       Aggregation.group(PRODUCT_FILE_ID, CATEGORY),
       Aggregation.project()
-        .and("_id"+PRODUCT_FILE_ID).as(PRODUCT_FILE_ID)
-        .and("_id"+CATEGORY).as(CATEGORY)
+        .and("_id." + PRODUCT_FILE_ID).as(PRODUCT_FILE_ID)
+        .and("_id." + CATEGORY).as(CATEGORY)
     );
 
     AggregationResults<Product> results = mongoTemplate.aggregate(
@@ -111,8 +111,6 @@ public class ProductSpecificRepositoryImpl implements ProductSpecificRepository 
 
     return results.getMappedResults();
   }
-
-
 
 }
 
