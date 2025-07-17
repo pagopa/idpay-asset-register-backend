@@ -11,7 +11,6 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.csv.CSVRecord;
-import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -63,7 +62,7 @@ public class EprelProductValidatorService {
       if (WASHERDRIERS.equalsIgnoreCase(context.getCategory())) {
         eprelData.setEnergyClass(eprelData.getEnergyClassWash());
       }
-      log.info("[VALIDATE_RECORD] - EPREL response for {}: {}", eprelData.getEprelRegistrationNumber(), eprelData);
+      log.info("[VALIDATE_RECORD] - EPREL response for {}: {}", csvRow.get(CODE_EPREL), eprelData);
       validateFields(context, eprelData, errors);
     }
 
@@ -72,8 +71,7 @@ public class EprelProductValidatorService {
       invalidRecords.add(csvRow);
       errorMessages.put(csvRow, String.join(", ", errors));
     } else {
-      log.info("[VALIDATE_RECORD] - EPREL product valid: {}",
-        ObjectUtils.allNull(eprelData.getEprelRegistrationNumber()) ? "N\\A"  : eprelData.getEprelRegistrationNumber());
+      log.info("[VALIDATE_RECORD] - EPREL product valid: {}", csvRow.get(CODE_EPREL));
       if(validRecords.containsKey(csvRow.get(CODE_GTIN_EAN))){
         Product product = validRecords.remove(csvRow.get(CODE_GTIN_EAN));
         CSVRecord duplicateGtinRow = mapProductToCsvRow(product,context.getCategory(), context.getHeaders());
