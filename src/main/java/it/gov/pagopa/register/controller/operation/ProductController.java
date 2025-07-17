@@ -3,15 +3,11 @@ package it.gov.pagopa.register.controller.operation;
 import it.gov.pagopa.register.dto.operation.ProductListDTO;
 import it.gov.pagopa.register.service.operation.ProductService;
 import jakarta.annotation.Nullable;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.ArrayList;
-import java.util.List;
 
 
 @RestController
@@ -33,7 +29,7 @@ public class ProductController {
     @RequestParam @Nullable String productFileId,
     @RequestParam @Nullable String eprelCode,
     @RequestParam @Nullable String gtinCode,
-    @PageableDefault(size = 10, sort = "registrationDate", direction = Sort.Direction.DESC) Pageable pageable) {
+    @PageableDefault(size = 20, sort = "registrationDate", direction = Sort.Direction.DESC) Pageable pageable) {
 
     ProductListDTO result = productService.getProducts(
       organizationId,

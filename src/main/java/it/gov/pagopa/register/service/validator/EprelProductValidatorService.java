@@ -11,6 +11,7 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.csv.CSVRecord;
+import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -72,7 +73,7 @@ public class EprelProductValidatorService {
       errorMessages.put(csvRow, String.join(", ", errors));
     } else {
       log.info("[VALIDATE_RECORD] - EPREL product valid: {}",
-        eprelData.getEprelRegistrationNumber() != null ? eprelData.getEprelRegistrationNumber() : "N\\A");
+        ObjectUtils.allNull(eprelData.getEprelRegistrationNumber()) ? "N\\A"  : eprelData.getEprelRegistrationNumber());
       if(validRecords.containsKey(csvRow.get(CODE_GTIN_EAN))){
         Product product = validRecords.remove(csvRow.get(CODE_GTIN_EAN));
         CSVRecord duplicateGtinRow = mapProductToCsvRow(product,context.getCategory(), context.getHeaders());
