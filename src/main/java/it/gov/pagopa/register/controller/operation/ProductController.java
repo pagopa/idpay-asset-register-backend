@@ -35,8 +35,6 @@ public class ProductController {
     @RequestParam @Nullable String gtinCode,
     @PageableDefault(size = 10, sort = "registrationDate", direction = Sort.Direction.DESC) Pageable pageable) {
 
-    Pageable resolvedPageable = resolveSort(pageable);
-
     ProductListDTO result = productService.getProducts(
       organizationId,
       category,
@@ -44,26 +42,11 @@ public class ProductController {
       productFileId,
       eprelCode,
       gtinCode,
-      resolvedPageable);
+      pageable);
 
     return ResponseEntity.ok(result);
   }
 
 
-  private Pageable resolveSort(Pageable pageable) {
-    Sort.Order order = pageable.getSort().getOrderFor("batchName");
-    if (order == null) {
-      return pageable;
-    }
 
-    Sort newSort = Sort.by(order.isAscending()
-      ? List.of(
-      Sort.Order.asc("category"),
-      Sort.Order.asc("productFileId"))
-      : List.of(
-      Sort.Order.desc("category"),
-      Sort.Order.desc("productFileId")));
-
-    return PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), newSort);
-  }
 }

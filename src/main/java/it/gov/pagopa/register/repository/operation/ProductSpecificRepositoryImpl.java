@@ -23,10 +23,28 @@ public class ProductSpecificRepositoryImpl implements ProductSpecificRepository 
 
   @Override
   public List<Product> findByFilter (Criteria criteria, Pageable pageable) {
+    Pageable resolvedPageable = resolveSort(pageable);
     return mongoTemplate.find(
       Query.query(criteria)
-        .with(this.getPageable(pageable)),
+        .with(this.getPageable(resolvedPageable)),
       Product.class);
+  }
+
+  private Pageable resolveSort(Pageable pageable) {
+    Sort.Order order = pageable.getSort().getOrderFor("batchName");
+    if (order == null) {
+      return pageable;
+    }
+
+    Sort newSort = Sort.by(order.isAscending()
+      ? List.of(
+      Sort.Order.asc("category"),
+      Sort.Order.asc("productFileId"))
+      : List.of(
+      Sort.Order.desc("category"),
+      Sort.Order.desc("productFileId")));
+
+    return PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), newSort);
   }
 
   @Override
