@@ -1,6 +1,8 @@
 package it.gov.pagopa.register.repository.operation;
 
+import it.gov.pagopa.register.enums.UploadCsvStatus;
 import it.gov.pagopa.register.model.operation.Product;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -9,6 +11,7 @@ import org.springframework.data.mongodb.core.aggregation.Aggregation;
 import org.springframework.data.mongodb.core.aggregation.AggregationResults;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.support.PageableExecutionUtils;
 
 import java.util.List;
 
@@ -112,7 +115,26 @@ public class ProductSpecificRepositoryImpl implements ProductSpecificRepository 
     return results.getMappedResults();
   }
 
+  @Override
+  public Page<Product> findByMarkedStatus(boolean onlyMarked, String organizationId, String category, String productGroup, String brand, Pageable pageable) {
+    Criteria criteria = Criteria.where("organizationId").is(organizationId);
 
+    if (category != null) criteria.and("category").is(category);
+    if (productGroup != null) criteria.and("productGroup").is(productGroup);
+    if (brand != null) criteria.and("brand").is(brand);
+
+    if (onlyMarked) {
+      criteria.and("status").is(UploadCsvStatus.MARKED);
+    } else {
+      criteria.and("status").ne(UploadCsvStatus.MARKED);
+    }
+
+    Query query = new Query(criteria).with(pageable);
+    List<Product> products = mongoTemplate.find(query, Product.class);
+    long count = mongoTemplate.count(Query.of(query).limit(-1).skip(-1), Product.class);
+
+    return PageableExecutionUtils.getPage(products, pageable, () -> count);
+  }
 
 }
 

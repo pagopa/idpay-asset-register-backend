@@ -43,6 +43,28 @@ public class ProductController {
     return ResponseEntity.ok(result);
   }
 
+  @GetMapping("/products/filter-by-status")
+  public ResponseEntity<ProductListDTO> getProductsByStatus(
+    @RequestHeader("x-organization-id") String organizationId,
+    @RequestParam(required = false) String category,
+    @RequestParam(required = false) String productGroup,
+    @RequestParam(required = false) String brand,
+    @RequestParam(defaultValue = "false") boolean onlyMarked,
+    @PageableDefault(size = 20, sort = "registrationDate", direction = Sort.Direction.DESC) Pageable pageable) {
+
+    ProductListDTO result = productService.getProductsByMarkedStatus(
+      onlyMarked,
+      organizationId,
+      category,
+      productGroup,
+      brand,
+      pageable);
+
+    return ResponseEntity.ok(result);
+  }
+
+
+
 
 
 }

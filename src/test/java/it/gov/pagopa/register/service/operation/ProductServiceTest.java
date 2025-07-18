@@ -1,6 +1,7 @@
 package it.gov.pagopa.register.service.operation;
 
 import it.gov.pagopa.register.dto.operation.ProductListDTO;
+import it.gov.pagopa.register.enums.UploadCsvStatus;
 import it.gov.pagopa.register.model.operation.Product;
 import it.gov.pagopa.register.repository.operation.ProductRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -136,6 +137,38 @@ class ProductServiceTest {
     verify(productRepository, times(1))
       .findByFilter(any(), any());
 
+  }
+
+
+  @Test
+  void testGetProductsByMarkedStatus_True() {
+    String orgId = "org1";
+    Pageable pageable = PageRequest.of(0, 10);
+
+    Product product = Product.builder().organizationId(orgId).status(UploadCsvStatus.MARKED.toString()).build();
+    when(productRepository.findByMarkedStatus(eq(true), eq(orgId), any(), any(), any(), eq(pageable)))
+      .thenReturn(new org.springframework.data.domain.PageImpl<>(List.of(product)));
+
+    ProductListDTO result = productService.getProductsByMarkedStatus(true, orgId, null, null, null, pageable);
+
+    assertEquals(1, result.getTotalElements());
+    assertEquals(orgId, result.getContent().get(0).getOrganizationId());
+    verify(productRepository, times(1)).findByMarkedStatus(eq(true), eq(orgId), any(), any(), any(), eq(pageable));
+  }
+
+  @Test
+  void testGetProductsByMarkedStatus_False() {
+    String orgId = "org1";
+    Pageable pageable = PageRequest.of(0, 10);
+
+    Product product = Product.builder().organizationId(orgId).status(UploadCsvStatus.UPLOADED.toString()).build();
+    when(productRepository.findByMarkedStatus(eq(false), eq(orgId), any(), any(), any(), eq(pageable)))
+      .thenReturn(new org.springframework.data.domain.PageImpl<>(List.of(product)));
+
+    ProductListDTO result = productService.getProductsByMarkedStatus(false, orgId, null, null, null, pageable);
+
+    assertEquals(1, result.getTotalElements());
+    verify(productRepository, times(1)).findByMarkedStatus(eq(false), eq(orgId), any(), any(), any(), eq(pageable));
   }
 
 

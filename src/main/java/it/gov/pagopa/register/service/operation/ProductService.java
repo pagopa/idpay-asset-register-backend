@@ -58,5 +58,23 @@ public class ProductService{
       .build();
   }
 
+  public ProductListDTO getProductsByMarkedStatus(boolean onlyMarked,
+                                                  String organizationId,
+                                                  String category,
+                                                  String productGroup,
+                                                  String brand,
+                                                  Pageable pageable) {
+    Page<Product> products = productRepository.findByMarkedStatus(onlyMarked, organizationId, category, productGroup, brand, pageable);
+    Page<ProductDTO> result = products.map(ProductMapper::toDTO);
+
+    return ProductListDTO.builder()
+      .content(result.getContent())
+      .pageNo(result.getNumber())
+      .pageSize(result.getSize())
+      .totalElements(result.getTotalElements())
+      .totalPages(result.getTotalPages())
+      .build();
+  }
+
 
 }

@@ -1,6 +1,7 @@
 package it.gov.pagopa.register.repository;
 
 
+import it.gov.pagopa.register.enums.UploadCsvStatus;
 import it.gov.pagopa.register.model.operation.Product;
 import it.gov.pagopa.register.repository.operation.ProductSpecificRepositoryImpl;
 import org.junit.jupiter.api.BeforeEach;
@@ -9,6 +10,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -190,5 +192,45 @@ class ProductFileSpecificRepositoryTest {
     assertTrue(orders.get(0).isAscending());
   }
 
+  @Test
+  void testFindByMarkedStatus_OnlyMarkedTrue() {
+    Pageable pageable = PageRequest.of(0, 10);
+    String orgId = "org1";
+    String category = "catA";
+    String group = "groupA";
+    String brand = "brandA";
 
+    Product product = Product.builder().status(UploadCsvStatus.MARKED.toString()).build();
+    when(mongoTemplate.find(any(Query.class), eq(Product.class)))
+      .thenReturn(List.of(product));
+    when(mongoTemplate.count(any(Query.class), eq(Product.class)))
+      .thenReturn(1L);
+
+    Page<Product> result = productSpecificRepository.findByMarkedStatus(true, orgId, category, group, brand, pageable);
+
+    assertEquals(1, result.getTotalElements());
+    verify(mongoTemplate, times(1)).find(any(Query.class), eq(Product.class));
+    verify(mongoTemplate, times(1)).count(any(Query.class), eq(Product.class));
+  }
+
+  @Test
+  void testFindByMarkedStatus_OnlyMarkedFalse() {
+    Pageable pageable = PageRequest.of(0, 10);
+    String orgId = "org1";
+    String category = "catA";
+    String group = "groupA";
+    String brand = "brandA";
+
+    Product product = Product.builder().status(UploadCsvStatus.LOADED.toString()).build();
+    when(mongoTemplate.find(any(Query.class), eq(Product.class)))
+      .thenReturn(List.of(product));
+    when(mongoTemplate.count(any(Query.class), eq(Product.class)))
+      .thenReturn(1L);
+
+    Page<Product> result = productSpecificRepository.findByMarkedStatus(false, orgId, category, group, brand, pageable);
+
+    assertEquals(1, result.getTotalElements());
+    verify(mongoTemplate, times(1)).find(any(Query.class), eq(Product.class));
+    verify(mongoTemplate, times(1)).count(any(Query.class), eq(Product.class));
+  }
 }

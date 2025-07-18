@@ -7,5 +7,6 @@ public enum UploadCsvStatus {
   PARTIAL,
   UPLOADED,
   IN_PROCESS,
-  LOADED
+  LOADED,
+  MARKED
 }

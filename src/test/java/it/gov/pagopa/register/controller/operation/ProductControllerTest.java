@@ -95,6 +95,58 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         .andExpect(status().isInternalServerError());
     }
 
+    @Test
+    void testGetProductsByStatus_OnlyMarkedTrue() throws Exception {
+      ProductDTO productDTO = new ProductDTO();
+      productDTO.setOrganizationId("organizationIdTest");
+
+      ProductListDTO mockResponse = ProductListDTO.builder()
+        .content(Collections.singletonList(productDTO))
+        .pageNo(0)
+        .pageSize(10)
+        .totalElements(1L)
+        .totalPages(1)
+        .build();
+
+      Mockito.when(productService.getProductsByMarkedStatus(
+          eq(true), eq("organizationIdTest"), any(), any(), any(), any()))
+        .thenReturn(mockResponse);
+
+      mockMvc.perform(get("/idpay/register/products/filter-by-status")
+          .header("x-organization-id", "organizationIdTest")
+          .param("onlyMarked", "true")
+          .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.content").isArray())
+        .andExpect(jsonPath("$.totalElements").value(1));
+    }
+
+    @Test
+    void testGetProductsByStatus_OnlyMarkedFalse() throws Exception {
+      ProductDTO productDTO = new ProductDTO();
+      productDTO.setOrganizationId("organizationIdTest");
+
+      ProductListDTO mockResponse = ProductListDTO.builder()
+        .content(Collections.singletonList(productDTO))
+        .pageNo(0)
+        .pageSize(10)
+        .totalElements(1L)
+        .totalPages(1)
+        .build();
+
+      Mockito.when(productService.getProductsByMarkedStatus(
+          eq(false), eq("organizationIdTest"), any(), any(), any(), any()))
+        .thenReturn(mockResponse);
+
+      mockMvc.perform(get("/idpay/register/products/filter-by-status")
+          .header("x-organization-id", "organizationIdTest")
+          .param("onlyMarked", "false")
+          .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.content").isArray())
+        .andExpect(jsonPath("$.totalElements").value(1));
+    }
+
 
 
   }
