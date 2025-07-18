@@ -6,17 +6,18 @@ import it.gov.pagopa.common.kafka.BaseKafkaConsumer;
 import org.springframework.messaging.Message;
 
 
-public class BaseConsumer extends BaseKafkaConsumer {
+public class BaseConsumer extends BaseKafkaConsumer<String> {
 
 
-  protected BaseConsumer(String applicationName) {
+  public BaseConsumer(String applicationName) {
     super(applicationName);
   }
 
   @Override
-  public void onError(Message message, Throwable e) {
-//void
+  protected void onError(Message<String> message, Throwable e) {
+    //not tested
   }
+
 
   @Override
   public ObjectReader getObjectReader() {
@@ -25,12 +26,17 @@ public class BaseConsumer extends BaseKafkaConsumer {
   }
 
   @Override
-  public void execute(Object payload, Message message) {
-//void
+  protected void onDeserializationError(Message<String> message, Throwable e) {
+    //not tested
   }
 
   @Override
-  public void onDeserializationError(Message message, Throwable e) {
-//void
+  public void execute(String payload, Message<String> message) {
+    System.out.println(payload);
+    if(payload.equals("exception"))
+      throw new RuntimeException();
   }
+
+
+
 }
