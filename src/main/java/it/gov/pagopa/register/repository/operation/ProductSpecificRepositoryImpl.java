@@ -45,6 +45,9 @@ public class ProductSpecificRepositoryImpl implements ProductSpecificRepository 
   }
 
   private static Aggregation energyClassAggregation(Criteria criteria, Pageable pageable) {
+    Sort.Order energyClassOrder = pageable.getSort().getOrderFor(ENERGY_CLASS);
+    Sort.Direction direction = energyClassOrder != null ? energyClassOrder.getDirection() : Sort.Direction.ASC;
+
     return Aggregation.newAggregation(
       Aggregation.addFields()
         .addField("energyRank")
@@ -62,11 +65,12 @@ public class ProductSpecificRepositoryImpl implements ProductSpecificRepository 
           ).defaultTo(10)
         ).build(),
       Aggregation.match(criteria),
-      Aggregation.sort(Sort.by(Sort.Direction.ASC, "energyRank")), // puoi adattare la direzione
+      Aggregation.sort(Sort.by(direction, "energyRank")),
       Aggregation.skip(pageable.getOffset()),
       Aggregation.limit(pageable.getPageSize())
     );
   }
+
 
   private Pageable resolveSort(Pageable pageable) {
     Sort.Order order = pageable.getSort().getOrderFor(BATCH_NAME);
