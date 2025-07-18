@@ -53,16 +53,16 @@ public class ProductSpecificRepositoryImpl implements ProductSpecificRepository 
         .addField("energyRank")
         .withValue(
           ConditionalOperators.switchCases(
-            ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(ENERGY_CLASS).equalToValue("A+++")).then(1),
-            ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(ENERGY_CLASS).equalToValue("A++")).then(2),
-            ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(ENERGY_CLASS).equalToValue("A+")).then(3),
-            ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(ENERGY_CLASS).equalToValue("A")).then(4),
-            ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(ENERGY_CLASS).equalToValue("B")).then(5),
-            ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(ENERGY_CLASS).equalToValue("C")).then(6),
-            ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(ENERGY_CLASS).equalToValue("D")).then(7),
-            ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(ENERGY_CLASS).equalToValue("E")).then(8),
-            ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(ENERGY_CLASS).equalToValue("F")).then(9)
-          ).defaultTo(10)
+            ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(ENERGY_CLASS).equalToValue("A+++")).then(10),
+            ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(ENERGY_CLASS).equalToValue("A++")).then(9),
+            ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(ENERGY_CLASS).equalToValue("A+")).then(8),
+            ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(ENERGY_CLASS).equalToValue("A")).then(7),
+            ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(ENERGY_CLASS).equalToValue("B")).then(6),
+            ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(ENERGY_CLASS).equalToValue("C")).then(5),
+            ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(ENERGY_CLASS).equalToValue("D")).then(4),
+            ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(ENERGY_CLASS).equalToValue("E")).then(3),
+            ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(ENERGY_CLASS).equalToValue("F")).then(2)
+          ).defaultTo(1)
         ).build(),
       Aggregation.match(criteria),
       Aggregation.sort(Sort.by(direction, "energyRank")),
