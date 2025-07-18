@@ -5,10 +5,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.aggregation.Aggregation;
-import org.springframework.data.mongodb.core.aggregation.AggregationExpression;
-import org.springframework.data.mongodb.core.aggregation.AggregationResults;
-import org.springframework.data.mongodb.core.aggregation.ConditionalOperators;
+import org.springframework.data.mongodb.core.aggregation.*;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 
@@ -53,15 +50,15 @@ public class ProductSpecificRepositoryImpl implements ProductSpecificRepository 
         .addField("energyRank")
         .withValue(
           ConditionalOperators.switchCases(
-            ConditionalOperators.Switch.CaseOperator.when((AggregationExpression) Criteria.where(ENERGY_CLASS).is("A+++")).then(1),
-            ConditionalOperators.Switch.CaseOperator.when((AggregationExpression)Criteria.where(ENERGY_CLASS).is("A++")).then(2),
-            ConditionalOperators.Switch.CaseOperator.when((AggregationExpression)Criteria.where(ENERGY_CLASS).is("A+")).then(3),
-            ConditionalOperators.Switch.CaseOperator.when((AggregationExpression)Criteria.where(ENERGY_CLASS).is("A")).then(4),
-            ConditionalOperators.Switch.CaseOperator.when((AggregationExpression)Criteria.where(ENERGY_CLASS).is("B")).then(5),
-            ConditionalOperators.Switch.CaseOperator.when((AggregationExpression)Criteria.where(ENERGY_CLASS).is("C")).then(6),
-            ConditionalOperators.Switch.CaseOperator.when((AggregationExpression)Criteria.where(ENERGY_CLASS).is("D")).then(7),
-            ConditionalOperators.Switch.CaseOperator.when((AggregationExpression)Criteria.where(ENERGY_CLASS).is("E")).then(8),
-            ConditionalOperators.Switch.CaseOperator.when((AggregationExpression)Criteria.where(ENERGY_CLASS).is("F")).then(9)
+            ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(ENERGY_CLASS).equalToValue("A+++")).then(1),
+            ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(ENERGY_CLASS).equalToValue("A++")).then(2),
+            ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(ENERGY_CLASS).equalToValue("A+")).then(3),
+            ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(ENERGY_CLASS).equalToValue("A")).then(4),
+            ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(ENERGY_CLASS).equalToValue("B")).then(5),
+            ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(ENERGY_CLASS).equalToValue("C")).then(6),
+            ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(ENERGY_CLASS).equalToValue("D")).then(7),
+            ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(ENERGY_CLASS).equalToValue("E")).then(8),
+            ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(ENERGY_CLASS).equalToValue("F")).then(9)
           ).defaultTo(10)
         ).build(),
       Aggregation.match(criteria),
