@@ -47,10 +47,9 @@ public class ProductMapper {
       .productName(
         entity.getCategory() +" " +
         entity.getBrand()+" "+
-        entity.getModel()+" "+
-        (("N\\A").equals(entity.getCapacity()) ? "" : entity.getCapacity())
+        entity.getModel()
       )
-      .capacity(entity.getCapacity())
+      .capacity(("N\\A").equals(entity.getCapacity()) ? null : entity.getCapacity())
       .build();
   }
   public static Product mapCookingHobToProduct(CSVRecord csvRecord, String orgId, String productFileId) {

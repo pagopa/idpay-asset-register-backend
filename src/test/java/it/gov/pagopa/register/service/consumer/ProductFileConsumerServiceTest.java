@@ -28,6 +28,7 @@ import java.util.regex.Pattern;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectReader;
+import org.springframework.messaging.Message;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -285,6 +286,25 @@ class ProductFileConsumerServiceTest {
     }}
 
 
+  @Test
+  void testOnError_shouldLogError() {
+    Message<String> message = mock(Message.class);
+    Throwable throwable = new RuntimeException("Test error");
 
+    assertDoesNotThrow(() -> service.onError(message, throwable));
+  }
+  @Test
+  void testOnDeserializationError_shouldLogDeserializationError() {
+    Message<String> message = mock(Message.class);
+    Throwable throwable = new RuntimeException("Deserialization failed");
+
+    assertDoesNotThrow(() -> service.onDeserializationError(message, throwable));
+  }
+
+  @Test
+  void testGetObjectReader_shouldReturnNotNullReader() {
+    ObjectReader reader = service.getObjectReader();
+    assertNotNull(reader);
+  }
 
 }
