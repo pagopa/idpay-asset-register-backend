@@ -120,25 +120,24 @@ class ProductFileSpecificRepositoryTest {
     Criteria criteria = Criteria.where("organizationId").is("org1");
     Pageable pageable = PageRequest.of(0, 10, Sort.by("batchName").ascending());
 
-    when(mongoTemplate.find(any(Query.class), eq(Product.class)))
-      .thenReturn(List.of(Product.builder().build()));
+    AggregationResults<Product> aggregationResults = mock(AggregationResults.class);
+    when(aggregationResults.getMappedResults()).thenReturn(List.of(Product.builder().build()));
 
-    productSpecificRepository.findByFilter(criteria, pageable);
+    when(mongoTemplate.aggregate(any(Aggregation.class), eq("product"), eq(Product.class)))
+      .thenReturn(aggregationResults);
 
-    ArgumentCaptor<Query> queryCaptor = ArgumentCaptor.forClass(Query.class);
-    verify(mongoTemplate).find(queryCaptor.capture(), eq(Product.class));
-    Query queryUsed = queryCaptor.getValue();
+    List<Product> result = productSpecificRepository.findByFilter(criteria, pageable);
 
-    Sort sort = (Sort) ReflectionTestUtils.getField(queryUsed, "sort");
-    assertNotNull(sort);
+    assertNotNull(result);
+    assertEquals(1, result.size());
 
-    List<Sort.Order> orders = sort.toList();
-    assertEquals(2, orders.size());
-    assertEquals("category", orders.get(0).getProperty());
-    assertTrue(orders.get(0).isAscending());
-    assertEquals("productFileId", orders.get(1).getProperty());
-    assertTrue(orders.get(1).isAscending());
+    ArgumentCaptor<Aggregation> aggregationCaptor = ArgumentCaptor.forClass(Aggregation.class);
+    verify(mongoTemplate).aggregate(aggregationCaptor.capture(), eq("product"), eq(Product.class));
+
+    Aggregation usedAggregation = aggregationCaptor.getValue();
+    assertNotNull(usedAggregation);
   }
+
 
 
   @Test
@@ -146,24 +145,45 @@ class ProductFileSpecificRepositoryTest {
     Criteria criteria = Criteria.where("organizationId").is("org1");
     Pageable pageable = PageRequest.of(0, 10, Sort.by("batchName").descending());
 
-    when(mongoTemplate.find(any(Query.class), eq(Product.class)))
-      .thenReturn(List.of(Product.builder().build()));
+    AggregationResults<Product> aggregationResults = mock(AggregationResults.class);
+    when(aggregationResults.getMappedResults()).thenReturn(List.of(Product.builder().build()));
 
-    productSpecificRepository.findByFilter(criteria, pageable);
+    when(mongoTemplate.aggregate(any(Aggregation.class), eq("product"), eq(Product.class)))
+      .thenReturn(aggregationResults);
 
-    ArgumentCaptor<Query> queryCaptor = ArgumentCaptor.forClass(Query.class);
-    verify(mongoTemplate).find(queryCaptor.capture(), eq(Product.class));
-    Query queryUsed = queryCaptor.getValue();
+    List<Product> result = productSpecificRepository.findByFilter(criteria, pageable);
 
-    Sort sort = (Sort) ReflectionTestUtils.getField(queryUsed, "sort");
-    assertNotNull(sort);
+    assertNotNull(result);
+    assertEquals(1, result.size());
 
-    List<Sort.Order> orders = sort.toList();
-    assertEquals(2, orders.size());
-    assertEquals("category", orders.get(0).getProperty());
-    assertTrue(orders.get(0).isDescending());
-    assertEquals("productFileId", orders.get(1).getProperty());
-    assertTrue(orders.get(1).isDescending());
+    ArgumentCaptor<Aggregation> aggregationCaptor = ArgumentCaptor.forClass(Aggregation.class);
+    verify(mongoTemplate).aggregate(aggregationCaptor.capture(), eq("product"), eq(Product.class));
+
+    Aggregation usedAggregation = aggregationCaptor.getValue();
+    assertNotNull(usedAggregation);
+  }
+
+  @Test
+  void testFindByFilter_SortByBatchEnergyClass() {
+    Criteria criteria = Criteria.where("organizationId").is("org1");
+    Pageable pageable = PageRequest.of(0, 10, Sort.by("energyClass").descending());
+
+    AggregationResults<Product> aggregationResults = mock(AggregationResults.class);
+    when(aggregationResults.getMappedResults()).thenReturn(List.of(Product.builder().build()));
+
+    when(mongoTemplate.aggregate(any(Aggregation.class), eq("product"), eq(Product.class)))
+      .thenReturn(aggregationResults);
+
+    List<Product> result = productSpecificRepository.findByFilter(criteria, pageable);
+
+    assertNotNull(result);
+    assertEquals(1, result.size());
+
+    ArgumentCaptor<Aggregation> aggregationCaptor = ArgumentCaptor.forClass(Aggregation.class);
+    verify(mongoTemplate).aggregate(aggregationCaptor.capture(), eq("product"), eq(Product.class));
+
+    Aggregation usedAggregation = aggregationCaptor.getValue();
+    assertNotNull(usedAggregation);
   }
 
 

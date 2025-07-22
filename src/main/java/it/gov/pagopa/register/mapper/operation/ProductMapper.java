@@ -35,7 +35,7 @@ public class ProductMapper {
       .status(entity.getStatus())
       .model(entity.getModel())
       .productGroup(entity.getProductGroup())
-      .category(entity.getCategory())
+      .category(CATEGORIES_TO_IT.get(entity.getCategory()))
       .brand(entity.getBrand())
       .eprelCode(entity.getEprelCode())
       .gtinCode(entity.getGtinCode())
@@ -43,9 +43,9 @@ public class ProductMapper {
       .countryOfProduction(entity.getCountryOfProduction())
       .energyClass(entity.getEnergyClass())
       .linkEprel(generateEprelUrl(entity.getProductGroup(), entity.getEprelCode()))
-      .batchName(entity.getCategory()+"_"+entity.getProductFileId()+".csv")
+      .batchName(CATEGORIES_TO_IT.get(entity.getCategory())+"_"+entity.getProductFileId()+".csv")
       .productName(
-        entity.getCategory() +" " +
+        CATEGORIES_TO_IT.get(entity.getCategory()) +" " +
         entity.getBrand()+" "+
         entity.getModel()
       )

@@ -42,6 +42,10 @@ import static it.gov.pagopa.register.enums.UploadCsvStatus.PARTIAL;
 public class ProductFileService {
 
 
+  public static final List<String> BLOCKING_STATUSES = List.of(
+    UploadCsvStatus.IN_PROCESS.name(),
+    UploadCsvStatus.UPLOADED.name()
+  );
   private final ProductFileRepository productFileRepository;
   private final ProductRepository productRepository;
 
@@ -142,13 +146,8 @@ public class ProductFileService {
 
   public ProductFileResult validateFile(MultipartFile file, String category, String organizationId, String userId, String userEmail) {
 
-    List<String> blockingStatuses = List.of(
-      UploadCsvStatus.IN_PROCESS.name(),
-      UploadCsvStatus.UPLOADED.name()
-    );
-
     boolean alreadyBlocked = productFileRepository.existsByOrganizationIdAndUploadStatusIn(
-      organizationId, blockingStatuses
+      organizationId, BLOCKING_STATUSES
     );
 
     if (alreadyBlocked) {
