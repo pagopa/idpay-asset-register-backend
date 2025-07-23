@@ -44,14 +44,14 @@ public class AssetRegisterConstants {
   public static final String TUMBLEDRYERS = "TUMBLEDRYERS";
   public static final String REFRIGERATINGAPPL = "REFRIGERATINGAPPL";
   public static final String COOKINGHOBS = "COOKINGHOBS";
-  public static final String WASHINGMACHINES_IT = "Lavatrici";
+  public static final String WASHINGMACHINES_IT = "Lavatrice";
   public static final String WASHERDRIERS_IT = "Lavasciuga";
-  public static final String OVENS_IT = "Forni";
-  public static final String RANGEHOODS_IT = "Cappe";
+  public static final String OVENS_IT = "Forno";
+  public static final String RANGEHOODS_IT = "Cappa da cucina";
   public static final String DISHWASHERS_IT = "Lavastoviglie";
-  public static final String TUMBLEDRYERS_IT = "Asciugatrici";
-  public static final String REFRIGERATINGAPPL_IT = "Frigoriferi";
-  public static final String COOKINGHOBS_IT = "Piani cottura";
+  public static final String TUMBLEDRYERS_IT = "Asciugatrice";
+  public static final String REFRIGERATINGAPPL_IT = "Frigorifero";
+  public static final String COOKINGHOBS_IT = "Piano cottura";
   public static final Set<String> CATEGORIES = Set.of(
     WASHINGMACHINES,
     WASHERDRIERS,
@@ -65,14 +65,14 @@ public class AssetRegisterConstants {
 
 
   public static final Map<String, String> CATEGORIES_TO_IT = Map.of(
-    WASHINGMACHINES_IT, WASHINGMACHINES,
-    WASHERDRIERS_IT, WASHERDRIERS,
-    OVENS_IT, OVENS,
-    RANGEHOODS_IT, RANGEHOODS,
-    DISHWASHERS_IT, DISHWASHERS,
-    TUMBLEDRYERS_IT, TUMBLEDRYERS,
-    REFRIGERATINGAPPL_IT, REFRIGERATINGAPPL,
-    COOKINGHOBS_IT, COOKINGHOBS
+    WASHINGMACHINES, WASHINGMACHINES_IT,
+    WASHERDRIERS, WASHERDRIERS_IT,
+    OVENS, OVENS_IT,
+    RANGEHOODS, RANGEHOODS_IT,
+    DISHWASHERS, DISHWASHERS_IT,
+    TUMBLEDRYERS, TUMBLEDRYERS_IT,
+    REFRIGERATINGAPPL, REFRIGERATINGAPPL_IT,
+    COOKINGHOBS, COOKINGHOBS_IT
   );
 
   // Eprel Value

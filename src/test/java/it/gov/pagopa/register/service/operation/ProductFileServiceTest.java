@@ -315,7 +315,7 @@ class ProductFileServiceTest {
 
     assertEquals(1, result.size());
     assertEquals("file123", result.getFirst().getProductFileId());
-    assertEquals("DISHWASHERS_file123.csv", result.getFirst().getBatchName());
+    assertEquals("Lavastoviglie_file123.csv", result.getFirst().getBatchName());
   }
 
   @Test
