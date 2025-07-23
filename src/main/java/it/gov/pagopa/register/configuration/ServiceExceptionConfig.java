@@ -2,6 +2,7 @@ package it.gov.pagopa.register.configuration;
 
 import it.gov.pagopa.common.web.exception.ServiceException;
 import it.gov.pagopa.register.exception.operation.ReportNotFoundException;
+import it.gov.pagopa.register.exception.role.ConsentNotFoundException;
 import it.gov.pagopa.register.exception.role.PermissionNotFoundException;
 import it.gov.pagopa.register.exception.role.VersionNotMatchedException;
 import org.springframework.context.annotation.Bean;
@@ -21,6 +22,7 @@ public class ServiceExceptionConfig {
     // NotFound
     exceptionMap.put(PermissionNotFoundException.class, HttpStatus.NOT_FOUND);
     exceptionMap.put(ReportNotFoundException.class,HttpStatus.NOT_FOUND);
+    exceptionMap.put(ConsentNotFoundException.class, HttpStatus.NOT_FOUND);
 
     //BadRequest
     exceptionMap.put(VersionNotMatchedException.class, HttpStatus.BAD_REQUEST);
