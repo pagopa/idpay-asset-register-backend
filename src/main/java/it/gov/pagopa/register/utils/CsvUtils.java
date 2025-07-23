@@ -69,7 +69,7 @@ public class CsvUtils {
 
   public static void writeCsvWithErrors(List<CSVRecord> invalidRecords, List<String> headers, Map<CSVRecord, String> errorMap, Path outputPath) throws IOException {
     List<String> finalHeaders = new ArrayList<>(headers);
-    finalHeaders.add("Validation Errors");
+    finalHeaders.add("Errori di validazione");
 
     try (BufferedWriter writer = Files.newBufferedWriter(outputPath, StandardCharsets.UTF_8)) {
       writer.write("\uFEFF"); // BOM

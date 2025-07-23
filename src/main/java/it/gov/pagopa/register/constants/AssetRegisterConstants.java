@@ -44,14 +44,22 @@ public class AssetRegisterConstants {
   public static final String TUMBLEDRYERS = "TUMBLEDRYERS";
   public static final String REFRIGERATINGAPPL = "REFRIGERATINGAPPL";
   public static final String COOKINGHOBS = "COOKINGHOBS";
-  public static final String WASHINGMACHINES_IT = "Lavatrice";
-  public static final String WASHERDRIERS_IT = "Lavasciuga";
-  public static final String OVENS_IT = "Forno";
-  public static final String RANGEHOODS_IT = "Cappa da cucina";
-  public static final String DISHWASHERS_IT = "Lavastoviglie";
-  public static final String TUMBLEDRYERS_IT = "Asciugatrice";
-  public static final String REFRIGERATINGAPPL_IT = "Frigorifero";
-  public static final String COOKINGHOBS_IT = "Piano cottura";
+  public static final String WASHINGMACHINES_IT_P = "Lavatrici";
+  public static final String WASHERDRIERS_IT_P = "Lavasciuga";
+  public static final String OVENS_IT_P = "Forni";
+  public static final String RANGEHOODS_IT_P = "Cappe_Da_Cucina";
+  public static final String DISHWASHERS_IT_P = "Lavastoviglie";
+  public static final String TUMBLEDRYERS_IT_P = "Asciugatrici";
+  public static final String REFRIGERATINGAPPL_IT_P = "Frigoriferi";
+  public static final String COOKINGHOBS_IT_P = "Piani_Cottura";
+  public static final String WASHINGMACHINES_IT_S = "Lavatrici";
+  public static final String WASHERDRIERS_IT_S = "Lavasciuga";
+  public static final String OVENS_IT_S = "Forno";
+  public static final String RANGEHOODS_IT_S = "Cappa da cucina";
+  public static final String DISHWASHERS_IT_S = "Lavastoviglie";
+  public static final String TUMBLEDRYERS_IT_S = "Asciugatrice";
+  public static final String REFRIGERATINGAPPL_IT_S = "Frigorifero";
+  public static final String COOKINGHOBS_IT_S = "Piano cottura";
   public static final Set<String> CATEGORIES = Set.of(
     WASHINGMACHINES,
     WASHERDRIERS,
@@ -64,15 +72,26 @@ public class AssetRegisterConstants {
   );
 
 
-  public static final Map<String, String> CATEGORIES_TO_IT = Map.of(
-    WASHINGMACHINES, WASHINGMACHINES_IT,
-    WASHERDRIERS, WASHERDRIERS_IT,
-    OVENS, OVENS_IT,
-    RANGEHOODS, RANGEHOODS_IT,
-    DISHWASHERS, DISHWASHERS_IT,
-    TUMBLEDRYERS, TUMBLEDRYERS_IT,
-    REFRIGERATINGAPPL, REFRIGERATINGAPPL_IT,
-    COOKINGHOBS, COOKINGHOBS_IT
+  public static final Map<String, String> CATEGORIES_TO_IT_S = Map.of(
+    WASHINGMACHINES, WASHINGMACHINES_IT_S,
+    WASHERDRIERS, WASHERDRIERS_IT_S,
+    OVENS, OVENS_IT_S,
+    RANGEHOODS, RANGEHOODS_IT_S,
+    DISHWASHERS, DISHWASHERS_IT_S,
+    TUMBLEDRYERS, TUMBLEDRYERS_IT_S,
+    REFRIGERATINGAPPL, REFRIGERATINGAPPL_IT_S,
+    COOKINGHOBS, COOKINGHOBS_IT_S
+  );
+
+  public static final Map<String, String> CATEGORIES_TO_IT_P = Map.of(
+    WASHINGMACHINES, WASHINGMACHINES_IT_P,
+    WASHERDRIERS, WASHERDRIERS_IT_P,
+    OVENS, OVENS_IT_P,
+    RANGEHOODS, RANGEHOODS_IT_P,
+    DISHWASHERS, DISHWASHERS_IT_P,
+    TUMBLEDRYERS, TUMBLEDRYERS_IT_P,
+    REFRIGERATINGAPPL, REFRIGERATINGAPPL_IT_P,
+    COOKINGHOBS, COOKINGHOBS_IT_P
   );
 
   // Eprel Value

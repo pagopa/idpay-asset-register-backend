@@ -97,14 +97,14 @@ public class ProductSpecificRepositoryImpl implements ProductSpecificRepository 
         .addField("categoryIt")
         .withValue(
           ConditionalOperators.switchCases(
-            ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(CATEGORY).equalToValue(WASHINGMACHINES)).then(WASHINGMACHINES_IT),
-            ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(CATEGORY).equalToValue(WASHERDRIERS)).then(WASHERDRIERS_IT),
-            ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(CATEGORY).equalToValue(OVENS)).then(OVENS_IT),
-            ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(CATEGORY).equalToValue(RANGEHOODS)).then(RANGEHOODS_IT),
-            ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(CATEGORY).equalToValue(DISHWASHERS)).then(DISHWASHERS_IT),
-            ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(CATEGORY).equalToValue(TUMBLEDRYERS)).then(TUMBLEDRYERS_IT),
-            ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(CATEGORY).equalToValue(REFRIGERATINGAPPL)).then(REFRIGERATINGAPPL_IT),
-            ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(CATEGORY).equalToValue(COOKINGHOBS)).then(COOKINGHOBS_IT)
+            ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(CATEGORY).equalToValue(WASHINGMACHINES)).then(WASHINGMACHINES_IT_S),
+            ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(CATEGORY).equalToValue(WASHERDRIERS)).then(WASHERDRIERS_IT_S),
+            ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(CATEGORY).equalToValue(OVENS)).then(OVENS_IT_S),
+            ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(CATEGORY).equalToValue(RANGEHOODS)).then(RANGEHOODS_IT_S),
+            ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(CATEGORY).equalToValue(DISHWASHERS)).then(DISHWASHERS_IT_S),
+            ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(CATEGORY).equalToValue(TUMBLEDRYERS)).then(TUMBLEDRYERS_IT_S),
+            ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(CATEGORY).equalToValue(REFRIGERATINGAPPL)).then(REFRIGERATINGAPPL_IT_S),
+            ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(CATEGORY).equalToValue(COOKINGHOBS)).then(COOKINGHOBS_IT_S)
           )
         ).build(),
       Aggregation.match(criteria),
