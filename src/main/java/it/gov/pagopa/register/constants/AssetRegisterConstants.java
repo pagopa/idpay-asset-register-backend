@@ -52,7 +52,7 @@ public class AssetRegisterConstants {
   public static final String TUMBLEDRYERS_IT_P = "Asciugatrici";
   public static final String REFRIGERATINGAPPL_IT_P = "Frigoriferi";
   public static final String COOKINGHOBS_IT_P = "Piani_Cottura";
-  public static final String WASHINGMACHINES_IT_S = "Lavatrici";
+  public static final String WASHINGMACHINES_IT_S = "Lavatrice";
   public static final String WASHERDRIERS_IT_S = "Lavasciuga";
   public static final String OVENS_IT_S = "Forno";
   public static final String RANGEHOODS_IT_S = "Cappa da cucina";
