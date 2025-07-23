@@ -59,8 +59,8 @@ class ProductFileServiceTest {
   void testGetFilesByPage_Success() {
     String org = "org";
     Pageable page = PageRequest.of(0,2);
-    ProductFile pf1 = ProductFile.builder().id("1").fileName("f1.csv").uploadStatus("OK").build();
-    ProductFile pf2 = ProductFile.builder().id("2").fileName("f2.csv").uploadStatus("OK").build();
+    ProductFile pf1 = ProductFile.builder().id("1").fileName("f1.csv").uploadStatus("OK").category("WASHINGMACHINES").build();
+    ProductFile pf2 = ProductFile.builder().id("2").fileName("f2.csv").uploadStatus("OK").category("WASHINGMACHINES").build();
     List<ProductFile> list = List.of(pf1, pf2);
     Page<ProductFile> pg = new PageImpl<>(list, page, list.size());
     when(productFileRepository.findByOrganizationIdAndUploadStatusNot(org, UploadCsvStatus.FORMAL_ERROR.name(), page))
