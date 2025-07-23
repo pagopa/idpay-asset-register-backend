@@ -67,4 +67,11 @@ public interface PortalConsentController {
             consumes = {"application/json"}
     )
     void savePortalConsent(@RequestParam(value = "userId") String userId, @RequestBody PortalConsentDTO consent) throws JsonProcessingException;
+
+    @DeleteMapping(
+      value = "/consent",
+      produces = { "application/json" }
+    )
+    void removePortalConsent(
+      @RequestParam(value = "userId") String userId) throws JsonProcessingException;
 }
