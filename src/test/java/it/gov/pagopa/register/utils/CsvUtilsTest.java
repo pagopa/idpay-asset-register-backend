@@ -62,7 +62,7 @@ class CsvUtilsTest {
     CsvUtils.writeCsvWithErrors(List.of(records.get(0)), headers, errorMap, tempFile);
 
     List<String> lines = Files.readAllLines(tempFile);
-    assertTrue(lines.get(0).contains("Validation Errors"));
+    assertTrue(lines.get(0).contains("Errori di validazione"));
     assertTrue(lines.get(1).contains("Invalid age format"));
 
     Files.deleteIfExists(tempFile);
