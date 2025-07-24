@@ -96,4 +96,18 @@ class PortalConsentControllerTest {
                 .andExpect(MockMvcResultMatchers.status().isOk())
                 .andReturn();
     }
+
+  @Test
+  void testRemoveConsentOk() throws Exception {
+    Mockito.doNothing().when(service).remove(USER_ID);
+
+    mvc.perform(MockMvcRequestBuilders
+        .delete(BASE_URL)
+        .param(UID_PARAM_NAME, USER_ID)
+        .contentType(MediaType.APPLICATION_JSON_VALUE)
+        .accept(MediaType.APPLICATION_JSON))
+      .andExpect(MockMvcResultMatchers.status().isOk())
+      .andReturn();
+  }
+
 }
