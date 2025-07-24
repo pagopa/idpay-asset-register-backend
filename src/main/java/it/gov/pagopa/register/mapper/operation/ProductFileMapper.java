@@ -6,6 +6,7 @@ import it.gov.pagopa.register.model.operation.Product;
 import it.gov.pagopa.register.model.operation.ProductFile;
 
 import static it.gov.pagopa.register.constants.AssetRegisterConstants.CATEGORIES_TO_IT_P;
+import static it.gov.pagopa.register.constants.AssetRegisterConstants.CATEGORIES_TO_IT_S;
 
 public class ProductFileMapper {
 
@@ -14,7 +15,7 @@ public class ProductFileMapper {
   public static ProductFileDTO toDTO(ProductFile productFile){
     return ProductFileDTO.builder()
       .productFileId(productFile.getId())
-      .category(CATEGORIES_TO_IT_P.get(productFile.getCategory()))
+      .category(CATEGORIES_TO_IT_S.get(productFile.getCategory()))
       .batchName(CATEGORIES_TO_IT_P.get(productFile.getCategory())+"_"+productFile.getId()+".csv")
       .fileName(productFile.getFileName())
       .uploadStatus(productFile.getUploadStatus())
