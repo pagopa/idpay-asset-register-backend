@@ -14,7 +14,7 @@ public class ProductFileMapper {
   public static ProductFileDTO toDTO(ProductFile productFile){
     return ProductFileDTO.builder()
       .productFileId(productFile.getId())
-      .category(productFile.getCategory())
+      .category(CATEGORIES_TO_IT_P.get(productFile.getCategory()))
       .batchName(CATEGORIES_TO_IT_P.get(productFile.getCategory())+"_"+productFile.getId()+".csv")
       .fileName(productFile.getFileName())
       .uploadStatus(productFile.getUploadStatus())
