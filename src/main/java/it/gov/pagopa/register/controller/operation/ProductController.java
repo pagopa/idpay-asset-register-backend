@@ -1,7 +1,7 @@
 package it.gov.pagopa.register.controller.operation;
 
 import it.gov.pagopa.register.dto.operation.ProductListDTO;
-import it.gov.pagopa.register.enums.ProductStatusEnum;
+import it.gov.pagopa.register.dto.operation.ProductUpdateStatusRequestDTO;
 import it.gov.pagopa.register.service.operation.ProductService;
 import jakarta.annotation.Nullable;
 import org.springframework.data.domain.Pageable;
@@ -46,32 +46,15 @@ public class ProductController {
     return ResponseEntity.ok(result);
   }
 
-  @PatchMapping("/products/status/approve")
+  @PatchMapping("/products/update-status")
   public ResponseEntity<ProductListDTO> approveProducts(
     @RequestHeader("x-organization-id") String organizationId,
-    @RequestBody List<String> productIds) {
+    @RequestBody ProductUpdateStatusRequestDTO dto) {
 
-    ProductListDTO result = productService.updateProductStatuses(organizationId, productIds, ProductStatusEnum.APPROVED);
+    ProductListDTO result = productService.updateProductStatuses(
+      organizationId,
+      dto.getProductIds(),
+      dto.getStatus());
     return ResponseEntity.ok(result);
   }
-
-  @PatchMapping("/products/status/validate")
-  public ResponseEntity<ProductListDTO> validateProducts(
-    @RequestHeader("x-organization-id") String organizationId,
-    @RequestBody List<String> productIds) {
-
-    ProductListDTO result = productService.updateProductStatuses(organizationId, productIds, ProductStatusEnum.IN_VALIDATION);
-    return ResponseEntity.ok(result);
-  }
-
-  @PatchMapping("/products/status/reject")
-  public ResponseEntity<ProductListDTO> rejectProducts(
-    @RequestHeader("x-organization-id") String organizationId,
-    @RequestBody List<String> productIds) {
-
-    ProductListDTO result = productService.updateProductStatuses(organizationId, productIds, ProductStatusEnum.REJECTED);
-    return ResponseEntity.ok(result);
-  }
-
-
 }
