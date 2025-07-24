@@ -116,25 +116,14 @@ public class ProductSpecificRepositoryImpl implements ProductSpecificRepository 
   }
 
   @Override
-  public Page<Product> findByMarkedStatus(boolean onlyMarked, String organizationId, String category, String productGroup, String brand, Pageable pageable) {
-    Criteria criteria = Criteria.where("organizationId").is(organizationId);
+  public List<Product> findByIdsAndOrganizationId(List<String> productIds, String organizationId) {
+    Criteria criteria = new Criteria();
+    criteria.and("gtinCode").in(productIds);
+    criteria.and("organizationId").is(organizationId);
 
-    if (category != null) criteria.and("category").is(category);
-    if (productGroup != null) criteria.and("productGroup").is(productGroup);
-    if (brand != null) criteria.and("brand").is(brand);
-
-    if (onlyMarked) {
-      criteria.and("status").is(UploadCsvStatus.MARKED);
-    } else {
-      criteria.and("status").ne(UploadCsvStatus.MARKED);
-    }
-
-    Query query = new Query(criteria).with(pageable);
-    List<Product> products = mongoTemplate.find(query, Product.class);
-    long count = mongoTemplate.count(Query.of(query).limit(-1).skip(-1), Product.class);
-
-    return PageableExecutionUtils.getPage(products, pageable, () -> count);
+    return mongoTemplate.find(Query.query(criteria), Product.class);
   }
+
 
 }
 

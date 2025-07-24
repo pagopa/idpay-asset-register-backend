@@ -192,45 +192,4 @@ class ProductFileSpecificRepositoryTest {
     assertTrue(orders.get(0).isAscending());
   }
 
-  @Test
-  void testFindByMarkedStatus_OnlyMarkedTrue() {
-    Pageable pageable = PageRequest.of(0, 10);
-    String orgId = "org1";
-    String category = "catA";
-    String group = "groupA";
-    String brand = "brandA";
-
-    Product product = Product.builder().status(UploadCsvStatus.MARKED.toString()).build();
-    when(mongoTemplate.find(any(Query.class), eq(Product.class)))
-      .thenReturn(List.of(product));
-    when(mongoTemplate.count(any(Query.class), eq(Product.class)))
-      .thenReturn(1L);
-
-    Page<Product> result = productSpecificRepository.findByMarkedStatus(true, orgId, category, group, brand, pageable);
-
-    assertEquals(1, result.getTotalElements());
-    verify(mongoTemplate, times(1)).find(any(Query.class), eq(Product.class));
-    verify(mongoTemplate, times(1)).count(any(Query.class), eq(Product.class));
-  }
-
-  @Test
-  void testFindByMarkedStatus_OnlyMarkedFalse() {
-    Pageable pageable = PageRequest.of(0, 10);
-    String orgId = "org1";
-    String category = "catA";
-    String group = "groupA";
-    String brand = "brandA";
-
-    Product product = Product.builder().status(UploadCsvStatus.LOADED.toString()).build();
-    when(mongoTemplate.find(any(Query.class), eq(Product.class)))
-      .thenReturn(List.of(product));
-    when(mongoTemplate.count(any(Query.class), eq(Product.class)))
-      .thenReturn(1L);
-
-    Page<Product> result = productSpecificRepository.findByMarkedStatus(false, orgId, category, group, brand, pageable);
-
-    assertEquals(1, result.getTotalElements());
-    verify(mongoTemplate, times(1)).find(any(Query.class), eq(Product.class));
-    verify(mongoTemplate, times(1)).count(any(Query.class), eq(Product.class));
-  }
 }

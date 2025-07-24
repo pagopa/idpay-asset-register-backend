@@ -2,6 +2,7 @@ package it.gov.pagopa.register.service.operation;
 
 import it.gov.pagopa.register.dto.operation.ProductDTO;
 import it.gov.pagopa.register.dto.operation.ProductListDTO;
+import it.gov.pagopa.register.enums.ProductStatusEnum;
 import it.gov.pagopa.register.mapper.operation.ProductMapper;
 import it.gov.pagopa.register.model.operation.Product;
 import it.gov.pagopa.register.repository.operation.ProductRepository;
@@ -58,21 +59,29 @@ public class ProductService{
       .build();
   }
 
-  public ProductListDTO getProductsByMarkedStatus(boolean onlyMarked,
-                                                  String organizationId,
-                                                  String category,
-                                                  String productGroup,
-                                                  String brand,
-                                                  Pageable pageable) {
-    Page<Product> products = productRepository.findByMarkedStatus(onlyMarked, organizationId, category, productGroup, brand, pageable);
-    Page<ProductDTO> result = products.map(ProductMapper::toDTO);
+  public ProductListDTO updateProductStatuses (String organizationId, List<String> productIds, ProductStatusEnum newStatus) {
+    log.info("[UPDATE_PRODUCT_STATUSES] - Updating status to {} for products: {}", newStatus, productIds);
+
+    List<Product> products = productRepository.findByIdsAndOrganizationId(productIds, organizationId);
+
+    if (products.size() != productIds.size()) {
+      throw new IllegalArgumentException("Alcuni prodotti non esistono o non appartengono all’organizzazione specificata");
+    }
+
+    products.forEach(p -> p.setStatus(newStatus.name()));
+
+    List<Product> updated = productRepository.saveAll(products);
+
+    List<ProductDTO> result = updated.stream()
+      .map(ProductMapper::toDTO)
+      .toList();
 
     return ProductListDTO.builder()
-      .content(result.getContent())
-      .pageNo(result.getNumber())
-      .pageSize(result.getSize())
-      .totalElements(result.getTotalElements())
-      .totalPages(result.getTotalPages())
+      .content(result)
+      .pageNo(0)
+      .pageSize(result.size())
+      .totalElements((long) result.size())
+      .totalPages(1)
       .build();
   }
 

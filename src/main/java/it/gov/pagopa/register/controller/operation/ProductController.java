@@ -1,6 +1,7 @@
 package it.gov.pagopa.register.controller.operation;
 
 import it.gov.pagopa.register.dto.operation.ProductListDTO;
+import it.gov.pagopa.register.enums.ProductStatusEnum;
 import it.gov.pagopa.register.service.operation.ProductService;
 import jakarta.annotation.Nullable;
 import org.springframework.data.domain.Pageable;
@@ -8,6 +9,8 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 
 @RestController
@@ -43,28 +46,32 @@ public class ProductController {
     return ResponseEntity.ok(result);
   }
 
-  @GetMapping("/products/filter-by-status")
-  public ResponseEntity<ProductListDTO> getProductsByStatus(
+  @PatchMapping("/products/status/approve")
+  public ResponseEntity<ProductListDTO> approveProducts(
     @RequestHeader("x-organization-id") String organizationId,
-    @RequestParam(required = false) String category,
-    @RequestParam(required = false) String productGroup,
-    @RequestParam(required = false) String brand,
-    @RequestParam(defaultValue = "false") boolean onlyMarked,
-    @PageableDefault(size = 20, sort = "registrationDate", direction = Sort.Direction.DESC) Pageable pageable) {
+    @RequestBody List<String> productIds) {
 
-    ProductListDTO result = productService.getProductsByMarkedStatus(
-      onlyMarked,
-      organizationId,
-      category,
-      productGroup,
-      brand,
-      pageable);
-
+    ProductListDTO result = productService.updateProductStatuses(organizationId, productIds, ProductStatusEnum.APPROVED);
     return ResponseEntity.ok(result);
   }
 
+  @PatchMapping("/products/status/validate")
+  public ResponseEntity<ProductListDTO> validateProducts(
+    @RequestHeader("x-organization-id") String organizationId,
+    @RequestBody List<String> productIds) {
 
+    ProductListDTO result = productService.updateProductStatuses(organizationId, productIds, ProductStatusEnum.IN_VALIDATION);
+    return ResponseEntity.ok(result);
+  }
 
+  @PatchMapping("/products/status/reject")
+  public ResponseEntity<ProductListDTO> rejectProducts(
+    @RequestHeader("x-organization-id") String organizationId,
+    @RequestBody List<String> productIds) {
+
+    ProductListDTO result = productService.updateProductStatuses(organizationId, productIds, ProductStatusEnum.REJECTED);
+    return ResponseEntity.ok(result);
+  }
 
 
 }

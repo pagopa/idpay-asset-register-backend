@@ -22,5 +22,5 @@ public interface ProductSpecificRepository {
 
   List<Product> findDistinctProductFileIdAndCategoryByOrganizationId(String organizationId);
 
-  Page<Product> findByMarkedStatus(boolean onlyMarked, String organizationId, String category, String productGroup, String brand, Pageable pageable);
+  List<Product> findByIdsAndOrganizationId(List<String> productIds, String organizationId);
 }
