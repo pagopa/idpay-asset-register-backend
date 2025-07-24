@@ -141,7 +141,7 @@ public class ProductSpecificRepositoryImpl implements ProductSpecificRepository 
       criteria.and(Product.Fields.eprelCode).regex(".*" + eprelCode + ".*", "i"); // Contains, case-insensitive
     }
     if(gtinCode != null){
-      criteria.and(Product.Fields.gtinCode).regex(".*" + gtinCode + ".*", "i"); // Contains, case-insensitive
+      criteria.and("_id").regex(".*" + gtinCode + ".*", "i"); // Contains, case-insensitive
     }
 
     return criteria;
