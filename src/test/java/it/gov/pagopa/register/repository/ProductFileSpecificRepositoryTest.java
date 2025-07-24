@@ -65,7 +65,7 @@ class ProductFileSpecificRepositoryTest {
     assertTrue(criteria.getCriteriaObject().containsKey("productCode"));
     assertTrue(criteria.getCriteriaObject().containsKey("productFileId"));
     assertTrue(criteria.getCriteriaObject().containsKey("eprelCode"));
-    assertTrue(criteria.getCriteriaObject().containsKey("gtinCode"));
+    assertTrue(criteria.getCriteriaObject().containsKey("_id"));
   }
 
   @Test
