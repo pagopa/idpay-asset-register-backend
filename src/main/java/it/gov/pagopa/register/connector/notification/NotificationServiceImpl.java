@@ -73,7 +73,7 @@ public class NotificationServiceImpl implements NotificationService {
         case "excludedList", "suspendedList", "ripristinedList" -> {
           String htmlList = products.stream()
             .map(code -> "<li>" + code + "</li>")
-            .collect(Collectors.joining("", "<ul>", "</ul>"));
+            .collect(Collectors.joining(""));
           templateValues.put(placeholder, htmlList);
         }
         case "motivation" -> templateValues.put("motivation", motivation);

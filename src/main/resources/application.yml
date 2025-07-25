@@ -122,7 +122,7 @@ app:
       place-holder:
         ok: productFileName
         partial: productFileName
-        rejected: suspendedList, motivation
+        rejected: excludedList, motivation
         supervisioned: suspendedList, motivation
         approved: ripristinedList
     eprel:
