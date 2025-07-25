@@ -195,6 +195,8 @@ public class ProductFileService {
       tempFilePath = Files.createTempFile("errors-", ".csv", attr);
     } else {
       tempFilePath = Files.createTempFile("errors-", ".csv");
+      tempFilePath.toFile().setReadable(true, true);
+      tempFilePath.toFile().setWritable(true, true);
     }
 
     CsvUtils.writeCsvWithErrors(
