@@ -57,7 +57,7 @@ class ProductFileSpecificRepositoryTest {
   @Test
   void testGetCriteria_AllFieldsPresent() {
     Criteria criteria = productSpecificRepository.getCriteria(
-      "org1", "cat", "prodCode", "fileId", "eprel", "gtin");
+      "org1", "cat", "prodCode", "fileId", "eprel", "gtin","descrption");
 
     assertNotNull(criteria);
     assertTrue(criteria.getCriteriaObject().containsKey("organizationId"));
@@ -66,12 +66,13 @@ class ProductFileSpecificRepositoryTest {
     assertTrue(criteria.getCriteriaObject().containsKey("productFileId"));
     assertTrue(criteria.getCriteriaObject().containsKey("eprelCode"));
     assertTrue(criteria.getCriteriaObject().containsKey("_id"));
+    assertTrue(criteria.getCriteriaObject().containsKey("description"));
   }
 
   @Test
   void testGetCriteria_OnlyOrgIdPresent() {
     Criteria criteria = productSpecificRepository.getCriteria(
-      "org1", null, null, null, null, null);
+      "org1", null, null, null, null, null,null);
 
     assertEquals("org1", criteria.getCriteriaObject().get("organizationId"));
     assertEquals(1, criteria.getCriteriaObject().size());

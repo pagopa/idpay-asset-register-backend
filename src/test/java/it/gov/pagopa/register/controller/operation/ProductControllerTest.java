@@ -55,6 +55,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
           , any()
           , any()
           , any()
+          , any()
           , any()))
         .thenReturn(mockResponse);
       mockMvc.perform(get("/idpay/register/products")
@@ -81,6 +82,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
     @Test
     void testGetProducts_ServiceThrowsException() throws Exception {
       Mockito.when(productService.getProducts(eq("organizationIdTest")
+          , any()
           , any()
           , any()
           , any()

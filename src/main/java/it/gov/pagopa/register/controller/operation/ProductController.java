@@ -29,6 +29,7 @@ public class ProductController {
     @RequestParam @Nullable String productFileId,
     @RequestParam @Nullable String eprelCode,
     @RequestParam @Nullable String gtinCode,
+    @RequestParam @Nullable String description,
     @PageableDefault(size = 20, sort = "registrationDate", direction = Sort.Direction.DESC) Pageable pageable) {
 
     ProductListDTO result = productService.getProducts(
@@ -38,6 +39,7 @@ public class ProductController {
       productFileId,
       eprelCode,
       gtinCode,
+      description,
       pageable);
 
     return ResponseEntity.ok(result);
