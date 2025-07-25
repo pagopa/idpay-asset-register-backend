@@ -148,7 +148,7 @@ public class ProductMapper {
         .setTrim(true)
         .build();
       List<CSVRecord> records = format.parse(new StringReader(out.toString())).getRecords();
-      return records.isEmpty() ? null : records.get(0);
+      return records.isEmpty() ? null : records.getFirst();
     } catch (Exception e) {
       return null;
     }

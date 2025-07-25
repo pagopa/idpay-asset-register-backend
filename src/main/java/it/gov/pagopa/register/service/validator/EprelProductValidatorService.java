@@ -5,7 +5,9 @@ import it.gov.pagopa.register.connector.eprel.EprelConnector;
 import it.gov.pagopa.register.dto.utils.EprelProduct;
 import it.gov.pagopa.register.dto.utils.EprelResult;
 import it.gov.pagopa.register.dto.utils.EprelValidationRule;
+import it.gov.pagopa.register.enums.ProductStatusEnum;
 import it.gov.pagopa.register.model.operation.Product;
+import it.gov.pagopa.register.repository.operation.ProductRepository;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -16,8 +18,7 @@ import org.springframework.stereotype.Service;
 import java.util.*;
 
 import static it.gov.pagopa.register.constants.AssetRegisterConstants.*;
-import static it.gov.pagopa.register.mapper.operation.ProductMapper.mapEprelToProduct;
-import static it.gov.pagopa.register.mapper.operation.ProductMapper.mapProductToCsvRow;
+import static it.gov.pagopa.register.mapper.operation.ProductMapper.*;
 
 @Service
 @RequiredArgsConstructor
@@ -27,6 +28,7 @@ public class EprelProductValidatorService {
 
   private final EprelValidationConfig eprelValidationConfig;
   private final EprelConnector eprelConnector;
+  private final ProductRepository productRepository;
   public EprelResult validateRecords(List<CSVRecord> records, Set<String> fields, String category, String orgId, String productFileId, List<String> headers) {
     log.info("[VALIDATE_RECORDS] - Validating records for organizationId: {}, category: {}, productFileId: {}", orgId, category, productFileId);
     Map<String, EprelValidationRule> rules = eprelValidationConfig.getSchemas();
@@ -42,6 +44,7 @@ public class EprelProductValidatorService {
     Map<CSVRecord, String> errorMessages = new HashMap<>();
 
     for (CSVRecord csvRow : records) {
+
       validateRecord(csvRow, context, validRecords, invalidRecords, errorMessages);
     }
 
@@ -53,6 +56,20 @@ public class EprelProductValidatorService {
                               Map<String, Product> validRecords,
                               List<CSVRecord> invalidRecords,
                               Map<CSVRecord, String> errorMessages) {
+
+    Optional<Product> optProduct = productRepository.findById(csvRow.get(CODE_GTIN_EAN));
+    boolean isProductPresent = optProduct.isPresent();
+    if(isProductPresent){
+      if( !context.getOrgId().equals(optProduct.get().getOrganizationId())){
+        invalidRecords.add(csvRow);
+        errorMessages.put(csvRow,DUPLICATE_GTIN_EAN_WITH_DIFFERENT_ORGANIZATIONID);
+        return;
+      } else if (!ProductStatusEnum.APPROVED.toString().equals(optProduct.get().getStatus())) {
+        invalidRecords.add(csvRow);
+        errorMessages.put(csvRow,DUPLICATE_GTIN_EAN_WITH_STATUS_NOT_APPROVED);
+        return;
+      }
+    }
 
     log.info("[VALIDATE_RECORD] - Validating record with EPREL code: {}", csvRow.get(CODE_EPREL));
     EprelProduct eprelData = eprelConnector.callEprel(csvRow.get(CODE_EPREL));
@@ -82,16 +99,17 @@ public class EprelProductValidatorService {
     log.info("[VALIDATE_RECORD] - EPREL product valid: {}", csvRow.get(CODE_EPREL));
     String gtin = csvRow.get(CODE_GTIN_EAN);
 
-    if (validRecords.containsKey(gtin)) {
-      Product product = validRecords.remove(gtin);
-      CSVRecord duplicateGtinRow = mapProductToCsvRow(product, context.getCategory(), context.getHeaders());
+    if(validRecords.containsKey(csvRow.get(CODE_GTIN_EAN))) {
+      Product duplicateGtin = validRecords.remove(csvRow.get(CODE_GTIN_EAN));
+      CSVRecord duplicateGtinRow = mapProductToCsvRow(duplicateGtin,context.getCategory(), context.getHeaders());
       invalidRecords.add(duplicateGtinRow);
-      errorMessages.put(duplicateGtinRow, DUPLICATE_GTIN_EAN);
+      errorMessages.put(duplicateGtinRow,DUPLICATE_GTIN_EAN);
+
       log.warn("[VALIDATE_RECORD] - Duplicate error for record with GTIN code: {}", gtin);
     }
-
     Product product = mapEprelToProduct(csvRow, eprelData, context.getOrgId(), context.getProductFileId(), context.getCategory());
     validRecords.put(gtin, product);
+    log.info("[PRODUCT_UPLOAD] - Added eprel product: {}", csvRow.get(CODE_GTIN_EAN));
   }
 
 

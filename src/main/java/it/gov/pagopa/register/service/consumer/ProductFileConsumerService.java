@@ -9,6 +9,7 @@ import it.gov.pagopa.register.connector.storage.FileStorageClient;
 import it.gov.pagopa.register.dto.operation.StorageEventDTO;
 import it.gov.pagopa.register.dto.utils.EprelResult;
 import it.gov.pagopa.register.dto.utils.EventDetails;
+import it.gov.pagopa.register.enums.ProductStatusEnum;
 import it.gov.pagopa.register.model.operation.Product;
 import it.gov.pagopa.register.model.operation.ProductFile;
 import it.gov.pagopa.register.repository.operation.ProductFileRepository;
@@ -193,17 +194,38 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
     List<CSVRecord> invalidRecords = new ArrayList<>();
     Map<CSVRecord, String> errorMessages = new HashMap<>();
     for (CSVRecord csvRecord : records) {
-      if(validProduct.containsKey(CODE_GTIN_EAN)) {
-        Product duplicateGtin = validProduct.remove(csvRecord.get(CODE_GTIN_EAN));
-        CSVRecord duplicateGtinRow = mapProductToCsvRow(duplicateGtin,COOKINGHOBS, headers);
-        invalidRecords.add(duplicateGtinRow);
-        errorMessages.put(duplicateGtinRow,DUPLICATE_GTIN_EAN);
-        log.info("[PRODUCT_UPLOAD] - Added cooking hob product: {}", csvRecord.get(CODE_PRODUCT));
-      } else {
-        validProduct.put(csvRecord.get(CODE_GTIN_EAN),mapCookingHobToProduct(csvRecord, orgId, productFileId));
-        log.info("[PRODUCT_UPLOAD] - Added cooking hob product: {}", csvRecord.get(CODE_PRODUCT));
+      Optional<Product> optProduct = productRepository.findById(csvRecord.get(CODE_GTIN_EAN));
+      boolean isProductPresent = optProduct.isPresent();
+      boolean dbCheck = true;
+      if(isProductPresent){
+        if( !orgId.equals(optProduct.get().getOrganizationId())){
+          invalidRecords.add(csvRecord);
+          errorMessages.put(csvRecord,DUPLICATE_GTIN_EAN_WITH_DIFFERENT_ORGANIZATIONID);
+          dbCheck = false;
+        } else if (!ProductStatusEnum.APPROVED.toString().equals(optProduct.get().getStatus())) {
+          invalidRecords.add(csvRecord);
+          errorMessages.put(csvRecord,DUPLICATE_GTIN_EAN_WITH_STATUS_NOT_APPROVED);
+          dbCheck = false;
+        }
       }
+      if(dbCheck){
+        if(validProduct.containsKey(csvRecord.get(CODE_GTIN_EAN))) {
+          Product duplicateGtin = validProduct.remove(csvRecord.get(CODE_GTIN_EAN));
+          CSVRecord duplicateGtinRow = mapProductToCsvRow(duplicateGtin,COOKINGHOBS, headers);
+          invalidRecords.add(duplicateGtinRow);
+          errorMessages.put(duplicateGtinRow,DUPLICATE_GTIN_EAN);
+          log.info("[PRODUCT_UPLOAD] - Duplicate error for record with GTIN code: {}", csvRecord.get(CODE_GTIN_EAN));
+        }
+        validProduct.put(csvRecord.get(CODE_GTIN_EAN),mapCookingHobToProduct(csvRecord, orgId, productFileId));
+        log.info("[PRODUCT_UPLOAD] - Added cooking hob product: {}", csvRecord.get(CODE_GTIN_EAN));
+
+      }
+
     }
+    processValidAndInvalidRecords(productFileId, headers, validProduct, invalidRecords, errorMessages);
+  }
+
+  private void processValidAndInvalidRecords(String productFileId, List<String> headers, Map<String, Product> validProduct, List<CSVRecord> invalidRecords, Map<CSVRecord, String> errorMessages) {
     if (!validProduct.isEmpty()) {
       List<Product> savedProduct = productRepository.saveAll(validProduct.values().stream().toList());
       log.info("[PRODUCT_UPLOAD] - Saved {} valid products for file {}", savedProduct.size(), productFileId);

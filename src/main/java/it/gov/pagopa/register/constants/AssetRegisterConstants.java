@@ -2,6 +2,7 @@ package it.gov.pagopa.register.constants;
 
 import it.gov.pagopa.register.dto.utils.ColumnValidationRule;
 import it.gov.pagopa.register.dto.utils.EprelValidationRule;
+import it.gov.pagopa.register.enums.ProductStatusEnum;
 
 import java.util.*;
 import java.util.regex.Pattern;
@@ -146,6 +147,8 @@ public class AssetRegisterConstants {
   public static final String ERROR_PRODUCT_GROU = "La categoria EPREL non è compatibile con la categoria prevista";
   public static final String ERROR_ENERGY_CLASS = "La classe energetica non è conforme";
   public static final String  DUPLICATE_GTIN_EAN = "GTIN già presente in un'altra riga";
+  public static final String  DUPLICATE_GTIN_EAN_WITH_DIFFERENT_ORGANIZATIONID = "prodotto già presente con organizationId differente";
+  public static final String  DUPLICATE_GTIN_EAN_WITH_STATUS_NOT_APPROVED = "prodotto già presente con stato diverso da " + ProductStatusEnum.APPROVED;
   public static final class EprelValidationRules {
     private EprelValidationRules() {}
 
