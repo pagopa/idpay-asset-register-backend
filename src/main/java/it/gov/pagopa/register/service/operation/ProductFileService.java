@@ -23,6 +23,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileAttribute;
@@ -187,9 +188,14 @@ public class ProductFileService {
   }
 
   private void uploadFormalErrorFile(MultipartFile file, ValidationResultDTO validationRecords, List<String> headers, ProductFile productFile) throws IOException {
-    Set<PosixFilePermission> perms = PosixFilePermissions.fromString("rw-------");
-    FileAttribute<Set<PosixFilePermission>> attr = PosixFilePermissions.asFileAttribute(perms);
-    Path tempFilePath = Files.createTempFile("errors-", ".csv", attr);
+    Path tempFilePath;
+    if (FileSystems.getDefault().supportedFileAttributeViews().contains("posix")) {
+      Set<PosixFilePermission> perms = PosixFilePermissions.fromString("rw-------");
+      FileAttribute<Set<PosixFilePermission>> attr = PosixFilePermissions.asFileAttribute(perms);
+      tempFilePath = Files.createTempFile("errors-", ".csv", attr);
+    } else {
+      tempFilePath = Files.createTempFile("errors-", ".csv");
+    }
 
     CsvUtils.writeCsvWithErrors(
       validationRecords.getInvalidRecords(),

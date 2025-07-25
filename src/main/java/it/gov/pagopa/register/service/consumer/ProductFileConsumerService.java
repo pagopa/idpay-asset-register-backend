@@ -23,6 +23,7 @@ import org.springframework.messaging.Message;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileAttribute;
@@ -271,10 +272,14 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
 
   private void processErrorRecords(List<CSVRecord> errors, Map<CSVRecord, String> messages, String productFileId, List<String> headers) {
     try {
-
-      Set<PosixFilePermission> perms = PosixFilePermissions.fromString("rw-------");
-      FileAttribute<Set<PosixFilePermission>> attr = PosixFilePermissions.asFileAttribute(perms);
-      Path tempFilePath = Files.createTempFile("errors-", ".csv", attr);
+      Path tempFilePath;
+      if (FileSystems.getDefault().supportedFileAttributeViews().contains("posix")) {
+        Set<PosixFilePermission> perms = PosixFilePermissions.fromString("rw-------");
+        FileAttribute<Set<PosixFilePermission>> attr = PosixFilePermissions.asFileAttribute(perms);
+        tempFilePath = Files.createTempFile("errors-", ".csv", attr);
+      } else {
+        tempFilePath = Files.createTempFile("errors-", ".csv");
+      }
       CsvUtils.writeCsvWithErrors(errors, headers, messages,  tempFilePath);
       String destination = REPORT_PARTIAL_ERROR + productFileId + CSV;
       fileStorageClient.upload(Files.newInputStream(tempFilePath), destination, "text/csv");
