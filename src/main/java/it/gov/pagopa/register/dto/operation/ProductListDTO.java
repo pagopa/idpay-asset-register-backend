@@ -14,6 +14,7 @@ import java.util.List;
 public class ProductListDTO {
 
   private List<ProductDTO> content;
+  private String message;
   private Integer pageNo;
   private Integer pageSize;
   private Long totalElements;

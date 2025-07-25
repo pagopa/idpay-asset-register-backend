@@ -176,7 +176,7 @@ public class ProductSpecificRepositoryImpl implements ProductSpecificRepository 
   public List<Product> findByIdsAndOrganizationId(List<String> productIds, String organizationId) {
     Criteria criteria = new Criteria();
     criteria.and("gtinCode").in(productIds);
-    criteria.and("organizationId").is(organizationId);
+    criteria.and(ORGANIZATION_ID).is(organizationId);
 
     return mongoTemplate.find(Query.query(criteria), Product.class);
   }

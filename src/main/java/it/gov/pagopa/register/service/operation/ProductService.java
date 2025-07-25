@@ -13,6 +13,7 @@ import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -62,26 +63,42 @@ public class ProductService{
   public ProductListDTO updateProductStatuses (String organizationId, List<String> productIds, ProductStatusEnum newStatus) {
     log.info("[UPDATE_PRODUCT_STATUSES] - Updating status to {} for products: {}", newStatus, productIds);
 
-    List<Product> products = productRepository.findByIdsAndOrganizationId(productIds, organizationId);
+    List<Product> allProducts = productRepository.findAllById(productIds);
 
-    if (products.size() != productIds.size()) {
-      throw new IllegalArgumentException("Alcuni prodotti non esistono o non appartengono all’organizzazione specificata");
+    List<Product> validProducts = new ArrayList<>();
+    List<ProductDTO> rejectedProducts = new ArrayList<>();
+
+    for (Product product : allProducts) {
+      if (organizationId.equals(product.getOrganizationId())) {
+        product.setStatus(newStatus.name());
+        validProducts.add(product);
+      } else {
+        ProductDTO rejectedDTO = ProductMapper.toDTO(product);
+        rejectedDTO.setRejectReason("Prodotto non appartenente all'organizzazione");
+        rejectedProducts.add(rejectedDTO);
+      }
     }
 
-    products.forEach(p -> p.setStatus(newStatus.name()));
+    List<ProductDTO> updatedDTOs = validProducts.isEmpty() ? new ArrayList<>() :
+      productRepository.saveAll(validProducts)
+        .stream()
+        .map(ProductMapper::toDTO)
+        .toList();
 
-    List<Product> updated = productRepository.saveAll(products);
+    List<ProductDTO> allResults = new ArrayList<>();
+    allResults.addAll(updatedDTOs);
+    allResults.addAll(rejectedProducts);
 
-    List<ProductDTO> result = updated.stream()
-      .map(ProductMapper::toDTO)
-      .toList();
+    String operationMessage = String.format("Operazione eseguita: aggiornati %d elementi, scartati %d elementi",
+      updatedDTOs.size(), rejectedProducts.size());
 
     return ProductListDTO.builder()
-      .content(result)
+      .content(allResults)
       .pageNo(0)
-      .pageSize(result.size())
-      .totalElements((long) result.size())
-      .totalPages(1)
+      .pageSize(allResults.size())
+      .totalElements((long) allResults.size())
+      .totalPages(2)
+      .message(operationMessage)
       .build();
   }
 
