@@ -95,6 +95,81 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         .andExpect(status().isInternalServerError());
     }
 
+    @Test
+    void testUpdateProductStatuses_Success() throws Exception {
+      ProductListDTO mockResponse = ProductListDTO.builder()
+        .content(Collections.emptyList())
+        .pageNo(0)
+        .pageSize(0)
+        .totalElements(0L)
+        .totalPages(1)
+        .build();
+
+      Mockito.when(productService.updateProductStatuses(
+          eq("org-test"),
+          eq(Collections.singletonList("prod-1")),
+          eq(it.gov.pagopa.register.enums.ProductStatusEnum.APPROVED)))
+        .thenReturn(mockResponse);
+
+      String requestBody = objectMapper.writeValueAsString(
+        new it.gov.pagopa.register.dto.operation.ProductUpdateStatusRequestDTO(
+          Collections.singletonList("prod-1"),
+          it.gov.pagopa.register.enums.ProductStatusEnum.APPROVED
+        )
+      );
+
+      mockMvc.perform(
+          org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+            .patch("/idpay/register/products/update-status")
+            .header("x-organization-id", "org-test")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(requestBody))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.pageNo").value(0));
+    }
+
+    @Test
+    void testUpdateProductStatuses_ServiceException() throws Exception {
+      Mockito.when(productService.updateProductStatuses(
+          eq("org-test"),
+          any(),
+          any()))
+        .thenThrow(new RuntimeException("Unexpected"));
+
+      String requestBody = objectMapper.writeValueAsString(
+        new it.gov.pagopa.register.dto.operation.ProductUpdateStatusRequestDTO(
+          Collections.singletonList("prod-1"),
+          it.gov.pagopa.register.enums.ProductStatusEnum.REJECTED
+        )
+      );
+
+      mockMvc.perform(
+          org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+            .patch("/idpay/register/products/update-status")
+            .header("x-organization-id", "org-test")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(requestBody))
+        .andExpect(status().isInternalServerError());
+    }
+
+    @Test
+    void testUpdateProductStatuses_MissingHeader() throws Exception {
+      String requestBody = objectMapper.writeValueAsString(
+        new it.gov.pagopa.register.dto.operation.ProductUpdateStatusRequestDTO(
+          Collections.singletonList("prod-1"),
+          it.gov.pagopa.register.enums.ProductStatusEnum.IN_VALIDATION
+        )
+      );
+
+      mockMvc.perform(
+          org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+            .patch("/idpay/register/products/update-status")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(requestBody))
+        .andExpect(status().isBadRequest());
+    }
+
+
   }
 
 

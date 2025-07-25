@@ -1,6 +1,7 @@
 package it.gov.pagopa.register.service.operation;
 
 import it.gov.pagopa.register.dto.operation.ProductListDTO;
+import it.gov.pagopa.register.enums.ProductStatusEnum;
 import it.gov.pagopa.register.enums.UploadCsvStatus;
 import it.gov.pagopa.register.model.operation.Product;
 import it.gov.pagopa.register.repository.operation.ProductRepository;
@@ -138,5 +139,57 @@ class ProductServiceTest {
       .findByFilter(any(), any());
 
   }
+
+  @Test
+  void testUpdateProductStatuses_Success() {
+    String organizationId = "org123";
+    List<String> productIds = List.of("prod1", "prod2");
+
+    Product product1 = Product.builder().gtinCode("prod1").organizationId(organizationId).status("IN_VALIDATION").build();
+    Product product2 = Product.builder().gtinCode("prod2").organizationId(organizationId).status("IN_VALIDATION").build();
+
+    List<Product> productList = List.of(product1, product2);
+
+    when(productRepository.findByIdsAndOrganizationId(productIds, organizationId))
+      .thenReturn(productList);
+    when(productRepository.saveAll(productList))
+      .thenReturn(productList);
+
+    ProductListDTO result = productService.updateProductStatuses(organizationId, productIds, ProductStatusEnum.APPROVED);
+
+    assertEquals(2, result.getContent().size());
+    assertEquals(0, result.getPageNo());
+    assertEquals(2, result.getPageSize());
+    assertEquals(2L, result.getTotalElements());
+    assertEquals(1, result.getTotalPages());
+
+    for (Product p : productList) {
+      assertEquals("APPROVED", p.getStatus());
+    }
+
+    verify(productRepository).findByIdsAndOrganizationId(productIds, organizationId);
+    verify(productRepository).saveAll(productList);
+  }
+
+  @Test
+  void testUpdateProductStatuses_ProductMismatch_ThrowsException() {
+    String organizationId = "org123";
+    List<String> productIds = List.of("prod1", "prod2");
+
+    Product product1 = Product.builder().gtinCode("prod1").organizationId(organizationId).build();
+
+    when(productRepository.findByIdsAndOrganizationId(productIds, organizationId))
+      .thenReturn(List.of(product1));
+
+    IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () ->
+      productService.updateProductStatuses(organizationId, productIds, ProductStatusEnum.REJECTED));
+
+    assertEquals("Alcuni prodotti non esistono o non appartengono all’organizzazione specificata", ex.getMessage());
+
+    verify(productRepository).findByIdsAndOrganizationId(productIds, organizationId);
+    verify(productRepository, never()).saveAll(any());
+  }
+
+
 
 }

@@ -15,4 +15,5 @@ import java.util.List;
 public class ProductUpdateStatusRequestDTO {
   private List<String> productIds;
   private ProductStatusEnum status;
+  private String rejectionReason;
 }
