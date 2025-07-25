@@ -187,6 +187,7 @@ public class ProductFileService {
     }
   }
 
+  @SuppressWarnings("java:S5443") // The system used will be Linux so never create a file without specified permissions
   private void uploadFormalErrorFile(MultipartFile file, ValidationResultDTO validationRecords, List<String> headers, ProductFile productFile) throws IOException {
     Path tempFilePath;
     if (FileSystems.getDefault().supportedFileAttributeViews().contains("posix")) {
@@ -195,10 +196,7 @@ public class ProductFileService {
       tempFilePath = Files.createTempFile("errors-", ".csv", attr);
     } else {
       tempFilePath = Files.createTempFile("errors-", ".csv");
-      tempFilePath.toFile().setReadable(true, true);
-      tempFilePath.toFile().setWritable(true, true);
     }
-
     CsvUtils.writeCsvWithErrors(
       validationRecords.getInvalidRecords(),
       headers,

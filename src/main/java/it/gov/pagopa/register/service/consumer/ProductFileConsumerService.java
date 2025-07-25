@@ -270,10 +270,10 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
     }
   }
 
+
+  @SuppressWarnings("java:S5443") //The system used will be Linux so never create a file without specified permissions
   private void processErrorRecords(List<CSVRecord> errors, Map<CSVRecord, String> messages, String productFileId, List<String> headers) {
     try {
-
-
       Path tempFilePath;
       if (FileSystems.getDefault().supportedFileAttributeViews().contains("posix")) {
         Set<PosixFilePermission> perms = PosixFilePermissions.fromString("rw-------");
@@ -281,10 +281,7 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
         tempFilePath = Files.createTempFile("errors-", ".csv", attr);
       } else {
         tempFilePath = Files.createTempFile("errors-", ".csv");
-        tempFilePath.toFile().setReadable(true, true);
-        tempFilePath.toFile().setWritable(true, true);
       }
-
       CsvUtils.writeCsvWithErrors(errors, headers, messages,  tempFilePath);
       String destination = REPORT_PARTIAL_ERROR + productFileId + CSV;
       fileStorageClient.upload(Files.newInputStream(tempFilePath), destination, "text/csv");
