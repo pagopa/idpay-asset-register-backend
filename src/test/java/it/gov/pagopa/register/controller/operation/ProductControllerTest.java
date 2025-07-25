@@ -113,7 +113,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
       List<String> productIds = List.of("prod-1", "prod-2");
       ProductUpdateStatusRequestDTO requestDTO = new ProductUpdateStatusRequestDTO();
-      requestDTO.setProductIds(productIds);
+      requestDTO.setGtinCodes(productIds);
       requestDTO.setStatus(ProductStatusEnum.APPROVED);
       requestDTO.setMotivation("Valid reason");
 
@@ -139,7 +139,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
     @Test
     void testUpdateProductStatuses_MissingHeader() throws Exception {
       ProductUpdateStatusRequestDTO requestDTO = new ProductUpdateStatusRequestDTO();
-      requestDTO.setProductIds(List.of("prod-1"));
+      requestDTO.setGtinCodes(List.of("prod-1"));
       requestDTO.setStatus(ProductStatusEnum.IN_VALIDATION);
       requestDTO.setMotivation("Missing header test");
 
