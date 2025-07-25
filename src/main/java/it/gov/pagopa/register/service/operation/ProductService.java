@@ -1,10 +1,12 @@
 package it.gov.pagopa.register.service.operation;
 
+import it.gov.pagopa.register.connector.notification.NotificationService;
 import it.gov.pagopa.register.dto.operation.ProductDTO;
 import it.gov.pagopa.register.dto.operation.ProductListDTO;
 import it.gov.pagopa.register.enums.ProductStatusEnum;
 import it.gov.pagopa.register.mapper.operation.ProductMapper;
 import it.gov.pagopa.register.model.operation.Product;
+import it.gov.pagopa.register.repository.operation.ProductFileRepository;
 import it.gov.pagopa.register.repository.operation.ProductRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -13,17 +15,21 @@ import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+
+import static it.gov.pagopa.register.constants.AssetRegisterConstants.COOKINGHOBS;
 
 @Service
 @Slf4j
 public class ProductService{
 
   private final ProductRepository productRepository;
-
-  public ProductService(ProductRepository productRepository) {
+  private final ProductFileRepository productFileRepository;
+  private final NotificationService notificationService;
+  public ProductService(ProductRepository productRepository, ProductFileRepository productFileRepository, NotificationService notificationService) {
     this.productRepository = productRepository;
+    this.productFileRepository = productFileRepository;
+    this.notificationService = notificationService;
   }
 
 
@@ -60,45 +66,53 @@ public class ProductService{
       .build();
   }
 
-  public ProductListDTO updateProductStatuses (String organizationId, List<String> productIds, ProductStatusEnum newStatus) {
+  public ProductListDTO updateProductState(String organizationId, List<String> productIds, ProductStatusEnum newStatus, String motivation) {
     log.info("[UPDATE_PRODUCT_STATUSES] - Updating status to {} for products: {}", newStatus, productIds);
 
-    List<Product> allProducts = productRepository.findAllById(productIds);
+    List<Product> productsToUpdate = productRepository.findByIdsAndOrganizationId(productIds,organizationId);
 
-    List<Product> validProducts = new ArrayList<>();
-    List<ProductDTO> rejectedProducts = new ArrayList<>();
+    productsToUpdate.forEach(p ->{
+      p.setStatus(newStatus.name());
+      p.setMotivation(motivation);
+    });
 
-    for (Product product : allProducts) {
-      if (organizationId.equals(product.getOrganizationId())) {
-        product.setStatus(newStatus.name());
-        validProducts.add(product);
-      } else {
-        ProductDTO rejectedDTO = ProductMapper.toDTO(product);
-        rejectedDTO.setRejectReason("Prodotto non appartenente all'organizzazione");
-        rejectedProducts.add(rejectedDTO);
-      }
+    List<Product> productsUpdated = productRepository.saveAll(productsToUpdate);
+
+    Map<String, List<String>> productFileIdMap = new HashMap<>();
+    for (Product p : productsUpdated) {
+      productFileIdMap
+        .computeIfAbsent(p.getProductFileId(), k -> new ArrayList<>())
+        .add(p.getGtinCode());
     }
 
-    List<ProductDTO> updatedDTOs = validProducts.isEmpty() ? new ArrayList<>() :
-      productRepository.saveAll(validProducts)
-        .stream()
-        .map(ProductMapper::toDTO)
+    Map<String, List<String>> emailMap = new HashMap<>();
+    for (String fileId : productFileIdMap.keySet()) {
+      productFileRepository.findById(fileId).ifPresent(file ->
+        emailMap
+          .computeIfAbsent(file.getUserEmail(), k -> new ArrayList<>())
+          .add(fileId)
+      );
+    }
+
+    Map<String, List<String>> emailProduct = new HashMap<>();
+    for (Map.Entry<String, List<String>> entry : emailMap.entrySet()) {
+      String email = entry.getKey();
+      List<String> fileIds = entry.getValue();
+
+      List<String> gtinCodes = fileIds.stream()
+        .flatMap(fileId -> productFileIdMap.getOrDefault(fileId, List.of()).stream())
         .toList();
 
-    List<ProductDTO> allResults = new ArrayList<>();
-    allResults.addAll(updatedDTOs);
-    allResults.addAll(rejectedProducts);
+      emailProduct.put(email, gtinCodes);
+    }
 
-    String operationMessage = String.format("Operazione eseguita: aggiornati %d elementi, scartati %d elementi",
-      updatedDTOs.size(), rejectedProducts.size());
+    emailProduct.keySet().forEach(e ->
+      notificationService.sendEmailUpdateStatus(emailProduct.get(e).toString(), motivation, newStatus.name(), e)
+    );
 
     return ProductListDTO.builder()
-      .content(allResults)
       .pageNo(0)
-      .pageSize(allResults.size())
-      .totalElements((long) allResults.size())
       .totalPages(2)
-      .message(operationMessage)
       .build();
   }
 

@@ -46,14 +46,15 @@ public class ProductController {
   }
 
   @PatchMapping("/products/update-status")
-  public ResponseEntity<ProductListDTO> approveProducts(
+  public ResponseEntity<ProductListDTO> updateProductsState(
     @RequestHeader("x-organization-id") String organizationId,
     @RequestBody ProductUpdateStatusRequestDTO dto) {
 
-    ProductListDTO result = productService.updateProductStatuses(
+    ProductListDTO result = productService.updateProductState(
       organizationId,
       dto.getProductIds(),
-      dto.getStatus());
+      dto.getStatus(),
+      dto.getMotivation());
     return ResponseEntity.ok(result);
   }
 }

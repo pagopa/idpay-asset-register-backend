@@ -2,7 +2,6 @@ package it.gov.pagopa.register.service.operation;
 
 import it.gov.pagopa.register.dto.operation.ProductListDTO;
 import it.gov.pagopa.register.enums.ProductStatusEnum;
-import it.gov.pagopa.register.enums.UploadCsvStatus;
 import it.gov.pagopa.register.model.operation.Product;
 import it.gov.pagopa.register.repository.operation.ProductRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -158,7 +157,7 @@ class ProductServiceTest {
     when(productRepository.saveAll(productList))
       .thenReturn(productList);
 
-    ProductListDTO result = productService.updateProductStatuses(organizationId, productIds, ProductStatusEnum.APPROVED);
+    ProductListDTO result = productService.updateProductState(organizationId, productIds, ProductStatusEnum.APPROVED);
 
     assertEquals(2, result.getContent().size());
     assertEquals(0, result.getPageNo());
@@ -185,7 +184,7 @@ class ProductServiceTest {
       .thenReturn(List.of(product1));
 
     IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () ->
-      productService.updateProductStatuses(organizationId, productIds, ProductStatusEnum.REJECTED));
+      productService.updateProductState(organizationId, productIds, ProductStatusEnum.REJECTED));
 
     assertEquals("Alcuni prodotti non esistono o non appartengono all’organizzazione specificata", ex.getMessage());
 

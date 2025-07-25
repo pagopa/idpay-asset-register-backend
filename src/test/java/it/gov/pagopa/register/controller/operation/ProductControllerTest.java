@@ -105,7 +105,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         .totalPages(1)
         .build();
 
-      Mockito.when(productService.updateProductStatuses(
+      Mockito.when(productService.updateProductState(
           eq("org-test"),
           eq(Collections.singletonList("prod-1")),
           eq(it.gov.pagopa.register.enums.ProductStatusEnum.APPROVED)))
@@ -130,7 +130,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
     @Test
     void testUpdateProductStatuses_ServiceException() throws Exception {
-      Mockito.when(productService.updateProductStatuses(
+      Mockito.when(productService.updateProductState(
           eq("org-test"),
           any(),
           any()))
