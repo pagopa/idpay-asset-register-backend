@@ -175,7 +175,7 @@ public class ProductSpecificRepositoryImpl implements ProductSpecificRepository 
   @Override
   public List<Product> findByIdsAndOrganizationId(List<String> productIds, String organizationId) {
     Criteria criteria = new Criteria();
-    criteria.and("gtinCode").in(productIds);
+    criteria.and("_id").in(productIds);
     criteria.and(ORGANIZATION_ID).is(organizationId);
 
     return mongoTemplate.find(Query.query(criteria), Product.class);

@@ -69,31 +69,38 @@ public class ProductService{
   }
 
   public ProductListDTO updateProductState(String organizationId, List<String> productIds, ProductStatusEnum newStatus, String motivation) {
-    log.info("[UPDATE_PRODUCT_STATUSES] - Updating status to {} for products: {}", newStatus, productIds);
+    log.info("[UPDATE_PRODUCT_STATUSES] - Starting update for organizationId: {}, newStatus: {}, motivation: {}", organizationId, newStatus, motivation);
+    log.debug("[UPDATE_PRODUCT_STATUSES] - Product IDs to update: {}", productIds);
 
     List<Product> productsToUpdate = productRepository.findByIdsAndOrganizationId(productIds, organizationId);
+    log.debug("[UPDATE_PRODUCT_STATUSES] - Retrieved {} products for update", productsToUpdate.size());
 
     productsToUpdate.forEach(product -> {
+      log.debug("[UPDATE_PRODUCT_STATUSES] - Updating product {} status from {} to {}", product.getGtinCode(), product.getStatus(), newStatus.name());
       product.setStatus(newStatus.name());
       product.setMotivation(motivation);
     });
 
     List<Product> productsUpdated = productRepository.saveAll(productsToUpdate);
+    log.info("[UPDATE_PRODUCT_STATUSES] - Successfully updated {} products", productsUpdated.size());
 
     Map<String, List<String>> productFileIdToGtins = productsUpdated.stream()
       .collect(Collectors.groupingBy(
         Product::getProductFileId,
         Collectors.mapping(Product::getGtinCode, Collectors.toList())
       ));
+    log.debug("[UPDATE_PRODUCT_STATUSES] - Grouped GTINs by product file ID: {}", productFileIdToGtins);
 
     Map<String, List<String>> userEmailToFileIds = new HashMap<>();
     productFileIdToGtins.keySet().forEach(fileId ->
-      productFileRepository.findById(fileId).ifPresent(file ->
+      productFileRepository.findById(fileId).ifPresent(file -> {
+        log.debug("[UPDATE_PRODUCT_STATUSES] - Found file {} for user {}", fileId, file.getUserEmail());
         userEmailToFileIds
           .computeIfAbsent(file.getUserEmail(), k -> new ArrayList<>())
-          .add(fileId)
-      )
+          .add(fileId);
+      })
     );
+    log.debug("[UPDATE_PRODUCT_STATUSES] - Mapped user emails to file IDs: {}", userEmailToFileIds);
 
     Map<String, List<String>> userEmailToGtins = new HashMap<>();
     userEmailToFileIds.forEach((email, fileIds) -> {
@@ -101,17 +108,22 @@ public class ProductService{
         .flatMap(fileId -> productFileIdToGtins.getOrDefault(fileId, List.of()).stream())
         .toList();
       userEmailToGtins.put(email, gtins);
+      log.trace("[UPDATE_PRODUCT_STATUSES] - User {} will be notified for GTINs: {}", email, gtins);
     });
 
-    userEmailToGtins.forEach((email, gtins) ->
-      notificationService.sendEmailUpdateStatus(gtins, motivation, newStatus.name(), email)
-    );
+    userEmailToGtins.forEach((email, gtins) -> {
+      log.info("[UPDATE_PRODUCT_STATUSES] - Sending notification to {} for {} products", email, gtins.size());
+      notificationService.sendEmailUpdateStatus(gtins, motivation, newStatus.name(), email);
+    });
+
+    log.info("[UPDATE_PRODUCT_STATUSES] - Update process completed");
 
     return ProductListDTO.builder()
       .pageNo(0)
       .totalPages(1)
       .build();
   }
+
 
 
 

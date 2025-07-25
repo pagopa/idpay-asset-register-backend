@@ -13,7 +13,7 @@ import java.util.List;
 @NoArgsConstructor
 @Builder
 public class ProductUpdateStatusRequestDTO {
-  private List<String> productIds;
+  private List<String> gtinCodes;
   private ProductStatusEnum status;
   private String motivation;
 }

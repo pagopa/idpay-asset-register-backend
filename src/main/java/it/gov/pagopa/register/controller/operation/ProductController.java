@@ -52,7 +52,7 @@ public class ProductController {
 
     ProductListDTO result = productService.updateProductState(
       organizationId,
-      dto.getProductIds(),
+      dto.getGtinCodes(),
       dto.getStatus(),
       dto.getMotivation());
     return ResponseEntity.ok(result);
