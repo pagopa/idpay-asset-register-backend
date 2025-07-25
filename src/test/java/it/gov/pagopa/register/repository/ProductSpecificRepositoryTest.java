@@ -6,7 +6,9 @@ import org.bson.Document;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.*;
+import org.mockito.ArgumentCaptor;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -23,7 +25,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-public class ProductSpecificRepositoryTest {
+class ProductSpecificRepositoryTest {
   @Mock
   private MongoTemplate mongoTemplate;
 
@@ -85,7 +87,7 @@ public class ProductSpecificRepositoryTest {
 
     when(mongoTemplate.aggregate(
       any(Aggregation.class),
-      eq("product"), // Deve essere esattamente lo stesso usato nella tua impl
+      eq("product"),
       eq(Product.class))
     ).thenReturn(aggregationResults);
 
@@ -98,7 +100,6 @@ public class ProductSpecificRepositoryTest {
     assertEquals("file123", result.get(0).getProductFileId());
     assertEquals("categoryABC", result.get(0).getCategory());
 
-    // Verifica che il metodo aggregate sia stato chiamato
     verify(mongoTemplate, times(1)).aggregate(any(Aggregation.class), eq("product"), eq(Product.class));
   }
 
@@ -120,21 +121,24 @@ public class ProductSpecificRepositoryTest {
     Pageable pageable = PageRequest.of(0, 10, Sort.by(Sort.Order.asc("batchName")));
     Criteria criteria = Criteria.where("organizationId").is("org1");
 
-    when(mongoTemplate.find(any(Query.class), eq(Product.class))).thenReturn(List.of());
+    AggregationResults<Product> mockResults = new AggregationResults<>(List.of(), new Document());
+
+    when(mongoTemplate.aggregate(any(Aggregation.class), eq("product"), eq(Product.class)))
+      .thenReturn(mockResults);
 
     repository.findByFilter(criteria, pageable);
 
-    ArgumentCaptor<Query> queryCaptor = ArgumentCaptor.forClass(Query.class);
-    verify(mongoTemplate).find(queryCaptor.capture(), eq(Product.class));
+    ArgumentCaptor<Aggregation> aggregationCaptor = ArgumentCaptor.forClass(Aggregation.class);
+    verify(mongoTemplate).aggregate(aggregationCaptor.capture(), eq("product"), eq(Product.class));
 
-    Query usedQuery = queryCaptor.getValue();
-    Document sortDocument = usedQuery.getSortObject();
+    Aggregation usedAggregation = aggregationCaptor.getValue();
+    String pipelineString = usedAggregation.toString();
 
-    // Verifica indiretta del nuovo sort applicato
-    assertTrue(sortDocument.containsKey("category"));
-    assertTrue(sortDocument.containsKey("productFileId"));
-    assertEquals(1, sortDocument.get("category")); // 1 = ASC
-    assertEquals(1, sortDocument.get("productFileId"));
+    assertTrue(pipelineString.contains("categoryIt"));
+    assertTrue(pipelineString.contains("productFileId"));
+
   }
+
+
 
 }

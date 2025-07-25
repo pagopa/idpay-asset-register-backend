@@ -15,9 +15,11 @@ import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
-
-import static it.gov.pagopa.register.constants.AssetRegisterConstants.COOKINGHOBS;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -69,52 +71,48 @@ public class ProductService{
   public ProductListDTO updateProductState(String organizationId, List<String> productIds, ProductStatusEnum newStatus, String motivation) {
     log.info("[UPDATE_PRODUCT_STATUSES] - Updating status to {} for products: {}", newStatus, productIds);
 
-    List<Product> productsToUpdate = productRepository.findByIdsAndOrganizationId(productIds,organizationId);
+    List<Product> productsToUpdate = productRepository.findByIdsAndOrganizationId(productIds, organizationId);
 
-    productsToUpdate.forEach(p ->{
-      p.setStatus(newStatus.name());
-      p.setMotivation(motivation);
+    productsToUpdate.forEach(product -> {
+      product.setStatus(newStatus.name());
+      product.setMotivation(motivation);
     });
 
     List<Product> productsUpdated = productRepository.saveAll(productsToUpdate);
 
-    Map<String, List<String>> productFileIdMap = new HashMap<>();
-    for (Product p : productsUpdated) {
-      productFileIdMap
-        .computeIfAbsent(p.getProductFileId(), k -> new ArrayList<>())
-        .add(p.getGtinCode());
-    }
+    Map<String, List<String>> productFileIdToGtins = productsUpdated.stream()
+      .collect(Collectors.groupingBy(
+        Product::getProductFileId,
+        Collectors.mapping(Product::getGtinCode, Collectors.toList())
+      ));
 
-    Map<String, List<String>> emailMap = new HashMap<>();
-    for (String fileId : productFileIdMap.keySet()) {
+    Map<String, List<String>> userEmailToFileIds = new HashMap<>();
+    productFileIdToGtins.keySet().forEach(fileId ->
       productFileRepository.findById(fileId).ifPresent(file ->
-        emailMap
+        userEmailToFileIds
           .computeIfAbsent(file.getUserEmail(), k -> new ArrayList<>())
           .add(fileId)
-      );
-    }
+      )
+    );
 
-    Map<String, List<String>> emailProduct = new HashMap<>();
-    for (Map.Entry<String, List<String>> entry : emailMap.entrySet()) {
-      String email = entry.getKey();
-      List<String> fileIds = entry.getValue();
-
-      List<String> gtinCodes = fileIds.stream()
-        .flatMap(fileId -> productFileIdMap.getOrDefault(fileId, List.of()).stream())
+    Map<String, List<String>> userEmailToGtins = new HashMap<>();
+    userEmailToFileIds.forEach((email, fileIds) -> {
+      List<String> gtins = fileIds.stream()
+        .flatMap(fileId -> productFileIdToGtins.getOrDefault(fileId, List.of()).stream())
         .toList();
+      userEmailToGtins.put(email, gtins);
+    });
 
-      emailProduct.put(email, gtinCodes);
-    }
-
-    emailProduct.keySet().forEach(e ->
-      notificationService.sendEmailUpdateStatus(emailProduct.get(e).toString(), motivation, newStatus.name(), e)
+    userEmailToGtins.forEach((email, gtins) ->
+      notificationService.sendEmailUpdateStatus(gtins, motivation, newStatus.name(), email)
     );
 
     return ProductListDTO.builder()
       .pageNo(0)
-      .totalPages(2)
+      .totalPages(1)
       .build();
   }
+
 
 
 }

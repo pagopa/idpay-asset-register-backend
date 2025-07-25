@@ -6,7 +6,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -46,8 +47,9 @@ public class NotificationServiceImpl implements NotificationService {
   }
 
   @Override
-  public void sendEmailUpdateStatus(String products, String motivation, String status, String recipientEmail) {
+  public void sendEmailUpdateStatus(List<String> products, String motivation, String status, String recipientEmail) {
     EmailMessageDTO email = buildUpdateEmailMessageDTO(
+      status,
       products,
       motivation,
       emailProps.getTemplate().get(status.toLowerCase()),
@@ -57,23 +59,47 @@ public class NotificationServiceImpl implements NotificationService {
     notificationRestClient.sendEmail(email);
   }
 
-  //TODO Add tamplateValues
-  private EmailMessageDTO buildUpdateEmailMessageDTO(String products, String motivation,String template, String recipientEmail, String subject) {
+  private EmailMessageDTO buildUpdateEmailMessageDTO(String status, List<String> products, String motivation, String template, String recipientEmail, String subject) {
+    Map<String, String> templateValues = new HashMap<>();
+
+    List<String> placeholders = Optional.ofNullable(emailProps.getPlaceHolder().get(status.toLowerCase()))
+      .map(ph -> Arrays.asList(ph.split(",")))
+      .orElse(List.of());
+
+    for (String rawPlaceholder : placeholders) {
+      String placeholder = rawPlaceholder.trim();
+
+      switch (placeholder) {
+        case "excludedList", "suspendedList", "ripristinedList" -> {
+          String htmlList = products.stream()
+            .map(code -> "<li>" + code + "</li>")
+            .collect(Collectors.joining("", "<ul>", "</ul>"));
+          templateValues.put(placeholder, htmlList);
+        }
+        case "motivation" -> templateValues.put("motivation", motivation);
+        default ->
+          log.warn("Placeholder not exists: {}", placeholder);
+
+      }
+    }
+
     return EmailMessageDTO.builder()
       .templateName(template)
-      .senderEmail(null)
+      .templateValues(templateValues)
       .subject(subject)
       .content(null)
+      .senderEmail(null)
       .recipientEmail(recipientEmail)
       .build();
   }
 
+
   private EmailMessageDTO buildUploadEmailMessageDTO(String productFileId, String template, String recipientEmail, String subject) {
     return EmailMessageDTO.builder()
-      .templateValues(Map.of(emailProps.getPlaceHolder().get(PARTIAL), productFileId))
       .templateName(template)
-      .senderEmail(null)
+      .templateValues(Map.of(emailProps.getPlaceHolder().get(PARTIAL), productFileId))
       .subject(subject)
+      .senderEmail(null)
       .content(null)
       .recipientEmail(recipientEmail)
       .build();

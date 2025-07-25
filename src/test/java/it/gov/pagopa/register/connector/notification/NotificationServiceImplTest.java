@@ -1,36 +1,49 @@
 package it.gov.pagopa.register.connector.notification;
+
+import it.gov.pagopa.register.configuration.EmailNotificationConfig;
 import it.gov.pagopa.register.dto.notification.EmailMessageDTO;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
-import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
+
+@SpringBootTest(
+  classes = {
+    NotificationServiceImpl.class,
+  },
+  properties = {
+  "app.rest-client.email-notification.template.ok=template-ok",
+  "app.rest-client.email-notification.template.partial=template-partial",
+  "app.rest-client.email-notification.subject.ok=Subject OK",
+  "app.rest-client.email-notification.subject.partial=Subject Partial",
+  "app.rest-client.email-notification.place-holder.ok=productFileName",
+  "app.rest-client.email-notification.place-holder.partial=productFileName",
+  "app.rest-client.email-notification.service.name=notificationClient",
+  "app.rest-client.email-notification.service.base-url=http://localhost"
+})
+@EnableConfigurationProperties(EmailNotificationConfig.class)
 class NotificationServiceImplTest {
 
+  @MockitoBean
   private NotificationRestClient restClientMock;
+
+  @Autowired
   private NotificationServiceImpl notificationService;
+
+  @Autowired
+  private EmailNotificationConfig emailNotificationConfig;
 
   private static final String PRODUCT_FILE_ID = "file_123.csv";
   private static final String SENDER_EMAIL = "ente@example.it";
-  private static final String SUBJECT_OK = "Subject OK";
-  private static final String SUBJECT_PARTIAL = "Subject Partial";
-  private static final String TEMPLATE_OK = "template-ok";
-  private static final String TEMPLATE_PARTIAL = "template-partial";
-
-  @BeforeEach
-  void setup() {
-    restClientMock = mock(NotificationRestClient.class);
-    notificationService = new NotificationServiceImpl(restClientMock);
-    ReflectionTestUtils.setField(notificationService, "subjectOk", SUBJECT_OK);
-    ReflectionTestUtils.setField(notificationService, "subjectPartial", SUBJECT_PARTIAL);
-    ReflectionTestUtils.setField(notificationService, "templateOk", TEMPLATE_OK);
-    ReflectionTestUtils.setField(notificationService, "templatePartial", TEMPLATE_PARTIAL);
-  }
 
   @Test
   void shouldSendEmailOk() {
@@ -41,8 +54,8 @@ class NotificationServiceImplTest {
 
     EmailMessageDTO email = captor.getValue();
     assertEquals(SENDER_EMAIL, email.getRecipientEmail());
-    assertEquals(SUBJECT_OK, email.getSubject());
-    assertEquals(TEMPLATE_OK, email.getTemplateName());
+    assertEquals("Subject OK", email.getSubject());
+    assertEquals("template-ok", email.getTemplateName());
     assertEquals(Map.of("productFileName", PRODUCT_FILE_ID), email.getTemplateValues());
   }
 
@@ -55,8 +68,9 @@ class NotificationServiceImplTest {
 
     EmailMessageDTO email = captor.getValue();
     assertEquals(SENDER_EMAIL, email.getRecipientEmail());
-    assertEquals(SUBJECT_PARTIAL, email.getSubject());
-    assertEquals(TEMPLATE_PARTIAL, email.getTemplateName());
+    assertEquals("Subject Partial", email.getSubject());
+    assertEquals("template-partial", email.getTemplateName());
     assertEquals(Map.of("productFileName", PRODUCT_FILE_ID), email.getTemplateValues());
   }
 }
+
