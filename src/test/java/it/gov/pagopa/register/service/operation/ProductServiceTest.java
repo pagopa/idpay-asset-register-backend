@@ -18,6 +18,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import static it.gov.pagopa.register.constants.AssetRegisterConstants.WASHINGMACHINES;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
@@ -42,11 +43,13 @@ class ProductServiceTest {
     Product product1 = Product.builder()
       .organizationId("organizationId")
       .productFileId("product1")
+      .category(WASHINGMACHINES)
       .capacity("N\\A")
       .build();
     Product product2 = Product.builder()
       .organizationId("organizationId")
       .productFileId("product2")
+      .category(WASHINGMACHINES)
       .capacity("N\\A")
       .build();
 

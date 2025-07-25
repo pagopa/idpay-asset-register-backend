@@ -33,33 +33,9 @@ class EprelUtilsTest {
 
   @Test
   void testMapEnergyClass() {
-    assertEquals("L", EprelUtils.mapEnergyClass("G"));
-    assertEquals("X", EprelUtils.mapEnergyClass("X"));
-    assertEquals("I", EprelUtils.mapEnergyClass("F"));
-    assertEquals("H", EprelUtils.mapEnergyClass("E"));
-    assertEquals("G", EprelUtils.mapEnergyClass("D"));
-    assertEquals("F", EprelUtils.mapEnergyClass("C"));
-    assertEquals("E", EprelUtils.mapEnergyClass("B"));
-    assertEquals("D", EprelUtils.mapEnergyClass("A"));
-    assertEquals("B", EprelUtils.mapEnergyClass("APP"));
-    assertEquals("C", EprelUtils.mapEnergyClass("AP"));
-    assertEquals("A", EprelUtils.mapEnergyClass("APPP"));
-
-  }
-
-  @Test
-  void testMapEnergyClassInverse() {
-    assertEquals("X", EprelUtils.mapEnergyClassInverse("X"));
-    assertEquals("G", EprelUtils.mapEnergyClassInverse("L"));
-    assertEquals("F", EprelUtils.mapEnergyClassInverse("I"));
-    assertEquals("E", EprelUtils.mapEnergyClassInverse("H"));
-    assertEquals("D", EprelUtils.mapEnergyClassInverse("G"));
-    assertEquals("C", EprelUtils.mapEnergyClassInverse("F"));
-    assertEquals("B", EprelUtils.mapEnergyClassInverse("E"));
-    assertEquals("A", EprelUtils.mapEnergyClassInverse("D"));
-    assertEquals("A+", EprelUtils.mapEnergyClassInverse("C"));
-    assertEquals("A++", EprelUtils.mapEnergyClassInverse("B"));
-    assertEquals("A+++", EprelUtils.mapEnergyClassInverse("A"));
+    assertEquals("A+", EprelUtils.mapEnergyClass("AP"));
+    assertEquals("A++", EprelUtils.mapEnergyClass("APP"));
+    assertEquals("A+++", EprelUtils.mapEnergyClass("APPP"));
 
   }
 }

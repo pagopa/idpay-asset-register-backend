@@ -35,22 +35,21 @@ public class ProductMapper {
       .status(entity.getStatus())
       .model(entity.getModel())
       .productGroup(entity.getProductGroup())
-      .category(entity.getCategory())
+      .category(CATEGORIES_TO_IT_S.get(entity.getCategory()))
       .brand(entity.getBrand())
       .eprelCode(entity.getEprelCode())
       .gtinCode(entity.getGtinCode())
       .productCode(entity.getProductCode())
       .countryOfProduction(entity.getCountryOfProduction())
-      .energyClass(mapEnergyClassInverse(entity.getEnergyClass()))
+      .energyClass(entity.getEnergyClass())
       .linkEprel(generateEprelUrl(entity.getProductGroup(), entity.getEprelCode()))
-      .batchName(entity.getCategory()+"_"+entity.getProductFileId()+".csv")
+      .batchName(CATEGORIES_TO_IT_P.get(entity.getCategory())+"_"+entity.getProductFileId()+".csv")
       .productName(
-        entity.getCategory() +" " +
+        CATEGORIES_TO_IT_S.get(entity.getCategory()) +" " +
         entity.getBrand()+" "+
-        entity.getModel()+" "+
-        (("N\\A").equals(entity.getCapacity()) ? "" : entity.getCapacity())
+        entity.getModel()
       )
-      .capacity(entity.getCapacity())
+      .capacity(("N\\A").equals(entity.getCapacity()) ? null : entity.getCapacity())
       .build();
   }
   public static Product mapCookingHobToProduct(CSVRecord csvRecord, String orgId, String productFileId) {
