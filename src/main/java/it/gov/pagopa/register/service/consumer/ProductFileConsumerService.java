@@ -222,10 +222,10 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
       }
 
     }
-    processValidAndInvalidRecords(productFileId, headers, validProduct, invalidRecords, errorMessages);
+    processCookingHoobsRecords(productFileId, headers, validProduct, invalidRecords, errorMessages);
   }
 
-  private void processValidAndInvalidRecords(String productFileId, List<String> headers, Map<String, Product> validProduct, List<CSVRecord> invalidRecords, Map<CSVRecord, String> errorMessages) {
+  private void processCookingHoobsRecords(String productFileId, List<String> headers, Map<String, Product> validProduct, List<CSVRecord> invalidRecords, Map<CSVRecord, String> errorMessages) {
     if (!validProduct.isEmpty()) {
       List<Product> savedProduct = productRepository.saveAll(validProduct.values().stream().toList());
       log.info("[PRODUCT_UPLOAD] - Saved {} valid products for file {}", savedProduct.size(), productFileId);
