@@ -2,6 +2,7 @@ package it.gov.pagopa.register.service.role;
 
 import it.gov.pagopa.register.connector.onetrust.OneTrustRestService;
 import it.gov.pagopa.register.dto.role.PortalConsentDTO;
+import it.gov.pagopa.register.exception.role.ConsentNotFoundException;
 import it.gov.pagopa.register.mapper.role.PrivacyNotices2PortalConsentDTOMapper;
 import it.gov.pagopa.register.dto.onetrust.PrivacyNoticesDTO;
 import it.gov.pagopa.register.exception.role.VersionNotMatchedException;
@@ -74,5 +75,19 @@ public class PortalConsentServiceImpl implements PortalConsentService {
             log.info("[CONSENTS] Saving accepted privacy notice");
             portalConsentRepository.save(consent);
         }
+    }
+
+    @Override
+    public void remove(String userId) {
+      log.info("[CONSENTS] Removing consent for user: {}", userId);
+
+      Optional<PortalConsent> optionalConsent = portalConsentRepository.findById(userId);
+
+      if (optionalConsent.isPresent()) {
+        portalConsentRepository.delete(optionalConsent.get());
+        log.info("[CONSENTS] Consent for user {} removed successfully", userId);
+      } else {
+        throw new ConsentNotFoundException("No consent found for user " + userId);
+      }
     }
 }
