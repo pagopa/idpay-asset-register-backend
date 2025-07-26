@@ -34,5 +34,5 @@ public class Product {
   private String countryOfProduction;
   private String energyClass;
   private String capacity;
-  private String description;
+  private String productName;
 }

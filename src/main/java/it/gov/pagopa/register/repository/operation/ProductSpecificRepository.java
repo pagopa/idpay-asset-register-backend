@@ -16,7 +16,8 @@ public interface ProductSpecificRepository {
                        String productFileId,
                        String eprelCode,
                        String gtinCode,
-                       String description);
+                       String productName,
+                       String status);
 
   Long getCount(Criteria criteria);
 

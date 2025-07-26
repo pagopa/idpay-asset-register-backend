@@ -125,7 +125,8 @@ public class ProductSpecificRepositoryImpl implements ProductSpecificRepository 
                               String productFileId,
                               String eprelCode,
                               String gtinCode,
-                              String description){
+                              String productName,
+                              String status){
 
     Criteria criteria = Criteria.where(Product.Fields.organizationId).is(organizationId);
 
@@ -144,9 +145,11 @@ public class ProductSpecificRepositoryImpl implements ProductSpecificRepository 
     if(gtinCode != null){
       criteria.and("_id").regex(".*" + gtinCode + ".*", "i"); // Contains, case-insensitive
     }
-    if(description != null){
-      criteria.and(Product.Fields.description).regex(".*" + description + ".*", "i");
-      criteria.and(Product.Fields.status).is("APPROVED");
+    if(productName != null){
+      criteria.and(Product.Fields.productName).regex(".*" + productName + ".*", "i");
+    }
+    if(status != null){
+      criteria.and(Product.Fields.status).is(status);
     }
 
     return criteria;

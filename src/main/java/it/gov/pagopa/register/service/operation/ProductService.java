@@ -31,13 +31,14 @@ public class ProductService{
                                     String productFileId,
                                     String eprelCode,
                                     String gtinCode,
-                                    String description,
+                                    String productName,
+                                    String status,
                                     Pageable pageable) {
 
     log.info("[GET_PRODUCTS] - Fetching products for organizationId: {}, category: {}, productCode: {}, productFileId: {}, eprelCode: {}, gtinCode: {}",
       organizationId, category, productCode, productFileId, eprelCode, gtinCode);
 
-    Criteria criteria = productRepository.getCriteria(organizationId, category, productCode, productFileId, eprelCode, gtinCode,description);
+    Criteria criteria = productRepository.getCriteria(organizationId, category, productCode, productFileId, eprelCode, gtinCode,productName,status);
 
     List<Product> entities = productRepository.findByFilter(criteria, pageable);
     Long count = productRepository.getCount(criteria);

@@ -44,11 +44,7 @@ public class ProductMapper {
       .energyClass(entity.getEnergyClass())
       .linkEprel(generateEprelUrl(entity.getProductGroup(), entity.getEprelCode()))
       .batchName(CATEGORIES_TO_IT_P.get(entity.getCategory())+"_"+entity.getProductFileId()+".csv")
-      .productName(
-        CATEGORIES_TO_IT_S.get(entity.getCategory()) +" " +
-        entity.getBrand()+" "+
-        entity.getModel()
-      )
+      .productName(entity.getProductName())
       .capacity(("N\\A").equals(entity.getCapacity()) ? null : entity.getCapacity())
       .build();
   }
@@ -65,6 +61,10 @@ public class ProductMapper {
       .brand(csvRecord.get(BRAND))
       .model(csvRecord.get(MODEL))
       .capacity("N\\A")
+      .productName(CATEGORIES_TO_IT_S.get(COOKINGHOBS) +" "+
+        csvRecord.get(BRAND)+" "+
+        csvRecord.get(MODEL)
+      )
       .build();
   }
 
@@ -84,6 +84,11 @@ public class ProductMapper {
       .model(eprelData.getModelIdentifier())
       .energyClass(mapEnergyClass(eprelData.getEnergyClass()))
       .capacity(mapCapacity(category,eprelData))
+      .productName(CATEGORIES_TO_IT_S.get(category) +" "+
+        eprelData.getSupplierOrTrademark()+" "+
+        eprelData.getModelIdentifier()+" "+
+        mapCapacity(category,eprelData)
+      )
       .build();
   }
 

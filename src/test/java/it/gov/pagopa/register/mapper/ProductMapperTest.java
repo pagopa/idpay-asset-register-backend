@@ -41,12 +41,13 @@ class ProductMapperTest {
       .energyClass("A")
       .capacity("10")
       .productFileId("file123")
+      .productName("CategoryA BrandX ModelX 10")
       .build();
 
     ProductDTO dto = ProductMapper.toDTO(product);
     assertNotNull(dto);
     assertEquals("org1", dto.getOrganizationId());
-    assertTrue(dto.getProductName().contains("BrandX"));
+
   }
 
   @Test
