@@ -6,12 +6,12 @@ public final class RoleConstants {
     private RoleConstants(){}
 
     public static final class ExceptionCode {
-        public static final String PERMISSIONS_NOT_FOUND = "ROLE_PERMISSION_NOT_FOUND";
-      public static final String CONSENT_NOT_FOUND = "CONSENT_NOT_FOUND";
-        public static final String VERSION_NOT_MATCHED = "ROLE_PERMISSION_VERSION_NOT_MATCHED";
-        public static final String GENERIC_ERROR = "ROLE_PERMISSION_GENERIC_ERROR";
-        public static final String TOO_MANY_REQUESTS = "ROLE_PERMISSION_TOO_MANY_REQUESTS";
-        public static final String INVALID_REQUEST = "ROLE_PERMISSION_INVALID_REQUEST";
+        public static final String PERMISSIONS_NOT_FOUND = "NOT_FOUND";
+        public static final String CONSENT_NOT_FOUND = "CONSENT_NOT_FOUND";
+        public static final String VERSION_NOT_MATCHED = "VERSION_NOT_MATCHED";
+        public static final String GENERIC_ERROR = "GENERIC_ERROR";
+        public static final String TOO_MANY_REQUESTS = "TOO_MANY_REQUESTS";
+        public static final String INVALID_REQUEST = "INVALID_REQUEST";
 
         private ExceptionCode() {}
     }
