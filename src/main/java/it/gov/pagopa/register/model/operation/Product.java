@@ -35,4 +35,5 @@ public class Product {
   private String energyClass;
   private String capacity;
   private String motivation;
+  private String productName;
 }

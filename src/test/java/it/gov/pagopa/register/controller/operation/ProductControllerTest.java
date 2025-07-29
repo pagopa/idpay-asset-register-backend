@@ -59,7 +59,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
           , any()
           , any()
           , any()
-          , any()))
+          , any()
+          , any()
+        ))
         .thenReturn(mockResponse);
       mockMvc.perform(get("/idpay/register/products")
           .header("x-organization-id", "organizationIdTest")
@@ -90,7 +92,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
           , any()
           , any()
           , any()
-          , any()))
+          , any()
+          , any()
+        ))
         .thenThrow(new RuntimeException("Service error"));
 
       mockMvc.perform(get("/idpay/register/products")

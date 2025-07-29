@@ -121,18 +121,16 @@ public class ProductSpecificRepositoryImpl implements ProductSpecificRepository 
   @Override
   public Criteria getCriteria(String organizationId,
                               String category,
-                              String productCode,
                               String productFileId,
                               String eprelCode,
-                              String gtinCode){
+                              String gtinCode,
+                              String productName,
+                              String status){
 
     Criteria criteria = Criteria.where(Product.Fields.organizationId).is(organizationId);
 
     if(category != null){
       criteria.and(Product.Fields.category).is(category);
-    }
-    if(productCode != null){
-      criteria.and(Product.Fields.productCode).is(productCode);
     }
     if(productFileId != null){
       criteria.and(Product.Fields.productFileId).is(productFileId);
@@ -143,7 +141,12 @@ public class ProductSpecificRepositoryImpl implements ProductSpecificRepository 
     if(gtinCode != null){
       criteria.and("_id").regex(".*" + gtinCode + ".*", "i"); // Contains, case-insensitive
     }
-
+    if(productName != null){
+      criteria.and(Product.Fields.productName).regex(".*" + productName + ".*", "i");
+    }
+    if(status != null){
+      criteria.and(Product.Fields.status).is(status);
+    }
     return criteria;
   }
 
