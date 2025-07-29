@@ -12,10 +12,11 @@ public interface ProductSpecificRepository {
 
   Criteria getCriteria(String organizationId,
                        String category,
-                       String productCode,
                        String productFileId,
                        String eprelCode,
-                       String gtinCode);
+                       String gtinCode,
+                       String productName,
+                       String status);
 
   Long getCount(Criteria criteria);
 

@@ -25,19 +25,21 @@ public class ProductController {
   public ResponseEntity<ProductListDTO> getProductList(
     @RequestHeader("x-organization-id") String organizationId,
     @RequestParam @Nullable String category,
-    @RequestParam @Nullable String productCode,
     @RequestParam @Nullable String productFileId,
     @RequestParam @Nullable String eprelCode,
     @RequestParam @Nullable String gtinCode,
+    @RequestParam @Nullable String productName,
+    @RequestParam @Nullable String status,
     @PageableDefault(size = 20, sort = "registrationDate", direction = Sort.Direction.DESC) Pageable pageable) {
 
     ProductListDTO result = productService.getProducts(
       organizationId,
       category,
-      productCode,
       productFileId,
       eprelCode,
       gtinCode,
+      productName,
+      status,
       pageable);
 
     return ResponseEntity.ok(result);

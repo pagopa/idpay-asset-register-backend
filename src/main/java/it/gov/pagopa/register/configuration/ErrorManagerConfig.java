@@ -6,7 +6,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-public class RoleErrorManagerConfig {
+public class ErrorManagerConfig {
     @Bean
     ErrorDTO defaultErrorDTO() {
         return new ErrorDTO(
