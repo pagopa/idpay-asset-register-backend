@@ -12,7 +12,6 @@ public interface ProductSpecificRepository {
 
   Criteria getCriteria(String organizationId,
                        String category,
-                       String productCode,
                        String productFileId,
                        String eprelCode,
                        String gtinCode,

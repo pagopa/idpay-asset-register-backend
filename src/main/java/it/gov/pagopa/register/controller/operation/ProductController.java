@@ -25,7 +25,6 @@ public class ProductController {
   public ResponseEntity<ProductListDTO> getProductList(
     @RequestHeader("x-organization-id") String organizationId,
     @RequestParam @Nullable String category,
-    @RequestParam @Nullable String productCode,
     @RequestParam @Nullable String productFileId,
     @RequestParam @Nullable String eprelCode,
     @RequestParam @Nullable String gtinCode,
@@ -36,7 +35,6 @@ public class ProductController {
     ProductListDTO result = productService.getProducts(
       organizationId,
       category,
-      productCode,
       productFileId,
       eprelCode,
       gtinCode,

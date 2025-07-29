@@ -121,7 +121,6 @@ public class ProductSpecificRepositoryImpl implements ProductSpecificRepository 
   @Override
   public Criteria getCriteria(String organizationId,
                               String category,
-                              String productCode,
                               String productFileId,
                               String eprelCode,
                               String gtinCode,
@@ -132,9 +131,6 @@ public class ProductSpecificRepositoryImpl implements ProductSpecificRepository 
 
     if(category != null){
       criteria.and(Product.Fields.category).is(category);
-    }
-    if(productCode != null){
-      criteria.and(Product.Fields.productCode).is(productCode);
     }
     if(productFileId != null){
       criteria.and(Product.Fields.productFileId).is(productFileId);
@@ -151,7 +147,6 @@ public class ProductSpecificRepositoryImpl implements ProductSpecificRepository 
     if(status != null){
       criteria.and(Product.Fields.status).is(status);
     }
-
     return criteria;
   }
 
