@@ -27,16 +27,17 @@ public class ProductService{
 
   public ProductListDTO getProducts(String organizationId,
                                     String category,
-                                    String productCode,
                                     String productFileId,
                                     String eprelCode,
                                     String gtinCode,
+                                    String productName,
+                                    String status,
                                     Pageable pageable) {
 
-    log.info("[GET_PRODUCTS] - Fetching products for organizationId: {}, category: {}, productCode: {}, productFileId: {}, eprelCode: {}, gtinCode: {}",
-      organizationId, category, productCode, productFileId, eprelCode, gtinCode);
+    log.info("[GET_PRODUCTS] - Fetching products for organizationId: {}, category: {}, productFileId: {}, eprelCode: {}, gtinCode: {}, productName: {}, status: {}",
+      organizationId, category, productFileId, eprelCode, gtinCode,productName,status);
 
-    Criteria criteria = productRepository.getCriteria(organizationId, category, productCode, productFileId, eprelCode, gtinCode);
+    Criteria criteria = productRepository.getCriteria(organizationId, category, productFileId, eprelCode, gtinCode,productName, status);
 
     List<Product> entities = productRepository.findByFilter(criteria, pageable);
     Long count = productRepository.getCount(criteria);
