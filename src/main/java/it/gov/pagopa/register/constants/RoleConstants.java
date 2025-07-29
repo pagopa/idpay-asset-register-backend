@@ -12,7 +12,6 @@ public final class RoleConstants {
         public static final String GENERIC_ERROR = "GENERIC_ERROR";
         public static final String TOO_MANY_REQUESTS = "TOO_MANY_REQUESTS";
         public static final String INVALID_REQUEST = "INVALID_REQUEST";
-
         private ExceptionCode() {}
     }
 }
