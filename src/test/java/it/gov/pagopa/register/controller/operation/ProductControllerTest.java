@@ -3,19 +3,23 @@ package it.gov.pagopa.register.controller.operation;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import it.gov.pagopa.register.dto.operation.ProductDTO;
 import it.gov.pagopa.register.dto.operation.ProductListDTO;
+import it.gov.pagopa.register.dto.operation.ProductUpdateStatusRequestDTO;
+import it.gov.pagopa.register.enums.ProductStatusEnum;
 import it.gov.pagopa.register.service.operation.ProductService;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import java.util.Collections;
+import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -49,7 +53,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         .totalPages(1)
         .build();
 
-      Mockito.when(productService.getProducts(eq("organizationIdTest")
+      when(productService.getProducts(eq("organizationIdTest")
           , any()
           , any()
           , any()
@@ -82,7 +86,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
     //Test in caso di eccezione
     @Test
     void testGetProducts_ServiceThrowsException() throws Exception {
-      Mockito.when(productService.getProducts(eq("organizationIdTest")
+      when(productService.getProducts(eq("organizationIdTest")
           , any()
           , any()
           , any()
@@ -99,8 +103,61 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         .andExpect(status().isInternalServerError());
     }
 
+    @Test
+    void testUpdateProductStatuses_Success() throws Exception {
+
+      ProductListDTO mockResponse = ProductListDTO.builder()
+        .content(Collections.emptyList())
+        .pageNo(0)
+        .pageSize(0)
+        .totalElements(0L)
+        .totalPages(1)
+        .build();
 
 
-  }
+      List<String> productIds = List.of("prod-1", "prod-2");
+      ProductUpdateStatusRequestDTO requestDTO = new ProductUpdateStatusRequestDTO();
+      requestDTO.setGtinCodes(productIds);
+      requestDTO.setStatus(ProductStatusEnum.APPROVED);
+      requestDTO.setMotivation("Valid reason");
+
+      String requestBody = objectMapper.writeValueAsString(requestDTO);
+
+      when(productService.updateProductState(
+        "org-test",
+        productIds,
+        ProductStatusEnum.APPROVED,
+        "Valid reason"
+      )).thenReturn(mockResponse);
+
+      mockMvc.perform(
+          org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+            .patch("/idpay/register/products/update-status")
+            .header("x-organization-id", "org-test")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(requestBody))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.pageNo").value(0));
+    }
+
+    @Test
+    void testUpdateProductStatuses_MissingHeader() throws Exception {
+      ProductUpdateStatusRequestDTO requestDTO = new ProductUpdateStatusRequestDTO();
+      requestDTO.setGtinCodes(List.of("prod-1"));
+      requestDTO.setStatus(ProductStatusEnum.SUPERVISIONED);
+      requestDTO.setMotivation("Missing header test");
+
+      String requestBody = objectMapper.writeValueAsString(requestDTO);
+
+      mockMvc.perform(MockMvcRequestBuilders
+          .patch("/idpay/register/products/update-status")
+          .contentType(MediaType.APPLICATION_JSON)
+          .content(requestBody))
+        .andExpect(status().isBadRequest());
+    }
+}
+
+
+
 
 

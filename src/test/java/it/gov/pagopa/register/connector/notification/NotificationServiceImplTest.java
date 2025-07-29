@@ -1,36 +1,41 @@
 package it.gov.pagopa.register.connector.notification;
+
+import it.gov.pagopa.register.configuration.EmailNotificationConfig;
 import it.gov.pagopa.register.dto.notification.EmailMessageDTO;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
-import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
+import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
+
+@SpringBootTest(
+  classes = {
+    NotificationServiceImpl.class,
+  }
+)
+@EnableConfigurationProperties(EmailNotificationConfig.class)
 class NotificationServiceImplTest {
 
+  @MockitoBean
   private NotificationRestClient restClientMock;
+
+  @Autowired
   private NotificationServiceImpl notificationService;
+
+  @Autowired
+  private EmailNotificationConfig emailNotificationConfig;
 
   private static final String PRODUCT_FILE_ID = "file_123.csv";
   private static final String SENDER_EMAIL = "ente@example.it";
-  private static final String SUBJECT_OK = "Subject OK";
-  private static final String SUBJECT_PARTIAL = "Subject Partial";
-  private static final String TEMPLATE_OK = "template-ok";
-  private static final String TEMPLATE_PARTIAL = "template-partial";
-
-  @BeforeEach
-  void setup() {
-    restClientMock = mock(NotificationRestClient.class);
-    notificationService = new NotificationServiceImpl(restClientMock);
-    ReflectionTestUtils.setField(notificationService, "subjectOk", SUBJECT_OK);
-    ReflectionTestUtils.setField(notificationService, "subjectPartial", SUBJECT_PARTIAL);
-    ReflectionTestUtils.setField(notificationService, "templateOk", TEMPLATE_OK);
-    ReflectionTestUtils.setField(notificationService, "templatePartial", TEMPLATE_PARTIAL);
-  }
 
   @Test
   void shouldSendEmailOk() {
@@ -41,8 +46,8 @@ class NotificationServiceImplTest {
 
     EmailMessageDTO email = captor.getValue();
     assertEquals(SENDER_EMAIL, email.getRecipientEmail());
-    assertEquals(SUBJECT_OK, email.getSubject());
-    assertEquals(TEMPLATE_OK, email.getTemplateName());
+    assertEquals("Prodotti elaborati con successo", email.getSubject());
+    assertEquals("Email_RDB_EsitoProdottiOK", email.getTemplateName());
     assertEquals(Map.of("productFileName", PRODUCT_FILE_ID), email.getTemplateValues());
   }
 
@@ -55,8 +60,36 @@ class NotificationServiceImplTest {
 
     EmailMessageDTO email = captor.getValue();
     assertEquals(SENDER_EMAIL, email.getRecipientEmail());
-    assertEquals(SUBJECT_PARTIAL, email.getSubject());
-    assertEquals(TEMPLATE_PARTIAL, email.getTemplateName());
+    assertEquals("Elaborazione parziale dei prodotti", email.getSubject());
+    assertEquals("Email_RDB_EsitoProdottiParziale", email.getTemplateName());
     assertEquals(Map.of("productFileName", PRODUCT_FILE_ID), email.getTemplateValues());
   }
+
+
+  @Test
+  void shouldSendEmailUpdateStatus() {
+    List<String> products = List.of("P001", "P002");
+    String motivation = "Motivazione di test";
+    String status = "REJECTED";
+    String recipientEmail = "utente@example.it";
+    notificationService.sendEmailUpdateStatus(products, motivation, status, recipientEmail);
+
+    ArgumentCaptor<EmailMessageDTO> captor = ArgumentCaptor.forClass(EmailMessageDTO.class);
+    verify(restClientMock, times(1)).sendEmail(captor.capture());
+
+    EmailMessageDTO email = captor.getValue();
+    assertEquals(recipientEmail, email.getRecipientEmail());
+    assertEquals("Prodotti Esclusi", email.getSubject());
+    assertEquals("Email_RDB_EsclusioneProdotti", email.getTemplateName());
+
+    String expectedHtmlList = "<li>P001</li><li>P002</li>";
+    Map<String, String> expectedTemplateValues = Map.of(
+      "excludedList", expectedHtmlList,
+      "motivation", motivation
+    );
+
+    assertEquals(expectedTemplateValues, email.getTemplateValues());
+  }
+
 }
+

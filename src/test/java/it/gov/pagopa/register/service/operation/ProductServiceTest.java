@@ -1,13 +1,17 @@
 package it.gov.pagopa.register.service.operation;
 
+import it.gov.pagopa.register.connector.notification.NotificationServiceImpl;
 import it.gov.pagopa.register.dto.operation.ProductListDTO;
+import it.gov.pagopa.register.enums.ProductStatusEnum;
 import it.gov.pagopa.register.model.operation.Product;
+import it.gov.pagopa.register.model.operation.ProductFile;
+import it.gov.pagopa.register.repository.operation.ProductFileRepository;
 import it.gov.pagopa.register.repository.operation.ProductRepository;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -15,23 +19,28 @@ import org.springframework.data.mongodb.core.query.Criteria;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import static it.gov.pagopa.register.constants.AssetRegisterConstants.WASHINGMACHINES;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
+@ExtendWith(MockitoExtension.class)
 class ProductServiceTest {
+
   @Mock
   private ProductRepository productRepository;
+
+  @Mock
+  private ProductFileRepository productFileRepository;
+
+  @Mock
+  private NotificationServiceImpl notificationService;
 
   @InjectMocks
   private ProductService productService;
 
-  @BeforeEach
-  void setUp() {
-    MockitoAnnotations.openMocks(this);
-  }
 
   @Test
   void testGetProductsByPage_Success() {
@@ -142,6 +151,71 @@ class ProductServiceTest {
     verify(productRepository, times(1))
       .findByFilter(any(), any());
 
+  }
+
+  @Test
+  void testUpdateProductStatuses_Success() {
+    String organizationId = "org123";
+    String motivation = "motivation";
+    List<String> productIds = List.of("prod1", "prod2");
+
+    Product product1 = Product.builder()
+      .gtinCode("prod1")
+      .organizationId(organizationId)
+      .status("REJECTED")
+      .productFileId("file1")
+      .build();
+
+    Product product2 = Product.builder()
+      .gtinCode("prod2")
+      .organizationId(organizationId)
+      .status("REJECTED")
+      .productFileId("file1")
+      .build();
+
+    List<Product> productList = List.of(product1, product2);
+
+    ProductFile productFile = ProductFile.builder()
+      .id("file1")
+      .userEmail("user@example.com")
+      .build();
+
+    when(productRepository.findByIdsAndOrganizationId(productIds, organizationId))
+      .thenReturn(productList);
+
+    when(productRepository.saveAll(productList))
+      .thenReturn(productList);
+
+    when(productFileRepository.findById("file1"))
+      .thenReturn(Optional.of(productFile));
+
+    doNothing().when(notificationService)
+      .sendEmailUpdateStatus(anyList(), eq(motivation), eq("APPROVED"), eq("user@example.com"));
+
+    ProductListDTO result = productService.updateProductState(
+      organizationId,
+      productIds,
+      ProductStatusEnum.APPROVED,
+      motivation
+    );
+
+    assertEquals(0, result.getPageNo());
+    assertEquals(1, result.getTotalPages());
+
+    for (Product p : productList) {
+      assertEquals("APPROVED", p.getStatus());
+      assertEquals(motivation, p.getMotivation());
+    }
+
+    verify(productRepository).findByIdsAndOrganizationId(productIds, organizationId);
+    verify(productRepository).saveAll(productList);
+    verify(productFileRepository).findById("file1");
+    verify(notificationService).sendEmailUpdateStatus(
+      List.of("prod1", "prod2"),
+      motivation,
+      "APPROVED",
+      "user@example.com"
+    );
   }
 
 

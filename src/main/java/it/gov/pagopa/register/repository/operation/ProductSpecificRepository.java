@@ -22,4 +22,5 @@ public interface ProductSpecificRepository {
 
   List<Product> findDistinctProductFileIdAndCategoryByOrganizationId(String organizationId);
 
+  List<Product> findByIdsAndOrganizationId(List<String> productIds, String organizationId);
 }

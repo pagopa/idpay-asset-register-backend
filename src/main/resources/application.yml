@@ -110,9 +110,21 @@ app:
       template:
         ok: Email_RDB_EsitoProdottiOK
         partial: Email_RDB_EsitoProdottiParziale
+        rejected: Email_RDB_EsclusioneProdotti
+        supervisioned: Email_RDB_ContrasegnazioneProdotti
+        approved: Email_RDB_RipristinoProdotti
       subject:
         ok: Prodotti elaborati con successo
         partial:  Elaborazione parziale dei prodotti
+        rejected: Prodotti Esclusi
+        supervisioned: Prodotti Contrassegnati
+        approved: Prodotti Ripristinati
+      place-holder:
+        ok: productFileName
+        partial: productFileName
+        rejected: excludedList, motivation
+        supervisioned: suspendedList, motivation
+        approved: ripristinedList
     eprel:
       service:
         get-product : ${EPREL_BASE_URL:https://eprel.ec.europa.eu/api/product/{REGISTRATION_NUMBER}}

@@ -175,5 +175,15 @@ public class ProductSpecificRepositoryImpl implements ProductSpecificRepository 
     return results.getMappedResults();
   }
 
+  @Override
+  public List<Product> findByIdsAndOrganizationId(List<String> productIds, String organizationId) {
+    Criteria criteria = new Criteria();
+    criteria.and("_id").in(productIds);
+    criteria.and(ORGANIZATION_ID).is(organizationId);
+
+    return mongoTemplate.find(Query.query(criteria), Product.class);
+  }
+
+
 }
 
