@@ -69,6 +69,11 @@ public class ProductMapper {
   }
 
   public static Product mapEprelToProduct(CSVRecord csvRecord, EprelProduct eprelData, String orgId, String productFileId, String category) {
+    String capacity = mapCapacity(category,eprelData);
+    String productName = CATEGORIES_TO_IT_S.get(category) + " " +
+      eprelData.getSupplierOrTrademark() + " " +
+      eprelData.getModelIdentifier() +
+      (!"N\\A".equals(capacity) ? " " + capacity : "");
     return Product.builder()
       .productFileId(productFileId)
       .organizationId(orgId)
@@ -83,12 +88,8 @@ public class ProductMapper {
       .brand(eprelData.getSupplierOrTrademark())
       .model(eprelData.getModelIdentifier())
       .energyClass(mapEnergyClass(eprelData.getEnergyClass()))
-      .capacity(mapCapacity(category,eprelData))
-      .productName(CATEGORIES_TO_IT_S.get(category) +" "+
-        eprelData.getSupplierOrTrademark()+" "+
-        eprelData.getModelIdentifier()+" "+
-        mapCapacity(category,eprelData)
-      )
+      .capacity(capacity)
+      .productName(productName)
       .build();
   }
 
