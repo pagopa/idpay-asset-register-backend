@@ -199,13 +199,13 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
       boolean isProductPresent = optProduct.isPresent();
       boolean dbCheck = true;
       if(isProductPresent){
-        if( !orgId.equals(optProduct.get().getOrganizationId())){
+        if(!orgId.equals(optProduct.get().getOrganizationId())){
           invalidRecords.add(csvRecord);
-          errorMessages.put(csvRecord,DUPLICATE_GTIN_EAN_WITH_DIFFERENT_ORGANIZATIONID);
+          errorMessages.put(csvRecord,DIFFERENT_ORGANIZATIONID);
           dbCheck = false;
         } else if (!ProductStatusEnum.APPROVED.toString().equals(optProduct.get().getStatus())) {
           invalidRecords.add(csvRecord);
-          errorMessages.put(csvRecord,DUPLICATE_GTIN_EAN_WITH_STATUS_NOT_APPROVED);
+          errorMessages.put(csvRecord, STATUS_NOT_APPROVED);
           dbCheck = false;
         }
       }

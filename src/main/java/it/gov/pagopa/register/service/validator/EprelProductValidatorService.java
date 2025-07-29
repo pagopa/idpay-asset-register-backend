@@ -62,11 +62,11 @@ public class EprelProductValidatorService {
     if(isProductPresent){
       if( !context.getOrgId().equals(optProduct.get().getOrganizationId())){
         invalidRecords.add(csvRow);
-        errorMessages.put(csvRow,DUPLICATE_GTIN_EAN_WITH_DIFFERENT_ORGANIZATIONID);
+        errorMessages.put(csvRow,DIFFERENT_ORGANIZATIONID);
         return;
       } else if (!ProductStatusEnum.APPROVED.toString().equals(optProduct.get().getStatus())) {
         invalidRecords.add(csvRow);
-        errorMessages.put(csvRow,DUPLICATE_GTIN_EAN_WITH_STATUS_NOT_APPROVED);
+        errorMessages.put(csvRow, STATUS_NOT_APPROVED);
         return;
       }
     }

@@ -174,10 +174,11 @@ public class AssetRegisterConstants {
   public static final String ERROR_STATUS = "Lo stato non è PUBBLICATO";
   public static final String ERROR_PRODUCT_GROU = "La categoria EPREL non è compatibile con la categoria prevista";
   public static final String ERROR_ENERGY_CLASS = "La classe energetica non è conforme";
-  public static final String  DUPLICATE_GTIN_EAN = "GTIN già presente in un'altra riga";
-  public static final String  DUPLICATE_GTIN_EAN_WITH_DIFFERENT_ORGANIZATIONID = "prodotto già presente con organizationId differente";
-  public static final String  DUPLICATE_GTIN_EAN_WITH_STATUS_NOT_APPROVED = "prodotto già presente con stato diverso da " + ProductStatusEnum.APPROVED;
+  public static final String DUPLICATE_GTIN_EAN = "GTIN già presente in un'altra riga";
+  public static final String DIFFERENT_ORGANIZATIONID = "Prodotto associato ad un altro produttore";
+  public static final String STATUS_NOT_APPROVED = "Prodotto non editabile";
   public static final class EprelValidationRules {
+
     private EprelValidationRules() {}
 
     public static final EprelValidationRule ORG_VERIFICATION_STATUS_RULE =
