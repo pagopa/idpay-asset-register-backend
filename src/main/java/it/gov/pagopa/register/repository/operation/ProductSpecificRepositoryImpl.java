@@ -50,49 +50,6 @@ public class ProductSpecificRepositoryImpl implements ProductSpecificRepository 
     return mongoTemplate.find(Query.query(criteria).with(pageable), Product.class);
   }
 
-  private boolean hasSortProperty(Sort sort, String property) {
-    return sort.stream().anyMatch(order -> order.getProperty().equalsIgnoreCase(property));
-  }
-
-  private List<Product> aggregateResults(Aggregation aggregation) {
-    return mongoTemplate.aggregate(aggregation, PRODUCT, Product.class).getMappedResults();
-  }
-
-  private static Aggregation energyClassAggregation(Criteria criteria, Pageable pageable) {
-    Sort.Order energyClassOrder = pageable.getSort().getOrderFor(ENERGY_CLASS);
-    Sort.Direction direction = energyClassOrder != null ? energyClassOrder.getDirection() : Sort.Direction.ASC;
-
-    return Aggregation.newAggregation(
-      Aggregation.addFields()
-        .addField("energyRank")
-        .withValue(
-          ConditionalOperators.switchCases(
-            ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(ENERGY_CLASS).equalToValue("A+++")).then(10),
-            ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(ENERGY_CLASS).equalToValue("A++")).then(9),
-            ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(ENERGY_CLASS).equalToValue("A+")).then(8),
-            ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(ENERGY_CLASS).equalToValue("A")).then(7),
-            ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(ENERGY_CLASS).equalToValue("B")).then(6),
-            ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(ENERGY_CLASS).equalToValue("C")).then(5),
-            ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(ENERGY_CLASS).equalToValue("D")).then(4),
-            ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(ENERGY_CLASS).equalToValue("E")).then(3),
-            ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(ENERGY_CLASS).equalToValue("F")).then(2)
-          ).defaultTo(1)
-        ).build(),
-      Aggregation.match(criteria),
-      Aggregation.sort(Sort.by(direction, "energyRank")),
-      Aggregation.skip(pageable.getOffset()),
-      Aggregation.limit(pageable.getPageSize())
-    );
-  }
-
-
-  private Pageable resolveSort(Pageable pageable) {
-    Sort.Order order = pageable.getSort().getOrderFor(BATCH_NAME);
-    if (order == null) {
-      return pageable;
-    }
-    return mongoTemplate.find(Query.query(criteria).with(pageable), Product.class);
-  }
 
   private boolean hasSortProperty(Sort sort, String property) {
     return sort.stream().anyMatch(order -> order.getProperty().equalsIgnoreCase(property));
