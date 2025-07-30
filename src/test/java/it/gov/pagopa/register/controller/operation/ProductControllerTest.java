@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import it.gov.pagopa.register.dto.operation.ProductDTO;
 import it.gov.pagopa.register.dto.operation.ProductListDTO;
 import it.gov.pagopa.register.dto.operation.ProductUpdateStatusRequestDTO;
+import it.gov.pagopa.register.dto.operation.UpdateResultDTO;
 import it.gov.pagopa.register.enums.ProductStatusEnum;
 import it.gov.pagopa.register.service.operation.ProductService;
 import org.junit.jupiter.api.Test;
@@ -106,14 +107,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
     @Test
     void testUpdateProductStatuses_Success() throws Exception {
 
-      ProductListDTO mockResponse = ProductListDTO.builder()
-        .content(Collections.emptyList())
-        .pageNo(0)
-        .pageSize(0)
-        .totalElements(0L)
-        .totalPages(1)
-        .build();
-
+      UpdateResultDTO mockResponse = UpdateResultDTO.ok();
 
       List<String> productIds = List.of("prod-1", "prod-2");
       ProductUpdateStatusRequestDTO requestDTO = new ProductUpdateStatusRequestDTO();
@@ -137,7 +131,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
             .contentType(MediaType.APPLICATION_JSON)
             .content(requestBody))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.pageNo").value(0));
+        .andExpect(jsonPath("$.status").value("OK"));
     }
 
     @Test

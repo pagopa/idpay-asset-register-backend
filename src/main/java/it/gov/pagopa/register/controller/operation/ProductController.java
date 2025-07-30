@@ -2,6 +2,7 @@ package it.gov.pagopa.register.controller.operation;
 
 import it.gov.pagopa.register.dto.operation.ProductListDTO;
 import it.gov.pagopa.register.dto.operation.ProductUpdateStatusRequestDTO;
+import it.gov.pagopa.register.dto.operation.UpdateResultDTO;
 import it.gov.pagopa.register.service.operation.ProductService;
 import jakarta.annotation.Nullable;
 import org.springframework.data.domain.Pageable;
@@ -48,15 +49,15 @@ public class ProductController {
   }
 
   @PatchMapping("/products/update-status")
-  public ResponseEntity<ProductListDTO> updateProductsState(
+  public ResponseEntity<UpdateResultDTO> updateProductsState(
     @RequestHeader("x-organization-id") String organizationId,
     @RequestBody ProductUpdateStatusRequestDTO dto) {
 
-    ProductListDTO result = productService.updateProductState(
+    return ResponseEntity.ok(productService.updateProductState(
       organizationId,
       dto.getGtinCodes(),
       dto.getStatus(),
-      dto.getMotivation());
-    return ResponseEntity.ok(result);
+      dto.getMotivation())
+    );
   }
 }
