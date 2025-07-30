@@ -27,6 +27,7 @@ mongo:
 blobStorage.connectionString: ${BLOB_STORAGE_CONNECTION_STRING:}
 blobStorage.initiative.logo.containerReference: ${BLOB_STORAGE_CONTAINER_REFERENCE:}
 
+
 spring:
   application:
     name: "@project.artifactId@"
@@ -93,7 +94,10 @@ spring:
                   ms: ${KAFKA_COMMANDS_REQUEST_CONNECTION_TIMEOUT_MS:${KAFKA_CONSUMER_CONFIG_CONNECTION_TIMEOUT_MS:100000}}
               standardHeaders: ${KAFKA_COMMANDS_STANDARD_HEADERS:${KAFKA_CONSUMER_CONFIG_STANDARD_HEADERS:both}}
               startOffset: ${KAFKA_COMMANDS_REQUEST_START_OFFSET:${KAFKA_CONSUMER_CONFIG_START_OFFSET:earliest}}
-
+  servlet:
+    multipart:
+      max-file-size:  2MB
+      max-request-size: 2MB
 app:
   rest-client:
     one-trust:
