@@ -318,6 +318,7 @@ class ProductFileConsumerServiceTest {
     }
   }
 
+
   @Test
   void testOnError_shouldLogError() {
     Message<String> message = mock(Message.class);
