@@ -1,7 +1,7 @@
 package it.gov.pagopa.register.service.role;
 
 
-import it.gov.pagopa.register.constants.RoleConstants;
+import it.gov.pagopa.register.constants.ExceptionConstants;
 import it.gov.pagopa.register.dto.role.PermissionDTO;
 import it.gov.pagopa.register.dto.role.UserPermissionDTO;
 import it.gov.pagopa.register.exception.role.PermissionNotFoundException;
@@ -123,7 +123,7 @@ class RolePermissionServiceTest {
             rolePermissionService.getUserPermission(anyString());
         } catch (PermissionNotFoundException e) {
           log.info("AuthorizationPermissionException: {}", e.getCode());
-            assertEquals(RoleConstants.ExceptionCode.PERMISSIONS_NOT_FOUND, e.getCode());
+            assertEquals(ExceptionConstants.ExceptionCode.PERMISSIONS_NOT_FOUND, e.getCode());
         }
     }
 

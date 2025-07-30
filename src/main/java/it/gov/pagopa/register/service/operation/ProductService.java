@@ -1,8 +1,10 @@
 package it.gov.pagopa.register.service.operation;
 
 import it.gov.pagopa.register.connector.notification.NotificationService;
+import it.gov.pagopa.register.constants.AssetRegisterConstants;
 import it.gov.pagopa.register.dto.operation.ProductDTO;
 import it.gov.pagopa.register.dto.operation.ProductListDTO;
+import it.gov.pagopa.register.dto.operation.UpdateResultDTO;
 import it.gov.pagopa.register.enums.ProductStatusEnum;
 import it.gov.pagopa.register.mapper.operation.ProductMapper;
 import it.gov.pagopa.register.model.operation.Product;
@@ -35,6 +37,7 @@ public class ProductService{
   }
 
 
+  @SuppressWarnings("java:S107")
   public ProductListDTO getProducts(String organizationId,
                                     String category,
                                     String productFileId,
@@ -69,7 +72,7 @@ public class ProductService{
       .build();
   }
 
-  public ProductListDTO updateProductState(String organizationId, List<String> productIds, ProductStatusEnum newStatus, String motivation) {
+  public UpdateResultDTO updateProductState(String organizationId, List<String> productIds, ProductStatusEnum newStatus, String motivation) {
     log.info("[UPDATE_PRODUCT_STATUSES] - Starting update for organizationId: {}, newStatus: {}, motivation: {}", organizationId, newStatus, motivation);
     log.debug("[UPDATE_PRODUCT_STATUSES] - Product IDs to update: {}", productIds);
 
@@ -112,17 +115,20 @@ public class ProductService{
       log.trace("[UPDATE_PRODUCT_STATUSES] - User {} will be notified for GTINs: {}", email, gtins);
     });
 
-    userEmailToGtins.forEach((email, gtins) -> {
-      log.info("[UPDATE_PRODUCT_STATUSES] - Sending notification to {} for {} products", email, gtins.size());
-      notificationService.sendEmailUpdateStatus(gtins, motivation, newStatus.name(), email);
-    });
+    try{
+      userEmailToGtins.forEach((email, gtins) -> {
+        log.info("[UPDATE_PRODUCT_STATUSES] - Sending notification to {} for {} products", email, gtins.size());
+        notificationService.sendEmailUpdateStatus(gtins, motivation, newStatus.name(), email);
+      });
+    }
+    catch (Exception e){
+      log.error("[UPDATE_PRODUCT_STATUSES] Error: {}",e.getMessage());
+      return  UpdateResultDTO.ko(AssetRegisterConstants.UpdateKeyConstant.EMAIL_ERROR_KEY);
+    }
 
     log.info("[UPDATE_PRODUCT_STATUSES] - Update process completed");
 
-    return ProductListDTO.builder()
-      .pageNo(0)
-      .totalPages(1)
-      .build();
+    return UpdateResultDTO.ok();
   }
 
 

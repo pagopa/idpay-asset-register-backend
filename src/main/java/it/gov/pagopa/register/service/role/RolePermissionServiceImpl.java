@@ -1,6 +1,6 @@
 package it.gov.pagopa.register.service.role;
 
-import it.gov.pagopa.register.constants.RoleConstants;
+import it.gov.pagopa.register.constants.ExceptionConstants;
 import it.gov.pagopa.register.dto.role.PermissionDTO;
 import it.gov.pagopa.register.dto.role.UserPermissionDTO;
 import it.gov.pagopa.register.exception.role.PermissionNotFoundException;
@@ -25,7 +25,7 @@ public class RolePermissionServiceImpl implements RolePermissionService {
     @Override
     public UserPermissionDTO getUserPermission(String role) {
         RolePermission roleOptional = rolePermissionRepository.findByRole(role).orElseThrow(() ->
-                new PermissionNotFoundException(String.format(RoleConstants.PERMISSIONS_NOT_FOUND_MSG, role))
+                new PermissionNotFoundException(String.format(ExceptionConstants.ExceptionMessage.PERMISSIONS_NOT_FOUND_MSG, role))
         );
         return rolePermissionToDTO(roleOptional);
     }

@@ -2,7 +2,6 @@ package it.gov.pagopa.register.constants;
 
 import it.gov.pagopa.register.dto.utils.ColumnValidationRule;
 import it.gov.pagopa.register.dto.utils.EprelValidationRule;
-import it.gov.pagopa.register.enums.ProductStatusEnum;
 
 import java.util.*;
 import java.util.regex.Pattern;
@@ -11,7 +10,7 @@ import static it.gov.pagopa.register.utils.EprelUtils.isEnergyClassValid;
 
 public class AssetRegisterConstants {
 
-  //private constructor to avoid instantiation
+    //private constructor to avoid instantiation
   private AssetRegisterConstants(){
   }
 
@@ -138,6 +137,11 @@ public class AssetRegisterConstants {
     public static final String UPLOAD_ALREADY_IN_PROGRESS = "product.invalid.file.already_in_progress";
   }
 
+  public static final class UpdateKeyConstant {
+    private UpdateKeyConstant(){}
+    public static final String EMAIL_ERROR_KEY = "product.invalid.update.email";
+
+  }
 
   public static final class CsvValidationRules {
     private CsvValidationRules() {}

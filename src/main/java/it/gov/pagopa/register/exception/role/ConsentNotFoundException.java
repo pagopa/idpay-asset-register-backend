@@ -2,12 +2,12 @@ package it.gov.pagopa.register.exception.role;
 
 import it.gov.pagopa.common.web.exception.ServiceException;
 import it.gov.pagopa.common.web.exception.ServiceExceptionPayload;
-import it.gov.pagopa.register.constants.RoleConstants;
+import it.gov.pagopa.register.constants.ExceptionConstants;
 
 public class ConsentNotFoundException extends ServiceException {
 
   public ConsentNotFoundException(String message) {
-    this(RoleConstants.ExceptionCode.CONSENT_NOT_FOUND, message);
+    this(ExceptionConstants.ExceptionCode.CONSENT_NOT_FOUND, message);
   }
 
   public ConsentNotFoundException(String code, String message) {

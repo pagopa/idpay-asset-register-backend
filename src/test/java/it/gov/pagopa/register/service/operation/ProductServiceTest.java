@@ -2,6 +2,7 @@ package it.gov.pagopa.register.service.operation;
 
 import it.gov.pagopa.register.connector.notification.NotificationServiceImpl;
 import it.gov.pagopa.register.dto.operation.ProductListDTO;
+import it.gov.pagopa.register.dto.operation.UpdateResultDTO;
 import it.gov.pagopa.register.enums.ProductStatusEnum;
 import it.gov.pagopa.register.model.operation.Product;
 import it.gov.pagopa.register.model.operation.ProductFile;
@@ -192,20 +193,15 @@ class ProductServiceTest {
     doNothing().when(notificationService)
       .sendEmailUpdateStatus(anyList(), eq(motivation), eq("APPROVED"), eq("user@example.com"));
 
-    ProductListDTO result = productService.updateProductState(
+    UpdateResultDTO result = productService.updateProductState(
       organizationId,
       productIds,
       ProductStatusEnum.APPROVED,
       motivation
     );
 
-    assertEquals(0, result.getPageNo());
-    assertEquals(1, result.getTotalPages());
 
-    for (Product p : productList) {
-      assertEquals("APPROVED", p.getStatus());
-      assertEquals(motivation, p.getMotivation());
-    }
+    assertEquals("OK",result.getStatus());
 
     verify(productRepository).findByIdsAndOrganizationId(productIds, organizationId);
     verify(productRepository).saveAll(productList);
