@@ -234,17 +234,17 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
         processErrorRecords(invalidRecords, errorMessages, productFileId, headers);
         String userEmail = setProductFileStatus(productFileId, String.valueOf(PARTIAL), validProduct.size());
         log.info("[PRODUCT_UPLOAD] - File {} processed with {} duplicate rows", productFileId, errorMessages.size());
-        notificationService.sendEmailPartial(COOKINGHOBS + "_" + productFileId + ".csv", userEmail);
+        notificationService.sendEmailPartial(CATEGORIES_TO_IT_P.get(COOKINGHOBS) + "_" + productFileId + ".csv", userEmail);
       } else {
         String userEmail = setProductFileStatus(productFileId, String.valueOf(LOADED), savedProduct.size());
         log.info("[PRODUCT_UPLOAD] - File {} processed successfully with no errors", productFileId);
-        notificationService.sendEmailOk(COOKINGHOBS + "_" + productFileId + ".csv", userEmail);
+        notificationService.sendEmailOk(CATEGORIES_TO_IT_P.get(COOKINGHOBS) + "_" + productFileId + ".csv", userEmail);
       }
     } else if (!invalidRecords.isEmpty()) {
       processErrorRecords(invalidRecords, errorMessages, productFileId, headers);
       String userEmail = setProductFileStatus(productFileId, String.valueOf(PARTIAL), 0);
       log.info("[PRODUCT_UPLOAD] - File {} processed with {} duplicate row", productFileId, invalidRecords.size());
-      notificationService.sendEmailPartial(COOKINGHOBS + "_" + productFileId + ".csv", userEmail);
+      notificationService.sendEmailPartial(CATEGORIES_TO_IT_P.get(COOKINGHOBS) + "_" + productFileId + ".csv", userEmail);
     }
   }
 
@@ -256,17 +256,17 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
         processErrorRecords(errors, messages, productFileId, headers);
         String userEmail = setProductFileStatus(productFileId, String.valueOf(PARTIAL), validProduct.size());
         log.info("[PRODUCT_UPLOAD] - File {} processed with {} EPREL errors", productFileId, errors.size());
-        notificationService.sendEmailPartial(category + "_" + productFileId + ".csv", userEmail);
+        notificationService.sendEmailPartial(CATEGORIES_TO_IT_P.get(category) + "_" + productFileId + ".csv", userEmail);
       } else {
         String userEmail = setProductFileStatus(productFileId, String.valueOf(LOADED), savedProduct.size());
         log.info("[PRODUCT_UPLOAD] - File {} processed successfully with no errors", productFileId);
-        notificationService.sendEmailOk(category + "_" + productFileId + ".csv", userEmail);
+        notificationService.sendEmailOk(CATEGORIES_TO_IT_P.get(category)  + "_" + productFileId + ".csv", userEmail);
       }
     } else if (!errors.isEmpty()) {
       processErrorRecords(errors, messages, productFileId, headers);
       String userEmail = setProductFileStatus(productFileId, String.valueOf(PARTIAL), 0);
       log.info("[PRODUCT_UPLOAD] - File {} processed with {} EPREL errors", productFileId, errors.size());
-      notificationService.sendEmailPartial(category + "_" + productFileId + ".csv", userEmail);
+      notificationService.sendEmailPartial(CATEGORIES_TO_IT_P.get(category)  + "_" + productFileId + ".csv", userEmail);
     }
   }
 
