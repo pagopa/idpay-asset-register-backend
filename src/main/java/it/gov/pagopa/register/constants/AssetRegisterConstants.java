@@ -17,7 +17,7 @@ public class AssetRegisterConstants {
   public static final String REPORT_PARTIAL_ERROR = "Report/Partial/";
   public static final String REPORT_FORMAL_ERROR = "Report/Formal/";
   public static final String CSV = ".csv";
-  public static final Integer CSV_SIZE = 2 * 1024 * 1024;
+  public static final Integer CSV_SIZE = 2 * 1024;
 
   // Regex
   public static final String CODE_GTIN_EAN_REGEX = "^[a-zA-Z0-9]{1,14}$";
@@ -115,13 +115,13 @@ public class AssetRegisterConstants {
 
   // Csv Errors
   public static final String ERROR_GTIN_EAN = "Il Codice GTIN/EAN è obbligatorio e deve essere univoco ed alfanumerico e lungo al massimo 14 caratteri";
-  public static final String ERROR_CATEGORY_COOKINGHOBS = "Il campo Categoria è obbligatorio e deve essere coerente con la categoria selezionata";
   public static final String ERROR_BRAND = "Il campo Marca è obbligatorio e deve contenere una stringa lunga al massimo 100 caratteri";
   public static final String ERROR_MODEL = "Il campo Modello è obbligatorio e deve contenere una stringa lunga al massimo 100 caratteri";
   public static final String ERROR_CODE_PRODUCT = "Il Codice prodotto non deve contenere caratteri speciali o lettere accentate e deve essere lungo al massimo 100 caratteri";
-  public static final String ERROR_COUNTRY_OF_PRODUCTION = "Paese di Produzione non è un ISO 3166 valido";
+  public static final String ERROR_COUNTRY_OF_PRODUCTION = "Paese di Produzione non è un ISO 3166 valido o non è in maiuscolo";
+  public static final String ERROR_CATEGORY_PRODUCTS = "Il campo Categoria è obbligatorio e deve essere \"{}\"";
   public static final String ERROR_CODE_EPREL = "Il Codice EPREL è obbligatorio e deve essere un valore numerico";
-  public static final String ERROR_CATEGORY_PRODUCTS = "Il campo Categoria è obbligatorio e deve essere coerente con la categoria selezionata";
+
 
   // Eprel Errors
 
@@ -152,7 +152,7 @@ public class AssetRegisterConstants {
       new ColumnValidationRule((v, z) -> v != null && v.matches(CODE_PRODUCT_REGEX), ERROR_CODE_PRODUCT);
 
     public static final ColumnValidationRule CATEGOY_COOKINGHOBS_RULE =
-      new ColumnValidationRule(String::equals, ERROR_CATEGORY_COOKINGHOBS);
+      new ColumnValidationRule(String::equals, ERROR_CATEGORY_PRODUCTS);
 
     public static final ColumnValidationRule CATEGOY_PRODUCTS_RULE =
       new ColumnValidationRule(String::equals, ERROR_CATEGORY_PRODUCTS);

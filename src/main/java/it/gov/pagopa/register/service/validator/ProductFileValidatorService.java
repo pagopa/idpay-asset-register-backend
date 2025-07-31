@@ -90,7 +90,7 @@ public class ProductFileValidatorService {
         if (rule != null) {
           String value = csvRow.get(header);
           if (!rule.isValid(value, CATEGORIES_TO_IT_S.get(category))) {
-            errors.add(rule.getMessage());
+            errors.add(rule.getMessage().replace("{}",CATEGORIES_TO_IT_S.get(category)));
           }
         }
       }

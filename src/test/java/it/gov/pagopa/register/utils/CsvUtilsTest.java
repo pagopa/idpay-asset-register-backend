@@ -27,7 +27,7 @@ class CsvUtilsTest {
   @Test
   void testReadHeaderFromMultipartFile() throws IOException {
     MockMultipartFile file = new MockMultipartFile("file", "test.csv", "text/csv", CSV_CONTENT.getBytes());
-    List<String> headers = CsvUtils.readHeader(file);
+    List<String> headers = CsvUtils.readHeaders(file);
     assertEquals(List.of("Name", "Age"), headers);
   }
 

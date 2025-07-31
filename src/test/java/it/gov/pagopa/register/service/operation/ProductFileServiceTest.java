@@ -192,7 +192,7 @@ class ProductFileServiceTest {
     try (MockedStatic<CsvUtils> mockedCsv = mockStatic(CsvUtils.class);
          MockedStatic<Files> mockedFiles = mockStatic(Files.class)) {
 
-      mockedCsv.when(() -> CsvUtils.readHeader(file))
+      mockedCsv.when(() -> CsvUtils.readHeaders(file))
         .thenReturn(List.of("Codice GTIN/EAN", "Codice Prodotto", "Categoria", "Paese di Produzione", "Marca", "Modello"));
 
       mockedCsv.when(() -> CsvUtils.readCsvRecords(file))
@@ -265,7 +265,7 @@ class ProductFileServiceTest {
 
     try (MockedStatic<CsvUtils> mocked = mockStatic(CsvUtils.class)) {
 
-      mocked.when(() -> CsvUtils.readHeader(file))
+      mocked.when(() -> CsvUtils.readHeaders(file))
         .thenReturn(List.of("C1"));
       mocked.when(() -> CsvUtils.readCsvRecords(file))
         .thenReturn(List.of(rec));
