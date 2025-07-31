@@ -47,6 +47,7 @@ public class ProductFileService {
     UploadCsvStatus.IN_PROCESS.name(),
     UploadCsvStatus.UPLOADED.name()
   );
+  public static final String PROCESS_FILE_VALIDATION_FAILED_FOR_FILE = "[PROCESS_FILE] - Validation failed for file: {}";
   private final ProductFileRepository productFileRepository;
   private final ProductRepository productRepository;
 
@@ -121,14 +122,14 @@ public class ProductFileService {
   public ProductFileResult uploadFile(MultipartFile file, String category, String organizationId, String userId, String userEmail){
 
     try {
-      List<CSVRecord> records = CsvUtils.readCsvRecords(file);
-      String originalFileName = file.getOriginalFilename();
+
 
       ProductFileResult result = validateFile(file, category, organizationId, userId, userEmail);
       if("KO".equals(result.getStatus())){
         return result;
       }
-
+      List<CSVRecord> records = CsvUtils.readCsvRecords(file);
+      String originalFileName = file.getOriginalFilename();
       // Log OK
       ProductFile productFile = saveProductFile(category, organizationId, userId, userEmail, originalFileName, records);
 
@@ -159,19 +160,21 @@ public class ProductFileService {
     try {
       String originalFileName = file.getOriginalFilename();
       log.info("[PROCESS_FILE] - Processing file: {} for organizationId: {}", originalFileName, organizationId);
-      List<String> headers = CsvUtils.readHeader(file);
+      List<String> headers = CsvUtils.readHeaders(file);
+      if(headers.stream().anyMatch(String::isEmpty)){
+        log.warn(PROCESS_FILE_VALIDATION_FAILED_FOR_FILE, originalFileName);
+        return ProductFileResult.ko(UploadKeyConstant.HEADER_FILE_ERROR_KEY);
+      }
       List<CSVRecord> records = CsvUtils.readCsvRecords(file);
-
       ValidationResultDTO validation = productFileValidator.validateFile(file, category, headers, records.size());
       if ("KO".equals(validation.getStatus())) {
-        log.warn("[PROCESS_FILE] - Validation failed for file: {}", originalFileName);
-
+        log.warn(PROCESS_FILE_VALIDATION_FAILED_FOR_FILE, originalFileName);
         return ProductFileResult.ko(validation.getErrorKey());
       }
 
       ValidationResultDTO validationRecords = productFileValidator.validateRecords(records, headers, category);
       if ("KO".equals(validationRecords.getStatus())) {
-        log.warn("[PROCESS_FILE] - Validation failed for file: {}", originalFileName);
+        log.warn(PROCESS_FILE_VALIDATION_FAILED_FOR_FILE, originalFileName);
 
         ProductFile productFile = saveProductFile(category, organizationId, userId, userEmail, originalFileName, records);
         uploadFormalErrorFile(file, validationRecords, headers, productFile);
