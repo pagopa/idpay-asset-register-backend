@@ -48,7 +48,7 @@ public class ProductController {
     return ResponseEntity.ok(result);
   }
 
-  @PatchMapping("/products/update-status")
+  @PostMapping("/products/update-status")
   public ResponseEntity<UpdateResultDTO> updateProductsState(
     @RequestHeader("x-organization-id") String organizationId,
     @RequestBody ProductUpdateStatusRequestDTO dto) {

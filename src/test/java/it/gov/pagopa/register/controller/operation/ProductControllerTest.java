@@ -126,7 +126,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
       mockMvc.perform(
           org.springframework.test.web.servlet.request.MockMvcRequestBuilders
-            .patch("/idpay/register/products/update-status")
+            .post("/idpay/register/products/update-status")
             .header("x-organization-id", "org-test")
             .contentType(MediaType.APPLICATION_JSON)
             .content(requestBody))
@@ -144,7 +144,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
       String requestBody = objectMapper.writeValueAsString(requestDTO);
 
       mockMvc.perform(MockMvcRequestBuilders
-          .patch("/idpay/register/products/update-status")
+          .post("/idpay/register/products/update-status")
           .contentType(MediaType.APPLICATION_JSON)
           .content(requestBody))
         .andExpect(status().isBadRequest());
