@@ -10,9 +10,7 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class CsvUtils {
 
@@ -31,15 +29,15 @@ public class CsvUtils {
     return parser.getRecords();
   }
 
-  public static List<String> readHeader(MultipartFile file) throws IOException {
-    try (Reader reader = new InputStreamReader(file.getInputStream());
-         CSVParser parser = CSVFormat.Builder.create()
-           .setTrim(Boolean.TRUE)
-           .setHeader().setSkipHeaderRecord(Boolean.TRUE)
-           .setDelimiter(DELIMITER)
-           .build()
-           .parse(reader)) {
-      return parser.getHeaderNames();
+  public static List<String> readHeaders(MultipartFile file) throws IOException {
+    try (BufferedReader reader = new BufferedReader(
+      new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8))) {
+      String headerLine = reader.readLine();
+      if (headerLine != null) {
+        return Arrays.asList(headerLine.split(";"));
+      } else {
+        return List.of("");
+      }
     }
   }
 
@@ -69,7 +67,7 @@ public class CsvUtils {
 
   public static void writeCsvWithErrors(List<CSVRecord> invalidRecords, List<String> headers, Map<CSVRecord, String> errorMap, Path outputPath) throws IOException {
     List<String> finalHeaders = new ArrayList<>(headers);
-    finalHeaders.add("Validation Errors");
+    finalHeaders.add("Errori di validazione");
 
     try (BufferedWriter writer = Files.newBufferedWriter(outputPath, StandardCharsets.UTF_8)) {
       writer.write("\uFEFF"); // BOM

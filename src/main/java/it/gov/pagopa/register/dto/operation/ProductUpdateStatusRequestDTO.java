@@ -1,5 +1,6 @@
 package it.gov.pagopa.register.dto.operation;
 
+import it.gov.pagopa.register.enums.ProductStatusEnum;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -11,12 +12,8 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class ProductListDTO {
-
-  private List<ProductDTO> content;
-  private String message;
-  private Integer pageNo;
-  private Integer pageSize;
-  private Long totalElements;
-  private Integer totalPages;
+public class ProductUpdateStatusRequestDTO {
+  private List<String> gtinCodes;
+  private ProductStatusEnum status;
+  private String motivation;
 }

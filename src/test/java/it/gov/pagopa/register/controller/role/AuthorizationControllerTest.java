@@ -1,7 +1,7 @@
 package it.gov.pagopa.register.controller.role;
 
 import it.gov.pagopa.register.configuration.ServiceExceptionConfig;
-import it.gov.pagopa.register.constants.RoleConstants;
+import it.gov.pagopa.register.constants.ExceptionConstants;
 import it.gov.pagopa.register.controller.role.authorization.AuthorizationController;
 import it.gov.pagopa.register.dto.role.PermissionDTO;
 import it.gov.pagopa.register.dto.role.UserPermissionDTO;
@@ -118,7 +118,7 @@ class AuthorizationControllerTest {
 
     @Test
     void shouldReturnNotFound() throws Exception {
-        Mockito.doThrow(new PermissionNotFoundException(String.format(RoleConstants.PERMISSIONS_NOT_FOUND_MSG, ROLE)))
+        Mockito.doThrow(new PermissionNotFoundException(String.format(ExceptionConstants.ExceptionMessage.PERMISSIONS_NOT_FOUND_MSG, ROLE)))
                 .when(rolePermissionServiceMock).getUserPermission(anyString());
 
         MvcResult mvcResult = mvc.perform(get(BASE_URL + PERMISSIONS_URL + "/{role}", ROLE))
@@ -129,7 +129,7 @@ class AuthorizationControllerTest {
                 .andReturn();
 
 
-        Optional<PermissionNotFoundException> authorizationPermissionException = Optional.ofNullable((PermissionNotFoundException) mvcResult.getResolvedException());
+        Optional<PermissionNotFoundException> authorizationPermissionException = Optional.of((PermissionNotFoundException) mvcResult.getResolvedException());
 
         authorizationPermissionException.ifPresent(authExp -> assertThat(authExp, is(notNullValue())));
         authorizationPermissionException.ifPresent(authExp -> assertThat(authExp, is(instanceOf(PermissionNotFoundException.class))));

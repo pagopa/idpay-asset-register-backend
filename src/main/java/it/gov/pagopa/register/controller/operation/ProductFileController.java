@@ -1,5 +1,6 @@
 package it.gov.pagopa.register.controller.operation;
 
+import it.gov.pagopa.register.constants.AssetRegisterConstants;
 import it.gov.pagopa.register.dto.operation.FileReportDTO;
 import it.gov.pagopa.register.dto.operation.ProductBatchDTO;
 import it.gov.pagopa.register.dto.operation.ProductFileResponseDTO;
@@ -11,6 +12,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
@@ -53,6 +55,13 @@ public class ProductFileController {
     ProductFileResult productFileResult = productFileService.validateFile(csv, category, organizationId, userId, userEmail);
     return ResponseEntity.ok().body(productFileResult);
   }
+
+
+  @ExceptionHandler(MaxUploadSizeExceededException.class)
+  public ResponseEntity<ProductFileResult> handleMaxSizeException(MaxUploadSizeExceededException ex) {
+    return ResponseEntity.ok().body(ProductFileResult.ko(AssetRegisterConstants.UploadKeyConstant.MAX_SIZE_FILE_ERROR_KEY));
+  }
+
 
 
   @GetMapping("/product-files/{productFileId}/report")

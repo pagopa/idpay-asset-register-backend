@@ -33,4 +33,5 @@ public class ProductDTO {
   private String batchName;
   private String productName;
   private String capacity;
+  private String motivation;
 }

@@ -23,6 +23,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileAttribute;
@@ -42,6 +43,11 @@ import static it.gov.pagopa.register.enums.UploadCsvStatus.PARTIAL;
 public class ProductFileService {
 
 
+  public static final List<String> BLOCKING_STATUSES = List.of(
+    UploadCsvStatus.IN_PROCESS.name(),
+    UploadCsvStatus.UPLOADED.name()
+  );
+  public static final String PROCESS_FILE_VALIDATION_FAILED_FOR_FILE = "[PROCESS_FILE] - Validation failed for file: {}";
   private final ProductFileRepository productFileRepository;
   private final ProductRepository productRepository;
 
@@ -114,22 +120,14 @@ public class ProductFileService {
 
 
   public ProductFileResult uploadFile(MultipartFile file, String category, String organizationId, String userId, String userEmail){
-
     try {
-      List<CSVRecord> records = CsvUtils.readCsvRecords(file);
-      String originalFileName = file.getOriginalFilename();
-
       ProductFileResult result = validateFile(file, category, organizationId, userId, userEmail);
       if("KO".equals(result.getStatus())){
         return result;
       }
-
-      // Log OK
-      ProductFile productFile = saveProductFile(category, organizationId, userId, userEmail, originalFileName, records);
-
-      // Upload on Azure
+      String originalFileName = file.getOriginalFilename();
+      ProductFile productFile = saveProductFile(category, organizationId, userId, userEmail, originalFileName, result.getRecords());
       fileStorageClient.upload(file.getInputStream(), "CSV/" + organizationId + "/" + category + "/" + productFile.getId() + ".csv", file.getContentType());
-
       log.info("[PROCESS_FILE] - File processed and uploaded successfully: {}", originalFileName);
       return ProductFileResult.ok();
     } catch (Exception e) {
@@ -141,57 +139,46 @@ public class ProductFileService {
 
 
   public ProductFileResult validateFile(MultipartFile file, String category, String organizationId, String userId, String userEmail) {
-
-    List<String> blockingStatuses = List.of(
-      UploadCsvStatus.IN_PROCESS.name(),
-      UploadCsvStatus.UPLOADED.name()
-    );
-
     boolean alreadyBlocked = productFileRepository.existsByOrganizationIdAndUploadStatusIn(
-      organizationId, blockingStatuses
+      organizationId, BLOCKING_STATUSES
     );
-
     if (alreadyBlocked) {
       log.warn("[PROCESS_FILE] - Existing file in UPLOADED or IN_PROCESS state for org: {}", organizationId);
       return ProductFileResult.ko(AssetRegisterConstants.UploadKeyConstant.UPLOAD_ALREADY_IN_PROGRESS);
     }
-
     try {
       String originalFileName = file.getOriginalFilename();
       log.info("[PROCESS_FILE] - Processing file: {} for organizationId: {}", originalFileName, organizationId);
-      List<String> headers = CsvUtils.readHeader(file);
-      List<CSVRecord> records = CsvUtils.readCsvRecords(file);
-
-      ValidationResultDTO validation = productFileValidator.validateFile(file, category, headers, records.size());
+      ValidationResultDTO validation = productFileValidator.validateFile(file, category);
       if ("KO".equals(validation.getStatus())) {
-        log.warn("[PROCESS_FILE] - Validation failed for file: {}", originalFileName);
-
+        log.warn(PROCESS_FILE_VALIDATION_FAILED_FOR_FILE, originalFileName);
         return ProductFileResult.ko(validation.getErrorKey());
       }
-
-      ValidationResultDTO validationRecords = productFileValidator.validateRecords(records, headers, category);
+      ValidationResultDTO validationRecords = productFileValidator.validateRecords(validation.getRecords(), validation.getHeaders(), category);
       if ("KO".equals(validationRecords.getStatus())) {
-        log.warn("[PROCESS_FILE] - Validation failed for file: {}", originalFileName);
-
-        ProductFile productFile = saveProductFile(category, organizationId, userId, userEmail, originalFileName, records);
-        uploadFormalErrorFile(file, validationRecords, headers, productFile);
-
+        log.warn(PROCESS_FILE_VALIDATION_FAILED_FOR_FILE, originalFileName);
+        ProductFile productFile = saveProductFile(category, organizationId, userId, userEmail, originalFileName, validation.getRecords());
+        uploadFormalErrorFile(file, validationRecords, validation.getHeaders(), productFile);
         log.warn("[PROCESS_FILE] - File processed with formal errors: {}", originalFileName);
         return ProductFileResult.ko(AssetRegisterConstants.UploadKeyConstant.REPORT_FORMAL_FILE_ERROR_KEY, productFile.getId());
       }
-      return ProductFileResult.ok();
-
+      return ProductFileResult.ok(validation.getRecords());
     } catch (Exception e) {
       log.error("[PROCESS_FILE] - Generic Error processing file: {}", file.getOriginalFilename(), e);
       return ProductFileResult.ko("GENERIC_ERROR");
     }
   }
 
+  @SuppressWarnings("java:S5443") // The system used will be Linux so never create a file without specified permissions
   private void uploadFormalErrorFile(MultipartFile file, ValidationResultDTO validationRecords, List<String> headers, ProductFile productFile) throws IOException {
-    Set<PosixFilePermission> perms = PosixFilePermissions.fromString("rw-------");
-    FileAttribute<Set<PosixFilePermission>> attr = PosixFilePermissions.asFileAttribute(perms);
-    Path tempFilePath = Files.createTempFile("errors-", ".csv", attr);
-
+    Path tempFilePath;
+    if (FileSystems.getDefault().supportedFileAttributeViews().contains("posix")) {
+      Set<PosixFilePermission> perms = PosixFilePermissions.fromString("rw-------");
+      FileAttribute<Set<PosixFilePermission>> attr = PosixFilePermissions.asFileAttribute(perms);
+      tempFilePath = Files.createTempFile("errors-", ".csv", attr);
+    } else {
+      tempFilePath = Files.createTempFile("errors-", ".csv");
+    }
     CsvUtils.writeCsvWithErrors(
       validationRecords.getInvalidRecords(),
       headers,

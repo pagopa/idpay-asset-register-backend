@@ -27,7 +27,7 @@ class CsvUtilsTest {
   @Test
   void testReadHeaderFromMultipartFile() throws IOException {
     MockMultipartFile file = new MockMultipartFile("file", "test.csv", "text/csv", CSV_CONTENT.getBytes());
-    List<String> headers = CsvUtils.readHeader(file);
+    List<String> headers = CsvUtils.readHeaders(file);
     assertEquals(List.of("Name", "Age"), headers);
   }
 
@@ -62,7 +62,7 @@ class CsvUtilsTest {
     CsvUtils.writeCsvWithErrors(List.of(records.get(0)), headers, errorMap, tempFile);
 
     List<String> lines = Files.readAllLines(tempFile);
-    assertTrue(lines.get(0).contains("Validation Errors"));
+    assertTrue(lines.get(0).contains("Errori di validazione"));
     assertTrue(lines.get(1).contains("Invalid age format"));
 
     Files.deleteIfExists(tempFile);

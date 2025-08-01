@@ -1,5 +1,6 @@
 package it.gov.pagopa.register.service.role;
 
+import it.gov.pagopa.register.exception.role.ConsentNotFoundException;
 import it.gov.pagopa.register.exception.role.VersionNotMatchedException;
 import it.gov.pagopa.register.connector.onetrust.OneTrustRestService;
 import it.gov.pagopa.register.dto.role.PortalConsentDTO;
@@ -189,5 +190,37 @@ class PortalConsentServiceTest {
         Mockito.verify(consentRepositoryMock, Mockito.never()).save(Mockito.any());
     }
     //endregion
+
+    //region remove
+    @Test
+    void testRemoveConsentSuccess() {
+      // Given
+      PortalConsent portalConsent = PortalConsent.builder()
+        .userId(USER_ID)
+        .acceptanceDate(NOW)
+        .versionId(VERSION_ID)
+        .build();
+      Mockito.when(consentRepositoryMock.findById(USER_ID)).thenReturn(Optional.of(portalConsent));
+
+      // When
+      portalConsentService.remove(USER_ID);
+
+      // Then
+      Mockito.verify(consentRepositoryMock).delete(portalConsent);
+    }
+
+    @Test
+    void testRemoveConsentNotFound() {
+      // Given
+      Mockito.when(consentRepositoryMock.findById(USER_ID)).thenReturn(Optional.empty());
+
+      // When
+      Executable executable = () -> portalConsentService.remove(USER_ID);
+
+      // Then
+      Assertions.assertThrows(ConsentNotFoundException.class, executable);
+      Mockito.verify(consentRepositoryMock, Mockito.never()).delete(Mockito.any());
+    }
+  //endregion
 
 }

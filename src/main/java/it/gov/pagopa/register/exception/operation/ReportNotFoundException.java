@@ -2,11 +2,11 @@ package it.gov.pagopa.register.exception.operation;
 
 import it.gov.pagopa.common.web.exception.ServiceException;
 import it.gov.pagopa.common.web.exception.ServiceExceptionPayload;
-import it.gov.pagopa.register.constants.ReportConstants;
+import it.gov.pagopa.register.constants.ExceptionConstants;
 
 public class ReportNotFoundException extends ServiceException {
     public ReportNotFoundException(String message) {
-        this(ReportConstants.ExceptionCode.REPORT_NOT_FOUND, message);
+        this(ExceptionConstants.ExceptionCode.REPORT_NOT_FOUND, message);
     }
 
     public ReportNotFoundException(String code, String message) {

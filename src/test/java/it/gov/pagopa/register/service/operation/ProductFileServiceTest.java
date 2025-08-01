@@ -59,8 +59,8 @@ class ProductFileServiceTest {
   void testGetFilesByPage_Success() {
     String org = "org";
     Pageable page = PageRequest.of(0,2);
-    ProductFile pf1 = ProductFile.builder().id("1").fileName("f1.csv").uploadStatus("OK").build();
-    ProductFile pf2 = ProductFile.builder().id("2").fileName("f2.csv").uploadStatus("OK").build();
+    ProductFile pf1 = ProductFile.builder().id("1").fileName("f1.csv").uploadStatus("OK").category("WASHINGMACHINES").build();
+    ProductFile pf2 = ProductFile.builder().id("2").fileName("f2.csv").uploadStatus("OK").category("WASHINGMACHINES").build();
     List<ProductFile> list = List.of(pf1, pf2);
     Page<ProductFile> pg = new PageImpl<>(list, page, list.size());
     when(productFileRepository.findByOrganizationIdAndUploadStatusNot(org, UploadCsvStatus.FORMAL_ERROR.name(), page))
@@ -176,10 +176,10 @@ class ProductFileServiceTest {
 
   //Test with invalid headers
   @Test
-  void whenInvalidFileType_thenReturnKoResult() {
+  void whenInvalidFileType_thenReturnKoResult() throws IOException {
     MultipartFile file = createMockFile_InvalidFileType();
     ValidationResultDTO validationResultDTO = new ValidationResultDTO("KO","TEST");
-    when(productFileValidator.validateFile(any(),anyString(),anyList(),anyInt())).thenReturn(validationResultDTO);
+    when(productFileValidator.validateFile(any(),anyString())).thenReturn(validationResultDTO);
     ProductFileResult res = productFileService.uploadFile(file, "cat","org","user","email");
     assertEquals("KO", res.getStatus());
     assertEquals("TEST", res.getErrorKey());
@@ -192,7 +192,7 @@ class ProductFileServiceTest {
     try (MockedStatic<CsvUtils> mockedCsv = mockStatic(CsvUtils.class);
          MockedStatic<Files> mockedFiles = mockStatic(Files.class)) {
 
-      mockedCsv.when(() -> CsvUtils.readHeader(file))
+      mockedCsv.when(() -> CsvUtils.readHeaders(file))
         .thenReturn(List.of("Codice GTIN/EAN", "Codice Prodotto", "Categoria", "Paese di Produzione", "Marca", "Modello"));
 
       mockedCsv.when(() -> CsvUtils.readCsvRecords(file))
@@ -206,8 +206,8 @@ class ProductFileServiceTest {
 
       when(fileStorageClient.upload(any(), any(), any())).thenReturn(null);
 
-      when(productFileValidator.validateFile(any(), any(), any(), anyInt()))
-        .thenReturn(new ValidationResultDTO("OK", null));
+      when(productFileValidator.validateFile(any(), any()))
+        .thenReturn(new ValidationResultDTO("OK", null,List.of(mock(CSVRecord.class)),List.of("Codice GTIN/EAN", "Codice Prodotto", "Categoria", "Paese di Produzione", "Marca", "Modello")));
 
       CSVRecord invalidRecordLocal = mock(CSVRecord.class);
       List<CSVRecord> invalidRecordsLocal = Collections.singletonList(invalidRecordLocal);
@@ -220,11 +220,13 @@ class ProductFileServiceTest {
       ProductFile savedProductFile = ProductFile.builder().id("123").build();
       when(productFileRepository.save(any())).thenReturn(savedProductFile);
 
-      ProductFileResult result = productFileService.uploadFile(file, "cookinghobs", "org1", "user1","email");
+      ProductFileResult result = productFileService.uploadFile(file, "COOKINGHOBS", "org1", "user1","email");
 
       assertEquals("KO", result.getStatus());
       assertEquals(AssetRegisterConstants.UploadKeyConstant.REPORT_FORMAL_FILE_ERROR_KEY, result.getErrorKey());
       assertEquals("123", result.getProductFileId());
+    } catch (IOException e) {
+        throw new RuntimeException(e);
     }
   }
 
@@ -265,13 +267,13 @@ class ProductFileServiceTest {
 
     try (MockedStatic<CsvUtils> mocked = mockStatic(CsvUtils.class)) {
 
-      mocked.when(() -> CsvUtils.readHeader(file))
+      mocked.when(() -> CsvUtils.readHeaders(file))
         .thenReturn(List.of("C1"));
       mocked.when(() -> CsvUtils.readCsvRecords(file))
         .thenReturn(List.of(rec));
 
-      when(productFileValidator.validateFile(file, "cat", List.of("C1"), 1))
-        .thenReturn(ValidationResultDTO.ok());
+      when(productFileValidator.validateFile(file, "cat"))
+        .thenReturn(ValidationResultDTO.ok(List.of(rec), List.of("C1")));
 
       when(productFileValidator.validateRecords(List.of(rec), List.of("C1"), "cat"))
         .thenReturn(ValidationResultDTO.ok());
@@ -315,7 +317,7 @@ class ProductFileServiceTest {
 
     assertEquals(1, result.size());
     assertEquals("file123", result.getFirst().getProductFileId());
-    assertEquals("DISHWASHERS_file123.csv", result.getFirst().getBatchName());
+    assertEquals("Lavastoviglie_file123.csv", result.getFirst().getBatchName());
   }
 
   @Test

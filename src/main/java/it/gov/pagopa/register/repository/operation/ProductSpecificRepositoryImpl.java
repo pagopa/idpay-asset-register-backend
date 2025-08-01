@@ -1,15 +1,21 @@
 package it.gov.pagopa.register.repository.operation;
 
 import it.gov.pagopa.register.model.operation.Product;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.aggregation.*;
+import org.springframework.data.mongodb.core.aggregation.Aggregation;
+import org.springframework.data.mongodb.core.aggregation.AggregationResults;
+import org.springframework.data.mongodb.core.aggregation.ComparisonOperators;
+import org.springframework.data.mongodb.core.aggregation.ConditionalOperators;
+
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 
+import java.util.ArrayList;
 import java.util.List;
+
+import static it.gov.pagopa.register.constants.AssetRegisterConstants.*;
 
 public class ProductSpecificRepositoryImpl implements ProductSpecificRepository {
 
@@ -18,8 +24,8 @@ public class ProductSpecificRepositoryImpl implements ProductSpecificRepository 
   public static final String PRODUCT_FILE_ID = "productFileId";
   public static final String BATCH_NAME = "batchName";
   public static final String ORGANIZATION_ID = "organizationId";
-
   public static final String ENERGY_CLASS = "energyClass";
+  public static final String STATUS = "status";
   private final MongoTemplate mongoTemplate;
 
   public ProductSpecificRepositoryImpl(MongoTemplate mongoTemplate){
@@ -30,23 +36,32 @@ public class ProductSpecificRepositoryImpl implements ProductSpecificRepository 
   public List<Product> findByFilter(Criteria criteria, Pageable pageable) {
     Sort sort = pageable.getSort();
 
-    boolean sortByEnergyClass = sort.stream()
-      .anyMatch(order -> order.getProperty().equalsIgnoreCase(ENERGY_CLASS));
+    boolean sortByEnergyClass = hasSortProperty(sort, ENERGY_CLASS);
+    boolean sortByCategory = hasSortProperty(sort, CATEGORY);
+    boolean sortByBatchName = hasSortProperty(sort, BATCH_NAME);
 
     if (sortByEnergyClass) {
-      return mongoTemplate.aggregate(energyClassAggregation(criteria, pageable), PRODUCT, Product.class).getMappedResults();
-    } else {
-      Pageable resolvedPageable = resolveSort(pageable);
-      return mongoTemplate.find(
-        Query.query(criteria).with(this.getPageable(resolvedPageable)),
-        Product.class
-      );
+      return aggregateResults(energyClassAggregation(criteria, pageable));
     }
+
+    if (sortByCategory || sortByBatchName) {
+      return aggregateResults(categoryAggregation(criteria, pageable, sortByBatchName));
+    }
+
+    return mongoTemplate.find(Query.query(criteria).with(pageable), Product.class);
   }
 
-  private static Aggregation energyClassAggregation(Criteria criteria, Pageable pageable) {
-    Sort.Order energyClassOrder = pageable.getSort().getOrderFor(ENERGY_CLASS);
-    Sort.Direction direction = energyClassOrder != null ? energyClassOrder.getDirection() : Sort.Direction.ASC;
+
+  private boolean hasSortProperty(Sort sort, String property) {
+    return sort.stream().anyMatch(order -> order.getProperty().equalsIgnoreCase(property));
+  }
+
+  private List<Product> aggregateResults(Aggregation aggregation) {
+    return mongoTemplate.aggregate(aggregation, PRODUCT, Product.class).getMappedResults();
+  }
+
+  private Aggregation energyClassAggregation(Criteria criteria, Pageable pageable) {
+    Sort.Direction direction = getSortDirection(pageable, ENERGY_CLASS);
 
     return Aggregation.newAggregation(
       Aggregation.addFields()
@@ -71,39 +86,56 @@ public class ProductSpecificRepositoryImpl implements ProductSpecificRepository 
     );
   }
 
+  private Aggregation categoryAggregation(Criteria criteria, Pageable pageable, boolean sortByBatchName) {
+    Sort.Direction direction = getSortDirection(pageable, CATEGORY);
+    List<Sort.Order> orders = new ArrayList<>();
+    orders.add(new Sort.Order(direction, "categoryIt"));
 
-  private Pageable resolveSort(Pageable pageable) {
-    Sort.Order order = pageable.getSort().getOrderFor(BATCH_NAME);
-    if (order == null) {
-      return pageable;
+    if (sortByBatchName) {
+      orders.add(new Sort.Order(direction, PRODUCT_FILE_ID));
     }
 
-    Sort newSort = Sort.by(order.isAscending()
-      ? List.of(
-      Sort.Order.asc(CATEGORY),
-      Sort.Order.asc(PRODUCT_FILE_ID))
-      : List.of(
-      Sort.Order.desc(CATEGORY),
-      Sort.Order.desc(PRODUCT_FILE_ID)));
-
-    return PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), newSort);
+    return Aggregation.newAggregation(
+      Aggregation.addFields()
+        .addField("categoryIt")
+        .withValue(
+          ConditionalOperators.switchCases(
+            ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(CATEGORY).equalToValue(WASHINGMACHINES)).then(WASHINGMACHINES_IT_S),
+            ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(CATEGORY).equalToValue(WASHERDRIERS)).then(WASHERDRIERS_IT_S),
+            ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(CATEGORY).equalToValue(OVENS)).then(OVENS_IT_S),
+            ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(CATEGORY).equalToValue(RANGEHOODS)).then(RANGEHOODS_IT_S),
+            ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(CATEGORY).equalToValue(DISHWASHERS)).then(DISHWASHERS_IT_S),
+            ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(CATEGORY).equalToValue(TUMBLEDRYERS)).then(TUMBLEDRYERS_IT_S),
+            ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(CATEGORY).equalToValue(REFRIGERATINGAPPL)).then(REFRIGERATINGAPPL_IT_S),
+            ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(CATEGORY).equalToValue(COOKINGHOBS)).then(COOKINGHOBS_IT_S)
+          )
+        ).build(),
+      Aggregation.match(criteria),
+      Aggregation.sort(Sort.by(orders)),
+      Aggregation.skip(pageable.getOffset()),
+      Aggregation.limit(pageable.getPageSize())
+    );
+  }
+  private Sort.Direction getSortDirection(Pageable pageable, String property) {
+    Sort.Order order = pageable.getSort().getOrderFor(property);
+    return order != null ? order.getDirection() : Sort.Direction.ASC;
   }
 
   @Override
   public Criteria getCriteria(String organizationId,
                               String category,
-                              String productCode,
                               String productFileId,
                               String eprelCode,
-                              String gtinCode){
+                              String gtinCode,
+                              String productName,
+                              String status){
 
-    Criteria criteria = Criteria.where(Product.Fields.organizationId).is(organizationId);
-
+    Criteria criteria = new Criteria();
+    if(organizationId != null){
+      criteria.and(Product.Fields.organizationId).is(organizationId);
+    }
     if(category != null){
       criteria.and(Product.Fields.category).is(category);
-    }
-    if(productCode != null){
-      criteria.and(Product.Fields.productCode).is(productCode);
     }
     if(productFileId != null){
       criteria.and(Product.Fields.productFileId).is(productFileId);
@@ -112,19 +144,17 @@ public class ProductSpecificRepositoryImpl implements ProductSpecificRepository 
       criteria.and(Product.Fields.eprelCode).regex(".*" + eprelCode + ".*", "i"); // Contains, case-insensitive
     }
     if(gtinCode != null){
-      criteria.and(Product.Fields.gtinCode).regex(".*" + gtinCode + ".*", "i"); // Contains, case-insensitive
+      criteria.and("_id").regex(".*" + gtinCode + ".*", "i"); // Contains, case-insensitive
     }
-
-
+    if(productName != null){
+      criteria.and(Product.Fields.productName).regex(".*" + productName + ".*", "i");
+    }
+    if(status != null){
+      criteria.and(Product.Fields.status).is(status);
+    }
     return criteria;
   }
 
-  private Pageable getPageable(Pageable pageable) {
-    if (pageable == null) {
-      return PageRequest.of(0, 10, Sort.unsorted());
-    }
-    return pageable;
-  }
 
   @Override
   public Long getCount(Criteria criteria){
@@ -149,6 +179,16 @@ public class ProductSpecificRepositoryImpl implements ProductSpecificRepository 
 
     return results.getMappedResults();
   }
+
+  @Override
+  public List<Product> findByIdsAndOrganizationIdAndNeStatus(List<String> productIds, String organizationId,String status) {
+    Criteria criteria = new Criteria();
+    criteria.and("_id").in(productIds);
+    criteria.and(ORGANIZATION_ID).is(organizationId);
+    criteria.and(STATUS).ne(status);
+    return mongoTemplate.find(Query.query(criteria), Product.class);
+  }
+
 
 }
 

@@ -1,7 +1,11 @@
 package it.gov.pagopa.register.connector.notification;
 
-public interface NotificationService  {
-  void sendEmailOk(String productFileId, String senderEmail);
+import java.util.List;
 
-  void sendEmailPartial(String productFileId, String senderEmail);
+public interface NotificationService  {
+  void sendEmailOk(String productFileId, String recipientEmail);
+
+  void sendEmailPartial(String productFileId, String recipientEmail);
+
+  void sendEmailUpdateStatus(List<String> products, String motivation, String status, String recipientEmail);
 }

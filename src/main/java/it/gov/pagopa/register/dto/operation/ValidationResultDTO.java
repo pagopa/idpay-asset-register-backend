@@ -8,11 +8,16 @@ import java.util.Map;
 
 @Getter
 public class ValidationResultDTO {
-  private String status;     // "OK" or "KO"
-  private String errorKey;   // i.e. EMPTY FILE, INVALID HEADER, ecc.
+  private final String status;     // "OK" or "KO"
+  private final String errorKey;   // i.e. EMPTY FILE, INVALID HEADER, ecc.
   private List<CSVRecord> invalidRecords;
   private Map<CSVRecord, String> errorMessages;
+  private List<CSVRecord> records;
+  private List<String> headers;
 
+  public static ValidationResultDTO ok(List<CSVRecord> records, List<String> headers) {
+    return new ValidationResultDTO("OK", null,records,headers);
+  }
 
   public static ValidationResultDTO ok() {
     return new ValidationResultDTO("OK", null);
@@ -22,29 +27,23 @@ public class ValidationResultDTO {
     return new ValidationResultDTO("KO", errorKey);
   }
 
-  public static ValidationResultDTO ko(String errorKey, List<CSVRecord> invalidRecords, Map<CSVRecord, String> errorMessages) {
-    return new ValidationResultDTO("KO", errorKey, invalidRecords, errorMessages);
-  }
-
 
   public ValidationResultDTO(String status, String errorKey) {
     this.status = status;
     this.errorKey = errorKey;
   }
-
+  public ValidationResultDTO(String status, String errorKey,List<CSVRecord> records, List<String> headers) {
+    this.status = status;
+    this.errorKey = errorKey;
+    this.records = records;
+    this.headers = headers;
+  }
   public ValidationResultDTO(String status, String errorKey, List<CSVRecord> invalidRecords, Map<CSVRecord, String> errorMessages) {
     this.status = status;
     this.errorKey = errorKey;
     this.invalidRecords = invalidRecords;
     this.errorMessages = errorMessages;
   }
-
-  public ValidationResultDTO(List<CSVRecord> invalidRecords, Map<CSVRecord, String> errorMessages) {
-    this.invalidRecords = invalidRecords;
-    this.errorMessages = errorMessages;
-  }
-
-  public ValidationResultDTO() {}
 
 
 }

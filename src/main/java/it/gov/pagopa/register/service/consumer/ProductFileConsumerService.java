@@ -9,6 +9,7 @@ import it.gov.pagopa.register.connector.storage.FileStorageClient;
 import it.gov.pagopa.register.dto.operation.StorageEventDTO;
 import it.gov.pagopa.register.dto.utils.EprelResult;
 import it.gov.pagopa.register.dto.utils.EventDetails;
+import it.gov.pagopa.register.enums.ProductStatusEnum;
 import it.gov.pagopa.register.model.operation.Product;
 import it.gov.pagopa.register.model.operation.ProductFile;
 import it.gov.pagopa.register.repository.operation.ProductFileRepository;
@@ -22,6 +23,7 @@ import org.springframework.messaging.Message;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileAttribute;
@@ -193,17 +195,38 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
     List<CSVRecord> invalidRecords = new ArrayList<>();
     Map<CSVRecord, String> errorMessages = new HashMap<>();
     for (CSVRecord csvRecord : records) {
-      if(validProduct.containsKey(CODE_GTIN_EAN)) {
-        Product duplicateGtin = validProduct.remove(csvRecord.get(CODE_GTIN_EAN));
-        CSVRecord duplicateGtinRow = mapProductToCsvRow(duplicateGtin,COOKINGHOBS, headers);
-        invalidRecords.add(duplicateGtinRow);
-        errorMessages.put(duplicateGtinRow,DUPLICATE_GTIN_EAN);
-        log.info("[PRODUCT_UPLOAD] - Added cooking hob product: {}", csvRecord.get(CODE_PRODUCT));
-      } else {
-        validProduct.put(csvRecord.get(CODE_GTIN_EAN),mapCookingHobToProduct(csvRecord, orgId, productFileId));
-        log.info("[PRODUCT_UPLOAD] - Added cooking hob product: {}", csvRecord.get(CODE_PRODUCT));
+      Optional<Product> optProduct = productRepository.findById(csvRecord.get(CODE_GTIN_EAN));
+      boolean isProductPresent = optProduct.isPresent();
+      boolean dbCheck = true;
+      if(isProductPresent){
+        if(!orgId.equals(optProduct.get().getOrganizationId())){
+          invalidRecords.add(csvRecord);
+          errorMessages.put(csvRecord,DIFFERENT_ORGANIZATIONID);
+          dbCheck = false;
+        } else if (!ProductStatusEnum.APPROVED.toString().equals(optProduct.get().getStatus())) {
+          invalidRecords.add(csvRecord);
+          errorMessages.put(csvRecord, STATUS_NOT_APPROVED);
+          dbCheck = false;
+        }
       }
+      if(dbCheck){
+        if(validProduct.containsKey(csvRecord.get(CODE_GTIN_EAN))) {
+          Product duplicateGtin = validProduct.remove(csvRecord.get(CODE_GTIN_EAN));
+          CSVRecord duplicateGtinRow = mapProductToCsvRow(duplicateGtin,COOKINGHOBS, headers);
+          invalidRecords.add(duplicateGtinRow);
+          errorMessages.put(duplicateGtinRow,DUPLICATE_GTIN_EAN);
+          log.info("[PRODUCT_UPLOAD] - Duplicate error for record with GTIN code: {}", csvRecord.get(CODE_GTIN_EAN));
+        }
+        validProduct.put(csvRecord.get(CODE_GTIN_EAN),mapCookingHobToProduct(csvRecord, orgId, productFileId));
+        log.info("[PRODUCT_UPLOAD] - Added cooking hob product: {}", csvRecord.get(CODE_GTIN_EAN));
+
+      }
+
     }
+    processCookingHoobsRecords(productFileId, headers, validProduct, invalidRecords, errorMessages);
+  }
+
+  private void processCookingHoobsRecords(String productFileId, List<String> headers, Map<String, Product> validProduct, List<CSVRecord> invalidRecords, Map<CSVRecord, String> errorMessages) {
     if (!validProduct.isEmpty()) {
       List<Product> savedProduct = productRepository.saveAll(validProduct.values().stream().toList());
       log.info("[PRODUCT_UPLOAD] - Saved {} valid products for file {}", savedProduct.size(), productFileId);
@@ -211,17 +234,17 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
         processErrorRecords(invalidRecords, errorMessages, productFileId, headers);
         String userEmail = setProductFileStatus(productFileId, String.valueOf(PARTIAL), validProduct.size());
         log.info("[PRODUCT_UPLOAD] - File {} processed with {} duplicate rows", productFileId, errorMessages.size());
-        notificationService.sendEmailPartial(COOKINGHOBS + "_" + productFileId + ".csv", userEmail);
+        notificationService.sendEmailPartial(CATEGORIES_TO_IT_P.get(COOKINGHOBS) + "_" + productFileId + ".csv", userEmail);
       } else {
         String userEmail = setProductFileStatus(productFileId, String.valueOf(LOADED), savedProduct.size());
         log.info("[PRODUCT_UPLOAD] - File {} processed successfully with no errors", productFileId);
-        notificationService.sendEmailOk(COOKINGHOBS + "_" + productFileId + ".csv", userEmail);
+        notificationService.sendEmailOk(CATEGORIES_TO_IT_P.get(COOKINGHOBS) + "_" + productFileId + ".csv", userEmail);
       }
     } else if (!invalidRecords.isEmpty()) {
       processErrorRecords(invalidRecords, errorMessages, productFileId, headers);
       String userEmail = setProductFileStatus(productFileId, String.valueOf(PARTIAL), 0);
       log.info("[PRODUCT_UPLOAD] - File {} processed with {} duplicate row", productFileId, invalidRecords.size());
-      notificationService.sendEmailPartial(COOKINGHOBS + "_" + productFileId + ".csv", userEmail);
+      notificationService.sendEmailPartial(CATEGORIES_TO_IT_P.get(COOKINGHOBS) + "_" + productFileId + ".csv", userEmail);
     }
   }
 
@@ -233,26 +256,32 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
         processErrorRecords(errors, messages, productFileId, headers);
         String userEmail = setProductFileStatus(productFileId, String.valueOf(PARTIAL), validProduct.size());
         log.info("[PRODUCT_UPLOAD] - File {} processed with {} EPREL errors", productFileId, errors.size());
-        notificationService.sendEmailPartial(category + "_" + productFileId + ".csv", userEmail);
+        notificationService.sendEmailPartial(CATEGORIES_TO_IT_P.get(category) + "_" + productFileId + ".csv", userEmail);
       } else {
         String userEmail = setProductFileStatus(productFileId, String.valueOf(LOADED), savedProduct.size());
         log.info("[PRODUCT_UPLOAD] - File {} processed successfully with no errors", productFileId);
-        notificationService.sendEmailOk(category + "_" + productFileId + ".csv", userEmail);
+        notificationService.sendEmailOk(CATEGORIES_TO_IT_P.get(category)  + "_" + productFileId + ".csv", userEmail);
       }
     } else if (!errors.isEmpty()) {
       processErrorRecords(errors, messages, productFileId, headers);
       String userEmail = setProductFileStatus(productFileId, String.valueOf(PARTIAL), 0);
       log.info("[PRODUCT_UPLOAD] - File {} processed with {} EPREL errors", productFileId, errors.size());
-      notificationService.sendEmailPartial(category + "_" + productFileId + ".csv", userEmail);
+      notificationService.sendEmailPartial(CATEGORIES_TO_IT_P.get(category)  + "_" + productFileId + ".csv", userEmail);
     }
   }
 
+
+  @SuppressWarnings("java:S5443") //The system used will be Linux so never create a file without specified permissions
   private void processErrorRecords(List<CSVRecord> errors, Map<CSVRecord, String> messages, String productFileId, List<String> headers) {
     try {
-
-      Set<PosixFilePermission> perms = PosixFilePermissions.fromString("rw-------");
-      FileAttribute<Set<PosixFilePermission>> attr = PosixFilePermissions.asFileAttribute(perms);
-      Path tempFilePath = Files.createTempFile("errors-", ".csv", attr);
+      Path tempFilePath;
+      if (FileSystems.getDefault().supportedFileAttributeViews().contains("posix")) {
+        Set<PosixFilePermission> perms = PosixFilePermissions.fromString("rw-------");
+        FileAttribute<Set<PosixFilePermission>> attr = PosixFilePermissions.asFileAttribute(perms);
+        tempFilePath = Files.createTempFile("errors-", ".csv", attr);
+      } else {
+        tempFilePath = Files.createTempFile("errors-", ".csv");
+      }
       CsvUtils.writeCsvWithErrors(errors, headers, messages,  tempFilePath);
       String destination = REPORT_PARTIAL_ERROR + productFileId + CSV;
       fileStorageClient.upload(Files.newInputStream(tempFilePath), destination, "text/csv");

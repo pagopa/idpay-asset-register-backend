@@ -2,12 +2,12 @@ package it.gov.pagopa.register.exception.role;
 
 import it.gov.pagopa.common.web.exception.ServiceException;
 import it.gov.pagopa.common.web.exception.ServiceExceptionPayload;
-import it.gov.pagopa.register.constants.RoleConstants;
+import it.gov.pagopa.register.constants.ExceptionConstants;
 
 public class PermissionNotFoundException extends ServiceException {
 
     public PermissionNotFoundException(String message) {
-        this(RoleConstants.ExceptionCode.PERMISSIONS_NOT_FOUND, message);
+        this(ExceptionConstants.ExceptionCode.PERMISSIONS_NOT_FOUND, message);
     }
 
     public PermissionNotFoundException(String code, String message) {

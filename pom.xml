@@ -122,6 +122,11 @@
         <artifactId>commons-fileupload</artifactId>
         <version>1.6.0</version>
       </dependency>
+      <dependency>
+        <groupId>org.apache.tomcat.embed</groupId>
+        <artifactId>tomcat-embed-core</artifactId>
+        <version>10.1.43</version>
+      </dependency>
     </dependencies>
   </dependencyManagement>
 
