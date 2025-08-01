@@ -46,6 +46,7 @@ public class ProductMapper {
       .batchName(CATEGORIES_TO_IT_P.get(entity.getCategory())+"_"+entity.getProductFileId()+".csv")
       .productName(entity.getProductName())
       .capacity(("N\\A").equals(entity.getCapacity()) ? null : entity.getCapacity())
+      .motivation(entity.getMotivation())
       .build();
   }
   public static Product mapCookingHobToProduct(CSVRecord csvRecord, String orgId, String productFileId) {
