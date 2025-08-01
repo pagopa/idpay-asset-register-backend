@@ -129,8 +129,10 @@ public class ProductSpecificRepositoryImpl implements ProductSpecificRepository 
                               String productName,
                               String status){
 
-    Criteria criteria = Criteria.where(Product.Fields.organizationId).is(organizationId);
-
+    Criteria criteria = new Criteria();
+    if(organizationId != null){
+      criteria.and(Product.Fields.organizationId).is(organizationId);
+    }
     if(category != null){
       criteria.and(Product.Fields.category).is(category);
     }
