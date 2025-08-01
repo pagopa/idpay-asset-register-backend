@@ -17,7 +17,6 @@ public class AssetRegisterConstants {
   public static final String REPORT_PARTIAL_ERROR = "Report/Partial/";
   public static final String REPORT_FORMAL_ERROR = "Report/Formal/";
   public static final String CSV = ".csv";
-  public static final Integer CSV_SIZE = 2 * 1024;
 
   // Regex
   public static final String CODE_GTIN_EAN_REGEX = "^[a-zA-Z0-9]{1,14}$";

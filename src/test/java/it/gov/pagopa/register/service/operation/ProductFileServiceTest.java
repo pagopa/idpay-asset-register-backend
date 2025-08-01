@@ -176,10 +176,10 @@ class ProductFileServiceTest {
 
   //Test with invalid headers
   @Test
-  void whenInvalidFileType_thenReturnKoResult() {
+  void whenInvalidFileType_thenReturnKoResult() throws IOException {
     MultipartFile file = createMockFile_InvalidFileType();
     ValidationResultDTO validationResultDTO = new ValidationResultDTO("KO","TEST");
-    when(productFileValidator.validateFile(any(),anyString(),anyList(),anyInt())).thenReturn(validationResultDTO);
+    when(productFileValidator.validateFile(any(),anyString())).thenReturn(validationResultDTO);
     ProductFileResult res = productFileService.uploadFile(file, "cat","org","user","email");
     assertEquals("KO", res.getStatus());
     assertEquals("TEST", res.getErrorKey());
@@ -206,8 +206,8 @@ class ProductFileServiceTest {
 
       when(fileStorageClient.upload(any(), any(), any())).thenReturn(null);
 
-      when(productFileValidator.validateFile(any(), any(), any(), anyInt()))
-        .thenReturn(new ValidationResultDTO("OK", null));
+      when(productFileValidator.validateFile(any(), any()))
+        .thenReturn(new ValidationResultDTO("OK", null,List.of(mock(CSVRecord.class)),List.of("Codice GTIN/EAN", "Codice Prodotto", "Categoria", "Paese di Produzione", "Marca", "Modello")));
 
       CSVRecord invalidRecordLocal = mock(CSVRecord.class);
       List<CSVRecord> invalidRecordsLocal = Collections.singletonList(invalidRecordLocal);
@@ -220,11 +220,13 @@ class ProductFileServiceTest {
       ProductFile savedProductFile = ProductFile.builder().id("123").build();
       when(productFileRepository.save(any())).thenReturn(savedProductFile);
 
-      ProductFileResult result = productFileService.uploadFile(file, "cookinghobs", "org1", "user1","email");
+      ProductFileResult result = productFileService.uploadFile(file, "COOKINGHOBS", "org1", "user1","email");
 
       assertEquals("KO", result.getStatus());
       assertEquals(AssetRegisterConstants.UploadKeyConstant.REPORT_FORMAL_FILE_ERROR_KEY, result.getErrorKey());
       assertEquals("123", result.getProductFileId());
+    } catch (IOException e) {
+        throw new RuntimeException(e);
     }
   }
 
@@ -270,8 +272,8 @@ class ProductFileServiceTest {
       mocked.when(() -> CsvUtils.readCsvRecords(file))
         .thenReturn(List.of(rec));
 
-      when(productFileValidator.validateFile(file, "cat", List.of("C1"), 1))
-        .thenReturn(ValidationResultDTO.ok());
+      when(productFileValidator.validateFile(file, "cat"))
+        .thenReturn(ValidationResultDTO.ok(List.of(rec), List.of("C1")));
 
       when(productFileValidator.validateRecords(List.of(rec), List.of("C1"), "cat"))
         .thenReturn(ValidationResultDTO.ok());

@@ -17,7 +17,8 @@ public class ProductFileValidationConfig {
 
   @Value("${product-file-validation.maxRows}")
   private int maxRows;
-
+  @Value("${product-file-validation.maxSize}")
+  private int maxSize;
   private Map<String, LinkedHashMap<String, ColumnValidationRule>> schemas = initialize();
 
   private static Map<String, LinkedHashMap<String, ColumnValidationRule>> initialize() {
