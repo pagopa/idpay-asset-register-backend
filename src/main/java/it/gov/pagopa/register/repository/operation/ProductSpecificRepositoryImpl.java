@@ -25,6 +25,7 @@ public class ProductSpecificRepositoryImpl implements ProductSpecificRepository 
   public static final String BATCH_NAME = "batchName";
   public static final String ORGANIZATION_ID = "organizationId";
   public static final String ENERGY_CLASS = "energyClass";
+  public static final String STATUS = "status";
   private final MongoTemplate mongoTemplate;
 
   public ProductSpecificRepositoryImpl(MongoTemplate mongoTemplate){
@@ -180,11 +181,11 @@ public class ProductSpecificRepositoryImpl implements ProductSpecificRepository 
   }
 
   @Override
-  public List<Product> findByIdsAndOrganizationId(List<String> productIds, String organizationId) {
+  public List<Product> findByIdsAndOrganizationIdAndNeStatus(List<String> productIds, String organizationId,String status) {
     Criteria criteria = new Criteria();
     criteria.and("_id").in(productIds);
     criteria.and(ORGANIZATION_ID).is(organizationId);
-
+    criteria.and(STATUS).ne(status);
     return mongoTemplate.find(Query.query(criteria), Product.class);
   }
 

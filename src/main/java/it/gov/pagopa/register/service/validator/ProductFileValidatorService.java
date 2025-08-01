@@ -4,12 +4,14 @@ import it.gov.pagopa.register.configuration.ProductFileValidationConfig;
 import it.gov.pagopa.register.constants.AssetRegisterConstants;
 import it.gov.pagopa.register.dto.operation.ValidationResultDTO;
 import it.gov.pagopa.register.dto.utils.ColumnValidationRule;
+import it.gov.pagopa.register.utils.CsvUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.csv.CSVRecord;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.*;
 
 import static it.gov.pagopa.register.constants.AssetRegisterConstants.*;
@@ -23,20 +25,21 @@ public class ProductFileValidatorService {
   public static final String DEFAULT_CATEGORY = "eprel";
   private final ProductFileValidationConfig validationConfig;
 
-  public ValidationResultDTO validateFile(MultipartFile file, String category, List<String> actualHeader, int recordCount) {
-    log.info("[VALIDATE_FILE] - Validating file: {}, category: {}, recordCount: {}", file.getOriginalFilename(), category, recordCount);
+  public ValidationResultDTO validateFile(MultipartFile file, String category) throws IOException {
+    log.info("[VALIDATE_FILE] - Validating file: {}, category: {}", file.getOriginalFilename(), category);
 
     if (!Objects.requireNonNull(file.getOriginalFilename()).endsWith(CSV)) {
       log.error("[VALIDATE_FILE] - Invalid file extension for file: {}", file.getOriginalFilename());
       return ValidationResultDTO.ko(AssetRegisterConstants.UploadKeyConstant.EXTENSION_FILE_ERROR_KEY);
     }
 
-    if (file.getSize() > CSV_SIZE) {
+    long fileSize = file.getSize();
+
+    if (fileSize > validationConfig.getMaxSize()) {
       log.error("[VALIDATE_FILE] - Invalid size for file: {}", file.getOriginalFilename());
       return ValidationResultDTO.ko(AssetRegisterConstants.UploadKeyConstant.MAX_SIZE_FILE_ERROR_KEY);
     }
-
-    if (recordCount == 0) {
+    if (fileSize == 0) {
       log.warn("[VALIDATE_FILE] - File is empty: {}", file.getOriginalFilename());
       return ValidationResultDTO.ko(AssetRegisterConstants.UploadKeyConstant.EMPTY_FILE_ERROR_KEY);
     }
@@ -54,20 +57,27 @@ public class ProductFileValidatorService {
 
     List<String> expectedHeader = new ArrayList<>(columnDefinitions.keySet());
 
+    List<String> actualHeader = CsvUtils.readHeaders(file);
+    List<CSVRecord> records = CsvUtils.readCsvRecords(file);
+    int recordCount = records.size();
 
     if (!actualHeader.equals(expectedHeader)) {
       log.warn("[VALIDATE_FILE] - Header mismatch for file: {}", file.getOriginalFilename());
       return ValidationResultDTO.ko(AssetRegisterConstants.UploadKeyConstant.HEADER_FILE_ERROR_KEY);
     }
 
-    // 5. check if record in file exceed the max expected
+    if (recordCount == 0) {
+      log.warn("[VALIDATE_FILE] - No products: {}", file.getOriginalFilename());
+      return ValidationResultDTO.ko(AssetRegisterConstants.UploadKeyConstant.EMPTY_FILE_ERROR_KEY);
+    }
+
     if (recordCount > validationConfig.getMaxRows()) {
       log.warn("[VALIDATE_FILE] - File exceeds maximum row count: {}", file.getOriginalFilename());
       return ValidationResultDTO.ko(AssetRegisterConstants.UploadKeyConstant.MAX_ROW_FILE_ERROR_KEY);
     }
 
     log.info("[VALIDATE_FILE] - File validation successful: {}", file.getOriginalFilename());
-    return ValidationResultDTO.ok();
+    return ValidationResultDTO.ok(records,actualHeader);
   }
 
   public ValidationResultDTO validateRecords(List<CSVRecord> records, List<String> headers, String category) {

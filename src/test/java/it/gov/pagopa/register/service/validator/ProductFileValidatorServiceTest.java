@@ -12,9 +12,10 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
+import java.io.IOException;
 import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -23,56 +24,79 @@ import static org.mockito.Mockito.when;
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration(classes = {
   ProductFileValidatorService.class,
-  ProductFileValidationConfig.class
 })
-@TestPropertySource(properties = "product-file-validation.maxRows=100")
 class ProductFileValidatorServiceTest {
 
   @Autowired
   ProductFileValidatorService productFileValidator;
+
+  @MockitoBean
   ProductFileValidationConfig validationConfig;
 
   @BeforeEach
   void setUp() {
     validationConfig = Mockito.mock(ProductFileValidationConfig.class);
     productFileValidator = new ProductFileValidatorService(validationConfig);
+    when(validationConfig.getMaxSize()).thenReturn(22);
+    when(validationConfig.getMaxRows()).thenReturn(100);
   }
 
   @Test
-  void validateFile_FileTypeError(){
+  void validateFile_FileTypeError() throws IOException {
     MockMultipartFile file = new MockMultipartFile(
       "file",
-      "test.csv",
+      "test.txt",
       "text/csv",
       "test content".getBytes());
     String category = "Test";
-    List<String> headers = List.of("Test");
-    int rowCount = 100;
-    ValidationResultDTO result = productFileValidator.validateFile(file,category,headers,rowCount);
-    System.out.println(result.getErrorKey());
+    ValidationResultDTO result = productFileValidator.validateFile(file,category);
     assertNotNull(result);
+    assertEquals(AssetRegisterConstants.UploadKeyConstant.EXTENSION_FILE_ERROR_KEY, result.getErrorKey());
   }
 
   @Test
-  void validateFile_UnknownCategoryError() {
+  void validateFile_EmpyFileTypeError() throws IOException {
     MockMultipartFile file = new MockMultipartFile(
       "file",
       "test.csv",
       "text/csv",
-      "test content".getBytes()
+      "".getBytes());
+    String category = "Test";
+    ValidationResultDTO result = productFileValidator.validateFile(file,category);
+    assertNotNull(result);
+    assertEquals(AssetRegisterConstants.UploadKeyConstant.EMPTY_FILE_ERROR_KEY, result.getErrorKey());
+  }
+  @Test
+  void validateFile_SizeFileTypeError() throws IOException {
+    MockMultipartFile file = new MockMultipartFile(
+      "file",
+      "test.csv",
+      "text/csv",
+      "Codice GTIN/EAN\\n1234567".getBytes());
+    String category = "Test";
+    ValidationResultDTO result = productFileValidator.validateFile(file,category);
+    assertNotNull(result);
+    assertEquals(AssetRegisterConstants.UploadKeyConstant.MAX_SIZE_FILE_ERROR_KEY, result.getErrorKey());
+  }
+
+  @Test
+  void validateFile_UnknownCategoryError() throws IOException {
+    MockMultipartFile file = new MockMultipartFile(
+      "file",
+      "test.csv",
+      "text/csv",
+      "test".getBytes()
     );
     String category = "UnknownCategory";
-    List<String> headers = List.of("Test");
-    int rowCount = 100;
 
-    ValidationResultDTO result = productFileValidator.validateFile(file, category, headers, rowCount);
+    ValidationResultDTO result = productFileValidator.validateFile(file, category);
     System.out.println(result.getErrorKey());
     assertNotNull(result);
     assertEquals(AssetRegisterConstants.UploadKeyConstant.UNKNOWN_CATEGORY_ERROR_KEY, result.getErrorKey());
   }
 
   @Test
-  void validateFile_HeaderFileError() {
+  void validateFile_HeaderFileError() throws Exception {
     MockMultipartFile file = new MockMultipartFile(
       "file",
       "test.csv",
@@ -90,12 +114,8 @@ class ProductFileValidatorServiceTest {
     when(validationConfig.getSchemas()).thenReturn(schemas);
     when(validationConfig.getMaxRows()).thenReturn(100);
 
-    // Passo un header sbagliato apposta
-    List<String> headers = List.of("WrongHeader");
-    int rowCount = 100;
-
     // Act
-    ValidationResultDTO result = productFileValidator.validateFile(file, category, headers, rowCount);
+    ValidationResultDTO result = productFileValidator.validateFile(file, category);
 
     // Assert
     System.out.println(result.getErrorKey());
@@ -104,12 +124,12 @@ class ProductFileValidatorServiceTest {
   }
 
   @Test
-  void validateFile_EmptyFileError() {
+  void validateFile_NoRowError() throws IOException {
     MockMultipartFile file = new MockMultipartFile(
       "file",
       "test.csv",
       "text/csv",
-      "test content".getBytes()
+      "Codice GTIN/EAN".getBytes()
     );
 
     String category = "COOKINGHOBS";
@@ -122,11 +142,8 @@ class ProductFileValidatorServiceTest {
     when(validationConfig.getSchemas()).thenReturn(schemas);
     when(validationConfig.getMaxRows()).thenReturn(1000);
 
-    List<String> headers = new ArrayList<>(mockSchema.keySet());
 
-    int rowCount = 0;
-
-    ValidationResultDTO result = productFileValidator.validateFile(file, category, headers, rowCount);
+    ValidationResultDTO result = productFileValidator.validateFile(file, category);
 
     assertNotNull(result);
     assertEquals(AssetRegisterConstants.UploadKeyConstant.EMPTY_FILE_ERROR_KEY, result.getErrorKey());
@@ -134,30 +151,27 @@ class ProductFileValidatorServiceTest {
 
 
   @Test
-  void validateFile_MaxRowFileError() {
+  void validateFile_MaxRowFileError() throws IOException {
 
     MockMultipartFile file = new MockMultipartFile(
       "file",
       "test.csv",
       "text/csv",
-      "test content".getBytes()
+      "Codice GTIN/EAN\n12345".getBytes()
     );
 
-    String category = "REFRIGERATINGAPPL";
+    String category = "COOKINGHOBS";
 
     LinkedHashMap<String, ColumnValidationRule> mockSchema = new LinkedHashMap<>();
-    mockSchema.put("Test", new ColumnValidationRule((v, z) -> true, "Error"));
+    mockSchema.put("Codice GTIN/EAN", new ColumnValidationRule((v, z) -> true, "Error"));
 
     Map<String, LinkedHashMap<String, ColumnValidationRule>> schemas = new HashMap<>();
     schemas.put(category.toLowerCase(), mockSchema);
 
     when(validationConfig.getSchemas()).thenReturn(schemas);
-    when(validationConfig.getMaxRows()).thenReturn(100); // Limite massimo fittizio
+    when(validationConfig.getMaxRows()).thenReturn(0);
 
-    List<String> headers = new ArrayList<>(mockSchema.keySet());
-    int rowCount = 101;
-
-    ValidationResultDTO result = productFileValidator.validateFile(file, category, headers, rowCount);
+    ValidationResultDTO result = productFileValidator.validateFile(file, category);
 
     System.out.println(result.getErrorKey());
     assertNotNull(result);
@@ -165,16 +179,15 @@ class ProductFileValidatorServiceTest {
   }
 
   @Test
-  void validateFile_InvalidFileExtensionError() {
+  void validateFile_InvalidFileExtensionError() throws IOException {
     MockMultipartFile file = new MockMultipartFile(
       "file", "file.txt", "text/plain", "invalid content".getBytes()
     );
 
     String category = "COOKINGHOBS";
-    List<String> headers = List.of("Codice GTIN/EAN");
-    int rowCount = 10;
 
-    ValidationResultDTO result = productFileValidator.validateFile(file, category, headers, rowCount);
+
+    ValidationResultDTO result = productFileValidator.validateFile(file, category);
 
     assertNotNull(result);
     assertEquals(AssetRegisterConstants.UploadKeyConstant.EXTENSION_FILE_ERROR_KEY, result.getErrorKey());
@@ -182,9 +195,10 @@ class ProductFileValidatorServiceTest {
 
 
   @Test
-  void validateFile_Ok() {
+  void validateFile_Ok() throws IOException {
     MockMultipartFile file = new MockMultipartFile(
-      "file", "valid.csv", "text/csv", "some,data\n".getBytes()
+      "file", "valid.csv", "text/csv",
+      "Codice GTIN/EAN\n12345".getBytes()
     );
 
     String category = "COOKINGHOBS";
@@ -198,10 +212,8 @@ class ProductFileValidatorServiceTest {
     when(validationConfig.getSchemas()).thenReturn(schemas);
     when(validationConfig.getMaxRows()).thenReturn(100);
 
-    List<String> headers = new ArrayList<>(mockSchema.keySet());
-    int rowCount = 1;
 
-    ValidationResultDTO result = productFileValidator.validateFile(file, category, headers, rowCount);
+    ValidationResultDTO result = productFileValidator.validateFile(file, category);
 
     assertNotNull(result);
     assertEquals("OK", result.getStatus());

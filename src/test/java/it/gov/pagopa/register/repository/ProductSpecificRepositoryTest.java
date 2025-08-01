@@ -108,7 +108,7 @@ class ProductSpecificRepositoryTest {
     Product product = Product.builder().gtinCode("gtin1").organizationId("org1").build();
     when(mongoTemplate.find(any(Query.class), eq(Product.class))).thenReturn(List.of(product));
 
-    List<Product> results = repository.findByIdsAndOrganizationId(List.of("gtin1"), "org1");
+    List<Product> results = repository.findByIdsAndOrganizationIdAndNeStatus(List.of("gtin1"), "org1","APPROVED");
 
     assertEquals(1, results.size());
     assertEquals("gtin1", results.get(0).getGtinCode());

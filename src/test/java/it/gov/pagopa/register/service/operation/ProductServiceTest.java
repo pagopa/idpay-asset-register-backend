@@ -181,7 +181,7 @@ class ProductServiceTest {
       .userEmail("user@example.com")
       .build();
 
-    when(productRepository.findByIdsAndOrganizationId(productIds, organizationId))
+    when(productRepository.findByIdsAndOrganizationIdAndNeStatus(productIds, organizationId,"APPROVED"))
       .thenReturn(productList);
 
     when(productRepository.saveAll(productList))
@@ -203,7 +203,7 @@ class ProductServiceTest {
 
     assertEquals("OK",result.getStatus());
 
-    verify(productRepository).findByIdsAndOrganizationId(productIds, organizationId);
+    verify(productRepository).findByIdsAndOrganizationIdAndNeStatus(productIds, organizationId,"APPROVED");
     verify(productRepository).saveAll(productList);
     verify(productFileRepository).findById("file1");
     verify(notificationService).sendEmailUpdateStatus(
