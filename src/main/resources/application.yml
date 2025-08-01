@@ -137,4 +137,4 @@ app:
       product-page: ${EPREL_PRODUCT_PAGE:https://eprel.ec.europa.eu/screen/product/%s/%s}
 product-file-validation:
   maxRows: 100
-  maxSize: 2097152
+  maxSize: 2048
