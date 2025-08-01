@@ -56,15 +56,15 @@ public class ProductFileValidatorService {
     }
 
     List<String> expectedHeader = new ArrayList<>(columnDefinitions.keySet());
-
     List<String> actualHeader = CsvUtils.readHeaders(file);
-    List<CSVRecord> records = CsvUtils.readCsvRecords(file);
-    int recordCount = records.size();
 
     if (!actualHeader.equals(expectedHeader)) {
       log.warn("[VALIDATE_FILE] - Header mismatch for file: {}", file.getOriginalFilename());
       return ValidationResultDTO.ko(AssetRegisterConstants.UploadKeyConstant.HEADER_FILE_ERROR_KEY);
     }
+
+    List<CSVRecord> records = CsvUtils.readCsvRecords(file);
+    int recordCount = records.size();
 
     if (recordCount == 0) {
       log.warn("[VALIDATE_FILE] - No products: {}", file.getOriginalFilename());
