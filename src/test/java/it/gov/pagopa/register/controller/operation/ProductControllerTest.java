@@ -65,7 +65,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         ))
         .thenReturn(mockResponse);
       mockMvc.perform(get("/idpay/register/products")
-          .header("x-organization-id", "organizationIdTest")
+          .queryParam("organizationId", "organizationIdTest")
           .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.content").isArray())
@@ -76,13 +76,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
     }
 
-    //Test senza header
-    @Test
-    void testGetProducts_MissingHeader() throws Exception {
-      mockMvc.perform(get("/idpay/register/products")
-          .contentType(MediaType.APPLICATION_JSON))
-        .andExpect(status().isBadRequest());
-    }
 
     //Test in caso di eccezione
     @Test
@@ -99,7 +92,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         .thenThrow(new RuntimeException("Service error"));
 
       mockMvc.perform(get("/idpay/register/products")
-          .header("x-organization-id", "organizationIdTest")
+          .queryParam("organizationId", "organizationIdTest")
           .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isInternalServerError());
     }

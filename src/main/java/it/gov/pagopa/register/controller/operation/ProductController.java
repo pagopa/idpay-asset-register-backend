@@ -26,7 +26,7 @@ public class ProductController {
 
   @GetMapping("/products")
   public ResponseEntity<ProductListDTO> getProductList(
-    @RequestHeader("x-organization-id") String organizationId,
+    @RequestParam @Nullable String organizationId,
     @RequestParam @Nullable String category,
     @RequestParam @Nullable String productFileId,
     @RequestParam @Nullable String eprelCode,
