@@ -52,7 +52,7 @@ class AuthorizationControllerTest {
 
     private static final String BASE_URL = "http://localhost:8080/idpay/authorization";
     private static final String PERMISSIONS_URL = "/permissions/";
-    private static final String ROLE = "TEST_ROLE";
+    private static final String ROLE = "OPERATORE";
 
     RolePermission createAdminRolePermission () {
         RolePermission rolePermission = new RolePermission();
@@ -86,7 +86,7 @@ class AuthorizationControllerTest {
         permissionDTO2.setDescription("Initiative Creation");
         permissionDTOList.add(permissionDTO);
         permissionDTOList.add(permissionDTO2);
-        userPermissionDTO.setRole("Invitalia");
+        userPermissionDTO.setRole(ROLE);
         userPermissionDTO.setPermissions(permissionDTOList);
         return userPermissionDTO;
     }
@@ -94,17 +94,17 @@ class AuthorizationControllerTest {
     @Test
     void shouldReturnPermission() throws Exception {
         UserPermissionDTO dummyAdminPermissionDTO = new UserPermissionDTO();
-        dummyAdminPermissionDTO.setRole("Invitalia");
+        dummyAdminPermissionDTO.setRole(ROLE);
         dummyAdminPermissionDTO.setPermissions(List.of(new PermissionDTO()));
 
         when(rolePermissionServiceMock.getUserPermission(anyString())).thenReturn(dummyAdminPermissionDTO);
 
-        UserPermissionDTO adminPermissions = rolePermissionServiceMock.getUserPermission("invitalia");
+        UserPermissionDTO adminPermissions = rolePermissionServiceMock.getUserPermission(ROLE);
 
         assertThat("result", adminPermissions, is(sameInstance(dummyAdminPermissionDTO)));
 
         mvc.perform(
-            MockMvcRequestBuilders.get(BASE_URL + PERMISSIONS_URL + "invitalia")
+            MockMvcRequestBuilders.get(BASE_URL + PERMISSIONS_URL + ROLE)
                 .contentType(MediaType.APPLICATION_JSON_VALUE).accept(MediaType.APPLICATION_JSON))
                 .andExpect(MockMvcResultMatchers.status().isOk())
                 .andExpect(jsonPath("$.role").value(dummyAdminPermissionDTO.getRole()))

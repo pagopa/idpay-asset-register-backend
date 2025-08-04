@@ -1,6 +1,7 @@
 package it.gov.pagopa.register.controller.role.authorization;
 
 import it.gov.pagopa.register.dto.role.UserPermissionDTO;
+import it.gov.pagopa.register.enums.Role;
 import it.gov.pagopa.register.service.role.RolePermissionService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,8 +17,9 @@ public class AuthorizationControllerImpl implements AuthorizationController {
     }
 
     @Override
-    public ResponseEntity<UserPermissionDTO> getUserPermissions(String role) {
-        UserPermissionDTO userPermissionDTO = rolePermissionService.getUserPermission(role);
+    public ResponseEntity<UserPermissionDTO> getUserPermissions(Role role) {
+
+        UserPermissionDTO userPermissionDTO = rolePermissionService.getUserPermission(role.name());
         return new ResponseEntity<>(userPermissionDTO, HttpStatus.OK);
     }
 
