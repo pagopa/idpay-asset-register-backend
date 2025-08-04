@@ -66,7 +66,7 @@ public class EprelProductValidatorService {
         return;
       } else if (!ProductStatus.APPROVED.toString().equals(optProduct.get().getStatus())) {
         invalidRecords.add(csvRow);
-        errorMessages.put(csvRow, STATUS_NOT_APPROVED);
+        errorMessages.put(csvRow, STATUS_NOT_APPROVED.replace("{}",optProduct.get().getMotivation()));
         return;
       }
     }

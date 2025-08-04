@@ -5,6 +5,7 @@ import it.gov.pagopa.register.constants.AssetRegisterConstants;
 import it.gov.pagopa.register.dto.operation.ProductDTO;
 import it.gov.pagopa.register.dto.operation.ProductListDTO;
 import it.gov.pagopa.register.dto.operation.UpdateResultDTO;
+import it.gov.pagopa.register.enums.ProductStatusEnum;
 import it.gov.pagopa.register.mapper.operation.ProductMapper;
 import it.gov.pagopa.register.model.operation.Product;
 import it.gov.pagopa.register.repository.operation.ProductFileRepository;
@@ -71,31 +72,31 @@ public class ProductService{
       .build();
   }
 
-  public UpdateResultDTO updateProductState(String organizationId, List<String> productIds, String newStatus, String motivation) {
+  public UpdateResultDTO updateProductState(String organizationId, List<String> productIds, ProductStatusEnum newStatus, String motivation) {
     log.info("[UPDATE_PRODUCT_STATUSES] - Starting update for organizationId: {}, newStatus: {}, motivation: {}", organizationId, newStatus, motivation);
     log.debug("[UPDATE_PRODUCT_STATUSES] - Product IDs to update: {}", productIds);
 
-    List<Product> productsToUpdate = productRepository.findByIdsAndOrganizationIdAndNeStatus(productIds, organizationId,newStatus);
+    List<Product> productsToUpdate = productRepository.findByIdsAndOrganizationIdAndNeStatus(productIds, organizationId,newStatus.name());
     log.debug("[UPDATE_PRODUCT_STATUSES] - Retrieved {} products for update", productsToUpdate.size());
 
     productsToUpdate.forEach(product -> {
-      log.debug("[UPDATE_PRODUCT_STATUSES] - Updating product {} status from {} to {}", product.getGtinCode(), product.getStatus(), newStatus);
-      product.setStatus(newStatus);
+      log.debug("[UPDATE_PRODUCT_STATUSES] - Updating product {} status from {} to {}", product.getGtinCode(), product.getStatus(), newStatus.name());
+      product.setStatus(newStatus.name());
       product.setMotivation(motivation);
     });
 
     List<Product> productsUpdated = productRepository.saveAll(productsToUpdate);
     log.info("[UPDATE_PRODUCT_STATUSES] - Successfully updated {} products", productsUpdated.size());
 
-    Map<String, List<String>> productFileIdToGtins = productsUpdated.stream()
+    Map<String, List<String>> productFileIdToProductNames = productsUpdated.stream()
       .collect(Collectors.groupingBy(
         Product::getProductFileId,
-        Collectors.mapping(Product::getGtinCode, Collectors.toList())
+        Collectors.mapping(Product::getProductName, Collectors.toList())
       ));
-    log.debug("[UPDATE_PRODUCT_STATUSES] - Grouped GTINs by product file ID: {}", productFileIdToGtins);
+    log.debug("[UPDATE_PRODUCT_STATUSES] - Grouped products by product file ID: {}", productFileIdToProductNames);
 
     Map<String, List<String>> userEmailToFileIds = new HashMap<>();
-    productFileIdToGtins.keySet().forEach(fileId ->
+    productFileIdToProductNames.keySet().forEach(fileId ->
       productFileRepository.findById(fileId).ifPresent(file -> {
         log.debug("[UPDATE_PRODUCT_STATUSES] - Found file {} for user {}", fileId, file.getUserEmail());
         userEmailToFileIds
@@ -105,19 +106,19 @@ public class ProductService{
     );
     log.debug("[UPDATE_PRODUCT_STATUSES] - Mapped user emails to file IDs: {}", userEmailToFileIds);
 
-    Map<String, List<String>> userEmailToGtins = new HashMap<>();
+    Map<String, List<String>> userEmailToProductNames = new HashMap<>();
     userEmailToFileIds.forEach((email, fileIds) -> {
-      List<String> gtins = fileIds.stream()
-        .flatMap(fileId -> productFileIdToGtins.getOrDefault(fileId, List.of()).stream())
+      List<String> productNames = fileIds.stream()
+        .flatMap(fileId -> productFileIdToProductNames.getOrDefault(fileId, List.of()).stream())
         .toList();
-      userEmailToGtins.put(email, gtins);
-      log.trace("[UPDATE_PRODUCT_STATUSES] - User {} will be notified for GTINs: {}", email, gtins);
+      userEmailToProductNames.put(email, productNames);
+      log.trace("[UPDATE_PRODUCT_STATUSES] - User {} will be notified for products: {}", email, productNames);
     });
 
     try{
-      userEmailToGtins.forEach((email, gtins) -> {
-        log.info("[UPDATE_PRODUCT_STATUSES] - Sending notification to {} for {} products", email, gtins.size());
-        notificationService.sendEmailUpdateStatus(gtins, motivation, newStatus, email);
+      userEmailToProductNames.forEach((email, productNames) -> {
+        log.info("[UPDATE_PRODUCT_STATUSES] - Sending notification to {} for {} products", email, productNames.size());
+        notificationService.sendEmailUpdateStatus(productNames, motivation, newStatus.name(), email);
       });
     }
     catch (Exception e){
