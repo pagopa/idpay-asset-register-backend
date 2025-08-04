@@ -10,12 +10,14 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import it.gov.pagopa.common.web.dto.ErrorDTO;
 import it.gov.pagopa.register.dto.role.UserPermissionDTO;
-import it.gov.pagopa.register.enums.Role;
+import jakarta.validation.constraints.Pattern;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+
+import static it.gov.pagopa.register.constants.ValidationConstants.ROLE_PATTERN;
 
 @Validated
 @Tag(name = "UserPermission")
@@ -58,7 +60,9 @@ public interface AuthorizationController {
     )
     ResponseEntity<UserPermissionDTO> getUserPermissions(
             @Parameter(name = "role", description = "Role Type (es. invitalia & operatore)", required = true)
-            @PathVariable("role") Role role
+            @PathVariable("role")
+            @Pattern(regexp = ROLE_PATTERN)
+            String role
     ) throws JsonProcessingException;
 
 }

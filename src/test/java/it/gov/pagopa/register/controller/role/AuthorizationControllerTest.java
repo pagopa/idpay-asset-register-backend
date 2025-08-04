@@ -52,7 +52,7 @@ class AuthorizationControllerTest {
 
     private static final String BASE_URL = "http://localhost:8080/idpay/authorization";
     private static final String PERMISSIONS_URL = "/permissions/";
-    private static final String ROLE = "OPERATORE";
+    private static final String ROLE = "operatore";
 
     RolePermission createAdminRolePermission () {
         RolePermission rolePermission = new RolePermission();
