@@ -15,6 +15,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Optional;
+
 import static it.gov.pagopa.register.constants.ValidationConstants.*;
 
 @Validated
@@ -29,7 +31,7 @@ public class ProductController {
     this.productService = productService;
   }
 
-  @GetMapping("/product-files/search")
+  @GetMapping("/products")
   public ResponseEntity<?> searchProductFiles(
     @RequestParam(required = false)
     @Pattern(regexp = UUID_V4_PATTERN)
@@ -59,14 +61,16 @@ public class ProductController {
     ProductCategories category,
 
     @PageableDefault(size = 20, sort = "registrationDate", direction = Sort.Direction.DESC) Pageable pageable) {
+    String categoryName = Optional.ofNullable(category).map(Enum::name).orElse(null);
+    String statusName = Optional.ofNullable(status).map(Enum::name).orElse(null);
     ProductListDTO result = productService.getProducts(
       organizationId,
-      category.name(),
+      categoryName,
       productFileId,
       eprelCode,
       gtinCode,
       productName,
-      status.name(),
+      statusName,
       pageable);
     return ResponseEntity.ok(result);
   }

@@ -5,7 +5,6 @@ import it.gov.pagopa.register.constants.AssetRegisterConstants;
 import it.gov.pagopa.register.dto.operation.ProductDTO;
 import it.gov.pagopa.register.dto.operation.ProductListDTO;
 import it.gov.pagopa.register.dto.operation.UpdateResultDTO;
-import it.gov.pagopa.register.enums.ProductStatus;
 import it.gov.pagopa.register.mapper.operation.ProductMapper;
 import it.gov.pagopa.register.model.operation.Product;
 import it.gov.pagopa.register.repository.operation.ProductFileRepository;

@@ -44,7 +44,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
     @Test
     void testGetProducts_Success() throws Exception {
       ProductDTO productDTO = new ProductDTO();
-      productDTO.setOrganizationId("organizationIdTest");
+      productDTO.setOrganizationId("83843864-f3c0-4def-badb-7f197471b72e");
 
       ProductListDTO mockResponse = ProductListDTO.builder()
         .content(Collections.singletonList(productDTO))
@@ -54,7 +54,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         .totalPages(1)
         .build();
 
-      when(productService.getProducts(eq("organizationIdTest")
+      when(productService.getProducts(eq("83843864-f3c0-4def-badb-7f197471b72e")
           , any()
           , any()
           , any()
@@ -65,7 +65,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         ))
         .thenReturn(mockResponse);
       mockMvc.perform(get("/idpay/register/products")
-          .queryParam("organizationId", "organizationIdTest")
+          .queryParam("organizationId", "83843864-f3c0-4def-badb-7f197471b72e")
           .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.content").isArray())
@@ -80,7 +80,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
     //Test in caso di eccezione
     @Test
     void testGetProducts_ServiceThrowsException() throws Exception {
-      when(productService.getProducts(eq("organizationIdTest")
+      when(productService.getProducts(eq("83843864-f3c0-4def-badb-7f197471b72e")
           , any()
           , any()
           , any()
@@ -92,7 +92,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         .thenThrow(new RuntimeException("Service error"));
 
       mockMvc.perform(get("/idpay/register/products")
-          .queryParam("organizationId", "organizationIdTest")
+          .queryParam("organizationId", "83843864-f3c0-4def-badb-7f197471b72e")
           .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isInternalServerError());
     }
@@ -111,7 +111,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
       String requestBody = objectMapper.writeValueAsString(requestDTO);
 
       when(productService.updateProductState(
-        "org-test",
+        "83843864-f3c0-4def-badb-7f197471b72e",
         productIds,
         ProductStatus.APPROVED.name(),
         "Valid reason"
@@ -120,7 +120,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
       mockMvc.perform(
           org.springframework.test.web.servlet.request.MockMvcRequestBuilders
             .post("/idpay/register/products/update-status")
-            .header("x-organization-id", "org-test")
+            .header("x-organization-id", "83843864-f3c0-4def-badb-7f197471b72e")
             .contentType(MediaType.APPLICATION_JSON)
             .content(requestBody))
         .andExpect(status().isOk())

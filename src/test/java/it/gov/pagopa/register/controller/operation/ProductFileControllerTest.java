@@ -34,7 +34,7 @@ class ProductFileControllerTest {
   @Autowired
   private ObjectMapper objectMapper;
 
-  private static final  String TEST_ID_UPLOAD = "example_upload";
+  private static final  String TEST_ID_UPLOAD = "687f8a176a5c92458819922a";
 
   @Test
   void testDownloadListUpload_Success() throws Exception {
@@ -49,11 +49,11 @@ class ProductFileControllerTest {
       .totalPages(1)
       .build();
 
-    Mockito.when(productFileService.getFilesByPage(eq("org123"), any(Pageable.class)))
+    Mockito.when(productFileService.getFilesByPage(eq("83843864-f3c0-4def-badb-7f197471b72e"), any(Pageable.class)))
       .thenReturn(mockResponse);
 
     mockMvc.perform(get("/idpay/register/product-files")
-        .header("x-organization-id", "org123")
+        .header("x-organization-id", "83843864-f3c0-4def-badb-7f197471b72e")
         .contentType(MediaType.APPLICATION_JSON))
       .andExpect(status().isOk())
       .andExpect(jsonPath("$.content").isArray())
@@ -75,11 +75,11 @@ class ProductFileControllerTest {
   //Test in caso di eccezione
   @Test
   void testDownloadListUpload_ServiceThrowsException() throws Exception {
-    Mockito.when(productFileService.getFilesByPage(eq("org123"), any(Pageable.class)))
+    Mockito.when(productFileService.getFilesByPage(eq("83843864-f3c0-4def-badb-7f197471b72e"), any(Pageable.class)))
       .thenThrow(new RuntimeException("Service error"));
 
     mockMvc.perform(get("/idpay/register/product-files")
-        .header("x-organization-id", "org123")
+        .header("x-organization-id", "83843864-f3c0-4def-badb-7f197471b72e")
         .contentType(MediaType.APPLICATION_JSON))
       .andExpect(status().isInternalServerError());
   }
@@ -90,12 +90,12 @@ class ProductFileControllerTest {
     file.write("fake csv content".getBytes());
     FileReportDTO fileReportDTO = FileReportDTO.builder().data(file.toByteArray()).filename("test.csv").build();
 
-    Mockito.when(productFileService.downloadReport(TEST_ID_UPLOAD, "testOrg")).thenReturn(fileReportDTO);
+    Mockito.when(productFileService.downloadReport(TEST_ID_UPLOAD, "83843864-f3c0-4def-badb-7f197471b72e")).thenReturn(fileReportDTO);
 
 
     mockMvc.perform(get("/idpay/register/product-files/{productFileId}/report", TEST_ID_UPLOAD)
-        .param("idProduttore", "testProducer")
-        .header("x-organization-id", "testOrg"))
+        .param("productFileId", "687f8a176a5c92458819922a")
+        .header("x-organization-id", "83843864-f3c0-4def-badb-7f197471b72e"))
       .andExpect(status().isOk())
       .andExpect(header().string("Content-Disposition", "attachment; filename=test.csv"))
       .andExpect(content().contentType(MediaType.APPLICATION_JSON))
@@ -126,9 +126,9 @@ class ProductFileControllerTest {
     mockMvc.perform(multipart("/idpay/register/product-files")
         .file(wrongFile)
         .param("category", "eprel")
-        .header("x-organization-id", "org-id")
-        .header("x-user-id", "user-id")
-        .header("x-user-email", "x-user-email"))
+        .header("x-organization-id", "83843864-f3c0-4def-badb-7f197471b72e")
+        .header("x-user-id", "83843864-f3c0-4def-badb-7f197471b72e")
+        .header("x-user-email", "user@email.com"))
       .andExpect(status().isOk())
       .andExpect(jsonPath("$.status").value("KO"))
       .andExpect(jsonPath("$.errorKey").value("EXTENSION_FILE_ERROR"));
@@ -147,9 +147,9 @@ class ProductFileControllerTest {
     mockMvc.perform(multipart("/idpay/register/product-files")
         .file(file)
         .param("category", "eprel")
-        .header("x-organization-id", "org-id")
-        .header("x-user-id", "user-id")
-        .header("x-user-email", "x-user-email"))
+        .header("x-organization-id", "83843864-f3c0-4def-badb-7f197471b72e")
+        .header("x-user-id", "83843864-f3c0-4def-badb-7f197471b72e")
+        .header("x-user-email", "user@email.com"))
       .andExpect(status().isOk())
       .andExpect(jsonPath("$.status").value("KO"))
       .andExpect(jsonPath("$.errorKey").value("HEADER_FILE_ERROR"));
@@ -175,9 +175,9 @@ class ProductFileControllerTest {
     mockMvc.perform(multipart("/idpay/register/product-files")
         .file(file)
         .param("category", "eprel")
-        .header("x-organization-id", "org-id")
-        .header("x-user-id", "user-id")
-        .header("x-user-email", "x-user-email"))
+        .header("x-organization-id", "83843864-f3c0-4def-badb-7f197471b72e")
+        .header("x-user-id", "83843864-f3c0-4def-badb-7f197471b72e")
+        .header("x-user-email", "user@email.com"))
       .andExpect(status().isOk())
       .andExpect(jsonPath("$.status").value("KO"))
       .andExpect(jsonPath("$.errorKey").value("MAX_ROW_FILE_ERROR"));
@@ -196,9 +196,9 @@ class ProductFileControllerTest {
     mockMvc.perform(multipart("/idpay/register/product-files")
         .file(file)
         .param("category", "eprel")
-        .header("x-organization-id", "org-id")
-        .header("x-user-id", "user-id")
-        .header("x-user-email", "x-user-email"))
+        .header("x-organization-id", "83843864-f3c0-4def-badb-7f197471b72e")
+        .header("x-user-id", "83843864-f3c0-4def-badb-7f197471b72e")
+        .header("x-user-email", "user@email.com"))
       .andExpect(status().isOk())
       .andExpect(jsonPath("$.status").value("OK"));
   }
@@ -209,11 +209,11 @@ void shouldReturn200AndListWhenOrganizationIdIsValid() throws Exception {
     new ProductBatchDTO("file123", "DISHWASHERS_file123.csv")
   );
 
-  Mockito.when(productFileService.getProductFilesByOrganizationId("org123"))
+  Mockito.when(productFileService.getProductFilesByOrganizationId("83843864-f3c0-4def-badb-7f197471b72e"))
     .thenReturn(mockResult);
 
   mockMvc.perform(get("/idpay/register/product-files/batch-list")
-      .header("x-organization-id", "org123")
+      .header("x-organization-id", "83843864-f3c0-4def-badb-7f197471b72e")
       .accept(MediaType.APPLICATION_JSON))
     .andExpect(status().isOk())
     .andExpect(jsonPath("$[0].productFileId").value("file123"))
@@ -226,7 +226,7 @@ void shouldReturn200AndListWhenOrganizationIdIsValid() throws Exception {
       .thenReturn(List.of());
 
     mockMvc.perform(get("/idpay/register/product-files/batch-list")
-        .header("x-organization-id", "org123")
+        .header("x-organization-id", "83843864-f3c0-4def-badb-7f197471b72e")
         .accept(MediaType.APPLICATION_JSON))
       .andExpect(status().isOk())
       .andExpect(content().json("[]"));
@@ -246,9 +246,9 @@ void shouldReturn200AndListWhenOrganizationIdIsValid() throws Exception {
     mockMvc.perform(multipart("/idpay/register/product-files/verify")
         .file(file)
         .param("category", "eprel")
-        .header("x-organization-id", "org-id")
-        .header("x-user-id", "user-id")
-        .header("x-user-email", "user@email"))
+        .header("x-organization-id", "83843864-f3c0-4def-badb-7f197471b72e")
+        .header("x-user-id", "83843864-f3c0-4def-badb-7f197471b72e")
+        .header("x-user-email", "user@email.com"))
       .andExpect(status().isOk())
       .andExpect(jsonPath("$.status").value("OK"));
   }
@@ -267,9 +267,9 @@ void shouldReturn200AndListWhenOrganizationIdIsValid() throws Exception {
     mockMvc.perform(multipart("/idpay/register/product-files/verify")
         .file(file)
         .param("category", "eprel")
-        .header("x-organization-id", "org-id")
-        .header("x-user-id", "user-id")
-        .header("x-user-email", "user@email"))
+        .header("x-organization-id", "83843864-f3c0-4def-badb-7f197471b72e")
+        .header("x-user-id", "83843864-f3c0-4def-badb-7f197471b72e")
+        .header("x-user-email", "user@email.com"))
       .andExpect(status().isOk())
       .andExpect(jsonPath("$.status").value("KO"))
       .andExpect(jsonPath("$.errorKey").value("INVALID_HEADER"));
