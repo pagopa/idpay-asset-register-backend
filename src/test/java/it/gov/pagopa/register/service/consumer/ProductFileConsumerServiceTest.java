@@ -124,6 +124,7 @@ class ProductFileConsumerServiceTest {
     Product productWrontStatus = Product.builder()
       .organizationId("ORG123")
       .status("REJECTED")
+      .motivation("Motivation")
       .build();
 
     when(productRepository.findById("wrong-org-id-csv")).thenReturn(Optional.of(productWrongId));

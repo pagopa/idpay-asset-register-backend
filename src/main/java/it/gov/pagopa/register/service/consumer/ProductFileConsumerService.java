@@ -205,7 +205,7 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
           dbCheck = false;
         } else if (!ProductStatusEnum.APPROVED.toString().equals(optProduct.get().getStatus())) {
           invalidRecords.add(csvRecord);
-          errorMessages.put(csvRecord, STATUS_NOT_APPROVED);
+          errorMessages.put(csvRecord, STATUS_NOT_APPROVED.replace("{}",optProduct.get().getMotivation()));
           dbCheck = false;
         }
       }
