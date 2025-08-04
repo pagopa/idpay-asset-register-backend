@@ -88,15 +88,15 @@ public class ProductService{
     List<Product> productsUpdated = productRepository.saveAll(productsToUpdate);
     log.info("[UPDATE_PRODUCT_STATUSES] - Successfully updated {} products", productsUpdated.size());
 
-    Map<String, List<String>> productFileIdToGtins = productsUpdated.stream()
+    Map<String, List<String>> productFileIdToProductNames = productsUpdated.stream()
       .collect(Collectors.groupingBy(
         Product::getProductFileId,
-        Collectors.mapping(Product::getGtinCode, Collectors.toList())
+        Collectors.mapping(Product::getProductName, Collectors.toList())
       ));
-    log.debug("[UPDATE_PRODUCT_STATUSES] - Grouped GTINs by product file ID: {}", productFileIdToGtins);
+    log.debug("[UPDATE_PRODUCT_STATUSES] - Grouped products by product file ID: {}", productFileIdToProductNames);
 
     Map<String, List<String>> userEmailToFileIds = new HashMap<>();
-    productFileIdToGtins.keySet().forEach(fileId ->
+    productFileIdToProductNames.keySet().forEach(fileId ->
       productFileRepository.findById(fileId).ifPresent(file -> {
         log.debug("[UPDATE_PRODUCT_STATUSES] - Found file {} for user {}", fileId, file.getUserEmail());
         userEmailToFileIds
@@ -106,19 +106,19 @@ public class ProductService{
     );
     log.debug("[UPDATE_PRODUCT_STATUSES] - Mapped user emails to file IDs: {}", userEmailToFileIds);
 
-    Map<String, List<String>> userEmailToGtins = new HashMap<>();
+    Map<String, List<String>> userEmailToProductNames = new HashMap<>();
     userEmailToFileIds.forEach((email, fileIds) -> {
-      List<String> gtins = fileIds.stream()
-        .flatMap(fileId -> productFileIdToGtins.getOrDefault(fileId, List.of()).stream())
+      List<String> productNames = fileIds.stream()
+        .flatMap(fileId -> productFileIdToProductNames.getOrDefault(fileId, List.of()).stream())
         .toList();
-      userEmailToGtins.put(email, gtins);
-      log.trace("[UPDATE_PRODUCT_STATUSES] - User {} will be notified for GTINs: {}", email, gtins);
+      userEmailToProductNames.put(email, productNames);
+      log.trace("[UPDATE_PRODUCT_STATUSES] - User {} will be notified for products: {}", email, productNames);
     });
 
     try{
-      userEmailToGtins.forEach((email, gtins) -> {
-        log.info("[UPDATE_PRODUCT_STATUSES] - Sending notification to {} for {} products", email, gtins.size());
-        notificationService.sendEmailUpdateStatus(gtins, motivation, newStatus.name(), email);
+      userEmailToProductNames.forEach((email, productNames) -> {
+        log.info("[UPDATE_PRODUCT_STATUSES] - Sending notification to {} for {} products", email, productNames.size());
+        notificationService.sendEmailUpdateStatus(productNames, motivation, newStatus.name(), email);
       });
     }
     catch (Exception e){

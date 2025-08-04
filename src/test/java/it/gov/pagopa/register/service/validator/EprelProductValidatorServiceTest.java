@@ -79,7 +79,6 @@ class EprelProductValidatorServiceTest {
     validProduct.setStatus("PUBLISHED");
     validProduct.setEnergyClassWash("A");
     validProduct.setProductGroup("WASHERDRIERS");
-    validProduct.setProductGroup("WASHERDRIERS");
 
     EprelProduct invalidProduct = new EprelProduct();
     invalidProduct.setEprelRegistrationNumber("invalid-code");
@@ -100,6 +99,7 @@ class EprelProductValidatorServiceTest {
     Product productWrontStatus = Product.builder()
       .organizationId(orgId)
       .status("REJECTED")
+      .motivation("Motivation")
       .build();
 
     when(eprelConnector.callEprel("valid-code")).thenReturn(validProduct);

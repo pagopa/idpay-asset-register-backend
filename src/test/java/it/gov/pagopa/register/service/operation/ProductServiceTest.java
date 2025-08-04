@@ -164,6 +164,7 @@ class ProductServiceTest {
       .gtinCode("prod1")
       .organizationId(organizationId)
       .status("REJECTED")
+      .productName("name1")
       .productFileId("file1")
       .build();
 
@@ -171,6 +172,7 @@ class ProductServiceTest {
       .gtinCode("prod2")
       .organizationId(organizationId)
       .status("REJECTED")
+      .productName("name2")
       .productFileId("file1")
       .build();
 
@@ -207,7 +209,7 @@ class ProductServiceTest {
     verify(productRepository).saveAll(productList);
     verify(productFileRepository).findById("file1");
     verify(notificationService).sendEmailUpdateStatus(
-      List.of("prod1", "prod2"),
+      List.of("name1", "name2"),
       motivation,
       "APPROVED",
       "user@example.com"
