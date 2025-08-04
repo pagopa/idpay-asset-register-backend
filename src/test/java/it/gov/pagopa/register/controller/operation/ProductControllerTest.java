@@ -5,7 +5,7 @@ import it.gov.pagopa.register.dto.operation.ProductDTO;
 import it.gov.pagopa.register.dto.operation.ProductListDTO;
 import it.gov.pagopa.register.dto.operation.ProductUpdateStatusRequestDTO;
 import it.gov.pagopa.register.dto.operation.UpdateResultDTO;
-import it.gov.pagopa.register.enums.ProductStatusEnum;
+import it.gov.pagopa.register.enums.ProductStatus;
 import it.gov.pagopa.register.service.operation.ProductService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -105,7 +105,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
       List<String> productIds = List.of("prod-1", "prod-2");
       ProductUpdateStatusRequestDTO requestDTO = new ProductUpdateStatusRequestDTO();
       requestDTO.setGtinCodes(productIds);
-      requestDTO.setStatus(ProductStatusEnum.APPROVED);
+      requestDTO.setStatus(ProductStatus.APPROVED);
       requestDTO.setMotivation("Valid reason");
 
       String requestBody = objectMapper.writeValueAsString(requestDTO);
@@ -113,7 +113,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
       when(productService.updateProductState(
         "org-test",
         productIds,
-        ProductStatusEnum.APPROVED,
+        ProductStatus.APPROVED.name(),
         "Valid reason"
       )).thenReturn(mockResponse);
 
@@ -131,7 +131,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
     void testUpdateProductStatuses_MissingHeader() throws Exception {
       ProductUpdateStatusRequestDTO requestDTO = new ProductUpdateStatusRequestDTO();
       requestDTO.setGtinCodes(List.of("prod-1"));
-      requestDTO.setStatus(ProductStatusEnum.SUPERVISIONED);
+      requestDTO.setStatus(ProductStatus.SUPERVISIONED);
       requestDTO.setMotivation("Missing header test");
 
       String requestBody = objectMapper.writeValueAsString(requestDTO);

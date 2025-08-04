@@ -3,7 +3,7 @@ package it.gov.pagopa.register.service.operation;
 import it.gov.pagopa.register.connector.notification.NotificationServiceImpl;
 import it.gov.pagopa.register.dto.operation.ProductListDTO;
 import it.gov.pagopa.register.dto.operation.UpdateResultDTO;
-import it.gov.pagopa.register.enums.ProductStatusEnum;
+import it.gov.pagopa.register.enums.ProductStatus;
 import it.gov.pagopa.register.model.operation.Product;
 import it.gov.pagopa.register.model.operation.ProductFile;
 import it.gov.pagopa.register.repository.operation.ProductFileRepository;
@@ -196,7 +196,7 @@ class ProductServiceTest {
     UpdateResultDTO result = productService.updateProductState(
       organizationId,
       productIds,
-      ProductStatusEnum.APPROVED,
+      ProductStatus.APPROVED.name(),
       motivation
     );
 

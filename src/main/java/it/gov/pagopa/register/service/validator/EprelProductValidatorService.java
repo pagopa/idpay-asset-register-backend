@@ -5,7 +5,7 @@ import it.gov.pagopa.register.connector.eprel.EprelConnector;
 import it.gov.pagopa.register.dto.utils.EprelProduct;
 import it.gov.pagopa.register.dto.utils.EprelResult;
 import it.gov.pagopa.register.dto.utils.EprelValidationRule;
-import it.gov.pagopa.register.enums.ProductStatusEnum;
+import it.gov.pagopa.register.enums.ProductStatus;
 import it.gov.pagopa.register.model.operation.Product;
 import it.gov.pagopa.register.repository.operation.ProductRepository;
 import lombok.AllArgsConstructor;
@@ -64,7 +64,7 @@ public class EprelProductValidatorService {
         invalidRecords.add(csvRow);
         errorMessages.put(csvRow,DIFFERENT_ORGANIZATIONID);
         return;
-      } else if (!ProductStatusEnum.APPROVED.toString().equals(optProduct.get().getStatus())) {
+      } else if (!ProductStatus.APPROVED.toString().equals(optProduct.get().getStatus())) {
         invalidRecords.add(csvRow);
         errorMessages.put(csvRow, STATUS_NOT_APPROVED);
         return;
