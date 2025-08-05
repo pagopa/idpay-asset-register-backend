@@ -119,7 +119,7 @@ class EprelProductValidatorServiceTest {
     when(productRepository.findById("wrong-org-id-csv")).thenReturn(Optional.of(productWrongId));
     when(productRepository.findById("wrong-status-csv")).thenReturn(Optional.of(productWrontStatus));
 
-    EprelResult result = validatorService.validateRecords(records, EPREL_FIELDS, category, orgId, productFileId, null);
+    EprelResult result = validatorService.validateRecords(records, EPREL_FIELDS, category, orgId, productFileId, null,"orgName");
 
     assertEquals(1, result.getValidRecords().size());
     assertEquals(5, result.getInvalidRecords().size());

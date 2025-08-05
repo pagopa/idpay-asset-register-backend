@@ -50,14 +50,14 @@ public class ProductController {
 
   @PostMapping("/products/update-status")
   public ResponseEntity<UpdateResultDTO> updateProductsState(
-    @RequestHeader("x-organization-id") String organizationId,
+    @RequestHeader("x-organization-role") String role,
     @RequestBody ProductUpdateStatusRequestDTO dto) {
 
     return ResponseEntity.ok(productService.updateProductState(
-      organizationId,
       dto.getGtinCodes(),
       dto.getStatus(),
-      dto.getMotivation())
+      dto.getMotivation(),
+      role)
     );
   }
 }

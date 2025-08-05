@@ -3,5 +3,12 @@ package it.gov.pagopa.register.enums;
 public enum ProductStatusEnum {
   APPROVED,
   SUPERVISIONED,
-  REJECTED
+  REJECTED,
+
+  SUSPENDED,
+  UPLOADED,
+
+  WAIT_APPROVED,
+
+  WAIT_REJECTED
 }

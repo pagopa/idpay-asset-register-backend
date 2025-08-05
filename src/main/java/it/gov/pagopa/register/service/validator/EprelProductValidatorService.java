@@ -29,7 +29,7 @@ public class EprelProductValidatorService {
   private final EprelValidationConfig eprelValidationConfig;
   private final EprelConnector eprelConnector;
   private final ProductRepository productRepository;
-  public EprelResult validateRecords(List<CSVRecord> records, Set<String> fields, String category, String orgId, String productFileId, List<String> headers) {
+  public EprelResult validateRecords(List<CSVRecord> records, Set<String> fields, String category, String orgId, String productFileId, List<String> headers, String organizationName) {
     log.info("[VALIDATE_RECORDS] - Validating records for organizationId: {}, category: {}, productFileId: {}", orgId, category, productFileId);
     Map<String, EprelValidationRule> rules = eprelValidationConfig.getSchemas();
     if (rules == null || rules.isEmpty()) {
@@ -37,7 +37,7 @@ public class EprelProductValidatorService {
       throw new IllegalArgumentException("No validation rules found");
     }
 
-    ValidationContext context = new ValidationContext(fields, category, orgId, productFileId, headers, rules);
+    ValidationContext context = new ValidationContext(fields, category, orgId, productFileId, headers, rules,organizationName);
 
     Map<String, Product> validRecords = new LinkedHashMap<>();
     List<CSVRecord> invalidRecords = new ArrayList<>();
@@ -107,7 +107,7 @@ public class EprelProductValidatorService {
 
       log.warn("[VALIDATE_RECORD] - Duplicate error for record with GTIN code: {}", gtin);
     }
-    Product product = mapEprelToProduct(csvRow, eprelData, context.getOrgId(), context.getProductFileId(), context.getCategory());
+    Product product = mapEprelToProduct(csvRow, eprelData, context.getOrgId(), context.getProductFileId(), context.getCategory(), context.getOrganizationName());
     validRecords.put(gtin, product);
     log.info("[PRODUCT_UPLOAD] - Added eprel product: {}", csvRow.get(CODE_GTIN_EAN));
   }
@@ -135,6 +135,7 @@ public class EprelProductValidatorService {
     private String productFileId;
     private List<String> headers;
     private Map<String, EprelValidationRule> rules;
+    private String organizationName;
   }
 
 }

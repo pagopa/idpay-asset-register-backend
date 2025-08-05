@@ -1,5 +1,6 @@
 package it.gov.pagopa.register.repository.operation;
 
+import it.gov.pagopa.register.dto.operation.EmailProductDTO;
 import it.gov.pagopa.register.model.operation.Product;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -13,7 +14,9 @@ import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static it.gov.pagopa.register.constants.AssetRegisterConstants.*;
 
@@ -26,6 +29,13 @@ public class ProductSpecificRepositoryImpl implements ProductSpecificRepository 
   public static final String ORGANIZATION_ID = "organizationId";
   public static final String ENERGY_CLASS = "energyClass";
   public static final String STATUS = "status";
+  public static final String SUPERVISIONED = "SUPERVISIONED";
+  public static final String WAIT_APPROVED = "WAIT_APPROVED";
+  public static final String WAIT_REJECTED = "WAIT_REJECTED";
+  public static final String UPLOAD = "UPLOAD";
+  public static final String APPROVED = "APPROVED";
+  public static final String REJECTED = "REJECTED";
+  public static final String SUSPENDED = "SUSPENDED";
   private final MongoTemplate mongoTemplate;
 
   public ProductSpecificRepositoryImpl(MongoTemplate mongoTemplate){
@@ -164,14 +174,25 @@ public class ProductSpecificRepositoryImpl implements ProductSpecificRepository 
   }
 
   @Override
-  public List<Product> findDistinctProductFileIdAndCategoryByOrganizationId(String organizationId) {
-    Aggregation aggregation = Aggregation.newAggregation(
-      Aggregation.match(Criteria.where(ORGANIZATION_ID).is(organizationId)),
-      Aggregation.group(PRODUCT_FILE_ID, CATEGORY),
-      Aggregation.project()
-        .and("_id." + PRODUCT_FILE_ID).as(PRODUCT_FILE_ID)
-        .and("_id." + CATEGORY).as(CATEGORY)
-    );
+  public List<Product> retrieveDistinctProductFileIdsBasedOnRole(String organizationId, String role) {
+    Aggregation aggregation;
+    if ("operaore".equalsIgnoreCase(role)) {
+        aggregation = Aggregation.newAggregation(
+        Aggregation.match(Criteria.where(ORGANIZATION_ID).is(organizationId)),
+        Aggregation.group(PRODUCT_FILE_ID, CATEGORY),
+        Aggregation.project()
+          .and("_id." + PRODUCT_FILE_ID).as(PRODUCT_FILE_ID)
+          .and("_id." + CATEGORY).as(CATEGORY)
+      );
+    }
+    else {
+      aggregation = Aggregation.newAggregation(
+        Aggregation.group(PRODUCT_FILE_ID, CATEGORY),
+        Aggregation.project()
+          .and("_id." + PRODUCT_FILE_ID).as(PRODUCT_FILE_ID)
+          .and("_id." + CATEGORY).as(CATEGORY)
+      );
+    }
 
     AggregationResults<Product> results = mongoTemplate.aggregate(
       aggregation, PRODUCT, Product.class
@@ -181,14 +202,65 @@ public class ProductSpecificRepositoryImpl implements ProductSpecificRepository 
   }
 
   @Override
-  public List<Product> findByIdsAndOrganizationIdAndNeStatus(List<String> productIds, String organizationId,String status) {
-    Criteria criteria = new Criteria();
-    criteria.and("_id").in(productIds);
-    criteria.and(ORGANIZATION_ID).is(organizationId);
-    criteria.and(STATUS).ne(status);
-    return mongoTemplate.find(Query.query(criteria), Product.class);
+  public List<Product> findByIdsAndValidStatusByRole(List<String> productIds, String targetStatus, String role){
+    Map<String, List<String>> validInitialStates = new HashMap<>();
+
+    if ("invitalia".equalsIgnoreCase(role)) {
+      switch (targetStatus) {
+        case SUPERVISIONED, WAIT_APPROVED, WAIT_REJECTED:
+          validInitialStates.put(targetStatus, List.of(UPLOAD));
+          break;
+        case UPLOAD:
+          validInitialStates.put(targetStatus, List.of(SUPERVISIONED, WAIT_APPROVED, WAIT_REJECTED));
+          break;
+        default:
+          break;
+      }
+    } else if ("invitalia_admin".equalsIgnoreCase(role)) {
+      switch (targetStatus) {
+        case APPROVED:
+          validInitialStates.put(targetStatus, List.of(UPLOAD, WAIT_APPROVED));
+          break;
+        case REJECTED:
+          validInitialStates.put(targetStatus, List.of(UPLOAD, WAIT_REJECTED));
+          break;
+        case UPLOAD:
+          validInitialStates.put(targetStatus, List.of(SUPERVISIONED, WAIT_APPROVED, WAIT_REJECTED, APPROVED, REJECTED, SUSPENDED));
+          break;
+        case SUSPENDED:
+          validInitialStates.put(targetStatus, List.of(UPLOAD, SUPERVISIONED));
+          break;
+        default:
+          break;
+      }
+    }
+
+      List<String> allowedStates = validInitialStates.getOrDefault(targetStatus, List.of());
+      if (allowedStates.isEmpty()) {
+        return List.of();
+      }
+
+      Criteria criteria = new Criteria();
+      criteria.and("_id").in(productIds);
+      criteria.and(STATUS).in(allowedStates);
+
+      return mongoTemplate.find(Query.query(criteria), Product.class);
   }
 
+
+  @Override
+  public List<EmailProductDTO> getProductNamesGroupedByEmail(List<String> gtinCodes) {
+    Aggregation aggregation = Aggregation.newAggregation(
+      Aggregation.match(Criteria.where("gtinCode").in(gtinCodes)),
+      Aggregation.lookup("product_file", PRODUCT_FILE_ID, "_id", "fileInfo"),
+      Aggregation.unwind("fileInfo"),
+      Aggregation.group("fileInfo.userEmail")
+        .addToSet("productName").as("productNames")
+    );
+
+    AggregationResults<EmailProductDTO> results = mongoTemplate.aggregate(aggregation, "productjoin", EmailProductDTO.class);
+    return results.getMappedResults();
+  }
 
 }
 

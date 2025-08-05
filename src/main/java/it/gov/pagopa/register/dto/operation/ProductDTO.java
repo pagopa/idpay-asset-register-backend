@@ -34,4 +34,5 @@ public class ProductDTO {
   private String productName;
   private String capacity;
   private String motivation;
+  private String organizationName;
 }

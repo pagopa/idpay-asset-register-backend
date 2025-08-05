@@ -36,4 +36,5 @@ public class Product {
   private String capacity;
   private String motivation;
   private String productName;
+  private String organizationName;
 }

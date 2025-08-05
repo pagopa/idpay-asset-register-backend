@@ -1,5 +1,6 @@
 package it.gov.pagopa.register.repository.operation;
 
+import it.gov.pagopa.register.dto.operation.EmailProductDTO;
 import it.gov.pagopa.register.model.operation.Product;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -20,7 +21,9 @@ public interface ProductSpecificRepository {
 
   Long getCount(Criteria criteria);
 
-  List<Product> findDistinctProductFileIdAndCategoryByOrganizationId(String organizationId);
+  List<Product> retrieveDistinctProductFileIdsBasedOnRole(String organizationId, String role);
 
-  List<Product> findByIdsAndOrganizationIdAndNeStatus(List<String> productIds, String organizationId,String status);
+  List<Product> findByIdsAndValidStatusByRole(List<String> productIds, String targetStatus, String role);
+
+  List<EmailProductDTO> getProductNamesGroupedByEmail(List<String> gtinCodes);
 }

@@ -111,16 +111,16 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
       String requestBody = objectMapper.writeValueAsString(requestDTO);
 
       when(productService.updateProductState(
-        "org-test",
         productIds,
         ProductStatusEnum.APPROVED,
-        "Valid reason"
+        "Valid reason",
+        "invitalia_admin"
       )).thenReturn(mockResponse);
 
       mockMvc.perform(
           org.springframework.test.web.servlet.request.MockMvcRequestBuilders
             .post("/idpay/register/products/update-status")
-            .header("x-organization-id", "org-test")
+            .header("x-organization-role", "invitalia_admin")
             .contentType(MediaType.APPLICATION_JSON)
             .content(requestBody))
         .andExpect(status().isOk())

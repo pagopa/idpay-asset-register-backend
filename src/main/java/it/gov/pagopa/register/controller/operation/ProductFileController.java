@@ -39,10 +39,11 @@ public class ProductFileController {
   public ResponseEntity<ProductFileResult> uploadProductFile(@RequestHeader("x-organization-id") String organizationId,
                                                              @RequestHeader("x-user-id") String userId,
                                                              @RequestHeader("x-user-email") String userEmail,
+                                                             @RequestHeader("x-organization-name") String organizationName,
                                                              @RequestParam(value = "category") String category,
                                                              @RequestPart("csv") MultipartFile csv) {
 
-    ProductFileResult productFileResult = productFileService.uploadFile(csv, category, organizationId, userId, userEmail);
+    ProductFileResult productFileResult = productFileService.uploadFile(csv, category, organizationId, userId, userEmail, organizationName);
     return ResponseEntity.ok().body(productFileResult);
   }
 
@@ -51,8 +52,9 @@ public class ProductFileController {
                                                              @RequestHeader("x-user-id") String userId,
                                                              @RequestHeader("x-user-email") String userEmail,
                                                              @RequestParam(value = "category") String category,
+                                                             @RequestHeader("x-organization-name") String organizationName,
                                                              @RequestPart("csv") MultipartFile csv) {
-    ProductFileResult productFileResult = productFileService.validateFile(csv, category, organizationId, userId, userEmail);
+    ProductFileResult productFileResult = productFileService.validateFile(csv, category, organizationId, userId, userEmail,organizationName);
     return ResponseEntity.ok().body(productFileResult);
   }
 
@@ -79,8 +81,9 @@ public class ProductFileController {
 
   @GetMapping("/product-files/batch-list")
   public ResponseEntity<List<ProductBatchDTO>> getFileteredProductFiles(
-    @RequestHeader("x-organization-id") String organizationId
+    @RequestHeader("x-organization-id") String organizationId,
+     @RequestHeader("x-organization-role") String role
   ) {
-    return ResponseEntity.ok().body(productFileService.getProductFilesByOrganizationId(organizationId));
+    return ResponseEntity.ok().body(productFileService.retrieveDistinctProductFileIdsBasedOnRole(organizationId,role));
   }
 }

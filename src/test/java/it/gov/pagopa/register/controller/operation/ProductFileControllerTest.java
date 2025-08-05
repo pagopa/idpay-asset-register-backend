@@ -121,14 +121,15 @@ class ProductFileControllerTest {
 
     ProductFileResult result = ProductFileResult.ko("EXTENSION_FILE_ERROR");
 
-    Mockito.when(productFileService.uploadFile(any(), any(), any(), any(),any())).thenReturn(result);
+    Mockito.when(productFileService.uploadFile(any(), any(), any(), any(),any(),any())).thenReturn(result);
 
     mockMvc.perform(multipart("/idpay/register/product-files")
         .file(wrongFile)
         .param("category", "eprel")
         .header("x-organization-id", "org-id")
         .header("x-user-id", "user-id")
-        .header("x-user-email", "x-user-email"))
+        .header("x-user-email", "x-user-email")
+        .header("x-organization-name", "org-name"))
       .andExpect(status().isOk())
       .andExpect(jsonPath("$.status").value("KO"))
       .andExpect(jsonPath("$.errorKey").value("EXTENSION_FILE_ERROR"));
@@ -142,14 +143,15 @@ class ProductFileControllerTest {
 
     ProductFileResult result = ProductFileResult.ko("HEADER_FILE_ERROR");
 
-    Mockito.when(productFileService.uploadFile(any(), any(), any(), any(),any())).thenReturn(result);
+    Mockito.when(productFileService.uploadFile(any(), any(), any(), any(),any(),any())).thenReturn(result);
 
     mockMvc.perform(multipart("/idpay/register/product-files")
         .file(file)
         .param("category", "eprel")
         .header("x-organization-id", "org-id")
         .header("x-user-id", "user-id")
-        .header("x-user-email", "x-user-email"))
+        .header("x-user-email", "x-user-email")
+        .header("x-organization-name", "org-name"))
       .andExpect(status().isOk())
       .andExpect(jsonPath("$.status").value("KO"))
       .andExpect(jsonPath("$.errorKey").value("HEADER_FILE_ERROR"));
@@ -170,14 +172,15 @@ class ProductFileControllerTest {
 
     ProductFileResult result = ProductFileResult.ko("MAX_ROW_FILE_ERROR");
 
-    Mockito.when(productFileService.uploadFile(any(), any(), any(), any(),any())).thenReturn(result);
+    Mockito.when(productFileService.uploadFile(any(), any(), any(), any(),any(),any())).thenReturn(result);
 
     mockMvc.perform(multipart("/idpay/register/product-files")
         .file(file)
         .param("category", "eprel")
         .header("x-organization-id", "org-id")
         .header("x-user-id", "user-id")
-        .header("x-user-email", "x-user-email"))
+        .header("x-user-email", "x-user-email")
+        .header("x-organization-name", "org-name"))
       .andExpect(status().isOk())
       .andExpect(jsonPath("$.status").value("KO"))
       .andExpect(jsonPath("$.errorKey").value("MAX_ROW_FILE_ERROR"));
@@ -191,14 +194,15 @@ class ProductFileControllerTest {
 
     ProductFileResult result = ProductFileResult.ok();
 
-    Mockito.when(productFileService.uploadFile(any(), any(), any(), any(),any())).thenReturn(result);
+    Mockito.when(productFileService.uploadFile(any(), any(), any(), any(),any(),any())).thenReturn(result);
 
     mockMvc.perform(multipart("/idpay/register/product-files")
         .file(file)
         .param("category", "eprel")
         .header("x-organization-id", "org-id")
         .header("x-user-id", "user-id")
-        .header("x-user-email", "x-user-email"))
+        .header("x-user-email", "x-user-email")
+        .header("x-organization-name", "org-name"))
       .andExpect(status().isOk())
       .andExpect(jsonPath("$.status").value("OK"));
   }
@@ -209,11 +213,12 @@ void shouldReturn200AndListWhenOrganizationIdIsValid() throws Exception {
     new ProductBatchDTO("file123", "DISHWASHERS_file123.csv")
   );
 
-  Mockito.when(productFileService.getProductFilesByOrganizationId("org123"))
+  Mockito.when(productFileService.retrieveDistinctProductFileIdsBasedOnRole("org123","operatore"))
     .thenReturn(mockResult);
 
   mockMvc.perform(get("/idpay/register/product-files/batch-list")
       .header("x-organization-id", "org123")
+      .header("x-organization-role", "operatore")
       .accept(MediaType.APPLICATION_JSON))
     .andExpect(status().isOk())
     .andExpect(jsonPath("$[0].productFileId").value("file123"))
@@ -222,11 +227,12 @@ void shouldReturn200AndListWhenOrganizationIdIsValid() throws Exception {
 
   @Test
   void shouldReturn200WithEmptyListWhenNoFilesFound() throws Exception {
-    Mockito.when(productFileService.getProductFilesByOrganizationId("org123"))
+    Mockito.when(productFileService.retrieveDistinctProductFileIdsBasedOnRole("org123","operatore"))
       .thenReturn(List.of());
 
     mockMvc.perform(get("/idpay/register/product-files/batch-list")
         .header("x-organization-id", "org123")
+        .header("x-organization-role", "operatore")
         .accept(MediaType.APPLICATION_JSON))
       .andExpect(status().isOk())
       .andExpect(content().json("[]"));
@@ -240,7 +246,7 @@ void shouldReturn200AndListWhenOrganizationIdIsValid() throws Exception {
 
     ProductFileResult result = ProductFileResult.ok();
 
-    Mockito.when(productFileService.validateFile(any(), any(), any(), any(), any()))
+    Mockito.when(productFileService.validateFile(any(), any(), any(), any(), any(),any()))
       .thenReturn(result);
 
     mockMvc.perform(multipart("/idpay/register/product-files/verify")
@@ -248,7 +254,8 @@ void shouldReturn200AndListWhenOrganizationIdIsValid() throws Exception {
         .param("category", "eprel")
         .header("x-organization-id", "org-id")
         .header("x-user-id", "user-id")
-        .header("x-user-email", "user@email"))
+        .header("x-user-email", "user@email")
+        .header("x-organization-name", "org-name"))
       .andExpect(status().isOk())
       .andExpect(jsonPath("$.status").value("OK"));
   }
@@ -261,7 +268,7 @@ void shouldReturn200AndListWhenOrganizationIdIsValid() throws Exception {
 
     ProductFileResult result = ProductFileResult.ko("INVALID_HEADER");
 
-    Mockito.when(productFileService.validateFile(any(), any(), any(), any(), any()))
+    Mockito.when(productFileService.validateFile(any(), any(), any(), any(), any(),any()))
       .thenReturn(result);
 
     mockMvc.perform(multipart("/idpay/register/product-files/verify")
@@ -269,7 +276,8 @@ void shouldReturn200AndListWhenOrganizationIdIsValid() throws Exception {
         .param("category", "eprel")
         .header("x-organization-id", "org-id")
         .header("x-user-id", "user-id")
-        .header("x-user-email", "user@email"))
+        .header("x-user-email", "user@email")
+        .header("x-organization-name", "org-name"))
       .andExpect(status().isOk())
       .andExpect(jsonPath("$.status").value("KO"))
       .andExpect(jsonPath("$.errorKey").value("INVALID_HEADER"));

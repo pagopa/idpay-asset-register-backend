@@ -59,7 +59,7 @@ class ProductMapperTest {
     when(csvRecord.get("brand")).thenReturn("BrandX");
     when(csvRecord.get("model")).thenReturn("ModelX");
 
-    Product product = ProductMapper.mapCookingHobToProduct(csvRecord, "org1", "file123");
+    Product product = ProductMapper.mapCookingHobToProduct(csvRecord, "org1", "file123","orgName");
     assertEquals("COOKINGHOBS", product.getCategory());
     assertEquals("N\\A", product.getCapacity());
   }
@@ -78,7 +78,7 @@ class ProductMapperTest {
     when(eprel.getModelIdentifier()).thenReturn("ModelX");
     when(eprel.getEnergyClass()).thenReturn("A");
 
-    Product product = ProductMapper.mapEprelToProduct(csvRecord, eprel, "org1", "file123", "WASHINGMACHINES");
+    Product product = ProductMapper.mapEprelToProduct(csvRecord, eprel, "org1", "file123", "WASHINGMACHINES","orgName");
     assertEquals("BrandX", product.getBrand());
   }
 

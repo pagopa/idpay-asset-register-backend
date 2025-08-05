@@ -31,7 +31,6 @@ import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 
 import static it.gov.pagopa.register.constants.AssetRegisterConstants.*;
@@ -119,15 +118,15 @@ public class ProductFileService {
 
 
 
-  public ProductFileResult uploadFile(MultipartFile file, String category, String organizationId, String userId, String userEmail){
+  public ProductFileResult uploadFile(MultipartFile file, String category, String organizationId, String userId, String userEmail, String organizationName){
     try {
-      ProductFileResult result = validateFile(file, category, organizationId, userId, userEmail);
+      ProductFileResult result = validateFile(file, category, organizationId, userId, userEmail,organizationName);
       if("KO".equals(result.getStatus())){
         return result;
       }
       String originalFileName = file.getOriginalFilename();
-      ProductFile productFile = saveProductFile(category, organizationId, userId, userEmail, originalFileName, result.getRecords());
-      fileStorageClient.upload(file.getInputStream(), "CSV/" + organizationId + "/" + category + "/" + productFile.getId() + ".csv", file.getContentType());
+      ProductFile productFile = saveProductFile(category, organizationId, userId, userEmail, originalFileName, result.getRecords(),organizationName);
+      fileStorageClient.upload(file.getInputStream(), "CSV/" + organizationId + "/" + organizationName + "/" + category + "/" + productFile.getId() + ".csv", file.getContentType());
       log.info("[PROCESS_FILE] - File processed and uploaded successfully: {}", originalFileName);
       return ProductFileResult.ok();
     } catch (Exception e) {
@@ -138,7 +137,7 @@ public class ProductFileService {
 
 
 
-  public ProductFileResult validateFile(MultipartFile file, String category, String organizationId, String userId, String userEmail) {
+  public ProductFileResult validateFile(MultipartFile file, String category, String organizationId, String userId, String userEmail, String organizationName) {
     boolean alreadyBlocked = productFileRepository.existsByOrganizationIdAndUploadStatusIn(
       organizationId, BLOCKING_STATUSES
     );
@@ -157,7 +156,7 @@ public class ProductFileService {
       ValidationResultDTO validationRecords = productFileValidator.validateRecords(validation.getRecords(), validation.getHeaders(), category);
       if ("KO".equals(validationRecords.getStatus())) {
         log.warn(PROCESS_FILE_VALIDATION_FAILED_FOR_FILE, originalFileName);
-        ProductFile productFile = saveProductFile(category, organizationId, userId, userEmail, originalFileName, validation.getRecords());
+        ProductFile productFile = saveProductFile(category, organizationId, userId, userEmail, originalFileName, validation.getRecords(),organizationName);
         uploadFormalErrorFile(file, validationRecords, validation.getHeaders(), productFile);
         log.warn("[PROCESS_FILE] - File processed with formal errors: {}", originalFileName);
         return ProductFileResult.ko(AssetRegisterConstants.UploadKeyConstant.REPORT_FORMAL_FILE_ERROR_KEY, productFile.getId());
@@ -194,7 +193,7 @@ public class ProductFileService {
 
 
 
-  private ProductFile saveProductFile(String category, String organizationId, String userId, String userEmail, String originalFileName, List<CSVRecord> records) {
+  private ProductFile saveProductFile(String category, String organizationId, String userId, String userEmail, String originalFileName, List<CSVRecord> records, String organizationName) {
 
     return productFileRepository.save(ProductFile.builder()
       .fileName(originalFileName)
@@ -206,24 +205,18 @@ public class ProductFileService {
       .organizationId(organizationId)
       .dateUpload(LocalDateTime.now())
       .userEmail(userEmail)
+      .organizationName(organizationName)
       .build());
   }
 
 
-  public List<ProductBatchDTO> getProductFilesByOrganizationId(String organizationId) {
-    if (Objects.isNull(organizationId) || organizationId.isEmpty()) {
-      log.error("[GET_PRODUCT_FILES] - Organization Id is null or empty");
-      throw new ReportNotFoundException("Organization Id is null or empty");
-    }
-
+  public List<ProductBatchDTO> retrieveDistinctProductFileIdsBasedOnRole(String organizationId, String role) {
     log.info("[GET_PRODUCT_FILES] - Fetching product files for organizationId: {}", organizationId);
      List<Product> productFiles = productRepository
-      .findDistinctProductFileIdAndCategoryByOrganizationId(organizationId);
+      .retrieveDistinctProductFileIdsBasedOnRole(organizationId, role);
 
 
     log.info("[GET_PRODUCT_FILES] - Fetched {} product files for organizationId: {}", productFiles.size(), organizationId);
-
-
     return productFiles.stream()
       .map(ProductFileMapper::toBatchDTO)
       .toList();

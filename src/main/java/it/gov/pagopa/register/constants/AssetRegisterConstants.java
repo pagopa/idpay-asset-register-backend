@@ -203,7 +203,7 @@ public class AssetRegisterConstants {
       new EprelValidationRule((v, z) -> v != null && isEnergyClassValid(v,z), ERROR_ENERGY_CLASS);
   }
 
-  public static final Pattern SUBJECT_PATTERN = Pattern.compile(".*/blobs/CSV/([^/]+)/([^/]+)/([^/]+\\.csv)$");
+  public static final Pattern SUBJECT_PATTERN = Pattern.compile(".*/blobs/CSV/([^/]+)/([^/]+)/([^/]+)/([^/]+\\.csv)$");
 
   public static final Map<String, String> ENERGY_CLASS_REQUIREMENTS = Map.of(
     WASHINGMACHINES, "A",

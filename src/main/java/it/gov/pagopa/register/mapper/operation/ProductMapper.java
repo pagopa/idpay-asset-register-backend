@@ -47,9 +47,10 @@ public class ProductMapper {
       .productName(entity.getProductName())
       .capacity(("N\\A").equals(entity.getCapacity()) ? null : entity.getCapacity())
       .motivation(entity.getMotivation())
+      .organizationName(entity.getOrganizationName())
       .build();
   }
-  public static Product mapCookingHobToProduct(CSVRecord csvRecord, String orgId, String productFileId) {
+  public static Product mapCookingHobToProduct(CSVRecord csvRecord, String orgId, String productFileId,String organizationName) {
     return Product.builder()
       .productFileId(productFileId)
       .organizationId(orgId)
@@ -66,10 +67,11 @@ public class ProductMapper {
         csvRecord.get(BRAND)+" "+
         csvRecord.get(MODEL)
       )
+      .organizationName(organizationName)
       .build();
   }
 
-  public static Product mapEprelToProduct(CSVRecord csvRecord, EprelProduct eprelData, String orgId, String productFileId, String category) {
+  public static Product mapEprelToProduct(CSVRecord csvRecord, EprelProduct eprelData, String orgId, String productFileId, String category, String organizationName) {
     String capacity = mapCapacity(category,eprelData);
     String productName = CATEGORIES_TO_IT_S.get(category) + " " +
       eprelData.getSupplierOrTrademark() + " " +
@@ -91,6 +93,7 @@ public class ProductMapper {
       .energyClass(mapEnergyClass(eprelData.getEnergyClass()))
       .capacity(capacity)
       .productName(productName)
+      .organizationName(organizationName)
       .build();
   }
 

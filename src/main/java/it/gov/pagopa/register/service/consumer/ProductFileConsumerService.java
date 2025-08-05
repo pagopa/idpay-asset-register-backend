@@ -128,17 +128,18 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
 
   protected EventDetails parseEventSubject(String subject) {
     Matcher matcher = SUBJECT_PATTERN.matcher(subject);
-    if (!matcher.find() || matcher.groupCount() < 3) {
+    if (!matcher.find() || matcher.groupCount() < 4) {
       log.warn("[PRODUCT_UPLOAD] - Invalid subject format: {}", subject);
       return null;
     }
 
     String orgId = matcher.group(1).trim();
-    String category = matcher.group(2);
-    String productFileId = matcher.group(3).replace(".csv", "");
-    log.info("[PRODUCT_UPLOAD] - Processing fileId: {} for orgId={}, category={}", productFileId, orgId, category);
+    String organizationName = matcher.group(2);
+    String category = matcher.group(3);
+    String productFileId = matcher.group(4).replace(".csv", "");
+    log.info("[PRODUCT_UPLOAD] - Processing fileId: {} for orgId={}, category={}, organizationName={}", productFileId, orgId, category,organizationName);
 
-    return new EventDetails(orgId, category, productFileId);
+    return new EventDetails(orgId, category, productFileId,organizationName);
   }
 
   protected String extractBlobPath(String url) {
@@ -160,7 +161,7 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
       }
 
       log.info("[PRODUCT_UPLOAD] - File downloaded successfully from path: {}", blobPath);
-      processCsvFromStorage(downloadedData, eventDetails.getProductFileId(), eventDetails.getCategory(), eventDetails.getOrgId());
+      processCsvFromStorage(downloadedData, eventDetails.getProductFileId(), eventDetails.getCategory(), eventDetails.getOrgId(), eventDetails.getOrganizationName());
 
     } catch (Exception e) {
       log.error("[PRODUCT_UPLOAD] - Error processing file {}: {}", eventDetails.getProductFileId(), e.getMessage(), e);
@@ -171,7 +172,8 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
   public void processCsvFromStorage(ByteArrayOutputStream byteArrayOutputStream,
                                     String fileId,
                                     String category,
-                                    String orgId) {
+                                    String orgId,
+                                    String organizationName) {
 
     try {
       boolean isCookingHob = COOKINGHOBS.equalsIgnoreCase(category);
@@ -180,9 +182,9 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
       List<CSVRecord> records = CsvUtils.readCsvRecords(byteArrayOutputStream);
       log.info("[PRODUCT_UPLOAD] - Valid CSV headers: {}", headers);
       if (isCookingHob) {
-        processCookingHobRecords(records, orgId, fileId,headers);
+        processCookingHobRecords(records, orgId, fileId,headers,organizationName);
       } else {
-        EprelResult validationResult = eprelProductValidator.validateRecords(records, EPREL_FIELDS, category, orgId, fileId, headers);
+        EprelResult validationResult = eprelProductValidator.validateRecords(records, EPREL_FIELDS, category, orgId, fileId, headers,organizationName);
         processEprelResult(validationResult.getValidRecords().values().stream().toList(), validationResult.getInvalidRecords(), validationResult.getErrorMessages(), fileId, headers, category);
       }
     } catch (Exception e) {
@@ -190,7 +192,7 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
     }
   }
 
-  private void processCookingHobRecords(List<CSVRecord> records, String orgId, String productFileId, List<String> headers) {
+  private void processCookingHobRecords(List<CSVRecord> records, String orgId, String productFileId, List<String> headers, String organizationName) {
     Map<String,Product> validProduct = new LinkedHashMap<>();
     List<CSVRecord> invalidRecords = new ArrayList<>();
     Map<CSVRecord, String> errorMessages = new HashMap<>();
@@ -217,7 +219,7 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
           errorMessages.put(duplicateGtinRow,DUPLICATE_GTIN_EAN);
           log.info("[PRODUCT_UPLOAD] - Duplicate error for record with GTIN code: {}", csvRecord.get(CODE_GTIN_EAN));
         }
-        validProduct.put(csvRecord.get(CODE_GTIN_EAN),mapCookingHobToProduct(csvRecord, orgId, productFileId));
+        validProduct.put(csvRecord.get(CODE_GTIN_EAN),mapCookingHobToProduct(csvRecord, orgId, productFileId,organizationName));
         log.info("[PRODUCT_UPLOAD] - Added cooking hob product: {}", csvRecord.get(CODE_GTIN_EAN));
 
       }
