@@ -1,7 +1,6 @@
 package it.gov.pagopa.register.service.operation;
 
 import it.gov.pagopa.register.connector.notification.NotificationServiceImpl;
-import it.gov.pagopa.register.constants.AssetRegisterConstants;
 import it.gov.pagopa.register.dto.operation.EmailProductDTO;
 import it.gov.pagopa.register.dto.operation.ProductListDTO;
 import it.gov.pagopa.register.dto.operation.UpdateResultDTO;
@@ -115,7 +114,7 @@ class ProductServiceTest {
       .thenReturn(productList);
 
 
-    ProductListDTO response = productService.getProducts(
+    ProductListDTO response = productService.fetchProductsByFilters(
       organizationId,
       null,
       null,
@@ -197,7 +196,7 @@ class ProductServiceTest {
 
     UpdateResultDTO result = productService.updateProductStatusesWithNotification(
       productIds,
-      ProductStatus.APPROVED.name(),
+      ProductStatus.APPROVED,
       motivation,
       "invitalia_admin"
     );
@@ -253,5 +252,17 @@ class ProductServiceTest {
     when(productRepository.getProductNamesGroupedByEmail(productList.stream().map(Product::getGtinCode).toList()))
       .thenReturn(emailProductDTOs);
 
+    doThrow(new RuntimeException("Email service error")).when(notificationService)
+      .sendEmailUpdateStatus(List.of("name1", "name2"), motivation, "APPROVED", "test@gmail.com");
+
+    UpdateResultDTO result = productService.updateProductStatusesWithNotification(
+      productIds,
+      ProductStatus.APPROVED,
+      motivation,
+      "invitalia_admin"
+    );
+
+    assertEquals("KO",result.getStatus());
+  }
 
 }

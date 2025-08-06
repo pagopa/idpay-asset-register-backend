@@ -121,7 +121,7 @@ class ProductFileControllerTest {
 
     ProductFileResult result = ProductFileResult.ko("EXTENSION_FILE_ERROR");
 
-    Mockito.when(productFileService.uploadFile(any(), any(), any(), any(),any())).thenReturn(result);
+    Mockito.when(productFileService.uploadFile(any(), any(), any(), any(),any(),any())).thenReturn(result);
 
     mockMvc.perform(multipart("/idpay/register/product-files")
         .file(wrongFile)
@@ -143,7 +143,7 @@ class ProductFileControllerTest {
 
     ProductFileResult result = ProductFileResult.ko("HEADER_FILE_ERROR");
 
-    Mockito.when(productFileService.uploadFile(any(), any(), any(), any(),any())).thenReturn(result);
+    Mockito.when(productFileService.uploadFile(any(), any(), any(), any(),any(), any())).thenReturn(result);
 
     mockMvc.perform(multipart("/idpay/register/product-files")
         .file(file)

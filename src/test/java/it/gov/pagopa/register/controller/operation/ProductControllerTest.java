@@ -54,7 +54,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         .totalPages(1)
         .build();
 
-      when(productService.getProducts(eq("83843864-f3c0-4def-badb-7f197471b72e")
+      when(productService.fetchProductsByFilters(eq("83843864-f3c0-4def-badb-7f197471b72e")
           , any()
           , any()
           , any()
@@ -80,7 +80,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
     //Test in caso di eccezione
     @Test
     void testGetProducts_ServiceThrowsException() throws Exception {
-      when(productService.getProducts(eq("83843864-f3c0-4def-badb-7f197471b72e")
+      when(productService.fetchProductsByFilters(eq("83843864-f3c0-4def-badb-7f197471b72e")
           , any()
           , any()
           , any()
@@ -110,11 +110,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
       String requestBody = objectMapper.writeValueAsString(requestDTO);
 
-      when(productService.updateProductState(
-        "83843864-f3c0-4def-badb-7f197471b72e",
+      when(productService.updateProductStatusesWithNotification(
         productIds,
-        ProductStatus.APPROVED.name(),
-        "Valid reason"
+        ProductStatus.APPROVED,
+        "Valid reason",
+        "invitalia_admin"
       )).thenReturn(mockResponse);
 
       mockMvc.perform(

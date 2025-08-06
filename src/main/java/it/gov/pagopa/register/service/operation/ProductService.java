@@ -6,6 +6,7 @@ import it.gov.pagopa.register.dto.operation.EmailProductDTO;
 import it.gov.pagopa.register.dto.operation.ProductDTO;
 import it.gov.pagopa.register.dto.operation.ProductListDTO;
 import it.gov.pagopa.register.dto.operation.UpdateResultDTO;
+import it.gov.pagopa.register.enums.ProductStatus;
 import it.gov.pagopa.register.mapper.operation.ProductMapper;
 import it.gov.pagopa.register.model.operation.Product;
 import it.gov.pagopa.register.repository.operation.ProductRepository;
@@ -63,7 +64,7 @@ public class ProductService {
 
   public UpdateResultDTO updateProductStatusesWithNotification(
     List<String> productIds,
-    ProductStatusEnum newStatus,
+    ProductStatus newStatus,
     String motivation,
     String role
   ) {
@@ -90,7 +91,7 @@ public class ProductService {
   }
 
 
-  private void updateStatuses(List<Product> products, ProductStatusEnum newStatus, String motivation) {
+  private void updateStatuses(List<Product> products, ProductStatus newStatus, String motivation) {
     products.forEach(product -> {
       log.debug("[UPDATE_PRODUCT_STATUSES] - Updating product {} status from {} to {}",
         product.getGtinCode(), product.getStatus(), newStatus.name());
@@ -99,7 +100,7 @@ public class ProductService {
     });
   }
 
-  private List<String> notifyStatusUpdates(List<Product> products, ProductStatusEnum newStatus, String motivation) {
+  private List<String> notifyStatusUpdates(List<Product> products, ProductStatus newStatus, String motivation) {
     var emailToProducts = productRepository.getProductNamesGroupedByEmail(
       products.stream().map(Product::getGtinCode).toList()
     );

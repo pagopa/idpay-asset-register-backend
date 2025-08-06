@@ -59,6 +59,7 @@ public class ProductController {
 
     @RequestParam(required = false)
     ProductCategories category,
+
     @PageableDefault(size = 20, sort = "registrationDate", direction = Sort.Direction.DESC) Pageable pageable) {
     String categoryName = Optional.ofNullable(category).map(Enum::name).orElse(null);
     String statusName = Optional.ofNullable(status).map(Enum::name).orElse(null);
@@ -77,7 +78,9 @@ public class ProductController {
 
   @PostMapping("/products/update-status")
   public ResponseEntity<UpdateResultDTO> updateProductsState(
-    @RequestHeader("x-organization-role") String role,
+    @RequestHeader("x-organization-role")
+    @Pattern(regexp = ROLE_PATTERN)
+    String role,
     @RequestBody ProductUpdateStatusRequestDTO dto) {
 
     return ResponseEntity.ok(productService.updateProductStatusesWithNotification(

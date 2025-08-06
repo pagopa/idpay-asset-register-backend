@@ -20,8 +20,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
-import static it.gov.pagopa.register.constants.ValidationConstants.OBJECT_ID_PATTERN;
-import static it.gov.pagopa.register.constants.ValidationConstants.UUID_V4_PATTERN;
+import static it.gov.pagopa.register.constants.ValidationConstants.*;
 
 @Validated
 @RestController
@@ -73,7 +72,10 @@ public class ProductFileController {
     @RequestHeader("x-organization-id")
     @Pattern(regexp = UUID_V4_PATTERN)
     String organizationId,
-    @RequestHeader("x-organization-name") String organizationName,
+
+    @RequestHeader("x-organization-name")
+    String organizationName,
+
     @RequestHeader("x-user-id")
     @Pattern(regexp = UUID_V4_PATTERN)
     String userId,
@@ -83,7 +85,9 @@ public class ProductFileController {
 
     @RequestParam(value = "category")
     String category,
-    @RequestPart("csv") MultipartFile csv
+
+    @RequestPart("csv")
+    MultipartFile csv
   ) {
     return ResponseEntity.ok(
       productFileService.validateFile(csv, category, organizationId, userId, userEmail, organizationName)
@@ -96,7 +100,9 @@ public class ProductFileController {
     @RequestHeader("x-organization-id")
     @Pattern(regexp = UUID_V4_PATTERN)
     String organizationId,
-    @PathVariable String productFileId
+    @PathVariable
+    @Pattern(regexp = OBJECT_ID_PATTERN)
+    String productFileId
   ) {
     FileReportDTO file = productFileService.downloadReport(productFileId, organizationId);
     return ResponseEntity.ok()
@@ -109,9 +115,15 @@ public class ProductFileController {
   public ResponseEntity<List<ProductBatchDTO>> getFilteredProductFiles(
     @RequestHeader("x-organization-id")
     @Pattern(regexp = UUID_V4_PATTERN)
-    String organizationId
-    @RequestHeader(value = "x-organization-selected", required = false) String organizationSelected,
-    @RequestHeader("x-organization-role") String role
+    String organizationId,
+
+    @Pattern(regexp = UUID_V4_PATTERN)
+    @RequestHeader(value = "x-organization-selected", required = false)
+    String organizationSelected,
+
+    @RequestHeader("x-organization-role")
+    @Pattern(regexp = ROLE_PATTERN)
+    String role
   ) {
     List<ProductBatchDTO> products = productFileService.retrieveDistinctProductFileIdsBasedOnRole(
       organizationId, organizationSelected, role
