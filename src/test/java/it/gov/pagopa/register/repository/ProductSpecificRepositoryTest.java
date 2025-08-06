@@ -91,7 +91,7 @@ class ProductSpecificRepositoryTest {
     ).thenReturn(aggregationResults);
 
 
-    List<Product> result = repository.retrieveDistinctProductFileIdsBasedOnRole("org1","operatore");
+    List<Product> result = repository.retrieveDistinctProductFileIdsBasedOnRole("org1",null,"operatore");
 
     assertNotNull(result);
     assertEquals(1, result.size());

@@ -213,7 +213,7 @@ void shouldReturn200AndListWhenOrganizationIdIsValid() throws Exception {
     new ProductBatchDTO("file123", "DISHWASHERS_file123.csv")
   );
 
-  Mockito.when(productFileService.retrieveDistinctProductFileIdsBasedOnRole("org123","operatore"))
+  Mockito.when(productFileService.retrieveDistinctProductFileIdsBasedOnRole("org123",null, "operatore"))
     .thenReturn(mockResult);
 
   mockMvc.perform(get("/idpay/register/product-files/batch-list")
@@ -227,7 +227,7 @@ void shouldReturn200AndListWhenOrganizationIdIsValid() throws Exception {
 
   @Test
   void shouldReturn200WithEmptyListWhenNoFilesFound() throws Exception {
-    Mockito.when(productFileService.retrieveDistinctProductFileIdsBasedOnRole("org123","operatore"))
+    Mockito.when(productFileService.retrieveDistinctProductFileIdsBasedOnRole("org123",null,"operatore"))
       .thenReturn(List.of());
 
     mockMvc.perform(get("/idpay/register/product-files/batch-list")

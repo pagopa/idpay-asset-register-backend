@@ -35,7 +35,7 @@ public class ProductController {
     @RequestParam @Nullable String status,
     @PageableDefault(size = 20, sort = "registrationDate", direction = Sort.Direction.DESC) Pageable pageable) {
 
-    ProductListDTO result = productService.getProducts(
+    ProductListDTO result = productService.fetchProductsByFilters(
       organizationId,
       category,
       productFileId,
@@ -53,7 +53,7 @@ public class ProductController {
     @RequestHeader("x-organization-role") String role,
     @RequestBody ProductUpdateStatusRequestDTO dto) {
 
-    return ResponseEntity.ok(productService.updateProductState(
+    return ResponseEntity.ok(productService.updateProductStatusesWithNotification(
       dto.getGtinCodes(),
       dto.getStatus(),
       dto.getMotivation(),

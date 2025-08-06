@@ -30,60 +30,69 @@ public class ProductFileController {
   @GetMapping("/product-files")
   public ResponseEntity<ProductFileResponseDTO> getProductFileList(
     @RequestHeader("x-organization-id") String organizationId,
-    @PageableDefault(size = 20, sort = "dateUpload", direction = Sort.Direction.DESC) Pageable pageable) {
-
-    return ResponseEntity.ok().body(productFileService.getFilesByPage(organizationId, pageable));
-  }
-
-  @PostMapping(value = "/product-files", consumes = "multipart/form-data")
-  public ResponseEntity<ProductFileResult> uploadProductFile(@RequestHeader("x-organization-id") String organizationId,
-                                                             @RequestHeader("x-user-id") String userId,
-                                                             @RequestHeader("x-user-email") String userEmail,
-                                                             @RequestHeader("x-organization-name") String organizationName,
-                                                             @RequestParam(value = "category") String category,
-                                                             @RequestPart("csv") MultipartFile csv) {
-
-    ProductFileResult productFileResult = productFileService.uploadFile(csv, category, organizationId, userId, userEmail, organizationName);
-    return ResponseEntity.ok().body(productFileResult);
-  }
-
-  @PostMapping(value = "/product-files/verify", consumes = "multipart/form-data")
-  public ResponseEntity<ProductFileResult> verifyProductFile(@RequestHeader("x-organization-id") String organizationId,
-                                                             @RequestHeader("x-user-id") String userId,
-                                                             @RequestHeader("x-user-email") String userEmail,
-                                                             @RequestParam(value = "category") String category,
-                                                             @RequestHeader("x-organization-name") String organizationName,
-                                                             @RequestPart("csv") MultipartFile csv) {
-    ProductFileResult productFileResult = productFileService.validateFile(csv, category, organizationId, userId, userEmail,organizationName);
-    return ResponseEntity.ok().body(productFileResult);
+    @PageableDefault(size = 20, sort = "dateUpload", direction = Sort.Direction.DESC) Pageable pageable
+  ) {
+    return ResponseEntity.ok(productFileService.getFilesByPage(organizationId, pageable));
   }
 
 
-  @ExceptionHandler(MaxUploadSizeExceededException.class)
-  public ResponseEntity<ProductFileResult> handleMaxSizeException(MaxUploadSizeExceededException ex) {
-    return ResponseEntity.ok().body(ProductFileResult.ko(AssetRegisterConstants.UploadKeyConstant.MAX_SIZE_FILE_ERROR_KEY));
+  @PostMapping(value = "/product-files", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  public ResponseEntity<ProductFileResult> uploadProductFile(
+    @RequestHeader("x-organization-id") String organizationId,
+    @RequestHeader("x-organization-name") String organizationName,
+    @RequestHeader("x-user-id") String userId,
+    @RequestHeader("x-user-email") String userEmail,
+    @RequestParam("category") String category,
+    @RequestPart("csv") MultipartFile csv
+  ) {
+    return ResponseEntity.ok(
+      productFileService.uploadFile(csv, category, organizationId, userId, userEmail, organizationName)
+    );
   }
 
 
+  @PostMapping(value = "/product-files/verify", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  public ResponseEntity<ProductFileResult> verifyProductFile(
+    @RequestHeader("x-organization-id") String organizationId,
+    @RequestHeader("x-organization-name") String organizationName,
+    @RequestHeader("x-user-id") String userId,
+    @RequestHeader("x-user-email") String userEmail,
+    @RequestParam("category") String category,
+    @RequestPart("csv") MultipartFile csv
+  ) {
+    return ResponseEntity.ok(
+      productFileService.validateFile(csv, category, organizationId, userId, userEmail, organizationName)
+    );
+  }
 
   @GetMapping("/product-files/{productFileId}/report")
   public ResponseEntity<byte[]> downloadProductFileReport(
     @RequestHeader("x-organization-id") String organizationId,
-    @PathVariable("productFileId") String productFileId) {
-
+    @PathVariable String productFileId
+  ) {
     FileReportDTO file = productFileService.downloadReport(productFileId, organizationId);
-
     return ResponseEntity.ok()
-      .header("Content-Disposition", "attachment; filename="+file.getFilename())
+      .header("Content-Disposition", "attachment; filename=" + file.getFilename())
       .contentType(MediaType.APPLICATION_JSON)
       .body(file.getData());
   }
 
   @GetMapping("/product-files/batch-list")
-  public ResponseEntity<List<ProductBatchDTO>> getFileteredProductFiles(
+  public ResponseEntity<List<ProductBatchDTO>> getFilteredProductFiles(
     @RequestHeader("x-organization-id") String organizationId,
-     @RequestHeader("x-organization-role") String role
+    @RequestHeader(value = "x-organization-selected", required = false) String organizationSelected,
+    @RequestHeader("x-organization-role") String role
   ) {
-    return ResponseEntity.ok().body(productFileService.retrieveDistinctProductFileIdsBasedOnRole(organizationId,role));
+    List<ProductBatchDTO> products = productFileService.retrieveDistinctProductFileIdsBasedOnRole(
+      organizationId, organizationSelected, role
+    );
+    return ResponseEntity.ok(products);
+  }
+
+  @ExceptionHandler(MaxUploadSizeExceededException.class)
+  public ResponseEntity<ProductFileResult> handleMaxSizeException(MaxUploadSizeExceededException ex) {
+    return ResponseEntity.ok(
+      ProductFileResult.ko(AssetRegisterConstants.UploadKeyConstant.MAX_SIZE_FILE_ERROR_KEY)
+    );
   }
 }

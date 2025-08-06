@@ -210,10 +210,10 @@ public class ProductFileService {
   }
 
 
-  public List<ProductBatchDTO> retrieveDistinctProductFileIdsBasedOnRole(String organizationId, String role) {
+  public List<ProductBatchDTO> retrieveDistinctProductFileIdsBasedOnRole(String organizationId, String organizationSelected, String role) {
     log.info("[GET_PRODUCT_FILES] - Fetching product files for organizationId: {}", organizationId);
      List<Product> productFiles = productRepository
-      .retrieveDistinctProductFileIdsBasedOnRole(organizationId, role);
+      .retrieveDistinctProductFileIdsBasedOnRole(organizationId, organizationSelected, role);
 
 
     log.info("[GET_PRODUCT_FILES] - Fetched {} product files for organizationId: {}", productFiles.size(), organizationId);

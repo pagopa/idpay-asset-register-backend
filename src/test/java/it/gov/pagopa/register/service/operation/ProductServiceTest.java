@@ -80,7 +80,7 @@ class ProductServiceTest {
       .thenReturn(productList);
 
 
-    ProductListDTO response = productService.getProducts(
+    ProductListDTO response = productService.fetchProductsByFilters(
       organizationId,
       null,
       null,
@@ -115,7 +115,7 @@ class ProductServiceTest {
       .thenReturn(productList);
 
 
-    ProductListDTO response = productService.getProducts(
+    ProductListDTO response = productService.fetchProductsByFilters(
       organizationId,
       null,
       null,
@@ -145,7 +145,7 @@ class ProductServiceTest {
     when(productRepository.findByFilter(any(), any()))
       .thenThrow(new RuntimeException("Database error"));
 
-    RuntimeException exception = assertThrows(RuntimeException.class, () -> productService.getProducts(organizationId, null,  null, null, null, null,null,pageable));
+    RuntimeException exception = assertThrows(RuntimeException.class, () -> productService.fetchProductsByFilters(organizationId, null,  null, null, null, null,null,pageable));
 
     assertEquals("Database error", exception.getMessage());
 
@@ -195,7 +195,7 @@ class ProductServiceTest {
     doNothing().when(notificationService)
       .sendEmailUpdateStatus(List.of("name1", "name2"), motivation, "APPROVED", "test@gmail.com");
 
-    UpdateResultDTO result = productService.updateProductState(
+    UpdateResultDTO result = productService.updateProductStatusesWithNotification(
       productIds,
       ProductStatusEnum.APPROVED,
       motivation,
@@ -256,7 +256,7 @@ class ProductServiceTest {
     doThrow(new RuntimeException("Email service error")).when(notificationService)
       .sendEmailUpdateStatus(List.of("name1", "name2"), motivation, "APPROVED", "test@gmail.com");
 
-    UpdateResultDTO result = productService.updateProductState(
+    UpdateResultDTO result = productService.updateProductStatusesWithNotification(
       productIds,
       ProductStatusEnum.APPROVED,
       motivation,

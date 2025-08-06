@@ -5,10 +5,7 @@ import it.gov.pagopa.register.model.operation.Product;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.aggregation.Aggregation;
-import org.springframework.data.mongodb.core.aggregation.AggregationResults;
-import org.springframework.data.mongodb.core.aggregation.ComparisonOperators;
-import org.springframework.data.mongodb.core.aggregation.ConditionalOperators;
+import org.springframework.data.mongodb.core.aggregation.*;
 
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
@@ -174,32 +171,34 @@ public class ProductSpecificRepositoryImpl implements ProductSpecificRepository 
   }
 
   @Override
-  public List<Product> retrieveDistinctProductFileIdsBasedOnRole(String organizationId, String role) {
+  public List<Product> retrieveDistinctProductFileIdsBasedOnRole(String organizationId, String organizationSelected, String role) {
     Aggregation aggregation;
-    if ("operaore".equalsIgnoreCase(role)) {
-        aggregation = Aggregation.newAggregation(
-        Aggregation.match(Criteria.where(ORGANIZATION_ID).is(organizationId)),
-        Aggregation.group(PRODUCT_FILE_ID, CATEGORY),
-        Aggregation.project()
-          .and("_id." + PRODUCT_FILE_ID).as(PRODUCT_FILE_ID)
-          .and("_id." + CATEGORY).as(CATEGORY)
-      );
-    }
-    else {
-      aggregation = Aggregation.newAggregation(
-        Aggregation.group(PRODUCT_FILE_ID, CATEGORY),
-        Aggregation.project()
-          .and("_id." + PRODUCT_FILE_ID).as(PRODUCT_FILE_ID)
-          .and("_id." + CATEGORY).as(CATEGORY)
-      );
+
+    boolean isOperatore = "operatore".equalsIgnoreCase(role);
+    Criteria criteria;
+    if (isOperatore) criteria = Criteria.where(ORGANIZATION_ID).is(organizationId);
+    else criteria = (organizationSelected != null)
+            ? Criteria.where(ORGANIZATION_ID).is(organizationSelected)
+            : new Criteria();
+
+    List<AggregationOperation> operations = new ArrayList<>();
+
+    if (!criteria.equals(new Criteria())) {
+      operations.add(Aggregation.match(criteria));
     }
 
-    AggregationResults<Product> results = mongoTemplate.aggregate(
-      aggregation, PRODUCT, Product.class
+    operations.add(Aggregation.group(PRODUCT_FILE_ID, CATEGORY));
+    operations.add(Aggregation.project()
+      .and("_id." + PRODUCT_FILE_ID).as(PRODUCT_FILE_ID)
+      .and("_id." + CATEGORY).as(CATEGORY)
     );
 
+    aggregation = Aggregation.newAggregation(operations);
+
+    AggregationResults<Product> results = mongoTemplate.aggregate(aggregation, PRODUCT, Product.class);
     return results.getMappedResults();
   }
+
 
   @Override
   public List<Product> findByIdsAndValidStatusByRole(List<String> productIds, String targetStatus, String role){

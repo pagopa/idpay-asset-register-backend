@@ -20,69 +20,89 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 
-@Service
+
 @Slf4j
-public class ProductService{
+@Service
+public class ProductService {
 
   private final ProductRepository productRepository;
   private final NotificationService notificationService;
+
   public ProductService(ProductRepository productRepository, NotificationService notificationService) {
     this.productRepository = productRepository;
     this.notificationService = notificationService;
   }
 
-
   @SuppressWarnings("java:S107")
-  public ProductListDTO getProducts(String organizationId,
-                                    String category,
-                                    String productFileId,
-                                    String eprelCode,
-                                    String gtinCode,
-                                    String productName,
-                                    String status,
-                                    Pageable pageable) {
-
+  public ProductListDTO fetchProductsByFilters(
+    String organizationId,
+    String category,
+    String productFileId,
+    String eprelCode,
+    String gtinCode,
+    String productName,
+    String status,
+    Pageable pageable
+  ) {
     log.info("[GET_PRODUCTS] - Fetching products for organizationId: {}, category: {}, productFileId: {}, eprelCode: {}, gtinCode: {}, productName: {}, status: {}",
-      organizationId, category, productFileId, eprelCode, gtinCode,productName,status);
+      organizationId, category, productFileId, eprelCode, gtinCode, productName, status);
 
-    Criteria criteria = productRepository.getCriteria(organizationId, category, productFileId, eprelCode, gtinCode,productName, status);
+    Criteria criteria = productRepository.getCriteria(organizationId, category, productFileId, eprelCode, gtinCode, productName, status);
     List<Product> entities = productRepository.findByFilter(criteria, pageable);
     Long count = productRepository.getCount(criteria);
 
     log.info("[GET_PRODUCTS] - Found {} products matching criteria", count);
 
-    final Page<Product> entitiesPage = PageableExecutionUtils.getPage(entities, pageable, () -> count);
-
+    Page<Product> entitiesPage = PageableExecutionUtils.getPage(entities, pageable, () -> count);
     Page<ProductDTO> result = entitiesPage.map(ProductMapper::toDTO);
 
     log.info("[GET_PRODUCTS] - Returning {} products for page {} of size {}", result.getTotalElements(), result.getNumber(), result.getSize());
 
-    return ProductListDTO.builder()
-      .content(result.getContent())
-      .pageNo(result.getNumber())
-      .pageSize(result.getSize())
-      .totalElements(result.getTotalElements())
-      .totalPages(result.getTotalPages())
-      .build();
+    return buildProductListDTO(result);
   }
 
-  public UpdateResultDTO updateProductState(List<String> productIds, ProductStatusEnum newStatus, String motivation, String role) {
-    log.info("[UPDATE_PRODUCT_STATUSES] - Starting update - newStatus: {}, motivation: {}",  newStatus, motivation);
+  public UpdateResultDTO updateProductStatusesWithNotification(
+    List<String> productIds,
+    ProductStatusEnum newStatus,
+    String motivation,
+    String role
+  ) {
+    log.info("[UPDATE_PRODUCT_STATUSES] - Starting update - newStatus: {}, motivation: {}", newStatus, motivation);
     log.debug("[UPDATE_PRODUCT_STATUSES] - Product IDs to update: {}", productIds);
 
     List<Product> productsToUpdate = productRepository.findByIdsAndValidStatusByRole(productIds, newStatus.name(), role);
     log.debug("[UPDATE_PRODUCT_STATUSES] - Retrieved {} products for update", productsToUpdate.size());
 
-    productsToUpdate.forEach(product -> {
-      log.debug("[UPDATE_PRODUCT_STATUSES] - Updating product {} status from {} to {}", product.getGtinCode(), product.getStatus(), newStatus.name());
+    updateStatuses(productsToUpdate, newStatus, motivation);
+    List<Product> productsUpdated = productRepository.saveAll(productsToUpdate);
+
+    log.info("[UPDATE_PRODUCT_STATUSES] - Successfully updated {} products", productsUpdated.size());
+
+    var failedEmails = notifyStatusUpdates(productsUpdated, newStatus, motivation);
+
+    if (!failedEmails.isEmpty()) {
+      log.warn("[UPDATE_PRODUCT_STATUSES] - Some email notifications failed. Total failures: {}", failedEmails.size());
+      return UpdateResultDTO.ko(AssetRegisterConstants.UpdateKeyConstant.EMAIL_ERROR_KEY);
+    }
+
+    log.info("[UPDATE_PRODUCT_STATUSES] - All notifications sent successfully");
+    return UpdateResultDTO.ok();
+  }
+
+
+  private void updateStatuses(List<Product> products, ProductStatusEnum newStatus, String motivation) {
+    products.forEach(product -> {
+      log.debug("[UPDATE_PRODUCT_STATUSES] - Updating product {} status from {} to {}",
+        product.getGtinCode(), product.getStatus(), newStatus.name());
       product.setStatus(newStatus.name());
       product.setMotivation(motivation);
     });
+  }
 
-    List<Product> productsUpdated = productRepository.saveAll(productsToUpdate);
-    log.info("[UPDATE_PRODUCT_STATUSES] - Successfully updated {} products", productsUpdated.size());
-
-    List<EmailProductDTO> emailToProducts = productRepository.getProductNamesGroupedByEmail(productsUpdated.stream().map(Product::getGtinCode).toList());
+  private List<String> notifyStatusUpdates(List<Product> products, ProductStatusEnum newStatus, String motivation) {
+    var emailToProducts = productRepository.getProductNamesGroupedByEmail(
+      products.stream().map(Product::getGtinCode).toList()
+    );
 
     List<String> failedEmails = new ArrayList<>();
 
@@ -100,17 +120,17 @@ public class ProductService{
       }
     }
 
-    if (!failedEmails.isEmpty()) {
-      log.warn("[UPDATE_PRODUCT_STATUSES] - Some email notifications failed. Total failures: {}", failedEmails.size());
-      return UpdateResultDTO.ko(AssetRegisterConstants.UpdateKeyConstant.EMAIL_ERROR_KEY);
-    }
-
-    log.info("[UPDATE_PRODUCT_STATUSES] - All notifications sent successfully");
-    return UpdateResultDTO.ok();
-
+    return failedEmails;
   }
 
-
-
-
+  private ProductListDTO buildProductListDTO(Page<ProductDTO> result) {
+    return ProductListDTO.builder()
+      .content(result.getContent())
+      .pageNo(result.getNumber())
+      .pageSize(result.getSize())
+      .totalElements(result.getTotalElements())
+      .totalPages(result.getTotalPages())
+      .build();
+  }
 }
+

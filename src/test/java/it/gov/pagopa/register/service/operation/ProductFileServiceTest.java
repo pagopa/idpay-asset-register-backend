@@ -303,10 +303,10 @@ class ProductFileServiceTest {
       .category("DISHWASHERS")
       .build();
 
-    when(productRepository.retrieveDistinctProductFileIdsBasedOnRole("org123","operatore"))
+    when(productRepository.retrieveDistinctProductFileIdsBasedOnRole("org123",null,"operatore"))
       .thenReturn(List.of(file));
 
-    List<ProductBatchDTO> result = productFileService.retrieveDistinctProductFileIdsBasedOnRole("org123","operatore");
+    List<ProductBatchDTO> result = productFileService.retrieveDistinctProductFileIdsBasedOnRole("org123",null,"operatore");
 
     assertEquals(1, result.size());
     assertEquals("file123", result.getFirst().getProductFileId());

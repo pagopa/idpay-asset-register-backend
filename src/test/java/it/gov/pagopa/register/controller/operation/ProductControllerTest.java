@@ -54,7 +54,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         .totalPages(1)
         .build();
 
-      when(productService.getProducts(eq("organizationIdTest")
+      when(productService.fetchProductsByFilters(eq("organizationIdTest")
           , any()
           , any()
           , any()
@@ -80,7 +80,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
     //Test in caso di eccezione
     @Test
     void testGetProducts_ServiceThrowsException() throws Exception {
-      when(productService.getProducts(eq("organizationIdTest")
+      when(productService.fetchProductsByFilters(eq("organizationIdTest")
           , any()
           , any()
           , any()
@@ -110,7 +110,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
       String requestBody = objectMapper.writeValueAsString(requestDTO);
 
-      when(productService.updateProductState(
+      when(productService.updateProductStatusesWithNotification(
         productIds,
         ProductStatusEnum.APPROVED,
         "Valid reason",
