@@ -176,7 +176,6 @@ public class ProductFileService {
     }
   }
 
-  @SuppressWarnings("java:S5443")
   private void uploadFormalErrorFile(MultipartFile file, ValidationResultDTO validationRecords,
                                      List<String> headers, ProductFile productFile) throws IOException {
 
@@ -195,6 +194,7 @@ public class ProductFileService {
     Files.deleteIfExists(tempFilePath);
   }
 
+  @SuppressWarnings("java:S5443") //The system used will be Linux so never create a file without specified permissions
   private Path createTempFilePath() throws IOException {
     if (FileSystems.getDefault().supportedFileAttributeViews().contains("posix")) {
       Set<PosixFilePermission> perms = PosixFilePermissions.fromString("rw-------");
