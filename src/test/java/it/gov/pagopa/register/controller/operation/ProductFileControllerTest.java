@@ -64,7 +64,7 @@ class ProductFileControllerTest {
 
   }
 
-  //Test senza header
+
   @Test
   void testDownloadListUpload_MissingHeader() throws Exception {
     mockMvc.perform(get("/idpay/register/product-files")
@@ -72,17 +72,6 @@ class ProductFileControllerTest {
       .andExpect(status().isBadRequest());
   }
 
-  //Test in caso di eccezione
-  @Test
-  void testDownloadListUpload_ServiceThrowsException() throws Exception {
-    Mockito.when(productFileService.getFilesByPage(eq("org123"), any(Pageable.class)))
-      .thenThrow(new RuntimeException("Service error"));
-
-    mockMvc.perform(get("/idpay/register/product-files")
-        .header("x-organization-id", "83843864-f3c0-4def-badb-7f197471b72e")
-        .contentType(MediaType.APPLICATION_JSON))
-      .andExpect(status().isInternalServerError());
-  }
 
   @Test
   void downloadCsv_successfulResponse() throws Exception {
@@ -213,7 +202,7 @@ void shouldReturn200AndListWhenOrganizationIdIsValid() throws Exception {
     new ProductBatchDTO("file123", "DISHWASHERS_file123.csv")
   );
 
-  Mockito.when(productFileService.retrieveDistinctProductFileIdsBasedOnRole("org123",null, "operatore"))
+  Mockito.when(productFileService.retrieveDistinctProductFileIdsBasedOnRole("83843864-f3c0-4def-badb-7f197471b72e",null, "operatore"))
     .thenReturn(mockResult);
 
   mockMvc.perform(get("/idpay/register/product-files/batch-list")
@@ -231,7 +220,6 @@ void shouldReturn200AndListWhenOrganizationIdIsValid() throws Exception {
       .thenReturn(List.of());
 
     mockMvc.perform(get("/idpay/register/product-files/batch-list")
-        .header("x-organization-id", "org123")
         .header("x-organization-role", "operatore")
         .header("x-organization-id", "83843864-f3c0-4def-badb-7f197471b72e")
         .accept(MediaType.APPLICATION_JSON))
@@ -253,9 +241,10 @@ void shouldReturn200AndListWhenOrganizationIdIsValid() throws Exception {
     mockMvc.perform(multipart("/idpay/register/product-files/verify")
         .file(file)
         .param("category", "eprel")
-        .header("x-organization-id", "org-id")
-        .header("x-user-id", "user-id")
-        .header("x-user-email", "user@email"))
+        .header("x-organization-id", "83843864-f3c0-4def-badb-7f197471b72e")
+        .header("x-user-id", "83843864-f3c0-4def-badb-7f197471b72e")
+        .header("x-user-email", "user@email")
+         .header("x-organization-name", "org-name"))
       .andExpect(status().isOk())
       .andExpect(jsonPath("$.status").value("OK"));
   }

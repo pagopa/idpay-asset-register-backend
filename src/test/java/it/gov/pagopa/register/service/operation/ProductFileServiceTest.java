@@ -101,11 +101,6 @@ class ProductFileServiceTest {
     assertEquals("DB", ex.getMessage());
   }
 
-  @Test
-  void testGetFilesByPage_NullOrg() {
-    Pageable page = PageRequest.of(0,1);
-    assertThrows(IllegalArgumentException.class, () -> productFileService.getFilesByPage(null, page));
-  }
 
   @Test
   void downloadReport_partialLoad() throws IOException {

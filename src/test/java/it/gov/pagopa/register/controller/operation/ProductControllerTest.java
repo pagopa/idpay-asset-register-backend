@@ -121,6 +121,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
           org.springframework.test.web.servlet.request.MockMvcRequestBuilders
             .post("/idpay/register/products/update-status")
             .header("x-organization-id", "83843864-f3c0-4def-badb-7f197471b72e")
+            .header("x-organization-role", "invitalia_admin")
             .contentType(MediaType.APPLICATION_JSON)
             .content(requestBody))
         .andExpect(status().isOk())

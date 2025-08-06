@@ -65,11 +65,6 @@ public class ProductFileService {
 
   public ProductFileResponseDTO getFilesByPage(String organizationId, Pageable pageable) {
 
-    if (organizationId == null) {
-      log.error("[GET_FILES_BY_PAGE] - OrganizationId must not be null");
-      throw new IllegalArgumentException("OrganizationId must not be null");
-    }
-
     log.info("[GET_FILES_BY_PAGE] - Fetching files for organizationId: {}", organizationId);
     Page<ProductFile> filesPage = productFileRepository.findByOrganizationIdAndUploadStatusNot(
       organizationId, UploadCsvStatus.FORMAL_ERROR.name(), pageable);
