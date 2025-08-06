@@ -6,7 +6,6 @@ import it.gov.pagopa.register.dto.operation.EmailProductDTO;
 import it.gov.pagopa.register.dto.operation.ProductDTO;
 import it.gov.pagopa.register.dto.operation.ProductListDTO;
 import it.gov.pagopa.register.dto.operation.UpdateResultDTO;
-import it.gov.pagopa.register.enums.ProductStatusEnum;
 import it.gov.pagopa.register.mapper.operation.ProductMapper;
 import it.gov.pagopa.register.model.operation.Product;
 import it.gov.pagopa.register.repository.operation.ProductRepository;
@@ -45,9 +44,10 @@ public class ProductService {
     Pageable pageable
   ) {
     log.info("[GET_PRODUCTS] - Fetching products for organizationId: {}, category: {}, productFileId: {}, eprelCode: {}, gtinCode: {}, productName: {}, status: {}",
-      organizationId, category, productFileId, eprelCode, gtinCode, productName, status);
+      organizationId, category, productFileId, eprelCode, gtinCode,productName,status);
 
-    Criteria criteria = productRepository.getCriteria(organizationId, category, productFileId, eprelCode, gtinCode, productName, status);
+    Criteria criteria = productRepository.getCriteria(organizationId, category, productFileId, eprelCode, gtinCode,productName, status);
+
     List<Product> entities = productRepository.findByFilter(criteria, pageable);
     Long count = productRepository.getCount(criteria);
 

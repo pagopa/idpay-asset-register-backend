@@ -3,16 +3,23 @@ package it.gov.pagopa.register.controller.operation;
 import it.gov.pagopa.register.dto.operation.ProductListDTO;
 import it.gov.pagopa.register.dto.operation.ProductUpdateStatusRequestDTO;
 import it.gov.pagopa.register.dto.operation.UpdateResultDTO;
+import it.gov.pagopa.register.enums.ProductCategories;
+import it.gov.pagopa.register.enums.ProductStatus;
 import it.gov.pagopa.register.service.operation.ProductService;
 import jakarta.annotation.Nullable;
-import org.springframework.data.domain.Pageable;
+import jakarta.validation.constraints.Pattern;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Optional;
 
+import static it.gov.pagopa.register.constants.ValidationConstants.*;
 
+@Validated
 @RestController
 @RequestMapping("/idpay/register")
 public class ProductController {
@@ -26,23 +33,43 @@ public class ProductController {
 
   @GetMapping("/products")
   public ResponseEntity<ProductListDTO> getProductList(
-    @RequestParam @Nullable String organizationId,
-    @RequestParam @Nullable String category,
-    @RequestParam @Nullable String productFileId,
-    @RequestParam @Nullable String eprelCode,
-    @RequestParam @Nullable String gtinCode,
-    @RequestParam @Nullable String productName,
-    @RequestParam @Nullable String status,
-    @PageableDefault(size = 20, sort = "registrationDate", direction = Sort.Direction.DESC) Pageable pageable) {
+    @RequestParam(required = false)
+    @Pattern(regexp = UUID_V4_PATTERN)
+    String organizationId,
 
+    @RequestParam(required = false)
+    @Pattern(regexp = ANY_TEXT)
+    String productName,
+
+    @RequestParam(required = false)
+    @Pattern(regexp = OBJECT_ID_PATTERN)
+    String productFileId,
+
+    @RequestParam(required = false)
+    @Nullable
+    @Pattern(regexp = DIGITS_ONLY)
+    String eprelCode,
+
+    @RequestParam(required = false)
+    @Pattern(regexp = GTIN_CODE)
+    String gtinCode,
+
+    @RequestParam(required = false)
+    ProductStatus status,
+
+    @RequestParam(required = false)
+    ProductCategories category,
+    @PageableDefault(size = 20, sort = "registrationDate", direction = Sort.Direction.DESC) Pageable pageable) {
+    String categoryName = Optional.ofNullable(category).map(Enum::name).orElse(null);
+    String statusName = Optional.ofNullable(status).map(Enum::name).orElse(null);
     ProductListDTO result = productService.fetchProductsByFilters(
       organizationId,
-      category,
+      categoryName,
       productFileId,
       eprelCode,
       gtinCode,
       productName,
-      status,
+      statusName,
       pageable);
 
     return ResponseEntity.ok(result);

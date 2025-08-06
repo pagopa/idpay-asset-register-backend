@@ -9,7 +9,7 @@ import it.gov.pagopa.register.connector.storage.FileStorageClient;
 import it.gov.pagopa.register.dto.operation.StorageEventDTO;
 import it.gov.pagopa.register.dto.utils.EprelResult;
 import it.gov.pagopa.register.dto.utils.EventDetails;
-import it.gov.pagopa.register.enums.ProductStatusEnum;
+import it.gov.pagopa.register.enums.ProductStatus;
 import it.gov.pagopa.register.model.operation.Product;
 import it.gov.pagopa.register.model.operation.ProductFile;
 import it.gov.pagopa.register.repository.operation.ProductFileRepository;
@@ -205,7 +205,7 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
           invalidRecords.add(csvRecord);
           errorMessages.put(csvRecord,DIFFERENT_ORGANIZATIONID);
           dbCheck = false;
-        } else if (!ProductStatusEnum.APPROVED.toString().equals(optProduct.get().getStatus())) {
+        } else if (!ProductStatus.APPROVED.toString().equals(optProduct.get().getStatus())) {
           invalidRecords.add(csvRecord);
           errorMessages.put(csvRecord, STATUS_NOT_APPROVED.replace("{}",optProduct.get().getMotivation()));
           dbCheck = false;

@@ -1,6 +1,6 @@
 package it.gov.pagopa.register.enums;
 
-public enum ProductStatusEnum {
+public enum ProductStatus {
   APPROVED,
   SUPERVISIONED,
   REJECTED,

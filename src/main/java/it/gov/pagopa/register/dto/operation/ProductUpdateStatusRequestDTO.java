@@ -1,6 +1,7 @@
 package it.gov.pagopa.register.dto.operation;
 
-import it.gov.pagopa.register.enums.ProductStatusEnum;
+import it.gov.pagopa.register.enums.ProductStatus;
+import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -14,6 +15,7 @@ import java.util.List;
 @Builder
 public class ProductUpdateStatusRequestDTO {
   private List<String> gtinCodes;
-  private ProductStatusEnum status;
+  private ProductStatus status;
+  @NotBlank
   private String motivation;
 }

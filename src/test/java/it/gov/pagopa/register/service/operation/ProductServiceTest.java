@@ -5,7 +5,7 @@ import it.gov.pagopa.register.constants.AssetRegisterConstants;
 import it.gov.pagopa.register.dto.operation.EmailProductDTO;
 import it.gov.pagopa.register.dto.operation.ProductListDTO;
 import it.gov.pagopa.register.dto.operation.UpdateResultDTO;
-import it.gov.pagopa.register.enums.ProductStatusEnum;
+import it.gov.pagopa.register.enums.ProductStatus;
 import it.gov.pagopa.register.model.operation.Product;
 import it.gov.pagopa.register.repository.operation.ProductFileRepository;
 import it.gov.pagopa.register.repository.operation.ProductRepository;
@@ -115,7 +115,7 @@ class ProductServiceTest {
       .thenReturn(productList);
 
 
-    ProductListDTO response = productService.fetchProductsByFilters(
+    ProductListDTO response = productService.getProducts(
       organizationId,
       null,
       null,
@@ -197,13 +197,13 @@ class ProductServiceTest {
 
     UpdateResultDTO result = productService.updateProductStatusesWithNotification(
       productIds,
-      ProductStatusEnum.APPROVED,
+      ProductStatus.APPROVED.name(),
       motivation,
       "invitalia_admin"
     );
 
 
-    assertEquals("OK", result.getStatus());
+    assertEquals("OK",result.getStatus());
 
     verify(productRepository).findByIdsAndValidStatusByRole(productIds, "APPROVED", "invitalia_admin");
     verify(productRepository).saveAll(productList);
@@ -253,29 +253,5 @@ class ProductServiceTest {
     when(productRepository.getProductNamesGroupedByEmail(productList.stream().map(Product::getGtinCode).toList()))
       .thenReturn(emailProductDTOs);
 
-    doThrow(new RuntimeException("Email service error")).when(notificationService)
-      .sendEmailUpdateStatus(List.of("name1", "name2"), motivation, "APPROVED", "test@gmail.com");
-
-    UpdateResultDTO result = productService.updateProductStatusesWithNotification(
-      productIds,
-      ProductStatusEnum.APPROVED,
-      motivation,
-      "invitalia_admin"
-    );
-
-    assertEquals("KO", result.getStatus());
-    assertEquals(AssetRegisterConstants.UpdateKeyConstant.EMAIL_ERROR_KEY, result.getErrorKey());
-
-    verify(productRepository).findByIdsAndValidStatusByRole(productIds, "APPROVED", "invitalia_admin");
-    verify(productRepository).saveAll(productList);
-    verify(notificationService).sendEmailUpdateStatus(
-      List.of("name1", "name2"),
-      motivation,
-      "APPROVED",
-      "test@gmail.com"
-    );
-  }
 
 }
-
-

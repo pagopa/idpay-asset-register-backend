@@ -17,6 +17,7 @@ public class AuthorizationControllerImpl implements AuthorizationController {
 
     @Override
     public ResponseEntity<UserPermissionDTO> getUserPermissions(String role) {
+
         UserPermissionDTO userPermissionDTO = rolePermissionService.getUserPermission(role);
         return new ResponseEntity<>(userPermissionDTO, HttpStatus.OK);
     }

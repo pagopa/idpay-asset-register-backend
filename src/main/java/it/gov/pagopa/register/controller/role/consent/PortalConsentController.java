@@ -7,8 +7,11 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import it.gov.pagopa.common.web.dto.ErrorDTO;
 import it.gov.pagopa.register.dto.role.PortalConsentDTO;
+import jakarta.validation.constraints.Pattern;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
+import static it.gov.pagopa.register.constants.ValidationConstants.UUID_V4_PATTERN;
 
 @Validated
 @RequestMapping("/idpay")
@@ -41,7 +44,9 @@ public interface PortalConsentController {
             value = "/consent",
             produces = { "application/json" }
     )
-    PortalConsentDTO getPortalConsent(@RequestParam(value = "userId") String userId) throws JsonProcessingException;
+    PortalConsentDTO getPortalConsent(@RequestParam(value = "userId")
+                                      @Pattern(regexp = UUID_V4_PATTERN)
+                                      String userId) throws JsonProcessingException;
 
     @Operation(
             operationId = "savePortalConsent",
@@ -66,12 +71,16 @@ public interface PortalConsentController {
             value = "/consent",
             consumes = {"application/json"}
     )
-    void savePortalConsent(@RequestParam(value = "userId") String userId, @RequestBody PortalConsentDTO consent) throws JsonProcessingException;
+    void savePortalConsent(@RequestParam(value = "userId")
+                           @Pattern(regexp = UUID_V4_PATTERN) String userId,
+                           @RequestBody PortalConsentDTO consent) throws JsonProcessingException;
 
     @DeleteMapping(
       value = "/consent",
       produces = { "application/json" }
     )
     void removePortalConsent(
-      @RequestParam(value = "userId") String userId) throws JsonProcessingException;
+      @RequestParam(value = "userId")
+      @Pattern(regexp = UUID_V4_PATTERN)
+      String userId) throws JsonProcessingException;
 }
