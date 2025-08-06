@@ -1,6 +1,8 @@
 package it.gov.pagopa.register.repository;
 
 import it.gov.pagopa.register.dto.operation.EmailProductDTO;
+import it.gov.pagopa.register.enums.ProductStatus;
+import it.gov.pagopa.register.enums.UserRole;
 import it.gov.pagopa.register.model.operation.Product;
 import it.gov.pagopa.register.repository.operation.ProductSpecificRepositoryImpl;
 import org.bson.Document;
@@ -106,7 +108,7 @@ class ProductSpecificRepositoryTest {
 
     when(mongoTemplate.find(any(Query.class), eq(Product.class))).thenReturn(List.of(product));
 
-    List<Product> results = repository.findByIdsAndValidStatusByRole(List.of("gtin1"), "APPROVED", "invitalia_admin");
+    List<Product> results = repository.findByIdsAndValidStatusByRole(List.of("gtin1"), ProductStatus.APPROVED, UserRole.INVITALIA_ADMIN.getRole());
 
     assertEquals(1, results.size());
     assertEquals("gtin1", results.get(0).getGtinCode());
@@ -118,7 +120,7 @@ class ProductSpecificRepositoryTest {
 
     when(mongoTemplate.find(any(Query.class), eq(Product.class))).thenReturn(List.of(product));
 
-    List<Product> results = repository.findByIdsAndValidStatusByRole(List.of("gtin1"), "REJECTED", "invitalia_admin");
+    List<Product> results = repository.findByIdsAndValidStatusByRole(List.of("gtin1"),  ProductStatus.REJECTED, UserRole.INVITALIA_ADMIN.getRole());
 
     assertEquals(1, results.size());
     assertEquals("gtin1", results.get(0).getGtinCode());
@@ -129,7 +131,7 @@ class ProductSpecificRepositoryTest {
     Product product = Product.builder().gtinCode("gtin1").organizationId("org1").status("APPROVED").build();
     when(mongoTemplate.find(any(Query.class), eq(Product.class))).thenReturn(List.of(product));
 
-    List<Product> results = repository.findByIdsAndValidStatusByRole(List.of("gtin1"), "UPLOAD", "invitalia_admin");
+    List<Product> results = repository.findByIdsAndValidStatusByRole(List.of("gtin1"), ProductStatus.UPLOADED, UserRole.INVITALIA_ADMIN.getRole());
 
     assertEquals(1, results.size());
     assertEquals("gtin1", results.get(0).getGtinCode());
@@ -140,7 +142,7 @@ class ProductSpecificRepositoryTest {
     Product product = Product.builder().gtinCode("gtin1").organizationId("org1").status("UPLOAD").build();
     when(mongoTemplate.find(any(Query.class), eq(Product.class))).thenReturn(List.of(product));
 
-    List<Product> results = repository.findByIdsAndValidStatusByRole(List.of("gtin1"), "SUSPENDED", "invitalia_admin");
+    List<Product> results = repository.findByIdsAndValidStatusByRole(List.of("gtin1"), ProductStatus.SUSPENDED, UserRole.INVITALIA_ADMIN.getRole());
 
     assertEquals(1, results.size());
     assertEquals("gtin1", results.get(0).getGtinCode());
@@ -151,7 +153,7 @@ class ProductSpecificRepositoryTest {
     Product product = Product.builder().gtinCode("gtin1").organizationId("org1").status("UPLOAD").build();
     when(mongoTemplate.find(any(Query.class), eq(Product.class))).thenReturn(List.of(product));
 
-    List<Product> results = repository.findByIdsAndValidStatusByRole(List.of("gtin1"), "SUPERVISIONED", "invitalia");
+    List<Product> results = repository.findByIdsAndValidStatusByRole(List.of("gtin1"), ProductStatus.SUPERVISIONED, "invitalia");
 
     assertEquals(1, results.size());
     assertEquals("gtin1", results.get(0).getGtinCode());
@@ -162,7 +164,7 @@ class ProductSpecificRepositoryTest {
     Product product = Product.builder().gtinCode("gtin1").organizationId("org1").status("UPLOAD").build();
     when(mongoTemplate.find(any(Query.class), eq(Product.class))).thenReturn(List.of(product));
 
-    List<Product> results = repository.findByIdsAndValidStatusByRole(List.of("gtin1"), "WAIT_APPROVED", "invitalia");
+    List<Product> results = repository.findByIdsAndValidStatusByRole(List.of("gtin1"), ProductStatus.WAIT_APPROVED, "invitalia");
 
     assertEquals(1, results.size());
     assertEquals("gtin1", results.get(0).getGtinCode());
@@ -173,7 +175,7 @@ class ProductSpecificRepositoryTest {
     Product product = Product.builder().gtinCode("gtin1").organizationId("org1").status("UPLOAD").build();
     when(mongoTemplate.find(any(Query.class), eq(Product.class))).thenReturn(List.of(product));
 
-    List<Product> results = repository.findByIdsAndValidStatusByRole(List.of("gtin1"), "WAIT_REJECTED", "invitalia");
+    List<Product> results = repository.findByIdsAndValidStatusByRole(List.of("gtin1"), ProductStatus.WAIT_REJECTED, "invitalia");
 
     assertEquals(1, results.size());
     assertEquals("gtin1", results.get(0).getGtinCode());
@@ -184,7 +186,7 @@ class ProductSpecificRepositoryTest {
     Product product = Product.builder().gtinCode("gtin1").organizationId("org1").status("SUPERVISIONED").build();
     when(mongoTemplate.find(any(Query.class), eq(Product.class))).thenReturn(List.of(product));
 
-    List<Product> results = repository.findByIdsAndValidStatusByRole(List.of("gtin"), "UPLOAD", "invitalia");
+    List<Product> results = repository.findByIdsAndValidStatusByRole(List.of("gtin"), ProductStatus.UPLOADED, "invitalia");
 
     assertEquals(1, results.size());
     assertEquals("gtin1", results.get(0).getGtinCode());

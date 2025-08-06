@@ -6,10 +6,10 @@ import it.gov.pagopa.register.dto.operation.UpdateResultDTO;
 import it.gov.pagopa.register.enums.ProductCategories;
 import it.gov.pagopa.register.enums.ProductStatus;
 import it.gov.pagopa.register.service.operation.ProductService;
-import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.Pattern;
-import org.springframework.data.domain.Sort;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -17,52 +17,30 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Optional;
 
-import static it.gov.pagopa.register.constants.ValidationConstants.*;
+import static it.gov.pagopa.register.constants.ValidationPatterns.*;
 
 @Validated
 @RestController
 @RequestMapping("/idpay/register")
+@RequiredArgsConstructor
 public class ProductController {
-
 
   private final ProductService productService;
 
-  public ProductController(ProductService productService) {
-    this.productService = productService;
-  }
-
   @GetMapping("/products")
   public ResponseEntity<ProductListDTO> getProductList(
-    @RequestParam(required = false)
-    @Pattern(regexp = UUID_V4_PATTERN)
-    String organizationId,
-
-    @RequestParam(required = false)
-    @Pattern(regexp = ANY_TEXT)
-    String productName,
-
-    @RequestParam(required = false)
-    @Pattern(regexp = OBJECT_ID_PATTERN)
-    String productFileId,
-
-    @RequestParam(required = false)
-    @Nullable
-    @Pattern(regexp = DIGITS_ONLY)
-    String eprelCode,
-
-    @RequestParam(required = false)
-    @Pattern(regexp = GTIN_CODE)
-    String gtinCode,
-
-    @RequestParam(required = false)
-    ProductStatus status,
-
-    @RequestParam(required = false)
-    ProductCategories category,
-
-    @PageableDefault(size = 20, sort = "registrationDate", direction = Sort.Direction.DESC) Pageable pageable) {
+    @RequestParam(required = false) @Pattern(regexp = UUID_V4_PATTERN) String organizationId,
+    @RequestParam(required = false) @Pattern(regexp = ANY_TEXT) String productName,
+    @RequestParam(required = false) @Pattern(regexp = OBJECT_ID_PATTERN) String productFileId,
+    @RequestParam(required = false) @Pattern(regexp = DIGITS_ONLY) String eprelCode,
+    @RequestParam(required = false) @Pattern(regexp = GTIN_CODE) String gtinCode,
+    @RequestParam(required = false) ProductStatus status,
+    @RequestParam(required = false) ProductCategories category,
+    @PageableDefault(size = 20, sort = "registrationDate", direction = Sort.Direction.DESC) Pageable pageable
+  ) {
     String categoryName = Optional.ofNullable(category).map(Enum::name).orElse(null);
     String statusName = Optional.ofNullable(status).map(Enum::name).orElse(null);
+
     ProductListDTO result = productService.fetchProductsByFilters(
       organizationId,
       categoryName,
@@ -71,23 +49,24 @@ public class ProductController {
       gtinCode,
       productName,
       statusName,
-      pageable);
+      pageable
+    );
 
     return ResponseEntity.ok(result);
   }
 
   @PostMapping("/products/update-status")
   public ResponseEntity<UpdateResultDTO> updateProductsState(
-    @RequestHeader("x-organization-role")
-    @Pattern(regexp = ROLE_PATTERN)
-    String role,
-    @RequestBody ProductUpdateStatusRequestDTO dto) {
-
-    return ResponseEntity.ok(productService.updateProductStatusesWithNotification(
+    @RequestHeader("x-organization-role") @Pattern(regexp = ROLE_PATTERN) String role,
+    @RequestBody ProductUpdateStatusRequestDTO dto
+  ) {
+    UpdateResultDTO result = productService.updateProductStatusesWithNotification(
       dto.getGtinCodes(),
       dto.getStatus(),
       dto.getMotivation(),
-      role)
+      role
     );
+
+    return ResponseEntity.ok(result);
   }
 }

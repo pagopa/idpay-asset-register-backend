@@ -2,6 +2,7 @@ package it.gov.pagopa.register.constants;
 
 import it.gov.pagopa.register.dto.utils.ColumnValidationRule;
 import it.gov.pagopa.register.dto.utils.EprelValidationRule;
+import it.gov.pagopa.register.enums.UploadCsvStatus;
 
 import java.util.*;
 import java.util.regex.Pattern;
@@ -220,5 +221,10 @@ public class AssetRegisterConstants {
   );
 
   public static final String STATUS_APPROVED = "APPROVED";
+
+  public static final List<String> BLOCKING_STATUSES = List.of(
+    UploadCsvStatus.IN_PROCESS.name(),
+    UploadCsvStatus.UPLOADED.name()
+  );
 
 }

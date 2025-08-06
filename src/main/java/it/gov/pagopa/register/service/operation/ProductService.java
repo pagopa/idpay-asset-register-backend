@@ -71,7 +71,7 @@ public class ProductService {
     log.info("[UPDATE_PRODUCT_STATUSES] - Starting update - newStatus: {}, motivation: {}", newStatus, motivation);
     log.debug("[UPDATE_PRODUCT_STATUSES] - Product IDs to update: {}", productIds);
 
-    List<Product> productsToUpdate = productRepository.findByIdsAndValidStatusByRole(productIds, newStatus.name(), role);
+    List<Product> productsToUpdate = productRepository.findByIdsAndValidStatusByRole(productIds, newStatus, role);
     log.debug("[UPDATE_PRODUCT_STATUSES] - Retrieved {} products for update", productsToUpdate.size());
 
     updateStatuses(productsToUpdate, newStatus, motivation);

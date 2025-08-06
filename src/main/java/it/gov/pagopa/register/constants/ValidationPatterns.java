@@ -1,8 +1,8 @@
 package it.gov.pagopa.register.constants;
 
-public class ValidationConstants {
+public class ValidationPatterns {
 
-  private  ValidationConstants(){}
+  private ValidationPatterns(){}
   public static final String UUID_V4_PATTERN = "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$";
   public static final String OBJECT_ID_PATTERN = "^[a-fA-F0-9]{24}$";
   public static final String DIGITS_ONLY = "^\\d+$";

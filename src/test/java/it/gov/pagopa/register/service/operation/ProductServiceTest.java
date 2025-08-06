@@ -5,6 +5,7 @@ import it.gov.pagopa.register.dto.operation.EmailProductDTO;
 import it.gov.pagopa.register.dto.operation.ProductListDTO;
 import it.gov.pagopa.register.dto.operation.UpdateResultDTO;
 import it.gov.pagopa.register.enums.ProductStatus;
+import it.gov.pagopa.register.enums.UserRole;
 import it.gov.pagopa.register.model.operation.Product;
 import it.gov.pagopa.register.repository.operation.ProductFileRepository;
 import it.gov.pagopa.register.repository.operation.ProductRepository;
@@ -182,7 +183,7 @@ class ProductServiceTest {
 
     List<Product> productList = List.of(product1, product2);
     List<EmailProductDTO> emailProductDTOs = List.of(emailProductDTO);
-    when(productRepository.findByIdsAndValidStatusByRole(productIds, "APPROVED", "invitalia_admin"))
+    when(productRepository.findByIdsAndValidStatusByRole(productIds, ProductStatus.APPROVED, UserRole.INVITALIA_ADMIN.getRole()))
       .thenReturn(productList);
 
     when(productRepository.saveAll(productList))
@@ -198,13 +199,13 @@ class ProductServiceTest {
       productIds,
       ProductStatus.APPROVED,
       motivation,
-      "invitalia_admin"
+      UserRole.INVITALIA_ADMIN.getRole()
     );
 
 
     assertEquals("OK",result.getStatus());
 
-    verify(productRepository).findByIdsAndValidStatusByRole(productIds, "APPROVED", "invitalia_admin");
+    verify(productRepository).findByIdsAndValidStatusByRole(productIds, ProductStatus.APPROVED, UserRole.INVITALIA_ADMIN.getRole());
     verify(productRepository).saveAll(productList);
     verify(notificationService).sendEmailUpdateStatus(
       List.of("name1", "name2"),
@@ -243,7 +244,7 @@ class ProductServiceTest {
     List<Product> productList = List.of(product1, product2);
     List<EmailProductDTO> emailProductDTOs = List.of(emailProductDTO);
 
-    when(productRepository.findByIdsAndValidStatusByRole(productIds, "APPROVED", "invitalia_admin"))
+    when(productRepository.findByIdsAndValidStatusByRole(productIds, ProductStatus.APPROVED, UserRole.INVITALIA_ADMIN.getRole()))
       .thenReturn(productList);
 
     when(productRepository.saveAll(productList))
@@ -259,7 +260,7 @@ class ProductServiceTest {
       productIds,
       ProductStatus.APPROVED,
       motivation,
-      "invitalia_admin"
+      UserRole.INVITALIA_ADMIN.getRole()
     );
 
     assertEquals("KO",result.getStatus());

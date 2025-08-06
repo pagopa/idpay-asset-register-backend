@@ -1,6 +1,7 @@
 package it.gov.pagopa.register.repository.operation;
 
 import it.gov.pagopa.register.dto.operation.EmailProductDTO;
+import it.gov.pagopa.register.enums.ProductStatus;
 import it.gov.pagopa.register.model.operation.Product;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -23,7 +24,7 @@ public interface ProductSpecificRepository {
 
   List<Product> retrieveDistinctProductFileIdsBasedOnRole(String organizationId, String organizationSelected, String role);
 
-  List<Product> findByIdsAndValidStatusByRole(List<String> productIds, String targetStatus, String role);
+  List<Product> findByIdsAndValidStatusByRole(List<String> productIds, ProductStatus targetStatus, String role);
 
   List<EmailProductDTO> getProductNamesGroupedByEmail(List<String> gtinCodes);
 }

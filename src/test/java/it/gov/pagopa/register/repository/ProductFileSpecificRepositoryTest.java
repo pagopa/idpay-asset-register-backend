@@ -1,6 +1,7 @@
 package it.gov.pagopa.register.repository;
 
 
+import it.gov.pagopa.register.enums.UserRole;
 import it.gov.pagopa.register.model.operation.Product;
 import it.gov.pagopa.register.repository.operation.ProductSpecificRepositoryImpl;
 import org.junit.jupiter.api.BeforeEach;
@@ -107,7 +108,7 @@ class ProductFileSpecificRepositoryTest {
     when(mongoTemplate.aggregate(any(Aggregation.class), eq("product"), eq(Product.class)))
       .thenReturn(aggregationResults);
 
-    List<Product> result = productSpecificRepository.retrieveDistinctProductFileIdsBasedOnRole(orgId,null,"operatore");
+    List<Product> result = productSpecificRepository.retrieveDistinctProductFileIdsBasedOnRole(orgId,null, UserRole.OPERATORE.getRole());
 
     assertEquals(1, result.size());
     assertEquals("file123", result.get(0).getProductFileId());

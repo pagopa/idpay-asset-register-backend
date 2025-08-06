@@ -11,7 +11,7 @@ import jakarta.validation.constraints.Pattern;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import static it.gov.pagopa.register.constants.ValidationConstants.UUID_V4_PATTERN;
+import static it.gov.pagopa.register.constants.ValidationPatterns.UUID_V4_PATTERN;
 
 @Validated
 @RequestMapping("/idpay")

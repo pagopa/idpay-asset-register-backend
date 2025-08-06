@@ -67,7 +67,7 @@ class AuthorizationControllerTest {
         permission2.setName("InitiativeModification");
         permission2.setDescription("Initiative Modification");
         permissionList.add(permission2);
-        rolePermission.setRole("Invitalia");
+        rolePermission.setRole("invitalia");
         rolePermission.setDescription("Administrator");
         rolePermission.setPermissions(permissionList);
         return rolePermission;

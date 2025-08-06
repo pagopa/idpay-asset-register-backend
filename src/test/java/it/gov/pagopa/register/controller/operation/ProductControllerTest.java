@@ -6,6 +6,7 @@ import it.gov.pagopa.register.dto.operation.ProductListDTO;
 import it.gov.pagopa.register.dto.operation.ProductUpdateStatusRequestDTO;
 import it.gov.pagopa.register.dto.operation.UpdateResultDTO;
 import it.gov.pagopa.register.enums.ProductStatus;
+import it.gov.pagopa.register.enums.UserRole;
 import it.gov.pagopa.register.service.operation.ProductService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -114,14 +115,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         productIds,
         ProductStatus.APPROVED,
         "Valid reason",
-        "invitalia_admin"
+        UserRole.INVITALIA_ADMIN.getRole()
       )).thenReturn(mockResponse);
 
       mockMvc.perform(
           org.springframework.test.web.servlet.request.MockMvcRequestBuilders
             .post("/idpay/register/products/update-status")
             .header("x-organization-id", "83843864-f3c0-4def-badb-7f197471b72e")
-            .header("x-organization-role", "invitalia_admin")
+            .header("x-organization-role", UserRole.INVITALIA_ADMIN.getRole())
             .contentType(MediaType.APPLICATION_JSON)
             .content(requestBody))
         .andExpect(status().isOk())

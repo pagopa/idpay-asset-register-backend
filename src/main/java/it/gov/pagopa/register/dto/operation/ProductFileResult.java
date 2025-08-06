@@ -46,4 +46,8 @@ public class ProductFileResult {
     return new ProductFileResult("KO", errorKey, productFileId);
   }
 
+  public boolean isKo(){
+    return this.status.equals("KO");
+  }
+
 }

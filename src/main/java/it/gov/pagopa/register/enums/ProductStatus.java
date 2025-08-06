@@ -4,11 +4,8 @@ public enum ProductStatus {
   APPROVED,
   SUPERVISIONED,
   REJECTED,
-
   SUSPENDED,
   UPLOADED,
-
   WAIT_APPROVED,
-
   WAIT_REJECTED
 }
