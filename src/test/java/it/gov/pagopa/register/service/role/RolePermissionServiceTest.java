@@ -4,6 +4,7 @@ package it.gov.pagopa.register.service.role;
 import it.gov.pagopa.register.constants.ExceptionConstants;
 import it.gov.pagopa.register.dto.role.PermissionDTO;
 import it.gov.pagopa.register.dto.role.UserPermissionDTO;
+import it.gov.pagopa.register.enums.UserRole;
 import it.gov.pagopa.register.exception.role.PermissionNotFoundException;
 import it.gov.pagopa.register.model.role.Permission;
 import it.gov.pagopa.register.model.role.RolePermission;
@@ -41,14 +42,14 @@ class RolePermissionServiceTest {
     void getUserPermissionReturnPermission() {
       UserPermissionDTO userPermissionDTO = new UserPermissionDTO();
       List<PermissionDTO> permissionDTOList = getPermissionDTOS();
-      userPermissionDTO.setRole("invitalia");
+      userPermissionDTO.setRole(UserRole.INVITALIA.getRole());
       userPermissionDTO.setPermissions(permissionDTOList);
 
       RolePermission rolePermission = getRolePermission();
 
-      Mockito.when(rolePermissionRepository.findByRole("invitalia")).thenReturn(Optional.of(rolePermission));
+      Mockito.when(rolePermissionRepository.findByRole(UserRole.INVITALIA.getRole())).thenReturn(Optional.of(rolePermission));
 
-        UserPermissionDTO admin = rolePermissionService.getUserPermission("invitalia");
+        UserPermissionDTO admin = rolePermissionService.getUserPermission(UserRole.INVITALIA.getRole());
 
         assertEquals(userPermissionDTO, admin);
     }
@@ -81,7 +82,7 @@ class RolePermissionServiceTest {
     permission2.setName("Permission2");
     permission2.setDescription("Permission2");
     permissionList.add(permission2);
-    rolePermission.setRole("invitalia");
+    rolePermission.setRole(UserRole.INVITALIA.getRole());
     rolePermission.setDescription("Administrator");
     rolePermission.setPermissions(permissionList);
     return rolePermission;
@@ -100,10 +101,10 @@ class RolePermissionServiceTest {
     @Test
     void getInvitaliaRole_ok() {
         RolePermission rolePermission = new RolePermission();
-        rolePermission.setRole("invitalia");
+        rolePermission.setRole(UserRole.INVITALIA.getRole());
 
         UserPermissionDTO userPermissionDTO = new UserPermissionDTO();
-        userPermissionDTO.setRole("invitalia");
+        userPermissionDTO.setRole(UserRole.INVITALIA.getRole());
         userPermissionDTO.setPermissions(new ArrayList<>());
 
         Mockito.when(rolePermissionRepository.findByRole(anyString()))

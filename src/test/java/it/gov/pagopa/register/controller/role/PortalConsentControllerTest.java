@@ -24,7 +24,7 @@ class PortalConsentControllerTest {
     //region String constants
     private static final String BASE_URL = "/idpay/consent";
     private static final String UID_PARAM_NAME = "userId";
-    private static final String USER_ID = "USER_ID";
+    private static final String USER_ID = "195da70f-d3f0-4c57-b62e-ef471348e920";
     private static final String VERSION_ID = "VERSION_ID";
     //endregion
 

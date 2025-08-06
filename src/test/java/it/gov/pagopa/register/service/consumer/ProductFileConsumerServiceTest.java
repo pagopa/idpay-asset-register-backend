@@ -24,7 +24,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.io.ByteArrayOutputStream;
 import java.util.*;
-import java.util.regex.Pattern;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectReader;
@@ -57,8 +56,7 @@ class ProductFileConsumerServiceTest {
 
   private static final String ORG_ID = "ORG123";
   private static final String PRODUCT_FILE_ID = "file123";
-  public static final Pattern SUBJECT_PATTERN =
-    Pattern.compile(".*/blobs/CSV/([^/]+)/([^/]+)/([^/]+\\.csv)$");
+
 
   @BeforeEach
   void setUp() {
@@ -80,11 +78,11 @@ class ProductFileConsumerServiceTest {
   @Test
   void testExecute_validEvent_shouldProcessFile() {
     StorageEventData data = StorageEventData.builder()
-      .url("/CSV/ORG123/COOKINGHOBS/file123.csv")
+      .url("/CSV/ORG123/ORGNAME/COOKINGHOBS/file123.csv")
       .build();
 
     StorageEventDTO event = StorageEventDTO.builder()
-      .subject("/blobs/CSV/ORG123/COOKINGHOBS/file123.csv")
+      .subject("/blobs/CSV/ORG123/ORGNAME/COOKINGHOBS/file123.csv")
       .data(data)
       .build();
 
@@ -141,10 +139,10 @@ class ProductFileConsumerServiceTest {
   @Test
   void testExecute_validEvent_shouldProcessFile_Eprel() {
     StorageEventData data = StorageEventData.builder()
-      .url("/CSV/ORG123/WASHINGMACHINES/file123.csv")
+      .url("/CSV/ORG123/ORGNAME/WASHINGMACHINES/file123.csv")
       .build();
     StorageEventDTO event = StorageEventDTO.builder()
-      .subject("/blobs/CSV/ORG123/WASHINGMACHINES/file123.csv")
+      .subject("/blobs/CSV/ORG123/ORGNAME/WASHINGMACHINES/file123.csv")
       .data(data)
       .build();
     ByteArrayOutputStream stream = new ByteArrayOutputStream();
@@ -158,7 +156,7 @@ class ProductFileConsumerServiceTest {
     List<CSVRecord> invalidRecords = new ArrayList<>();
     Map<CSVRecord, String> errorMessages = new HashMap<>();
 
-    when(eprelProductValidator.validateRecords(any(), any(), any(), any(), any(), any()))
+    when(eprelProductValidator.validateRecords(any(), any(), any(), any(), any(), any(),any()))
       .thenReturn(new EprelResult(validRecords, invalidRecords, errorMessages));
 
     try (MockedStatic<CsvUtils> utils = mockStatic(CsvUtils.class)) {
@@ -173,10 +171,10 @@ class ProductFileConsumerServiceTest {
   @Test
   void testExecute_validEvent_shouldProcessFile_Eprel_InvalidRecords() {
     StorageEventData data = StorageEventData.builder()
-      .url("/CSV/ORG123/WASHINGMACHINES/file123.csv")
+      .url("/CSV/ORG123/ORGNAME/WASHINGMACHINES/file123.csv")
       .build();
     StorageEventDTO event = StorageEventDTO.builder()
-      .subject("/blobs/CSV/ORG123/WASHINGMACHINES/file123.csv")
+      .subject("/blobs/CSV/ORG123/ORGNAME/WASHINGMACHINES/file123.csv")
       .data(data)
       .build();
     ByteArrayOutputStream stream = new ByteArrayOutputStream();
@@ -193,7 +191,7 @@ class ProductFileConsumerServiceTest {
     List<CSVRecord> invalidRecords = List.of(record1, record2);
     Map<CSVRecord, String> errorMessages = new HashMap<>();
 
-    when(eprelProductValidator.validateRecords(any(), any(), any(), any(), any(), any()))
+    when(eprelProductValidator.validateRecords(any(), any(), any(), any(), any(), any(),any()))
       .thenReturn(new EprelResult(validRecords, invalidRecords, errorMessages));
 
     try (MockedStatic<CsvUtils> utils = mockStatic(CsvUtils.class)) {
@@ -224,7 +222,7 @@ class ProductFileConsumerServiceTest {
   // Test: subject valido viene correttamente parsato in EventDetails
   @Test
   void testParseEventSubject_validSubject_shouldReturnDetails() {
-    String subject = "/blobs/CSV/ORG123/COOKINGHOBS/file123.csv";
+    String subject = "/blobs/CSV/ORG123/ORGNAME/COOKINGHOBS/file123.csv";
     EventDetails details = service.parseEventSubject(subject);
     assertNotNull(details);
     assertEquals("ORG123", details.getOrgId());
@@ -247,8 +245,8 @@ class ProductFileConsumerServiceTest {
       .thenReturn(Optional.of(new ProductFile()));
 
     StorageEventDTO event = StorageEventDTO.builder()
-      .subject("/blobs/CSV/ORG123/COOKINGHOBS/file123.csv")
-      .data(StorageEventData.builder().url("/CSV/ORG123/COOKINGHOBS/file123.csv").build())
+      .subject("/blobs/CSV/ORG123/ORGNAME/COOKINGHOBS/file123.csv")
+      .data(StorageEventData.builder().url("/CSV/ORG123/ORGNAME/COOKINGHOBS/file123.csv").build())
       .build();
 
     service.execute(List.of(event), null);
@@ -263,8 +261,8 @@ class ProductFileConsumerServiceTest {
       .thenReturn(Optional.of(new ProductFile()));
 
     StorageEventDTO event = StorageEventDTO.builder()
-      .subject("/blobs/CSV/ORG123/COOKINGHOBS/file123.csv")
-      .data(StorageEventData.builder().url("/CSV/ORG123/COOKINGHOBS/file123.csv").build())
+      .subject("/blobs/CSV/ORG123/ORGNAME/COOKINGHOBS/file123.csv")
+      .data(StorageEventData.builder().url("/CSV/ORG123/ORGNAME/OOKINGHOBS/file123.csv").build())
       .build();
 
     service.execute(List.of(event), null);
@@ -315,7 +313,7 @@ class ProductFileConsumerServiceTest {
       utils.when(() -> CsvUtils.readHeader(any(ByteArrayOutputStream.class)))
         .thenThrow(new RuntimeException("CSV read error"));
 
-      assertDoesNotThrow(() -> service.processCsvFromStorage(csvContent, PRODUCT_FILE_ID, "OTHER", ORG_ID));
+      assertDoesNotThrow(() -> service.processCsvFromStorage(csvContent, PRODUCT_FILE_ID, "OTHER", ORG_ID, "ORG_NAME"));
     }
   }
 

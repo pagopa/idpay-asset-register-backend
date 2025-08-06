@@ -1,11 +1,12 @@
 package it.gov.pagopa.register.service.operation;
 
 import it.gov.pagopa.register.connector.notification.NotificationServiceImpl;
+import it.gov.pagopa.register.dto.operation.EmailProductDTO;
 import it.gov.pagopa.register.dto.operation.ProductListDTO;
 import it.gov.pagopa.register.dto.operation.UpdateResultDTO;
-import it.gov.pagopa.register.enums.ProductStatusEnum;
+import it.gov.pagopa.register.enums.ProductStatus;
+import it.gov.pagopa.register.enums.UserRole;
 import it.gov.pagopa.register.model.operation.Product;
-import it.gov.pagopa.register.model.operation.ProductFile;
 import it.gov.pagopa.register.repository.operation.ProductFileRepository;
 import it.gov.pagopa.register.repository.operation.ProductRepository;
 import org.junit.jupiter.api.Test;
@@ -20,7 +21,6 @@ import org.springframework.data.mongodb.core.query.Criteria;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 
 import static it.gov.pagopa.register.constants.AssetRegisterConstants.WASHINGMACHINES;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -80,7 +80,7 @@ class ProductServiceTest {
       .thenReturn(productList);
 
 
-    ProductListDTO response = productService.getProducts(
+    ProductListDTO response = productService.fetchProductsByFilters(
       organizationId,
       null,
       null,
@@ -115,7 +115,7 @@ class ProductServiceTest {
       .thenReturn(productList);
 
 
-    ProductListDTO response = productService.getProducts(
+    ProductListDTO response = productService.fetchProductsByFilters(
       organizationId,
       null,
       null,
@@ -145,7 +145,7 @@ class ProductServiceTest {
     when(productRepository.findByFilter(any(), any()))
       .thenThrow(new RuntimeException("Database error"));
 
-    RuntimeException exception = assertThrows(RuntimeException.class, () -> productService.getProducts(organizationId, null,  null, null, null, null,null,pageable));
+    RuntimeException exception = assertThrows(RuntimeException.class, () -> productService.fetchProductsByFilters(organizationId, null,  null, null, null, null,null,pageable));
 
     assertEquals("Database error", exception.getMessage());
 
@@ -163,7 +163,7 @@ class ProductServiceTest {
     Product product1 = Product.builder()
       .gtinCode("prod1")
       .organizationId(organizationId)
-      .status("REJECTED")
+      .status("WAIT_APPROVED")
       .productName("name1")
       .productFileId("file1")
       .build();
@@ -171,50 +171,99 @@ class ProductServiceTest {
     Product product2 = Product.builder()
       .gtinCode("prod2")
       .organizationId(organizationId)
-      .status("REJECTED")
+      .status("WAIT_APPROVED")
       .productName("name2")
       .productFileId("file1")
       .build();
 
-    List<Product> productList = List.of(product1, product2);
-
-    ProductFile productFile = ProductFile.builder()
-      .id("file1")
-      .userEmail("user@example.com")
+    EmailProductDTO emailProductDTO = EmailProductDTO.builder()
+      .id("test@gmail.com")
+      .productNames(List.of("name1", "name2"))
       .build();
 
-    when(productRepository.findByIdsAndOrganizationIdAndNeStatus(productIds, organizationId,"APPROVED"))
+    List<Product> productList = List.of(product1, product2);
+    List<EmailProductDTO> emailProductDTOs = List.of(emailProductDTO);
+    when(productRepository.findByIdsAndValidStatusByRole(productIds, ProductStatus.APPROVED, UserRole.INVITALIA_ADMIN.getRole()))
       .thenReturn(productList);
 
     when(productRepository.saveAll(productList))
       .thenReturn(productList);
 
-    when(productFileRepository.findById("file1"))
-      .thenReturn(Optional.of(productFile));
+    when(productRepository.getProductNamesGroupedByEmail(productList.stream().map(Product::getGtinCode).toList()))
+      .thenReturn(emailProductDTOs);
 
     doNothing().when(notificationService)
-      .sendEmailUpdateStatus(anyList(), eq(motivation), eq("APPROVED"), eq("user@example.com"));
+      .sendEmailUpdateStatus(List.of("name1", "name2"), motivation, "APPROVED", "test@gmail.com");
 
-    UpdateResultDTO result = productService.updateProductState(
-      organizationId,
+    UpdateResultDTO result = productService.updateProductStatusesWithNotification(
       productIds,
-      ProductStatusEnum.APPROVED,
-      motivation
+      ProductStatus.APPROVED,
+      motivation,
+      UserRole.INVITALIA_ADMIN.getRole()
     );
 
 
     assertEquals("OK",result.getStatus());
 
-    verify(productRepository).findByIdsAndOrganizationIdAndNeStatus(productIds, organizationId,"APPROVED");
+    verify(productRepository).findByIdsAndValidStatusByRole(productIds, ProductStatus.APPROVED, UserRole.INVITALIA_ADMIN.getRole());
     verify(productRepository).saveAll(productList);
-    verify(productFileRepository).findById("file1");
     verify(notificationService).sendEmailUpdateStatus(
       List.of("name1", "name2"),
       motivation,
       "APPROVED",
-      "user@example.com"
+      "test@gmail.com"
     );
   }
+  @Test
+  void testUpdateProductStatuses_EmailFailure() {
+    String organizationId = "org123";
+    String motivation = "motivation";
+    List<String> productIds = List.of("prod1", "prod2");
 
+    Product product1 = Product.builder()
+      .gtinCode("prod1")
+      .organizationId(organizationId)
+      .status("WAIT_APPROVED")
+      .productName("name1")
+      .productFileId("file1")
+      .build();
+
+    Product product2 = Product.builder()
+      .gtinCode("prod2")
+      .organizationId(organizationId)
+      .status("WAIT_APPROVED")
+      .productName("name2")
+      .productFileId("file1")
+      .build();
+
+    EmailProductDTO emailProductDTO = EmailProductDTO.builder()
+      .id("test@gmail.com")
+      .productNames(List.of("name1", "name2"))
+      .build();
+
+    List<Product> productList = List.of(product1, product2);
+    List<EmailProductDTO> emailProductDTOs = List.of(emailProductDTO);
+
+    when(productRepository.findByIdsAndValidStatusByRole(productIds, ProductStatus.APPROVED, UserRole.INVITALIA_ADMIN.getRole()))
+      .thenReturn(productList);
+
+    when(productRepository.saveAll(productList))
+      .thenReturn(productList);
+
+    when(productRepository.getProductNamesGroupedByEmail(productList.stream().map(Product::getGtinCode).toList()))
+      .thenReturn(emailProductDTOs);
+
+    doThrow(new RuntimeException("Email service error")).when(notificationService)
+      .sendEmailUpdateStatus(List.of("name1", "name2"), motivation, "APPROVED", "test@gmail.com");
+
+    UpdateResultDTO result = productService.updateProductStatusesWithNotification(
+      productIds,
+      ProductStatus.APPROVED,
+      motivation,
+      UserRole.INVITALIA_ADMIN.getRole()
+    );
+
+    assertEquals("KO",result.getStatus());
+  }
 
 }

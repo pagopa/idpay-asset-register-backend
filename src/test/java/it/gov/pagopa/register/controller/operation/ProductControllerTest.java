@@ -5,7 +5,8 @@ import it.gov.pagopa.register.dto.operation.ProductDTO;
 import it.gov.pagopa.register.dto.operation.ProductListDTO;
 import it.gov.pagopa.register.dto.operation.ProductUpdateStatusRequestDTO;
 import it.gov.pagopa.register.dto.operation.UpdateResultDTO;
-import it.gov.pagopa.register.enums.ProductStatusEnum;
+import it.gov.pagopa.register.enums.ProductStatus;
+import it.gov.pagopa.register.enums.UserRole;
 import it.gov.pagopa.register.service.operation.ProductService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,7 +45,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
     @Test
     void testGetProducts_Success() throws Exception {
       ProductDTO productDTO = new ProductDTO();
-      productDTO.setOrganizationId("organizationIdTest");
+      productDTO.setOrganizationId("83843864-f3c0-4def-badb-7f197471b72e");
 
       ProductListDTO mockResponse = ProductListDTO.builder()
         .content(Collections.singletonList(productDTO))
@@ -54,7 +55,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         .totalPages(1)
         .build();
 
-      when(productService.getProducts(eq("organizationIdTest")
+      when(productService.fetchProductsByFilters(eq("83843864-f3c0-4def-badb-7f197471b72e")
           , any()
           , any()
           , any()
@@ -65,7 +66,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         ))
         .thenReturn(mockResponse);
       mockMvc.perform(get("/idpay/register/products")
-          .queryParam("organizationId", "organizationIdTest")
+          .queryParam("organizationId", "83843864-f3c0-4def-badb-7f197471b72e")
           .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.content").isArray())
@@ -80,7 +81,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
     //Test in caso di eccezione
     @Test
     void testGetProducts_ServiceThrowsException() throws Exception {
-      when(productService.getProducts(eq("organizationIdTest")
+      when(productService.fetchProductsByFilters(eq("83843864-f3c0-4def-badb-7f197471b72e")
           , any()
           , any()
           , any()
@@ -92,7 +93,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         .thenThrow(new RuntimeException("Service error"));
 
       mockMvc.perform(get("/idpay/register/products")
-          .queryParam("organizationId", "organizationIdTest")
+          .queryParam("organizationId", "83843864-f3c0-4def-badb-7f197471b72e")
           .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isInternalServerError());
     }
@@ -105,22 +106,23 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
       List<String> productIds = List.of("prod-1", "prod-2");
       ProductUpdateStatusRequestDTO requestDTO = new ProductUpdateStatusRequestDTO();
       requestDTO.setGtinCodes(productIds);
-      requestDTO.setStatus(ProductStatusEnum.APPROVED);
+      requestDTO.setStatus(ProductStatus.APPROVED);
       requestDTO.setMotivation("Valid reason");
 
       String requestBody = objectMapper.writeValueAsString(requestDTO);
 
-      when(productService.updateProductState(
-        "org-test",
+      when(productService.updateProductStatusesWithNotification(
         productIds,
-        ProductStatusEnum.APPROVED,
-        "Valid reason"
+        ProductStatus.APPROVED,
+        "Valid reason",
+        UserRole.INVITALIA_ADMIN.getRole()
       )).thenReturn(mockResponse);
 
       mockMvc.perform(
           org.springframework.test.web.servlet.request.MockMvcRequestBuilders
             .post("/idpay/register/products/update-status")
-            .header("x-organization-id", "org-test")
+            .header("x-organization-id", "83843864-f3c0-4def-badb-7f197471b72e")
+            .header("x-organization-role", UserRole.INVITALIA_ADMIN.getRole())
             .contentType(MediaType.APPLICATION_JSON)
             .content(requestBody))
         .andExpect(status().isOk())
@@ -131,7 +133,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
     void testUpdateProductStatuses_MissingHeader() throws Exception {
       ProductUpdateStatusRequestDTO requestDTO = new ProductUpdateStatusRequestDTO();
       requestDTO.setGtinCodes(List.of("prod-1"));
-      requestDTO.setStatus(ProductStatusEnum.SUPERVISIONED);
+      requestDTO.setStatus(ProductStatus.SUPERVISIONED);
       requestDTO.setMotivation("Missing header test");
 
       String requestBody = objectMapper.writeValueAsString(requestDTO);

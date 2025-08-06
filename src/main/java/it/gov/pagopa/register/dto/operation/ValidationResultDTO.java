@@ -45,5 +45,7 @@ public class ValidationResultDTO {
     this.errorMessages = errorMessages;
   }
 
-
+    public boolean isKo() {
+      return this.status.equals("KO");
+    }
 }
