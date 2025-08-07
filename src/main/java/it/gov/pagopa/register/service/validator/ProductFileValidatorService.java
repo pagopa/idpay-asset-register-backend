@@ -22,26 +22,27 @@ import static it.gov.pagopa.register.constants.AssetRegisterConstants.UploadKeyC
 @Slf4j
 public class ProductFileValidatorService {
 
-  public static final String DEFAULT_CATEGORY = "eprel";
+  private static final String DEFAULT_CATEGORY = "eprel";
   private final ProductFileValidationConfig validationConfig;
 
   public ValidationResultDTO validateFile(MultipartFile file, String category) throws IOException {
-    log.info("[VALIDATE_FILE] - Validating file: {}, category: {}", file.getOriginalFilename(), category);
+    String filename = Objects.requireNonNull(file.getOriginalFilename());
+    log.info("[VALIDATE_FILE] - Validating file: {}, category: {}", filename, category);
 
-    if (!Objects.requireNonNull(file.getOriginalFilename()).endsWith(CSV)) {
-      log.error("[VALIDATE_FILE] - Invalid file extension for file: {}", file.getOriginalFilename());
+    if (!filename.endsWith(CSV)) {
+      log.error("[VALIDATE_FILE] - Invalid file extension: {}", filename);
       return ValidationResultDTO.ko(AssetRegisterConstants.UploadKeyConstant.EXTENSION_FILE_ERROR_KEY);
     }
 
     long fileSize = file.getSize();
+    if (fileSize == 0) {
+      log.warn("[VALIDATE_FILE] - File is empty: {}", filename);
+      return ValidationResultDTO.ko(AssetRegisterConstants.UploadKeyConstant.EMPTY_FILE_ERROR_KEY);
+    }
 
     if (fileSize > validationConfig.getMaxSize()) {
-      log.error("[VALIDATE_FILE] - Invalid size for file: {}", file.getOriginalFilename());
+      log.error("[VALIDATE_FILE] - File size exceeds limit: {}", filename);
       return ValidationResultDTO.ko(AssetRegisterConstants.UploadKeyConstant.MAX_SIZE_FILE_ERROR_KEY);
-    }
-    if (fileSize == 0) {
-      log.warn("[VALIDATE_FILE] - File is empty: {}", file.getOriginalFilename());
-      return ValidationResultDTO.ko(AssetRegisterConstants.UploadKeyConstant.EMPTY_FILE_ERROR_KEY);
     }
 
     if (!CATEGORIES.contains(category)) {
@@ -49,9 +50,9 @@ public class ProductFileValidatorService {
       return ValidationResultDTO.ko(AssetRegisterConstants.UploadKeyConstant.UNKNOWN_CATEGORY_ERROR_KEY);
     }
 
-    LinkedHashMap<String, ColumnValidationRule> columnDefinitions = validationConfig.getSchemas().getOrDefault(category.toLowerCase(), validationConfig.getSchemas().get(DEFAULT_CATEGORY));
-    if (columnDefinitions == null || columnDefinitions.isEmpty()) {
-      log.error("[VALIDATE_FILE] - No column definitions found for category: {}", category);
+    Map<String, ColumnValidationRule> columnDefinitions = getColumnDefinitions(category);
+    if (columnDefinitions.isEmpty()) {
+      log.error("[VALIDATE_FILE] - No column definitions for category: {}", category);
       return ValidationResultDTO.ko(AssetRegisterConstants.UploadKeyConstant.UNKNOWN_CATEGORY_ERROR_KEY);
     }
 
@@ -59,68 +60,70 @@ public class ProductFileValidatorService {
     List<String> actualHeader = CsvUtils.readHeaders(file);
 
     if (!actualHeader.equals(expectedHeader)) {
-      log.warn("[VALIDATE_FILE] - Header mismatch for file: {}", file.getOriginalFilename());
+      log.warn("[VALIDATE_FILE] - Header mismatch: {}", filename);
       return ValidationResultDTO.ko(AssetRegisterConstants.UploadKeyConstant.HEADER_FILE_ERROR_KEY);
     }
 
     List<CSVRecord> records = CsvUtils.readCsvRecords(file);
-    int recordCount = records.size();
-
-    if (recordCount == 0) {
-      log.warn("[VALIDATE_FILE] - No products: {}", file.getOriginalFilename());
+    if (records.isEmpty()) {
+      log.warn("[VALIDATE_FILE] - No records found: {}", filename);
       return ValidationResultDTO.ko(AssetRegisterConstants.UploadKeyConstant.EMPTY_FILE_ERROR_KEY);
     }
 
-    if (recordCount > validationConfig.getMaxRows()) {
-      log.warn("[VALIDATE_FILE] - File exceeds maximum row count: {}", file.getOriginalFilename());
+    if (records.size() > validationConfig.getMaxRows()) {
+      log.warn("[VALIDATE_FILE] - Too many records: {}", filename);
       return ValidationResultDTO.ko(AssetRegisterConstants.UploadKeyConstant.MAX_ROW_FILE_ERROR_KEY);
     }
 
-    log.info("[VALIDATE_FILE] - File validation successful: {}", file.getOriginalFilename());
-    return ValidationResultDTO.ok(records,actualHeader);
+    log.info("[VALIDATE_FILE] - File validation successful: {}", filename);
+    return ValidationResultDTO.ok(records, actualHeader);
   }
 
   public ValidationResultDTO validateRecords(List<CSVRecord> records, List<String> headers, String category) {
     log.info("[VALIDATE_RECORDS] - Validating records for category: {}", category);
 
-    Map<String, ColumnValidationRule> rules = validationConfig.getSchemas().getOrDefault(category.toLowerCase(), validationConfig.getSchemas().get(DEFAULT_CATEGORY));
-    if (rules == null || rules.isEmpty()) {
-      log.error("[VALIDATE_RECORDS] - No validation rules found for category: {}", category);
+    Map<String, ColumnValidationRule> rules = getColumnDefinitions(category);
+    if (rules == null  || rules.isEmpty()) {
+      log.error("[VALIDATE_RECORDS] - No validation rules for category: {}", category);
       throw new IllegalArgumentException("No validation rules found for category: " + category);
     }
 
     List<CSVRecord> invalidRecords = new ArrayList<>();
     Map<CSVRecord, String> errorMessages = new HashMap<>();
 
-    for (CSVRecord csvRow : records) {
-      List<String> errors = new ArrayList<>();
-
-      for (String header : headers) {
-        ColumnValidationRule rule = rules.get(header);
-        if (rule != null) {
-          String value = csvRow.get(header);
-          if (!rule.isValid(value, CATEGORIES_TO_IT_S.get(category))) {
-            errors.add(rule.getMessage().replace("{}",CATEGORIES_TO_IT_S.get(category)));
-          }
-        }
-      }
-
+    for (CSVRecord csvRecord : records) {
+      List<String> errors = validateRecord(csvRecord, headers, rules, category);
       if (!errors.isEmpty()) {
-        log.warn("[VALIDATE_RECORDS] - Validation errors for record: {}", csvRow);
-        invalidRecords.add(csvRow);
-        errorMessages.put(csvRow, String.join(", ", errors));
+        log.warn("[VALIDATE_RECORDS] - Errors in record: {}", csvRecord);
+        invalidRecords.add(csvRecord);
+        errorMessages.put(csvRecord, String.join(", ", errors));
       }
     }
 
     log.info("[VALIDATE_RECORDS] - Validation completed. Invalid records: {}", invalidRecords.size());
-    if(!invalidRecords.isEmpty()) {
-      return new ValidationResultDTO("KO",REPORT_FORMAL_FILE_ERROR_KEY,invalidRecords, errorMessages);
-    }
-    return ValidationResultDTO.ok();
+    return invalidRecords.isEmpty()
+      ? ValidationResultDTO.ok()
+      : new ValidationResultDTO("KO", REPORT_FORMAL_FILE_ERROR_KEY, invalidRecords, errorMessages);
   }
 
+  private Map<String, ColumnValidationRule> getColumnDefinitions(String category) {
+    return validationConfig.getSchemas().getOrDefault(
+      category.toLowerCase(),
+      validationConfig.getSchemas().get(DEFAULT_CATEGORY)
+    );
+  }
+
+  private List<String> validateRecord(CSVRecord csvRecord, List<String> headers, Map<String, ColumnValidationRule> rules, String category) {
+    List<String> errors = new ArrayList<>();
+    for (String header : headers) {
+      ColumnValidationRule rule = rules.get(header);
+      if (rule != null) {
+        String value = csvRecord.get(header);
+        if (!rule.isValid(value, CATEGORIES_TO_IT_S.get(category))) {
+          errors.add(rule.getMessage().replace("{}", CATEGORIES_TO_IT_S.get(category)));
+        }
+      }
+    }
+    return errors;
+  }
 }
-
-
-
-

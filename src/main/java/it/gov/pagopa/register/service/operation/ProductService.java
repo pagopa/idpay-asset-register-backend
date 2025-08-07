@@ -79,13 +79,13 @@ public class ProductService {
 
     log.info("[UPDATE_PRODUCT_STATUSES] - Successfully updated {} products", productsUpdated.size());
 
-    var failedEmails = notifyStatusUpdates(productsUpdated, newStatus, motivation);
-
-    if (!failedEmails.isEmpty()) {
-      log.warn("[UPDATE_PRODUCT_STATUSES] - Some email notifications failed. Total failures: {}", failedEmails.size());
-      return UpdateResultDTO.ko(AssetRegisterConstants.UpdateKeyConstant.EMAIL_ERROR_KEY);
+    if(newStatus.name().equals(ProductStatus.REJECTED.toString())) {
+      int failedEmails = notifyStatusUpdates(productsUpdated, newStatus, motivation);
+      if (failedEmails != 0) {
+        log.warn("[UPDATE_PRODUCT_STATUSES] - Some email notifications failed. Total failures: {}", failedEmails);
+        return UpdateResultDTO.ko(AssetRegisterConstants.UpdateKeyConstant.EMAIL_ERROR_KEY);
+      }
     }
-
     log.info("[UPDATE_PRODUCT_STATUSES] - All notifications sent successfully");
     return UpdateResultDTO.ok();
   }
@@ -100,7 +100,7 @@ public class ProductService {
     });
   }
 
-  private List<String> notifyStatusUpdates(List<Product> products, ProductStatus newStatus, String motivation) {
+  private int notifyStatusUpdates(List<Product> products, ProductStatus newStatus, String motivation) {
     var emailToProducts = productRepository.getProductNamesGroupedByEmail(
       products.stream().map(Product::getGtinCode).toList()
     );
@@ -121,7 +121,7 @@ public class ProductService {
       }
     }
 
-    return failedEmails;
+    return failedEmails.size();
   }
 
   private ProductListDTO buildProductListDTO(Page<ProductDTO> result) {
