@@ -13,72 +13,84 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.csv.CSVRecord;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
 import java.util.*;
 
 import static it.gov.pagopa.register.constants.AssetRegisterConstants.*;
-import static it.gov.pagopa.register.mapper.operation.ProductMapper.*;
+import static it.gov.pagopa.register.mapper.operation.ProductMapper.mapEprelToProduct;
+import static it.gov.pagopa.register.mapper.operation.ProductMapper.mapProductToCsvRow;
 
-@Service
+@Component
 @RequiredArgsConstructor
 @Slf4j
 public class EprelProductValidatorService {
 
-
   private final EprelValidationConfig eprelValidationConfig;
   private final EprelConnector eprelConnector;
   private final ProductRepository productRepository;
-  public EprelResult validateRecords(List<CSVRecord> records, Set<String> fields, String category, String orgId, String productFileId, List<String> headers, String organizationName) {
+
+  public EprelResult validateRecords(
+    List<CSVRecord> records,
+    Set<String> fields,
+    String category,
+    String orgId,
+    String productFileId,
+    List<String> headers,
+    String organizationName) {
+
     log.info("[VALIDATE_RECORDS] - Validating records for organizationId: {}, category: {}, productFileId: {}", orgId, category, productFileId);
+
     Map<String, EprelValidationRule> rules = eprelValidationConfig.getSchemas();
     if (rules == null || rules.isEmpty()) {
       log.error("[VALIDATE_RECORDS] - No validation rules found");
       throw new IllegalArgumentException("No validation rules found");
     }
 
-    ValidationContext context = new ValidationContext(fields, category, orgId, productFileId, headers, rules,organizationName);
+    ValidationContext context = new ValidationContext(fields, category, orgId, productFileId, headers, rules, organizationName);
 
     Map<String, Product> validRecords = new LinkedHashMap<>();
     List<CSVRecord> invalidRecords = new ArrayList<>();
     Map<CSVRecord, String> errorMessages = new HashMap<>();
 
-    for (CSVRecord csvRow : records) {
-
-      validateRecord(csvRow, context, validRecords, invalidRecords, errorMessages);
+    for (CSVRecord csvRecord : records) {
+      validateRecord(csvRecord, context, validRecords, invalidRecords, errorMessages);
     }
 
-    log.info("[VALIDATE_RECORDS] - Validation completed. Valid records: {}, Invalid records: {}", validRecords.size(), invalidRecords.size());
+    log.info("[VALIDATE_RECORDS] - Validation completed. Valid: {}, Invalid: {}", validRecords.size(), invalidRecords.size());
     return new EprelResult(validRecords, invalidRecords, errorMessages);
   }
 
-  private void validateRecord(CSVRecord csvRow, ValidationContext context,
-                              Map<String, Product> validRecords,
-                              List<CSVRecord> invalidRecords,
-                              Map<CSVRecord, String> errorMessages) {
+  private void validateRecord(
+    CSVRecord csvRecord,
+    ValidationContext context,
+    Map<String, Product> validRecords,
+    List<CSVRecord> invalidRecords,
+    Map<CSVRecord, String> errorMessages) {
 
-    Optional<Product> optProduct = productRepository.findById(csvRow.get(CODE_GTIN_EAN));
-    boolean isProductPresent = optProduct.isPresent();
-    if(isProductPresent){
-      if( !context.getOrgId().equals(optProduct.get().getOrganizationId())){
-        invalidRecords.add(csvRow);
-        errorMessages.put(csvRow,DIFFERENT_ORGANIZATIONID);
+    String gtin = csvRecord.get(CODE_GTIN_EAN);
+    String eprelCode = csvRecord.get(CODE_EPREL);
+
+    Optional<Product> existingProduct = productRepository.findById(gtin);
+    if (existingProduct.isPresent()) {
+      Product product = existingProduct.get();
+      if (!context.getOrgId().equals(product.getOrganizationId())) {
+        addError(csvRecord, DIFFERENT_ORGANIZATIONID, invalidRecords, errorMessages);
         return;
-      } else if (!ProductStatus.APPROVED.toString().equals(optProduct.get().getStatus())) {
-        invalidRecords.add(csvRow);
-        errorMessages.put(csvRow, STATUS_NOT_APPROVED.replace("{}",optProduct.get().getMotivation()));
+      }
+      if (ProductStatus.REJECTED.toString().equals(product.getStatus()) ||
+          ProductStatus.SUSPENDED.toString().equals(product.getStatus())) {
+        addError(csvRecord, STATUS_NOT_APPROVED.replace("{}", product.getMotivation()), invalidRecords, errorMessages);
         return;
       }
     }
 
-    log.info("[VALIDATE_RECORD] - Validating record with EPREL code: {}", csvRow.get(CODE_EPREL));
-    EprelProduct eprelData = eprelConnector.callEprel(csvRow.get(CODE_EPREL));
+    log.info("[VALIDATE_RECORD] - Validating EPREL code: {}", eprelCode);
+    EprelProduct eprelData = eprelConnector.callEprel(eprelCode);
     log.info("[VALIDATE_RECORD] - EPREL response: {}", eprelData);
 
     if (eprelData == null) {
-      log.warn("[VALIDATE_RECORD] - Product not found in EPREL for code: {}", csvRow.get(CODE_EPREL));
-      invalidRecords.add(csvRow);
-      errorMessages.put(csvRow, "Product not found in EPREL");
+      addError(csvRecord, "Product not found in EPREL", invalidRecords, errorMessages);
       return;
     }
 
@@ -86,34 +98,26 @@ public class EprelProductValidatorService {
       eprelData.setEnergyClass(eprelData.getEnergyClassWash());
     }
 
-    List<String> errors = new ArrayList<>();
-    validateFields(context, eprelData, errors);
-
+    List<String> errors = validateFields(context, eprelData);
     if (!errors.isEmpty()) {
-      log.warn("[VALIDATE_RECORD] - Validation errors for record with EPREL code: {}: {}", csvRow.get(CODE_EPREL), String.join(", ", errors));
-      invalidRecords.add(csvRow);
-      errorMessages.put(csvRow, String.join(", ", errors));
+      addError(csvRecord, String.join(", ", errors), invalidRecords, errorMessages);
       return;
     }
 
-    log.info("[VALIDATE_RECORD] - EPREL product valid: {}", csvRow.get(CODE_EPREL));
-    String gtin = csvRow.get(CODE_GTIN_EAN);
-
-    if(validRecords.containsKey(csvRow.get(CODE_GTIN_EAN))) {
-      Product duplicateGtin = validRecords.remove(csvRow.get(CODE_GTIN_EAN));
-      CSVRecord duplicateGtinRow = mapProductToCsvRow(duplicateGtin,context.getCategory(), context.getHeaders());
-      invalidRecords.add(duplicateGtinRow);
-      errorMessages.put(duplicateGtinRow,DUPLICATE_GTIN_EAN);
-
-      log.warn("[VALIDATE_RECORD] - Duplicate error for record with GTIN code: {}", gtin);
+    if (validRecords.containsKey(gtin)) {
+      Product duplicate = validRecords.remove(gtin);
+      CSVRecord duplicateRow = mapProductToCsvRow(duplicate, context.getCategory(), context.getHeaders());
+      addError(duplicateRow, DUPLICATE_GTIN_EAN, invalidRecords, errorMessages);
+      log.warn("[VALIDATE_RECORD] - Duplicate GTIN: {}", gtin);
     }
-    Product product = mapEprelToProduct(csvRow, eprelData, context.getOrgId(), context.getProductFileId(), context.getCategory(), context.getOrganizationName());
+
+    Product product = mapEprelToProduct(csvRecord, eprelData, context.getOrgId(), context.getProductFileId(), context.getCategory(), context.getOrganizationName());
     validRecords.put(gtin, product);
-    log.info("[PRODUCT_UPLOAD] - Added eprel product: {}", csvRow.get(CODE_GTIN_EAN));
+    log.info("[PRODUCT_UPLOAD] - Added product: {}", gtin);
   }
 
-
-  private void validateFields(ValidationContext context, EprelProduct eprelData, List<String> errors) {
+  private List<String> validateFields(ValidationContext context, EprelProduct eprelData) {
+    List<String> errors = new ArrayList<>();
     for (String field : context.getFields()) {
       EprelValidationRule rule = context.getRules().get(field);
       if (rule != null) {
@@ -123,8 +127,13 @@ public class EprelProductValidatorService {
         }
       }
     }
+    return errors;
   }
 
+  private void addError(CSVRecord csvRecord, String message, List<CSVRecord> invalidRecords, Map<CSVRecord, String> errorMessages) {
+    invalidRecords.add(csvRecord);
+    errorMessages.put(csvRecord, message);
+  }
 
   @Getter
   @AllArgsConstructor
@@ -137,5 +146,4 @@ public class EprelProductValidatorService {
     private Map<String, EprelValidationRule> rules;
     private String organizationName;
   }
-
 }

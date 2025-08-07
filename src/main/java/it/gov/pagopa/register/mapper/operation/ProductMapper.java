@@ -22,6 +22,8 @@ import static it.gov.pagopa.register.utils.EprelUtils.*;
 
 public class ProductMapper {
 
+
+
   private ProductMapper() {}
 
   public static ProductDTO toDTO(Product entity){
@@ -69,6 +71,7 @@ public class ProductMapper {
         csvRecord.get(MODEL)
       )
       .organizationName(organizationName)
+      .motivation(MOTIVATION_UPLOADED)
       .build();
   }
 
@@ -95,6 +98,7 @@ public class ProductMapper {
       .capacity(capacity)
       .productName(productName)
       .organizationName(organizationName)
+      .motivation(MOTIVATION_UPLOADED)
       .build();
   }
 

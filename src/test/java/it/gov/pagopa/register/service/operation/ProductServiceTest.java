@@ -7,7 +7,6 @@ import it.gov.pagopa.register.dto.operation.UpdateResultDTO;
 import it.gov.pagopa.register.enums.ProductStatus;
 import it.gov.pagopa.register.enums.UserRole;
 import it.gov.pagopa.register.model.operation.Product;
-import it.gov.pagopa.register.repository.operation.ProductFileRepository;
 import it.gov.pagopa.register.repository.operation.ProductRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -32,9 +31,6 @@ class ProductServiceTest {
 
   @Mock
   private ProductRepository productRepository;
-
-  @Mock
-  private ProductFileRepository productFileRepository;
 
   @Mock
   private NotificationServiceImpl notificationService;
@@ -176,25 +172,13 @@ class ProductServiceTest {
       .productFileId("file1")
       .build();
 
-    EmailProductDTO emailProductDTO = EmailProductDTO.builder()
-      .id("test@gmail.com")
-      .productNames(List.of("name1", "name2"))
-      .build();
 
     List<Product> productList = List.of(product1, product2);
-    List<EmailProductDTO> emailProductDTOs = List.of(emailProductDTO);
     when(productRepository.findByIdsAndValidStatusByRole(productIds, ProductStatus.APPROVED, UserRole.INVITALIA_ADMIN.getRole()))
       .thenReturn(productList);
 
     when(productRepository.saveAll(productList))
       .thenReturn(productList);
-
-    when(productRepository.getProductNamesGroupedByEmail(productList.stream().map(Product::getGtinCode).toList()))
-      .thenReturn(emailProductDTOs);
-
-    doNothing().when(notificationService)
-      .sendEmailUpdateStatus(List.of("name1", "name2"), motivation, "APPROVED", "test@gmail.com");
-
     UpdateResultDTO result = productService.updateProductStatusesWithNotification(
       productIds,
       ProductStatus.APPROVED,
@@ -207,12 +191,7 @@ class ProductServiceTest {
 
     verify(productRepository).findByIdsAndValidStatusByRole(productIds, ProductStatus.APPROVED, UserRole.INVITALIA_ADMIN.getRole());
     verify(productRepository).saveAll(productList);
-    verify(notificationService).sendEmailUpdateStatus(
-      List.of("name1", "name2"),
-      motivation,
-      "APPROVED",
-      "test@gmail.com"
-    );
+
   }
   @Test
   void testUpdateProductStatuses_EmailFailure() {
@@ -223,7 +202,7 @@ class ProductServiceTest {
     Product product1 = Product.builder()
       .gtinCode("prod1")
       .organizationId(organizationId)
-      .status("WAIT_APPROVED")
+      .status(ProductStatus.WAIT_REJECTED.name())
       .productName("name1")
       .productFileId("file1")
       .build();
@@ -231,7 +210,7 @@ class ProductServiceTest {
     Product product2 = Product.builder()
       .gtinCode("prod2")
       .organizationId(organizationId)
-      .status("WAIT_APPROVED")
+      .status(ProductStatus.WAIT_REJECTED.name())
       .productName("name2")
       .productFileId("file1")
       .build();
@@ -244,7 +223,7 @@ class ProductServiceTest {
     List<Product> productList = List.of(product1, product2);
     List<EmailProductDTO> emailProductDTOs = List.of(emailProductDTO);
 
-    when(productRepository.findByIdsAndValidStatusByRole(productIds, ProductStatus.APPROVED, UserRole.INVITALIA_ADMIN.getRole()))
+    when(productRepository.findByIdsAndValidStatusByRole(productIds, ProductStatus.REJECTED, UserRole.INVITALIA_ADMIN.getRole()))
       .thenReturn(productList);
 
     when(productRepository.saveAll(productList))
@@ -254,11 +233,11 @@ class ProductServiceTest {
       .thenReturn(emailProductDTOs);
 
     doThrow(new RuntimeException("Email service error")).when(notificationService)
-      .sendEmailUpdateStatus(List.of("name1", "name2"), motivation, "APPROVED", "test@gmail.com");
+      .sendEmailUpdateStatus(List.of("name1", "name2"), motivation, ProductStatus.REJECTED.name(), "test@gmail.com");
 
     UpdateResultDTO result = productService.updateProductStatusesWithNotification(
       productIds,
-      ProductStatus.APPROVED,
+      ProductStatus.REJECTED,
       motivation,
       UserRole.INVITALIA_ADMIN.getRole()
     );

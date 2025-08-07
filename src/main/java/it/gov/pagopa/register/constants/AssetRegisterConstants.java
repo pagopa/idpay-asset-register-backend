@@ -226,4 +226,6 @@ public class AssetRegisterConstants {
     UploadCsvStatus.UPLOADED.name()
   );
 
+  public static final String MOTIVATION_UPLOADED = "Controlli superati";
+
 }
