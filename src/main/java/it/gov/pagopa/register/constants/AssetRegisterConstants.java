@@ -220,7 +220,6 @@ public class AssetRegisterConstants {
     "APPP", "APP", "AP", "A", "B", "C", "D", "E", "F", "G"
   );
 
-  public static final String STATUS_APPROVED = "APPROVED";
 
   public static final List<String> BLOCKING_STATUSES = List.of(
     UploadCsvStatus.IN_PROCESS.name(),

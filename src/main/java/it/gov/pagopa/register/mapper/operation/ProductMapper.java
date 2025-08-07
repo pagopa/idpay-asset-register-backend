@@ -1,6 +1,7 @@
 package it.gov.pagopa.register.mapper.operation;
 
 import it.gov.pagopa.register.dto.operation.ProductDTO;
+import it.gov.pagopa.register.enums.ProductStatus;
 import it.gov.pagopa.register.model.operation.Product;
 import it.gov.pagopa.register.dto.utils.EprelProduct;
 import org.apache.commons.csv.CSVFormat;
@@ -55,7 +56,7 @@ public class ProductMapper {
       .productFileId(productFileId)
       .organizationId(orgId)
       .registrationDate(LocalDateTime.now())
-      .status(STATUS_APPROVED)
+      .status(ProductStatus.UPLOADED.name())
       .productCode(csvRecord.get(CODE_PRODUCT))
       .gtinCode(csvRecord.get(CODE_GTIN_EAN))
       .category(COOKINGHOBS)
@@ -81,7 +82,7 @@ public class ProductMapper {
       .productFileId(productFileId)
       .organizationId(orgId)
       .registrationDate(LocalDateTime.now())
-      .status(STATUS_APPROVED)
+      .status(ProductStatus.UPLOADED.name())
       .productCode(csvRecord.get(CODE_PRODUCT))
       .gtinCode(csvRecord.get(CODE_GTIN_EAN))
       .eprelCode(csvRecord.get(CODE_EPREL))
