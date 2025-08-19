@@ -174,13 +174,14 @@ class ProductServiceTest {
 
 
     List<Product> productList = List.of(product1, product2);
-    when(productRepository.findByIdsAndValidStatusByRole(productIds, ProductStatus.APPROVED, UserRole.INVITALIA_ADMIN.getRole()))
+    when(productRepository.findUpdatableProducts(productIds, ProductStatus.WAIT_APPROVED,ProductStatus.APPROVED, UserRole.INVITALIA_ADMIN.getRole()))
       .thenReturn(productList);
 
     when(productRepository.saveAll(productList))
       .thenReturn(productList);
     UpdateResultDTO result = productService.updateProductStatusesWithNotification(
       productIds,
+      ProductStatus.WAIT_APPROVED,
       ProductStatus.APPROVED,
       motivation,
       UserRole.INVITALIA_ADMIN.getRole()
@@ -189,7 +190,7 @@ class ProductServiceTest {
 
     assertEquals("OK",result.getStatus());
 
-    verify(productRepository).findByIdsAndValidStatusByRole(productIds, ProductStatus.APPROVED, UserRole.INVITALIA_ADMIN.getRole());
+    verify(productRepository).findUpdatableProducts(productIds, ProductStatus.WAIT_APPROVED, ProductStatus.APPROVED, UserRole.INVITALIA_ADMIN.getRole());
     verify(productRepository).saveAll(productList);
 
   }
@@ -202,7 +203,7 @@ class ProductServiceTest {
     Product product1 = Product.builder()
       .gtinCode("prod1")
       .organizationId(organizationId)
-      .status(ProductStatus.WAIT_REJECTED.name())
+      .status(ProductStatus.UPLOADED.name())
       .productName("name1")
       .productFileId("file1")
       .build();
@@ -210,7 +211,7 @@ class ProductServiceTest {
     Product product2 = Product.builder()
       .gtinCode("prod2")
       .organizationId(organizationId)
-      .status(ProductStatus.WAIT_REJECTED.name())
+      .status(ProductStatus.UPLOADED.name())
       .productName("name2")
       .productFileId("file1")
       .build();
@@ -223,7 +224,7 @@ class ProductServiceTest {
     List<Product> productList = List.of(product1, product2);
     List<EmailProductDTO> emailProductDTOs = List.of(emailProductDTO);
 
-    when(productRepository.findByIdsAndValidStatusByRole(productIds, ProductStatus.REJECTED, UserRole.INVITALIA_ADMIN.getRole()))
+    when(productRepository.findUpdatableProducts(productIds, ProductStatus.UPLOADED, ProductStatus.REJECTED, UserRole.INVITALIA_ADMIN.getRole()))
       .thenReturn(productList);
 
     when(productRepository.saveAll(productList))
@@ -237,6 +238,7 @@ class ProductServiceTest {
 
     UpdateResultDTO result = productService.updateProductStatusesWithNotification(
       productIds,
+      ProductStatus.UPLOADED,
       ProductStatus.REJECTED,
       motivation,
       UserRole.INVITALIA_ADMIN.getRole()
