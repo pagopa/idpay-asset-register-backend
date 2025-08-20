@@ -229,33 +229,19 @@ public class ProductSpecificRepositoryImpl implements ProductSpecificRepository 
 
     if (UserRole.INVITALIA.getRole().equalsIgnoreCase(role)) {
       switch (targetStatus) {
-        case ProductStatus.SUPERVISED, ProductStatus.WAIT_APPROVED,  ProductStatus.REJECTED  ->
+        case ProductStatus.WAIT_APPROVED, ProductStatus.REJECTED  ->
+          validInitialStates.put(targetStatus.name(),
+            List.of(ProductStatus.UPLOADED.name(),ProductStatus.SUPERVISED.name()));
+        case ProductStatus.SUPERVISED ->
           validInitialStates.put(targetStatus.name(),
             List.of(ProductStatus.UPLOADED.name()));
-        case ProductStatus.UPLOADED ->
-          validInitialStates.put(targetStatus.name(), List.of(
-            ProductStatus.SUPERVISED.name(),
-            ProductStatus.WAIT_APPROVED.name(),
-            ProductStatus.REJECTED.name()
-          ));
         default -> validInitialStates.put(targetStatus.name(), List.of());
       }
     } else if (UserRole.INVITALIA_ADMIN.getRole().equalsIgnoreCase(role)) {
       switch (targetStatus) {
-        case ProductStatus.APPROVED ->
+        case ProductStatus.APPROVED, ProductStatus.UPLOADED ->
           validInitialStates.put(targetStatus.name(),
             List.of(ProductStatus.WAIT_APPROVED.name()));
-        case ProductStatus.REJECTED, ProductStatus.SUPERVISED ->
-          validInitialStates.put(targetStatus.name(),
-            List.of(
-              ProductStatus.UPLOADED.name()));
-        case ProductStatus.UPLOADED ->
-          validInitialStates.put(targetStatus.name(), List.of(
-            ProductStatus.SUPERVISED.name(),
-            ProductStatus.WAIT_APPROVED.name(),
-            ProductStatus.APPROVED.name(),
-            ProductStatus.REJECTED.name()
-          ));
           default -> validInitialStates.put(targetStatus.name(), List.of());
       }
     }

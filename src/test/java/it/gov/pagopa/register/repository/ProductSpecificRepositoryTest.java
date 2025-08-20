@@ -103,7 +103,7 @@ class ProductSpecificRepositoryTest {
     verify(mongoTemplate, times(1)).aggregate(any(Aggregation.class), eq("product"), eq(Product.class));
   }
   @Test
-  void testFindByIds_APPROVED_invitaliaAdmin() {
+  void testFindUpdatableProducts_APPROVED_invitaliaAdmin() {
     Product product = Product.builder().gtinCode("gtin1").organizationId("org1").status("UPLOAD").build();
 
     when(mongoTemplate.find(any(Query.class), eq(Product.class))).thenReturn(List.of(product));
@@ -115,23 +115,11 @@ class ProductSpecificRepositoryTest {
   }
 
   @Test
-  void testFindByIds_REJECTED_invitaliaAdmin() {
-    Product product = Product.builder().gtinCode("gtin1").organizationId("org1").status(ProductStatus.UPLOADED.name()).build();
-
-    when(mongoTemplate.find(any(Query.class), eq(Product.class))).thenReturn(List.of(product));
-
-    List<Product> results = repository.findUpdatableProducts(List.of("gtin1"),  ProductStatus.UPLOADED, ProductStatus.REJECTED, UserRole.INVITALIA_ADMIN.getRole());
-
-    assertEquals(1, results.size());
-    assertEquals("gtin1", results.get(0).getGtinCode());
-  }
-
-  @Test
-  void testFindByIds_UPLOAD_invitaliaAdmin() {
+  void testFindUpdatableProducts_UPLOAD_invitaliaAdmin() {
     Product product = Product.builder().gtinCode("gtin1").organizationId("org1").status("APPROVED").build();
     when(mongoTemplate.find(any(Query.class), eq(Product.class))).thenReturn(List.of(product));
 
-    List<Product> results = repository.findUpdatableProducts(List.of("gtin1"),ProductStatus.REJECTED, ProductStatus.UPLOADED, UserRole.INVITALIA_ADMIN.getRole());
+    List<Product> results = repository.findUpdatableProducts(List.of("gtin1"),ProductStatus.WAIT_APPROVED, ProductStatus.UPLOADED, UserRole.INVITALIA_ADMIN.getRole());
 
     assertEquals(1, results.size());
     assertEquals("gtin1", results.get(0).getGtinCode());
@@ -139,7 +127,7 @@ class ProductSpecificRepositoryTest {
 
 
   @Test
-  void testFindByIds_SUPERVISIONED_invitalia() {
+  void testFindUpdatableProducts_SUPERVISIONED_invitalia() {
     Product product = Product.builder().gtinCode("gtin1").organizationId("org1").status("UPLOAD").build();
     when(mongoTemplate.find(any(Query.class), eq(Product.class))).thenReturn(List.of(product));
 
@@ -150,7 +138,7 @@ class ProductSpecificRepositoryTest {
   }
 
   @Test
-  void testFindByIds_WAIT_APPROVED_invitalia() {
+  void testFindUpdatableProducts_WAIT_APPROVED_invitalia() {
     Product product = Product.builder().gtinCode("gtin1").organizationId("org1").status("UPLOAD").build();
     when(mongoTemplate.find(any(Query.class), eq(Product.class))).thenReturn(List.of(product));
 
@@ -160,17 +148,6 @@ class ProductSpecificRepositoryTest {
     assertEquals("gtin1", results.get(0).getGtinCode());
   }
 
-
-  @Test
-  void testFindByIds_UPLOAD_invitalia() {
-    Product product = Product.builder().gtinCode("gtin1").organizationId("org1").status("SUPERVISED").build();
-    when(mongoTemplate.find(any(Query.class), eq(Product.class))).thenReturn(List.of(product));
-
-    List<Product> results = repository.findUpdatableProducts(List.of("gtin"),  ProductStatus.SUPERVISED,ProductStatus.UPLOADED, "invitalia");
-
-    assertEquals(1, results.size());
-    assertEquals("gtin1", results.get(0).getGtinCode());
-  }
 
 
   @Test
