@@ -106,13 +106,15 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
       List<String> productIds = List.of("prod-1", "prod-2");
       ProductUpdateStatusRequestDTO requestDTO = new ProductUpdateStatusRequestDTO();
       requestDTO.setGtinCodes(productIds);
-      requestDTO.setStatus(ProductStatus.APPROVED);
+      requestDTO.setCurrentStatus(ProductStatus.WAIT_APPROVED);
+      requestDTO.setTargetStatus(ProductStatus.APPROVED);
       requestDTO.setMotivation("Valid reason");
 
       String requestBody = objectMapper.writeValueAsString(requestDTO);
 
       when(productService.updateProductStatusesWithNotification(
         productIds,
+        ProductStatus.WAIT_APPROVED,
         ProductStatus.APPROVED,
         "Valid reason",
         UserRole.INVITALIA_ADMIN.getRole()
@@ -133,7 +135,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
     void testUpdateProductStatuses_MissingHeader() throws Exception {
       ProductUpdateStatusRequestDTO requestDTO = new ProductUpdateStatusRequestDTO();
       requestDTO.setGtinCodes(List.of("prod-1"));
-      requestDTO.setStatus(ProductStatus.SUPERVISIONED);
+      requestDTO.setCurrentStatus(ProductStatus.SUPERVISED);
+      requestDTO.setTargetStatus(ProductStatus.SUPERVISED);
       requestDTO.setMotivation("Missing header test");
 
       String requestBody = objectMapper.writeValueAsString(requestDTO);

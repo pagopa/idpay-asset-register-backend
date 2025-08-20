@@ -3,9 +3,8 @@ package it.gov.pagopa.register.service.validator;
 import it.gov.pagopa.register.configuration.EprelValidationConfig;
 import it.gov.pagopa.register.connector.eprel.EprelConnector;
 import it.gov.pagopa.register.dto.utils.EprelProduct;
-import it.gov.pagopa.register.dto.utils.EprelResult;
 import it.gov.pagopa.register.dto.utils.EprelValidationRule;
-import it.gov.pagopa.register.enums.ProductStatus;
+import it.gov.pagopa.register.dto.utils.ProductValidationResult;
 import it.gov.pagopa.register.model.operation.Product;
 import it.gov.pagopa.register.repository.operation.ProductRepository;
 import lombok.AllArgsConstructor;
@@ -20,6 +19,8 @@ import java.util.*;
 import static it.gov.pagopa.register.constants.AssetRegisterConstants.*;
 import static it.gov.pagopa.register.mapper.operation.ProductMapper.mapEprelToProduct;
 import static it.gov.pagopa.register.mapper.operation.ProductMapper.mapProductToCsvRow;
+import static it.gov.pagopa.register.utils.ValidationUtils.addError;
+import static it.gov.pagopa.register.utils.ValidationUtils.dbCheck;
 
 @Component
 @RequiredArgsConstructor
@@ -30,7 +31,7 @@ public class EprelProductValidatorService {
   private final EprelConnector eprelConnector;
   private final ProductRepository productRepository;
 
-  public EprelResult validateRecords(
+  public ProductValidationResult validateRecords(
     List<CSVRecord> records,
     Set<String> fields,
     String category,
@@ -58,7 +59,7 @@ public class EprelProductValidatorService {
     }
 
     log.info("[VALIDATE_RECORDS] - Validation completed. Valid: {}, Invalid: {}", validRecords.size(), invalidRecords.size());
-    return new EprelResult(validRecords, invalidRecords, errorMessages);
+    return new ProductValidationResult(validRecords, invalidRecords, errorMessages);
   }
 
   private void validateRecord(
@@ -72,17 +73,9 @@ public class EprelProductValidatorService {
     String eprelCode = csvRecord.get(CODE_EPREL);
 
     Optional<Product> existingProduct = productRepository.findById(gtin);
-    if (existingProduct.isPresent()) {
-      Product product = existingProduct.get();
-      if (!context.getOrgId().equals(product.getOrganizationId())) {
-        addError(csvRecord, DIFFERENT_ORGANIZATIONID, invalidRecords, errorMessages);
-        return;
-      }
-      if (ProductStatus.REJECTED.toString().equals(product.getStatus()) ||
-          ProductStatus.SUSPENDED.toString().equals(product.getStatus())) {
-        addError(csvRecord, STATUS_NOT_APPROVED.replace("{}", product.getMotivation()), invalidRecords, errorMessages);
-        return;
-      }
+    boolean dbCheck = dbCheck(context.orgId, csvRecord, existingProduct, invalidRecords, errorMessages);
+    if(!dbCheck) {
+      return;
     }
 
     log.info("[VALIDATE_RECORD] - Validating EPREL code: {}", eprelCode);
@@ -130,10 +123,7 @@ public class EprelProductValidatorService {
     return errors;
   }
 
-  private void addError(CSVRecord csvRecord, String message, List<CSVRecord> invalidRecords, Map<CSVRecord, String> errorMessages) {
-    invalidRecords.add(csvRecord);
-    errorMessages.put(csvRecord, message);
-  }
+
 
   @Getter
   @AllArgsConstructor

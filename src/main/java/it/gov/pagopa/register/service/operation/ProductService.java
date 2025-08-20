@@ -64,23 +64,24 @@ public class ProductService {
 
   public UpdateResultDTO updateProductStatusesWithNotification(
     List<String> productIds,
-    ProductStatus newStatus,
+    ProductStatus currentStatus,
+    ProductStatus targetStatus,
     String motivation,
     String role
   ) {
-    log.info("[UPDATE_PRODUCT_STATUSES] - Starting update - newStatus: {}, motivation: {}", newStatus, motivation);
+    log.info("[UPDATE_PRODUCT_STATUSES] - Starting update - newStatus: {}, motivation: {}", targetStatus, motivation);
     log.debug("[UPDATE_PRODUCT_STATUSES] - Product IDs to update: {}", productIds);
 
-    List<Product> productsToUpdate = productRepository.findByIdsAndValidStatusByRole(productIds, newStatus, role);
+    List<Product> productsToUpdate = productRepository.findUpdatableProducts(productIds, currentStatus, targetStatus, role);
     log.debug("[UPDATE_PRODUCT_STATUSES] - Retrieved {} products for update", productsToUpdate.size());
 
-    updateStatuses(productsToUpdate, newStatus, motivation);
+    updateStatuses(productsToUpdate, targetStatus, motivation);
     List<Product> productsUpdated = productRepository.saveAll(productsToUpdate);
 
     log.info("[UPDATE_PRODUCT_STATUSES] - Successfully updated {} products", productsUpdated.size());
 
-    if(newStatus.name().equals(ProductStatus.REJECTED.toString())) {
-      int failedEmails = notifyStatusUpdates(productsUpdated, newStatus, motivation);
+    if(targetStatus.name().equals(ProductStatus.REJECTED.toString())) {
+      int failedEmails = notifyStatusUpdates(productsUpdated, targetStatus, motivation);
       if (failedEmails != 0) {
         log.warn("[UPDATE_PRODUCT_STATUSES] - Some email notifications failed. Total failures: {}", failedEmails);
         return UpdateResultDTO.ko(AssetRegisterConstants.UpdateKeyConstant.EMAIL_ERROR_KEY);
@@ -101,7 +102,7 @@ public class ProductService {
   }
 
   private int notifyStatusUpdates(List<Product> products, ProductStatus newStatus, String motivation) {
-    var emailToProducts = productRepository.getProductNamesGroupedByEmail(
+    List<EmailProductDTO>  emailToProducts = productRepository.getProductNamesGroupedByEmail(
       products.stream().map(Product::getGtinCode).toList()
     );
 

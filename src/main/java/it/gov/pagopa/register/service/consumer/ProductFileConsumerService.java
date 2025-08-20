@@ -7,13 +7,13 @@ import it.gov.pagopa.common.kafka.BaseKafkaConsumer;
 import it.gov.pagopa.register.connector.notification.NotificationServiceImpl;
 import it.gov.pagopa.register.connector.storage.FileStorageClient;
 import it.gov.pagopa.register.dto.operation.StorageEventDTO;
-import it.gov.pagopa.register.dto.utils.EprelResult;
 import it.gov.pagopa.register.dto.utils.EventDetails;
-import it.gov.pagopa.register.enums.ProductStatus;
+import it.gov.pagopa.register.dto.utils.ProductValidationResult;
 import it.gov.pagopa.register.model.operation.Product;
 import it.gov.pagopa.register.model.operation.ProductFile;
 import it.gov.pagopa.register.repository.operation.ProductFileRepository;
 import it.gov.pagopa.register.repository.operation.ProductRepository;
+import it.gov.pagopa.register.service.validator.CookinghobsValidatorService;
 import it.gov.pagopa.register.service.validator.EprelProductValidatorService;
 import it.gov.pagopa.register.utils.CsvUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -29,13 +29,14 @@ import java.nio.file.Path;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.regex.Matcher;
 
 import static it.gov.pagopa.register.constants.AssetRegisterConstants.*;
 import static it.gov.pagopa.register.enums.UploadCsvStatus.*;
-import static it.gov.pagopa.register.mapper.operation.ProductMapper.mapCookingHobToProduct;
-import static it.gov.pagopa.register.mapper.operation.ProductMapper.mapProductToCsvRow;
 
 @Slf4j
 @Service
@@ -46,6 +47,7 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
   private final ProductFileRepository productFileRepository;
   private final FileStorageClient fileStorageClient;
   private final EprelProductValidatorService eprelProductValidator;
+  private final CookinghobsValidatorService cookinghobsValidatorService;
   private final NotificationServiceImpl notificationService;
 
   protected ProductFileConsumerService(@Value("${spring.application.name}") String applicationName,
@@ -54,14 +56,14 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
                                        ObjectMapper objectMapper,
                                        ProductFileRepository productFileRepository,
                                        EprelProductValidatorService eprelProductValidator,
-                                       NotificationServiceImpl notificationService) {
+                                       CookinghobsValidatorService cookinghobsValidatorService, NotificationServiceImpl notificationService) {
     super(applicationName);
     this.productRepository = productRepository;
     this.fileStorageClient = fileStorageClient;
-    this.objectReader = objectMapper.readerFor(new TypeReference<List<StorageEventDTO>>() {
-    });
+    this.objectReader = objectMapper.readerFor(new TypeReference<List<StorageEventDTO>>() {});
     this.productFileRepository = productFileRepository;
     this.eprelProductValidator = eprelProductValidator;
+    this.cookinghobsValidatorService = cookinghobsValidatorService;
     this.notificationService = notificationService;
   }
 
@@ -181,88 +183,26 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
       List<String> headers = CsvUtils.readHeader(byteArrayOutputStream);
       List<CSVRecord> records = CsvUtils.readCsvRecords(byteArrayOutputStream);
       log.info("[PRODUCT_UPLOAD] - Valid CSV headers: {}", headers);
+      ProductValidationResult validationResult;
       if (isCookingHob) {
-        processCookingHobRecords(records, orgId, fileId,headers,organizationName);
+        validationResult = cookinghobsValidatorService.validateRecords(records, orgId, fileId,headers,organizationName);
       } else {
-        EprelResult validationResult = eprelProductValidator.validateRecords(records, EPREL_FIELDS, category, orgId, fileId, headers,organizationName);
-        processEprelResult(validationResult.getValidRecords().values().stream().toList(), validationResult.getInvalidRecords(), validationResult.getErrorMessages(), fileId, headers, category);
+        validationResult = eprelProductValidator.validateRecords(records, EPREL_FIELDS, category, orgId, fileId, headers,organizationName);
       }
+      processResult(validationResult.getValidRecords().values().stream().toList(), validationResult.getInvalidRecords(), validationResult.getErrorMessages(), fileId, headers, category);
     } catch (Exception e) {
       log.error("[UPLOAD_PRODUCT_FILE] - Generic Error ", e);
     }
   }
 
-  private void processCookingHobRecords(List<CSVRecord> records, String orgId, String productFileId, List<String> headers, String organizationName) {
-    Map<String,Product> validProduct = new LinkedHashMap<>();
-    List<CSVRecord> invalidRecords = new ArrayList<>();
-    Map<CSVRecord, String> errorMessages = new HashMap<>();
-    for (CSVRecord csvRecord : records) {
-      Optional<Product> optProduct = productRepository.findById(csvRecord.get(CODE_GTIN_EAN));
-      boolean isProductPresent = optProduct.isPresent();
-      boolean dbCheck = true;
-      if(isProductPresent) {
-
-        if(!orgId.equals(optProduct.get().getOrganizationId())) {
-
-          invalidRecords.add(csvRecord);
-          errorMessages.put(csvRecord,DIFFERENT_ORGANIZATIONID);
-          dbCheck = false;
-        } else if (
-            ProductStatus.REJECTED.toString().equals(optProduct.get().getStatus()) ||
-            ProductStatus.SUSPENDED.toString().equals(optProduct.get().getStatus())) {
-          invalidRecords.add(csvRecord);
-          errorMessages.put(csvRecord, STATUS_NOT_APPROVED.replace("{}",optProduct.get().getMotivation()));
-          dbCheck = false;
-        }
-      }
-      if(dbCheck) {
-
-        if(validProduct.containsKey(csvRecord.get(CODE_GTIN_EAN))) {
-          Product duplicateGtin = validProduct.remove(csvRecord.get(CODE_GTIN_EAN));
-          CSVRecord duplicateGtinRow = mapProductToCsvRow(duplicateGtin,COOKINGHOBS, headers);
-          invalidRecords.add(duplicateGtinRow);
-          errorMessages.put(duplicateGtinRow,DUPLICATE_GTIN_EAN);
-          log.info("[PRODUCT_UPLOAD] - Duplicate error for record with GTIN code: {}", csvRecord.get(CODE_GTIN_EAN));
-        }
-        validProduct.put(csvRecord.get(CODE_GTIN_EAN),mapCookingHobToProduct(csvRecord, orgId, productFileId,organizationName));
-        log.info("[PRODUCT_UPLOAD] - Added cooking hob product: {}", csvRecord.get(CODE_GTIN_EAN));
-
-      }
-
-    }
-    processCookingHoobsRecords(productFileId, headers, validProduct, invalidRecords, errorMessages);
-  }
-
-  private void processCookingHoobsRecords(String productFileId, List<String> headers, Map<String, Product> validProduct, List<CSVRecord> invalidRecords, Map<CSVRecord, String> errorMessages) {
-    if (!validProduct.isEmpty()) {
-      List<Product> savedProduct = productRepository.saveAll(validProduct.values().stream().toList());
-      log.info("[PRODUCT_UPLOAD] - Saved {} valid products for file {}", savedProduct.size(), productFileId);
-      if (!invalidRecords.isEmpty()) {
-        processErrorRecords(invalidRecords, errorMessages, productFileId, headers);
-        String userEmail = setProductFileStatus(productFileId, String.valueOf(PARTIAL), validProduct.size());
-        log.info("[PRODUCT_UPLOAD] - File {} processed with {} duplicate rows", productFileId, errorMessages.size());
-        notificationService.sendEmailPartial(CATEGORIES_TO_IT_P.get(COOKINGHOBS) + "_" + productFileId + CSV, userEmail);
-      } else {
-        String userEmail = setProductFileStatus(productFileId, String.valueOf(LOADED), savedProduct.size());
-        log.info("[PRODUCT_UPLOAD] - File {} processed successfully with no errors", productFileId);
-        notificationService.sendEmailOk(CATEGORIES_TO_IT_P.get(COOKINGHOBS) + "_" + productFileId + CSV, userEmail);
-      }
-    } else if (!invalidRecords.isEmpty()) {
-      processErrorRecords(invalidRecords, errorMessages, productFileId, headers);
-      String userEmail = setProductFileStatus(productFileId, String.valueOf(PARTIAL), 0);
-      log.info("[PRODUCT_UPLOAD] - File {} processed with {} duplicate row", productFileId, invalidRecords.size());
-      notificationService.sendEmailPartial(CATEGORIES_TO_IT_P.get(COOKINGHOBS) + "_" + productFileId + CSV, userEmail);
-    }
-  }
-
-  private void processEprelResult(List<Product> validProduct, List<CSVRecord> errors, Map<CSVRecord, String> messages, String productFileId, List<String> headers, String category) {
+  private void processResult(List<Product> validProduct, List<CSVRecord> errors, Map<CSVRecord, String> messages, String productFileId, List<String> headers, String category) {
     if (!validProduct.isEmpty()) {
       List<Product> savedProduct = productRepository.saveAll(validProduct);
       log.info("[PRODUCT_UPLOAD] - Saved {} valid products for file {}", savedProduct.size(), productFileId);
       if (!errors.isEmpty()) {
         processErrorRecords(errors, messages, productFileId, headers);
         String userEmail = setProductFileStatus(productFileId, String.valueOf(PARTIAL), validProduct.size());
-        log.info("[PRODUCT_UPLOAD] - File {} processed with {} EPREL errors", productFileId, errors.size());
+        log.info("[PRODUCT_UPLOAD] - File {} processed with {} errors", productFileId, errors.size());
         notificationService.sendEmailPartial(CATEGORIES_TO_IT_P.get(category) + "_" + productFileId + CSV, userEmail);
       } else {
         String userEmail = setProductFileStatus(productFileId, String.valueOf(LOADED), savedProduct.size());
@@ -272,11 +212,10 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
     } else if (!errors.isEmpty()) {
       processErrorRecords(errors, messages, productFileId, headers);
       String userEmail = setProductFileStatus(productFileId, String.valueOf(PARTIAL), 0);
-      log.info("[PRODUCT_UPLOAD] - File {} processed with {} EPREL errors", productFileId, errors.size());
+      log.info("[PRODUCT_UPLOAD] - File {} processed with {} errors", productFileId, errors.size());
       notificationService.sendEmailPartial(CATEGORIES_TO_IT_P.get(category)  + "_" + productFileId + CSV, userEmail);
     }
   }
-
 
   @SuppressWarnings("java:S5443") //The system used will be Linux so never create a file without specified permissions
   private void processErrorRecords(List<CSVRecord> errors, Map<CSVRecord, String> messages, String productFileId, List<String> headers) {

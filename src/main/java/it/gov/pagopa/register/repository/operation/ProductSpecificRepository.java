@@ -24,7 +24,7 @@ public interface ProductSpecificRepository {
 
   List<Product> retrieveDistinctProductFileIdsBasedOnRole(String organizationId, String organizationSelected, String role);
 
-  List<Product> findByIdsAndValidStatusByRole(List<String> productIds, ProductStatus targetStatus, String role);
+  List<Product> findUpdatableProducts(List<String> productIds, ProductStatus currentStatus, ProductStatus targetStatus, String role);
 
   List<EmailProductDTO> getProductNamesGroupedByEmail(List<String> gtinCodes);
 }

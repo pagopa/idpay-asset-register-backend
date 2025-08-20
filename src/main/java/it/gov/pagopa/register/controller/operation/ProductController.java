@@ -62,7 +62,8 @@ public class ProductController {
   ) {
     UpdateResultDTO result = productService.updateProductStatusesWithNotification(
       dto.getGtinCodes(),
-      dto.getStatus(),
+      dto.getCurrentStatus(),
+      dto.getTargetStatus(),
       dto.getMotivation(),
       role
     );

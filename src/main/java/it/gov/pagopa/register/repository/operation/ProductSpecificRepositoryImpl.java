@@ -108,18 +108,19 @@ public class ProductSpecificRepositoryImpl implements ProductSpecificRepository 
   }
 
   @Override
-  public List<Product> findByIdsAndValidStatusByRole(List<String> productIds, ProductStatus targetStatus, String role) {
+  public List<Product> findUpdatableProducts(List<String> productIds, ProductStatus currentStatus, ProductStatus targetStatus, String role) {
     List<String> allowedStates = getAllowedInitialStates(targetStatus, role);
-    if (allowedStates.isEmpty()) {
+    if (allowedStates.isEmpty() || !allowedStates.contains(currentStatus.name())) {
       return List.of();
     }
 
     Criteria criteria = new Criteria()
       .and(FIELD_ID).in(productIds)
-      .and(FIELD_STATUS).in(allowedStates);
+      .and(FIELD_STATUS).is(currentStatus.name());
 
     return mongoTemplate.find(Query.query(criteria), Product.class);
   }
+
   private Aggregation buildAggregation(Criteria criteria, Pageable pageable) {
     Sort sort = pageable.getSort();
 
@@ -228,41 +229,20 @@ public class ProductSpecificRepositoryImpl implements ProductSpecificRepository 
 
     if (UserRole.INVITALIA.getRole().equalsIgnoreCase(role)) {
       switch (targetStatus) {
-        case ProductStatus.SUPERVISIONED, ProductStatus.WAIT_APPROVED, ProductStatus.WAIT_REJECTED ->
+        case ProductStatus.WAIT_APPROVED, ProductStatus.REJECTED  ->
+          validInitialStates.put(targetStatus.name(),
+            List.of(ProductStatus.UPLOADED.name(),ProductStatus.SUPERVISED.name()));
+        case ProductStatus.SUPERVISED ->
           validInitialStates.put(targetStatus.name(),
             List.of(ProductStatus.UPLOADED.name()));
-        case ProductStatus.UPLOADED ->
-          validInitialStates.put(targetStatus.name(), List.of(
-            ProductStatus.SUPERVISIONED.name(),
-            ProductStatus.WAIT_APPROVED.name(),
-            ProductStatus.WAIT_REJECTED.name()
-          ));
         default -> validInitialStates.put(targetStatus.name(), List.of());
       }
     } else if (UserRole.INVITALIA_ADMIN.getRole().equalsIgnoreCase(role)) {
       switch (targetStatus) {
-        case ProductStatus.APPROVED ->
+        case ProductStatus.APPROVED, ProductStatus.UPLOADED ->
           validInitialStates.put(targetStatus.name(),
-            List.of(
-              ProductStatus.UPLOADED.name(),
-              ProductStatus.WAIT_APPROVED.name()));
-        case ProductStatus.REJECTED ->
-          validInitialStates.put(targetStatus.name(),
-            List.of(
-              ProductStatus.UPLOADED.name(),
-              ProductStatus.WAIT_REJECTED.name()));
-        case ProductStatus.UPLOADED ->
-          validInitialStates.put(targetStatus.name(), List.of(
-            ProductStatus.SUPERVISIONED.name(),
-            ProductStatus.WAIT_APPROVED.name(),
-            ProductStatus.WAIT_REJECTED.name(),
-            ProductStatus.APPROVED.name(),
-            ProductStatus.REJECTED.name(),
-            ProductStatus.SUSPENDED.name()
-          ));
-        case ProductStatus.SUSPENDED ->
-          validInitialStates.put(targetStatus.name(), List.of(ProductStatus.UPLOADED.name(), ProductStatus.SUPERVISIONED.name()));
-        default -> validInitialStates.put(targetStatus.name(), List.of());
+            List.of(ProductStatus.WAIT_APPROVED.name()));
+          default -> validInitialStates.put(targetStatus.name(), List.of());
       }
     }
     return validInitialStates.getOrDefault(targetStatus.name(), List.of());

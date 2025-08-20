@@ -3,7 +3,8 @@ package it.gov.pagopa.register.service.validator;
 import it.gov.pagopa.register.configuration.EprelValidationConfig;
 import it.gov.pagopa.register.connector.eprel.EprelConnector;
 import it.gov.pagopa.register.dto.utils.EprelProduct;
-import it.gov.pagopa.register.dto.utils.EprelResult;
+import it.gov.pagopa.register.dto.utils.ProductValidationResult;
+import it.gov.pagopa.register.enums.ProductStatus;
 import it.gov.pagopa.register.model.operation.Product;
 import it.gov.pagopa.register.repository.operation.ProductRepository;
 import org.apache.commons.csv.CSVRecord;
@@ -29,8 +30,6 @@ import static org.mockito.Mockito.when;
   EprelProductValidatorService.class
 })
 class EprelProductValidatorServiceTest {
-
-
 
   @MockitoBean
   private EprelConnector eprelConnector;
@@ -93,12 +92,12 @@ class EprelProductValidatorServiceTest {
 
     Product productWrongId = Product.builder()
       .organizationId("test")
-      .status("APPROVED")
+      .status(ProductStatus.UPLOADED.name())
       .build();
 
     Product productWrontStatus = Product.builder()
       .organizationId(orgId)
-      .status("REJECTED")
+      .status(ProductStatus.APPROVED.name())
       .motivation("Motivation")
       .build();
 
@@ -119,7 +118,7 @@ class EprelProductValidatorServiceTest {
     when(productRepository.findById("wrong-org-id-csv")).thenReturn(Optional.of(productWrongId));
     when(productRepository.findById("wrong-status-csv")).thenReturn(Optional.of(productWrontStatus));
 
-    EprelResult result = validatorService.validateRecords(records, EPREL_FIELDS, category, orgId, productFileId, null,"orgName");
+    ProductValidationResult result = validatorService.validateRecords(records, EPREL_FIELDS, category, orgId, productFileId, null,"orgName");
 
     assertEquals(1, result.getValidRecords().size());
     assertEquals(5, result.getInvalidRecords().size());

@@ -13,7 +13,6 @@ public class EprelUtils {
     return String.format("https://eprel.ec.europa.eu/screen/product/%s/%s", productGroup, eprelCode);
   }
 
-
   public static Boolean isEnergyClassValid(String energyClass, String category) {
     if (energyClass == null || energyClass.isBlank() || category == null) {
       return false;

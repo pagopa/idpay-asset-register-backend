@@ -19,7 +19,9 @@ public class ProductUpdateStatusRequestDTO {
   @NotEmpty()
   private List<String> gtinCodes;
 
-  private ProductStatus status;
+  private ProductStatus currentStatus;
+  private ProductStatus targetStatus;
+
 
   @NotBlank()
   private String motivation;
