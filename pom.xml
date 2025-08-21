@@ -125,7 +125,12 @@
       <dependency>
         <groupId>org.apache.tomcat.embed</groupId>
         <artifactId>tomcat-embed-core</artifactId>
-        <version>10.1.43</version>
+        <version>10.1.44</version>
+      </dependency>
+      <dependency>
+        <groupId>io.netty</groupId>
+        <artifactId>netty-all</artifactId>
+        <version>4.1.124.Final</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
