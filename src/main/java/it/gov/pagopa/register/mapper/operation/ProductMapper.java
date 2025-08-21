@@ -2,6 +2,7 @@ package it.gov.pagopa.register.mapper.operation;
 
 import it.gov.pagopa.register.dto.operation.ProductDTO;
 import it.gov.pagopa.register.enums.ProductStatus;
+import it.gov.pagopa.register.enums.UserRole;
 import it.gov.pagopa.register.model.operation.Product;
 import it.gov.pagopa.register.dto.utils.EprelProduct;
 import org.apache.commons.csv.CSVFormat;
@@ -26,16 +27,17 @@ public class ProductMapper {
 
   private ProductMapper() {}
 
-  public static ProductDTO toDTO(Product entity){
+  public static ProductDTO toDTO(Product entity, String role){
 
     if(entity==null){
       return null;
     }
 
+
     return ProductDTO.builder()
       .organizationId(entity.getOrganizationId())
       .registrationDate(entity.getRegistrationDate())
-      .status(entity.getStatus())
+      .status(role.equals(UserRole.OPERATORE.getRole()) && entity.getStatus().equals(ProductStatus.WAIT_APPROVED.name()) ? ProductStatus.UPLOADED.name() : entity.getStatus())
       .model(entity.getModel())
       .productGroup(entity.getProductGroup())
       .category(CATEGORIES_TO_IT_S.get(entity.getCategory()))
@@ -49,7 +51,7 @@ public class ProductMapper {
       .batchName(CATEGORIES_TO_IT_P.get(entity.getCategory())+"_"+entity.getProductFileId()+".csv")
       .productName(entity.getProductName())
       .capacity(("N\\A").equals(entity.getCapacity()) ? null : entity.getCapacity())
-      .motivation(entity.getMotivation())
+      .motivation(role.equals(UserRole.OPERATORE.getRole()) ? null : entity.getMotivation())
       .organizationName(entity.getOrganizationName())
       .build();
   }

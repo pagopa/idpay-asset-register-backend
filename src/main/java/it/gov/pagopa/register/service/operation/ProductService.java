@@ -42,7 +42,8 @@ public class ProductService {
     String gtinCode,
     String productName,
     String status,
-    Pageable pageable
+    Pageable pageable,
+    String role
   ) {
     log.info("[GET_PRODUCTS] - Fetching products for organizationId: {}, category: {}, productFileId: {}, eprelCode: {}, gtinCode: {}, productName: {}, status: {}",
       organizationId, category, productFileId, eprelCode, gtinCode,productName,status);
@@ -55,7 +56,7 @@ public class ProductService {
     log.info("[GET_PRODUCTS] - Found {} products matching criteria", count);
 
     Page<Product> entitiesPage = PageableExecutionUtils.getPage(entities, pageable, () -> count);
-    Page<ProductDTO> result = entitiesPage.map(ProductMapper::toDTO);
+    Page<ProductDTO> result = entitiesPage.map(p -> ProductMapper.toDTO(p, role));
 
     log.info("[GET_PRODUCTS] - Returning {} products for page {} of size {}", result.getTotalElements(), result.getNumber(), result.getSize());
 

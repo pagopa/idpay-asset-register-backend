@@ -1,6 +1,8 @@
 package it.gov.pagopa.register.mapper;
 
 import it.gov.pagopa.register.dto.operation.ProductDTO;
+import it.gov.pagopa.register.enums.ProductStatus;
+import it.gov.pagopa.register.enums.UserRole;
 import it.gov.pagopa.register.mapper.operation.ProductMapper;
 import it.gov.pagopa.register.model.operation.Product;
 import it.gov.pagopa.register.dto.utils.EprelProduct;
@@ -21,15 +23,43 @@ class ProductMapperTest {
 
   @Test
   void testToDTO_NullEntity() {
-    assertNull(ProductMapper.toDTO(null));
+    assertNull(ProductMapper.toDTO(null, null));
   }
 
   @Test
-  void testToDTO_ValidEntity() {
+  void testToDTO_RoleOperatore() {
     Product product = Product.builder()
       .organizationId("org1")
       .registrationDate(LocalDateTime.now())
-      .status("APPROVED")
+      .status(ProductStatus.WAIT_APPROVED.name())
+      .model("ModelX")
+      .productGroup("GroupA")
+      .category("CategoryA")
+      .brand("BrandX")
+      .eprelCode("EPREL123")
+      .gtinCode("GTIN123")
+      .productCode("PROD123")
+      .countryOfProduction("Italy")
+      .energyClass("A")
+      .capacity("10")
+      .productFileId("file123")
+      .motivation("Test")
+      .productName("CategoryA BrandX ModelX 10")
+      .build();
+
+    ProductDTO dto = ProductMapper.toDTO(product, UserRole.OPERATORE.getRole());
+    assertNotNull(dto);
+    assertEquals(ProductStatus.UPLOADED.name(), dto.getStatus());
+    assertNull(dto.getMotivation());
+
+  }
+
+  @Test
+  void testToDTO_RoleInvitalia() {
+    Product product = Product.builder()
+      .organizationId("org1")
+      .registrationDate(LocalDateTime.now())
+      .status(ProductStatus.WAIT_APPROVED.name())
       .model("ModelX")
       .productGroup("GroupA")
       .category("CategoryA")
@@ -42,11 +72,12 @@ class ProductMapperTest {
       .capacity("10")
       .productFileId("file123")
       .productName("CategoryA BrandX ModelX 10")
+      .motivation("Test")
       .build();
 
-    ProductDTO dto = ProductMapper.toDTO(product);
-    assertNotNull(dto);
-    assertEquals("org1", dto.getOrganizationId());
+    ProductDTO dto = ProductMapper.toDTO(product, UserRole.INVITALIA_ADMIN.getRole());
+    assertEquals(ProductStatus.WAIT_APPROVED.name(), dto.getStatus());
+    assertEquals("Test",dto.getMotivation());
 
   }
 

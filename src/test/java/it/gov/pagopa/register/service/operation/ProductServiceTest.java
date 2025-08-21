@@ -46,12 +46,14 @@ class ProductServiceTest {
 
     Product product1 = Product.builder()
       .organizationId("organizationId")
+      .status(ProductStatus.WAIT_APPROVED.name())
       .productFileId("product1")
       .category(WASHINGMACHINES)
       .capacity("N\\A")
       .build();
     Product product2 = Product.builder()
       .organizationId("organizationId")
+      .status(ProductStatus.SUPERVISED.name())
       .productFileId("product2")
       .category(WASHINGMACHINES)
       .capacity("N\\A")
@@ -84,7 +86,8 @@ class ProductServiceTest {
       null,
       null,
       null,
-      pageable);
+      pageable,
+      UserRole.OPERATORE.getRole());
 
     assertEquals(2, response.getContent().size());
     assertEquals(0, response.getPageNo());
@@ -119,7 +122,8 @@ class ProductServiceTest {
       null,
       null,
       null,
-      pageable);
+      pageable,
+      null);
 
     assertEquals(0, response.getContent().size());
     assertEquals(0, response.getPageNo());
@@ -141,7 +145,7 @@ class ProductServiceTest {
     when(productRepository.findByFilter(any(), any()))
       .thenThrow(new RuntimeException("Database error"));
 
-    RuntimeException exception = assertThrows(RuntimeException.class, () -> productService.fetchProductsByFilters(organizationId, null,  null, null, null, null,null,pageable));
+    RuntimeException exception = assertThrows(RuntimeException.class, () -> productService.fetchProductsByFilters(organizationId, null,  null, null, null, null,null,pageable, null));
 
     assertEquals("Database error", exception.getMessage());
 
