@@ -1,11 +1,11 @@
 package it.gov.pagopa.register.mapper;
 
 import it.gov.pagopa.register.dto.operation.ProductDTO;
+import it.gov.pagopa.register.dto.utils.EprelProduct;
 import it.gov.pagopa.register.enums.ProductStatus;
 import it.gov.pagopa.register.enums.UserRole;
 import it.gov.pagopa.register.mapper.operation.ProductMapper;
 import it.gov.pagopa.register.model.operation.Product;
-import it.gov.pagopa.register.dto.utils.EprelProduct;
 import org.apache.commons.csv.CSVRecord;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -16,8 +16,10 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Stream;
 
+import static it.gov.pagopa.register.utils.ObjectMaker.buildStatusChangeEventsList;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class ProductMapperTest {
 
@@ -43,14 +45,14 @@ class ProductMapperTest {
       .energyClass("A")
       .capacity("10")
       .productFileId("file123")
-      .motivation("Test")
+      .statusChangeChronology(buildStatusChangeEventsList())
       .productName("CategoryA BrandX ModelX 10")
       .build();
 
     ProductDTO dto = ProductMapper.toDTO(product, UserRole.OPERATORE.getRole());
     assertNotNull(dto);
     assertEquals(ProductStatus.UPLOADED.name(), dto.getStatus());
-    assertNull(dto.getMotivation());
+    assertNull(dto.getStatusChangeChronology());
 
   }
 
@@ -72,12 +74,12 @@ class ProductMapperTest {
       .capacity("10")
       .productFileId("file123")
       .productName("CategoryA BrandX ModelX 10")
-      .motivation("Test")
+      .statusChangeChronology(buildStatusChangeEventsList())
       .build();
 
     ProductDTO dto = ProductMapper.toDTO(product, UserRole.INVITALIA_ADMIN.getRole());
     assertEquals(ProductStatus.WAIT_APPROVED.name(), dto.getStatus());
-    assertEquals("Test",dto.getMotivation());
+    assertNotNull(dto.getStatusChangeChronology());
 
   }
 

@@ -180,7 +180,7 @@ public class AssetRegisterConstants {
   public static final String ERROR_ENERGY_CLASS = "La classe energetica non è conforme";
   public static final String DUPLICATE_GTIN_EAN = "GTIN già presente in un'altra riga";
   public static final String DIFFERENT_ORGANIZATIONID = "Prodotto associato ad un altro produttore";
-  public static final String STATUS_NOT_APPROVED = "Prodotto non editabile: \"{}\"";
+  public static final String STATUS_NOT_VALID = "Prodotto in stato diverso da ESCLUSO o DA CONTROLLARE";
   public static final class EprelValidationRules {
 
     private EprelValidationRules() {}
@@ -226,6 +226,7 @@ public class AssetRegisterConstants {
     UploadCsvStatus.UPLOADED.name()
   );
 
-  public static final String MOTIVATION_UPLOADED = "Controlli superati";
+
+  public static final String USERNAME = "USERNAME";
 
 }

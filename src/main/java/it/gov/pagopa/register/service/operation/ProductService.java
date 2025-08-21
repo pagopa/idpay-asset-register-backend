@@ -7,8 +7,10 @@ import it.gov.pagopa.register.dto.operation.ProductDTO;
 import it.gov.pagopa.register.dto.operation.ProductListDTO;
 import it.gov.pagopa.register.dto.operation.UpdateResultDTO;
 import it.gov.pagopa.register.enums.ProductStatus;
+import it.gov.pagopa.register.enums.UserRole;
 import it.gov.pagopa.register.mapper.operation.ProductMapper;
 import it.gov.pagopa.register.model.operation.Product;
+import it.gov.pagopa.register.model.operation.StatusChangeEvent;
 import it.gov.pagopa.register.repository.operation.ProductRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -17,6 +19,7 @@ import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -68,7 +71,8 @@ public class ProductService {
     ProductStatus currentStatus,
     ProductStatus targetStatus,
     String motivation,
-    String role
+    String role,
+    String username
   ) {
     log.info("[UPDATE_PRODUCT_STATUSES] - Starting update - newStatus: {}, motivation: {}", targetStatus, motivation);
     log.debug("[UPDATE_PRODUCT_STATUSES] - Product IDs to update: {}", productIds);
@@ -76,7 +80,7 @@ public class ProductService {
     List<Product> productsToUpdate = productRepository.findUpdatableProducts(productIds, currentStatus, targetStatus, role);
     log.debug("[UPDATE_PRODUCT_STATUSES] - Retrieved {} products for update", productsToUpdate.size());
 
-    updateStatuses(productsToUpdate, targetStatus, motivation);
+    updateStatuses(productsToUpdate, targetStatus, motivation,currentStatus,targetStatus,role,username);
     List<Product> productsUpdated = productRepository.saveAll(productsToUpdate);
 
     log.info("[UPDATE_PRODUCT_STATUSES] - Successfully updated {} products", productsUpdated.size());
@@ -93,12 +97,26 @@ public class ProductService {
   }
 
 
-  private void updateStatuses(List<Product> products, ProductStatus newStatus, String motivation) {
+  private void updateStatuses(List<Product> products,
+                              ProductStatus newStatus,
+                              String motivation,
+                              ProductStatus currentStatus,
+                              ProductStatus targetStatus,
+                              String role,
+                              String username
+  ) {
     products.forEach(product -> {
       log.debug("[UPDATE_PRODUCT_STATUSES] - Updating product {} status from {} to {}",
         product.getGtinCode(), product.getStatus(), newStatus.name());
       product.setStatus(newStatus.name());
-      product.setMotivation(motivation);
+      product.getStatusChangeChronology().add(StatusChangeEvent.builder()
+        .username(username)
+        .role(role.equals(UserRole.INVITALIA.getRole()) ? "L1" : "L2")
+        .updateDate(LocalDateTime.now())
+        .currentStatus(currentStatus)
+        .targetStatus(targetStatus)
+        .motivation(motivation)
+        .build());
     });
   }
 

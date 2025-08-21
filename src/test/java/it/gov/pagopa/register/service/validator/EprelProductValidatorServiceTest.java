@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static it.gov.pagopa.register.constants.AssetRegisterConstants.*;
+import static it.gov.pagopa.register.utils.ObjectMaker.buildStatusChangeEventsList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -98,7 +99,7 @@ class EprelProductValidatorServiceTest {
     Product productWrontStatus = Product.builder()
       .organizationId(orgId)
       .status(ProductStatus.APPROVED.name())
-      .motivation("Motivation")
+      .statusChangeChronology(buildStatusChangeEventsList())
       .build();
 
     when(eprelConnector.callEprel("valid-code")).thenReturn(validProduct);

@@ -21,7 +21,9 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import static it.gov.pagopa.register.constants.AssetRegisterConstants.USERNAME;
 import static it.gov.pagopa.register.constants.AssetRegisterConstants.WASHINGMACHINES;
+import static it.gov.pagopa.register.utils.ObjectMaker.buildStatusChangeEventsList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
@@ -166,6 +168,7 @@ class ProductServiceTest {
       .status("WAIT_APPROVED")
       .productName("name1")
       .productFileId("file1")
+      .statusChangeChronology(buildStatusChangeEventsList())
       .build();
 
     Product product2 = Product.builder()
@@ -174,6 +177,7 @@ class ProductServiceTest {
       .status("WAIT_APPROVED")
       .productName("name2")
       .productFileId("file1")
+      .statusChangeChronology(buildStatusChangeEventsList())
       .build();
 
 
@@ -188,7 +192,8 @@ class ProductServiceTest {
       ProductStatus.WAIT_APPROVED,
       ProductStatus.APPROVED,
       motivation,
-      UserRole.INVITALIA_ADMIN.getRole()
+      UserRole.INVITALIA_ADMIN.getRole(),
+      USERNAME
     );
 
 
@@ -210,6 +215,7 @@ class ProductServiceTest {
       .status(ProductStatus.UPLOADED.name())
       .productName("name1")
       .productFileId("file1")
+      .statusChangeChronology(buildStatusChangeEventsList())
       .build();
 
     Product product2 = Product.builder()
@@ -218,6 +224,7 @@ class ProductServiceTest {
       .status(ProductStatus.UPLOADED.name())
       .productName("name2")
       .productFileId("file1")
+      .statusChangeChronology(buildStatusChangeEventsList())
       .build();
 
     EmailProductDTO emailProductDTO = EmailProductDTO.builder()
@@ -245,7 +252,8 @@ class ProductServiceTest {
       ProductStatus.UPLOADED,
       ProductStatus.REJECTED,
       motivation,
-      UserRole.INVITALIA_ADMIN.getRole()
+      UserRole.INVITALIA_ADMIN.getRole(),
+      USERNAME
     );
 
     assertEquals("KO",result.getStatus());
