@@ -1,10 +1,10 @@
 package it.gov.pagopa.register.mapper.operation;
 
 import it.gov.pagopa.register.dto.operation.ProductDTO;
+import it.gov.pagopa.register.dto.utils.EprelProduct;
 import it.gov.pagopa.register.enums.ProductStatus;
 import it.gov.pagopa.register.enums.UserRole;
 import it.gov.pagopa.register.model.operation.Product;
-import it.gov.pagopa.register.dto.utils.EprelProduct;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.csv.CSVRecord;
@@ -12,13 +12,14 @@ import org.apache.commons.csv.CSVRecord;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
-
 import java.util.stream.Collectors;
 
 import static it.gov.pagopa.register.constants.AssetRegisterConstants.*;
 import static it.gov.pagopa.register.utils.CsvUtils.DELIMITER;
-import static it.gov.pagopa.register.utils.EprelUtils.*;
+import static it.gov.pagopa.register.utils.EprelUtils.generateEprelUrl;
+import static it.gov.pagopa.register.utils.EprelUtils.mapEnergyClass;
 
 
 public class ProductMapper {
@@ -51,7 +52,7 @@ public class ProductMapper {
       .batchName(CATEGORIES_TO_IT_P.get(entity.getCategory())+"_"+entity.getProductFileId()+".csv")
       .productName(entity.getProductName())
       .capacity(("N\\A").equals(entity.getCapacity()) ? null : entity.getCapacity())
-      .motivation(role.equals(UserRole.OPERATORE.getRole()) ? null : entity.getMotivation())
+      .statusChangeChronology(role.equals(UserRole.OPERATORE.getRole()) ? null : entity.getStatusChangeChronology())
       .organizationName(entity.getOrganizationName())
       .build();
   }
@@ -73,7 +74,7 @@ public class ProductMapper {
         csvRecord.get(MODEL)
       )
       .organizationName(organizationName)
-      .motivation(MOTIVATION_UPLOADED)
+      .statusChangeChronology(new ArrayList<>())
       .build();
   }
 
@@ -100,7 +101,7 @@ public class ProductMapper {
       .capacity(capacity)
       .productName(productName)
       .organizationName(organizationName)
-      .motivation(MOTIVATION_UPLOADED)
+      .statusChangeChronology(new ArrayList<>())
       .build();
   }
 

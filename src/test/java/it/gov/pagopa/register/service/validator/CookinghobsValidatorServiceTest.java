@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static it.gov.pagopa.register.constants.AssetRegisterConstants.CODE_GTIN_EAN;
+import static it.gov.pagopa.register.utils.ObjectMaker.buildStatusChangeEventsList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -64,7 +65,7 @@ class CookinghobsValidatorServiceTest {
     Product productWrongStatus = Product.builder()
       .organizationId(orgId)
       .status(ProductStatus.APPROVED.name())
-      .motivation("Not approved")
+      .statusChangeChronology(buildStatusChangeEventsList())
       .build();
 
     when(productRepository.findById("valid-gtin")).thenReturn(Optional.of(validProduct));

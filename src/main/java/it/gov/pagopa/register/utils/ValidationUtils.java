@@ -9,7 +9,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import static it.gov.pagopa.register.constants.AssetRegisterConstants.DIFFERENT_ORGANIZATIONID;
-import static it.gov.pagopa.register.constants.AssetRegisterConstants.STATUS_NOT_APPROVED;
+import static it.gov.pagopa.register.constants.AssetRegisterConstants.STATUS_NOT_VALID;
 
 public class ValidationUtils {
 
@@ -25,7 +25,7 @@ public class ValidationUtils {
         dbCheck = false;
       } else if (!ProductStatus.REJECTED.toString().equals(optProduct.get().getStatus()) &&
         !ProductStatus.UPLOADED.toString().equals(optProduct.get().getStatus())) {
-        addError(csvRecord, STATUS_NOT_APPROVED.replace("{}", optProduct.get().getMotivation()), invalidRecords, errorMessages);
+        addError(csvRecord, STATUS_NOT_VALID, invalidRecords, errorMessages);
         dbCheck = false;
       }
     }

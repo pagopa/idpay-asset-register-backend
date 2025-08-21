@@ -19,6 +19,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import java.util.Collections;
 import java.util.List;
 
+import static it.gov.pagopa.register.constants.AssetRegisterConstants.USERNAME;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
@@ -119,14 +120,15 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         ProductStatus.WAIT_APPROVED,
         ProductStatus.APPROVED,
         "Valid reason",
-        UserRole.INVITALIA_ADMIN.getRole()
+        UserRole.INVITALIA_ADMIN.getRole(),
+        USERNAME
       )).thenReturn(mockResponse);
 
       mockMvc.perform(
           org.springframework.test.web.servlet.request.MockMvcRequestBuilders
             .post("/idpay/register/products/update-status")
-            .header("x-organization-id", "83843864-f3c0-4def-badb-7f197471b72e")
             .header("x-organization-role", UserRole.INVITALIA_ADMIN.getRole())
+            .header("x-organization-username", USERNAME)
             .contentType(MediaType.APPLICATION_JSON)
             .content(requestBody))
         .andExpect(status().isOk())
