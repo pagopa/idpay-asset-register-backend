@@ -63,6 +63,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
           , any()
           , any()
           , any()
+          , any()
         ))
         .thenReturn(mockResponse);
       mockMvc.perform(get("/idpay/register/products")
@@ -82,6 +83,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
     @Test
     void testGetProducts_ServiceThrowsException() throws Exception {
       when(productService.fetchProductsByFilters(eq("83843864-f3c0-4def-badb-7f197471b72e")
+          , any()
           , any()
           , any()
           , any()

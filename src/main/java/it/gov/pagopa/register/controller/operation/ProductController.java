@@ -5,6 +5,7 @@ import it.gov.pagopa.register.dto.operation.ProductUpdateStatusRequestDTO;
 import it.gov.pagopa.register.dto.operation.UpdateResultDTO;
 import it.gov.pagopa.register.enums.ProductCategories;
 import it.gov.pagopa.register.enums.ProductStatus;
+import it.gov.pagopa.register.enums.UserRole;
 import it.gov.pagopa.register.service.operation.ProductService;
 import jakarta.validation.constraints.Pattern;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +30,7 @@ public class ProductController {
 
   @GetMapping("/products")
   public ResponseEntity<ProductListDTO> getProductList(
+    @RequestHeader(value = "x-organization-role", required = false, defaultValue = "operatore") @Pattern(regexp = ROLE_PATTERN) String role,
     @RequestParam(required = false) @Pattern(regexp = UUID_V4_PATTERN) String organizationId,
     @RequestParam(required = false) @Pattern(regexp = ANY_TEXT) String productName,
     @RequestParam(required = false) @Pattern(regexp = OBJECT_ID_PATTERN) String productFileId,
@@ -49,7 +51,8 @@ public class ProductController {
       gtinCode,
       productName,
       statusName,
-      pageable
+      pageable,
+      role
     );
 
     return ResponseEntity.ok(result);

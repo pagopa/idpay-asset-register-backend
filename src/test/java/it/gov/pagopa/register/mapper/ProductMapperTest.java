@@ -1,6 +1,7 @@
 package it.gov.pagopa.register.mapper;
 
 import it.gov.pagopa.register.dto.operation.ProductDTO;
+import it.gov.pagopa.register.enums.UserRole;
 import it.gov.pagopa.register.mapper.operation.ProductMapper;
 import it.gov.pagopa.register.model.operation.Product;
 import it.gov.pagopa.register.dto.utils.EprelProduct;
@@ -21,7 +22,7 @@ class ProductMapperTest {
 
   @Test
   void testToDTO_NullEntity() {
-    assertNull(ProductMapper.toDTO(null));
+    assertNull(ProductMapper.toDTO(null, null));
   }
 
   @Test
@@ -44,7 +45,7 @@ class ProductMapperTest {
       .productName("CategoryA BrandX ModelX 10")
       .build();
 
-    ProductDTO dto = ProductMapper.toDTO(product);
+    ProductDTO dto = ProductMapper.toDTO(product, UserRole.OPERATORE.getRole());
     assertNotNull(dto);
     assertEquals("org1", dto.getOrganizationId());
 
