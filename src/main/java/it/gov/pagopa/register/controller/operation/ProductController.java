@@ -60,7 +60,7 @@ public class ProductController {
   @PostMapping("/products/update-status")
   public ResponseEntity<UpdateResultDTO> updateProductsState(
     @RequestHeader("x-organization-role") @Pattern(regexp = ROLE_PATTERN) String role,
-    @RequestHeader("x-organization-username") String username,
+    @RequestHeader("x-user-name") String username,
     @RequestBody ProductUpdateStatusRequestDTO dto
   ) {
     UpdateResultDTO result = productService.updateProductStatusesWithNotification(

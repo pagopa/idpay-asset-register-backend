@@ -128,7 +128,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
           org.springframework.test.web.servlet.request.MockMvcRequestBuilders
             .post("/idpay/register/products/update-status")
             .header("x-organization-role", UserRole.INVITALIA_ADMIN.getRole())
-            .header("x-organization-username", USERNAME)
+            .header("x-user-name", USERNAME)
             .contentType(MediaType.APPLICATION_JSON)
             .content(requestBody))
         .andExpect(status().isOk())
