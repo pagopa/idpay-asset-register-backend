@@ -1,5 +1,8 @@
 package it.gov.pagopa.register.repository;
 
+import it.gov.pagopa.register.dto.operation.EmailProductDTO;
+import it.gov.pagopa.register.enums.ProductStatus;
+import it.gov.pagopa.register.enums.UserRole;
 import it.gov.pagopa.register.model.operation.Product;
 import it.gov.pagopa.register.repository.operation.ProductSpecificRepositoryImpl;
 import org.bson.Document;
@@ -74,7 +77,6 @@ class ProductSpecificRepositoryTest {
 
   @Test
   void testFindDistinctProductFileIdAndCategoryByOrganizationId_shouldReturnResults() {
-    // Arrange
     Product mockProduct = Product.builder()
       .productFileId("file123")
       .category("categoryABC")
@@ -90,10 +92,9 @@ class ProductSpecificRepositoryTest {
       eq(Product.class))
     ).thenReturn(aggregationResults);
 
-    // Act
-    List<Product> result = repository.findDistinctProductFileIdAndCategoryByOrganizationId("org1");
 
-    // Assert
+    List<Product> result = repository.retrieveDistinctProductFileIdsBasedOnRole("org1",null,"operatore");
+
     assertNotNull(result);
     assertEquals(1, result.size());
     assertEquals("file123", result.get(0).getProductFileId());
@@ -101,19 +102,77 @@ class ProductSpecificRepositoryTest {
 
     verify(mongoTemplate, times(1)).aggregate(any(Aggregation.class), eq("product"), eq(Product.class));
   }
-
-
   @Test
-  void testFindByIdsAndOrganizationId_shouldReturnMatchingProducts() {
-    Product product = Product.builder().gtinCode("gtin1").organizationId("org1").build();
+  void testFindUpdatableProducts_APPROVED_invitaliaAdmin() {
+    Product product = Product.builder().gtinCode("gtin1").organizationId("org1").status("UPLOAD").build();
+
     when(mongoTemplate.find(any(Query.class), eq(Product.class))).thenReturn(List.of(product));
 
-    List<Product> results = repository.findByIdsAndOrganizationIdAndNeStatus(List.of("gtin1"), "org1","APPROVED");
+    List<Product> results = repository.findUpdatableProducts(List.of("gtin1"),ProductStatus.WAIT_APPROVED, ProductStatus.APPROVED, UserRole.INVITALIA_ADMIN.getRole());
 
     assertEquals(1, results.size());
     assertEquals("gtin1", results.get(0).getGtinCode());
-    assertEquals("org1", results.get(0).getOrganizationId());
   }
+
+  @Test
+  void testFindUpdatableProducts_UPLOAD_invitaliaAdmin() {
+    Product product = Product.builder().gtinCode("gtin1").organizationId("org1").status("APPROVED").build();
+    when(mongoTemplate.find(any(Query.class), eq(Product.class))).thenReturn(List.of(product));
+
+    List<Product> results = repository.findUpdatableProducts(List.of("gtin1"),ProductStatus.WAIT_APPROVED, ProductStatus.UPLOADED, UserRole.INVITALIA_ADMIN.getRole());
+
+    assertEquals(1, results.size());
+    assertEquals("gtin1", results.get(0).getGtinCode());
+  }
+
+
+  @Test
+  void testFindUpdatableProducts_SUPERVISIONED_invitalia() {
+    Product product = Product.builder().gtinCode("gtin1").organizationId("org1").status("UPLOAD").build();
+    when(mongoTemplate.find(any(Query.class), eq(Product.class))).thenReturn(List.of(product));
+
+    List<Product> results = repository.findUpdatableProducts(List.of("gtin1"), ProductStatus.UPLOADED, ProductStatus.SUPERVISED, "invitalia");
+
+    assertEquals(1, results.size());
+    assertEquals("gtin1", results.get(0).getGtinCode());
+  }
+
+  @Test
+  void testFindUpdatableProducts_WAIT_APPROVED_invitalia() {
+    Product product = Product.builder().gtinCode("gtin1").organizationId("org1").status("UPLOAD").build();
+    when(mongoTemplate.find(any(Query.class), eq(Product.class))).thenReturn(List.of(product));
+
+    List<Product> results = repository.findUpdatableProducts(List.of("gtin1"),  ProductStatus.UPLOADED,ProductStatus.WAIT_APPROVED, "invitalia");
+
+    assertEquals(1, results.size());
+    assertEquals("gtin1", results.get(0).getGtinCode());
+  }
+
+
+
+  @Test
+  void testGetProductNamesGroupedByEmail_shouldReturnGroupedResults() {
+
+    EmailProductDTO dto = EmailProductDTO
+      .builder()
+      .id("user@example.com")
+      .productNames(List.of("Product A", "Product B"))
+      .build();
+
+    AggregationResults<EmailProductDTO> aggregationResults = mock(AggregationResults.class);
+    when(aggregationResults.getMappedResults()).thenReturn(List.of(dto));
+    when(mongoTemplate.aggregate(any(Aggregation.class), eq("productjoin"), eq(EmailProductDTO.class)))
+      .thenReturn(aggregationResults);
+
+    List<EmailProductDTO> results = repository.getProductNamesGroupedByEmail(List.of("gtin1", "gtin2"));
+
+    assertEquals(1, results.size());
+    assertEquals("user@example.com", results.get(0).getId());
+    assertTrue(results.get(0).getProductNames().contains("Product A"));
+    assertTrue(results.get(0).getProductNames().contains("Product B"));
+  }
+
+
 
   @Test
   void testResolveSort_shouldApplyCustomSortForBatchName() {

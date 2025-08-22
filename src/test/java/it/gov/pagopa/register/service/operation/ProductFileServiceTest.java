@@ -101,11 +101,6 @@ class ProductFileServiceTest {
     assertEquals("DB", ex.getMessage());
   }
 
-  @Test
-  void testGetFilesByPage_NullOrg() {
-    Pageable page = PageRequest.of(0,1);
-    assertThrows(IllegalArgumentException.class, () -> productFileService.getFilesByPage(null, page));
-  }
 
   @Test
   void downloadReport_partialLoad() throws IOException {
@@ -180,7 +175,7 @@ class ProductFileServiceTest {
     MultipartFile file = createMockFile_InvalidFileType();
     ValidationResultDTO validationResultDTO = new ValidationResultDTO("KO","TEST");
     when(productFileValidator.validateFile(any(),anyString())).thenReturn(validationResultDTO);
-    ProductFileResult res = productFileService.uploadFile(file, "cat","org","user","email");
+    ProductFileResult res = productFileService.uploadFile(file, "cat","org","user","email","orgName");
     assertEquals("KO", res.getStatus());
     assertEquals("TEST", res.getErrorKey());
   }
@@ -220,7 +215,7 @@ class ProductFileServiceTest {
       ProductFile savedProductFile = ProductFile.builder().id("123").build();
       when(productFileRepository.save(any())).thenReturn(savedProductFile);
 
-      ProductFileResult result = productFileService.uploadFile(file, "COOKINGHOBS", "org1", "user1","email");
+      ProductFileResult result = productFileService.uploadFile(file, "COOKINGHOBS", "org1", "user1","email","orgName");
 
       assertEquals("KO", result.getStatus());
       assertEquals(AssetRegisterConstants.UploadKeyConstant.REPORT_FORMAL_FILE_ERROR_KEY, result.getErrorKey());
@@ -287,7 +282,7 @@ class ProductFileServiceTest {
 
       when(fileStorageClient.upload(any(), any(), any())).thenReturn(null);
 
-      ProductFileResult res = productFileService.uploadFile(file, "cat", "org", "user","email");
+      ProductFileResult res = productFileService.uploadFile(file, "cat", "org", "user","email","orgName");
 
       assertEquals("OK", res.getStatus());
       assertNull(res.getErrorKey());
@@ -297,23 +292,16 @@ class ProductFileServiceTest {
   }
 
   @Test
-  void shouldThrowExceptionWhenOrganizationIdIsEmpty() {
-    ReportNotFoundException ex = assertThrows(ReportNotFoundException.class,
-      () -> productFileService.getProductFilesByOrganizationId(""));
-    assertEquals("Organization Id is null or empty", ex.getMessage());
-  }
-
-  @Test
   void shouldReturnMappedDTOListWhenValidDataIsPresent() {
     Product file = Product.builder()
       .productFileId("file123")
       .category("DISHWASHERS")
       .build();
 
-    when(productRepository.findDistinctProductFileIdAndCategoryByOrganizationId("org123"))
+    when(productRepository.retrieveDistinctProductFileIdsBasedOnRole("org123",null,"operatore"))
       .thenReturn(List.of(file));
 
-    List<ProductBatchDTO> result = productFileService.getProductFilesByOrganizationId("org123");
+    List<ProductBatchDTO> result = productFileService.retrieveDistinctProductFileIdsBasedOnRole("org123",null,"operatore");
 
     assertEquals(1, result.size());
     assertEquals("file123", result.getFirst().getProductFileId());
@@ -328,7 +316,7 @@ class ProductFileServiceTest {
     when(productFileRepository.existsByOrganizationIdAndUploadStatusIn(eq("org"), anyList()))
       .thenReturn(true);
 
-    ProductFileResult result = productFileService.uploadFile(file, "cat", "org", "user", "email");
+    ProductFileResult result = productFileService.uploadFile(file, "cat", "org", "user", "email","orgName");
 
     assertEquals("KO", result.getStatus());
     assertEquals(AssetRegisterConstants.UploadKeyConstant.UPLOAD_ALREADY_IN_PROGRESS, result.getErrorKey());

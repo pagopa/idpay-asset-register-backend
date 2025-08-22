@@ -9,6 +9,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 
 @Data
 @Builder
@@ -34,6 +35,7 @@ public class Product {
   private String countryOfProduction;
   private String energyClass;
   private String capacity;
-  private String motivation;
+  private ArrayList<StatusChangeEvent> statusChangeChronology;
   private String productName;
+  private String organizationName;
 }

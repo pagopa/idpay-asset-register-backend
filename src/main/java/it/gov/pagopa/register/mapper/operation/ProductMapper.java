@@ -1,8 +1,10 @@
 package it.gov.pagopa.register.mapper.operation;
 
 import it.gov.pagopa.register.dto.operation.ProductDTO;
-import it.gov.pagopa.register.model.operation.Product;
 import it.gov.pagopa.register.dto.utils.EprelProduct;
+import it.gov.pagopa.register.enums.ProductStatus;
+import it.gov.pagopa.register.enums.UserRole;
+import it.gov.pagopa.register.model.operation.Product;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.csv.CSVRecord;
@@ -10,29 +12,33 @@ import org.apache.commons.csv.CSVRecord;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
-
 import java.util.stream.Collectors;
 
 import static it.gov.pagopa.register.constants.AssetRegisterConstants.*;
 import static it.gov.pagopa.register.utils.CsvUtils.DELIMITER;
-import static it.gov.pagopa.register.utils.EprelUtils.*;
+import static it.gov.pagopa.register.utils.EprelUtils.generateEprelUrl;
+import static it.gov.pagopa.register.utils.EprelUtils.mapEnergyClass;
 
 
 public class ProductMapper {
 
+
+
   private ProductMapper() {}
 
-  public static ProductDTO toDTO(Product entity){
+  public static ProductDTO toDTO(Product entity, String role){
 
     if(entity==null){
       return null;
     }
 
+
     return ProductDTO.builder()
       .organizationId(entity.getOrganizationId())
       .registrationDate(entity.getRegistrationDate())
-      .status(entity.getStatus())
+      .status(role.equals(UserRole.OPERATORE.getRole()) && entity.getStatus().equals(ProductStatus.WAIT_APPROVED.name()) ? ProductStatus.UPLOADED.name() : entity.getStatus())
       .model(entity.getModel())
       .productGroup(entity.getProductGroup())
       .category(CATEGORIES_TO_IT_S.get(entity.getCategory()))
@@ -46,15 +52,16 @@ public class ProductMapper {
       .batchName(CATEGORIES_TO_IT_P.get(entity.getCategory())+"_"+entity.getProductFileId()+".csv")
       .productName(entity.getProductName())
       .capacity(("N\\A").equals(entity.getCapacity()) ? null : entity.getCapacity())
-      .motivation(entity.getMotivation())
+      .statusChangeChronology(role.equals(UserRole.OPERATORE.getRole()) ? null : entity.getStatusChangeChronology())
+      .organizationName(entity.getOrganizationName())
       .build();
   }
-  public static Product mapCookingHobToProduct(CSVRecord csvRecord, String orgId, String productFileId) {
+  public static Product mapCookingHobToProduct(CSVRecord csvRecord, String orgId, String productFileId,String organizationName) {
     return Product.builder()
       .productFileId(productFileId)
       .organizationId(orgId)
       .registrationDate(LocalDateTime.now())
-      .status(STATUS_APPROVED)
+      .status(ProductStatus.UPLOADED.name())
       .productCode(csvRecord.get(CODE_PRODUCT))
       .gtinCode(csvRecord.get(CODE_GTIN_EAN))
       .category(COOKINGHOBS)
@@ -66,10 +73,12 @@ public class ProductMapper {
         csvRecord.get(BRAND)+" "+
         csvRecord.get(MODEL)
       )
+      .organizationName(organizationName)
+      .statusChangeChronology(new ArrayList<>())
       .build();
   }
 
-  public static Product mapEprelToProduct(CSVRecord csvRecord, EprelProduct eprelData, String orgId, String productFileId, String category) {
+  public static Product mapEprelToProduct(CSVRecord csvRecord, EprelProduct eprelData, String orgId, String productFileId, String category, String organizationName) {
     String capacity = mapCapacity(category,eprelData);
     String productName = CATEGORIES_TO_IT_S.get(category) + " " +
       eprelData.getSupplierOrTrademark() + " " +
@@ -79,7 +88,7 @@ public class ProductMapper {
       .productFileId(productFileId)
       .organizationId(orgId)
       .registrationDate(LocalDateTime.now())
-      .status(STATUS_APPROVED)
+      .status(ProductStatus.UPLOADED.name())
       .productCode(csvRecord.get(CODE_PRODUCT))
       .gtinCode(csvRecord.get(CODE_GTIN_EAN))
       .eprelCode(csvRecord.get(CODE_EPREL))
@@ -91,6 +100,8 @@ public class ProductMapper {
       .energyClass(mapEnergyClass(eprelData.getEnergyClass()))
       .capacity(capacity)
       .productName(productName)
+      .organizationName(organizationName)
+      .statusChangeChronology(new ArrayList<>())
       .build();
   }
 

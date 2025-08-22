@@ -1,6 +1,7 @@
 package it.gov.pagopa.register.dto.operation;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import it.gov.pagopa.register.model.operation.StatusChangeEvent;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -8,6 +9,7 @@ import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 @Builder
@@ -33,5 +35,6 @@ public class ProductDTO {
   private String batchName;
   private String productName;
   private String capacity;
-  private String motivation;
+  private List<StatusChangeEvent> statusChangeChronology;
+  private String organizationName;
 }

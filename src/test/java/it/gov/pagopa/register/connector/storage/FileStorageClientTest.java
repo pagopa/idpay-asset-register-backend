@@ -54,7 +54,6 @@ class FileStorageClientTest {
 
   @Test
   void uploadFile_ShouldUploadSuccessfully() {
-    // Given
     File file = new File("test.txt");
     String destination = "folder/test.txt";
     String contentType = "text/plain";
@@ -65,10 +64,8 @@ class FileStorageClientTest {
     when(blobClient.uploadFromFileWithResponse(any(BlobUploadFromFileOptions.class), any(), any()))
       .thenReturn(mockResponse);
 
-    // When
     Response<BlockBlobItem> result = fileStorageClient.uploadFile(file, destination, contentType);
 
-    // Then
     assertThat(result).isEqualTo(mockResponse);
     verify(blobContainerClient).getBlobClient(destination);
     verify(blobClient).uploadFromFileWithResponse(any(BlobUploadFromFileOptions.class), any(), any());
@@ -76,7 +73,6 @@ class FileStorageClientTest {
 
   @Test
   void upload_ShouldUploadFromInputStream() {
-    // Given
     InputStream inputStream = new ByteArrayInputStream("test content".getBytes());
     String destination = "folder/test.txt";
     String contentType = "text/plain";
@@ -87,10 +83,8 @@ class FileStorageClientTest {
     when(blobClient.uploadWithResponse(any(BlobParallelUploadOptions.class), any(), any()))
       .thenReturn(mockResponse);
 
-    // When
     Response<BlockBlobItem> result = fileStorageClient.upload(inputStream, destination, contentType);
 
-    // Then
     assertThat(result).isEqualTo(mockResponse);
     verify(blobContainerClient).getBlobClient(destination);
     verify(blobClient).uploadWithResponse(any(BlobParallelUploadOptions.class), any(), any());
@@ -98,7 +92,6 @@ class FileStorageClientTest {
 
   @Test
   void deleteFile_ShouldDeleteSuccessfully() {
-    // Given
     String destination = "folder/test.txt";
     Response<Boolean> mockResponse = mock(Response.class);
 
@@ -106,10 +99,8 @@ class FileStorageClientTest {
     when(blobClient.deleteIfExistsWithResponse(any(), any(), any(), any()))
       .thenReturn(mockResponse);
 
-    // When
     Response<Boolean> result = fileStorageClient.deleteFile(destination);
 
-    // Then
     assertThat(result).isEqualTo(mockResponse);
     verify(blobContainerClient).getBlobClient(destination);
     verify(blobClient).deleteIfExistsWithResponse(any(), any(), any(), any());
@@ -117,7 +108,6 @@ class FileStorageClientTest {
 
   @Test
   void download_ShouldReturnNullWhen404() {
-    // Given
     String filePath = "nonexistent.txt";
     BlobStorageException exception = mock(BlobStorageException.class);
     when(exception.getStatusCode()).thenReturn(404);
@@ -125,10 +115,8 @@ class FileStorageClientTest {
     when(blobContainerClient.getBlobClient(filePath)).thenReturn(blobClient);
     doThrow(exception).when(blobClient).downloadStream(any(OutputStream.class));
 
-    // When
     ByteArrayOutputStream result = fileStorageClient.download(filePath);
 
-    // Then
     assertThat(result).isNull();
     verify(blobContainerClient).getBlobClient(filePath);
     verify(blobClient).downloadStream(any(OutputStream.class));
@@ -136,7 +124,6 @@ class FileStorageClientTest {
 
   @Test
   void download_ShouldThrowExceptionWhenServerError() {
-    // Given
     String filePath = "test.txt";
     BlobStorageException exception = mock(BlobStorageException.class);
     when(exception.getStatusCode()).thenReturn(500);
@@ -144,14 +131,14 @@ class FileStorageClientTest {
     when(blobContainerClient.getBlobClient(filePath)).thenReturn(blobClient);
     doThrow(exception).when(blobClient).downloadStream(any(OutputStream.class));
 
-    // When & Then
+
     assertThatThrownBy(() -> fileStorageClient.download(filePath))
       .isInstanceOf(BlobStorageException.class);
   }
 
   @Test
   void downloadToFile_ShouldDownloadSuccessfully() throws IOException {
-    // Given
+
     String filePath = "test.txt";
     Path destination = Files.createTempFile("test", ".txt");
 
@@ -162,31 +149,29 @@ class FileStorageClientTest {
       .thenReturn(mockResponse);
 
     try {
-      // When
+
       Response<BlobProperties> result = fileStorageClient.download(filePath, destination);
 
-      // Then
+
       assertThat(result).isEqualTo(mockResponse);
       verify(blobContainerClient).getBlobClient(filePath);
       verify(blobClient).downloadToFileWithResponse(any(BlobDownloadToFileOptions.class), any(), any());
     } finally {
-      // Cleanup
       Files.deleteIfExists(destination);
     }
   }
 
   @Test
   void listFiles_ShouldReturnPagedIterable() {
-    // Given
     String path = "folder/";
     PagedIterable<BlobItem> mockPagedIterable = mock(PagedIterable.class);
 
     when(blobContainerClient.listBlobsByHierarchy(path)).thenReturn(mockPagedIterable);
 
-    // When
+
     PagedIterable<BlobItem> result = fileStorageClient.listFiles(path);
 
-    // Then
+
     assertThat(result).isEqualTo(mockPagedIterable);
     verify(blobContainerClient).listBlobsByHierarchy(path);
   }

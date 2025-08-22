@@ -25,4 +25,5 @@ public class ProductFile {
   private Integer findedProductsNumber;
   private Integer addedProductNumber;
   private String userEmail;
+  private String organizationName;
 }

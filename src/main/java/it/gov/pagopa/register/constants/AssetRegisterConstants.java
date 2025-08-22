@@ -2,6 +2,7 @@ package it.gov.pagopa.register.constants;
 
 import it.gov.pagopa.register.dto.utils.ColumnValidationRule;
 import it.gov.pagopa.register.dto.utils.EprelValidationRule;
+import it.gov.pagopa.register.enums.UploadCsvStatus;
 
 import java.util.*;
 import java.util.regex.Pattern;
@@ -179,7 +180,7 @@ public class AssetRegisterConstants {
   public static final String ERROR_ENERGY_CLASS = "La classe energetica non è conforme";
   public static final String DUPLICATE_GTIN_EAN = "GTIN già presente in un'altra riga";
   public static final String DIFFERENT_ORGANIZATIONID = "Prodotto associato ad un altro produttore";
-  public static final String STATUS_NOT_APPROVED = "Prodotto non editabile: \"{}\"";
+  public static final String STATUS_NOT_VALID = "Prodotto in stato diverso da ESCLUSO o DA CONTROLLARE";
   public static final class EprelValidationRules {
 
     private EprelValidationRules() {}
@@ -203,7 +204,7 @@ public class AssetRegisterConstants {
       new EprelValidationRule((v, z) -> v != null && isEnergyClassValid(v,z), ERROR_ENERGY_CLASS);
   }
 
-  public static final Pattern SUBJECT_PATTERN = Pattern.compile(".*/blobs/CSV/([^/]+)/([^/]+)/([^/]+\\.csv)$");
+  public static final Pattern SUBJECT_PATTERN = Pattern.compile(".*/blobs/CSV/([^/]+)/([^/]+)/([^/]+)/([^/]+\\.csv)$");
 
   public static final Map<String, String> ENERGY_CLASS_REQUIREMENTS = Map.of(
     WASHINGMACHINES, "A",
@@ -219,6 +220,13 @@ public class AssetRegisterConstants {
     "APPP", "APP", "AP", "A", "B", "C", "D", "E", "F", "G"
   );
 
-  public static final String STATUS_APPROVED = "APPROVED";
+
+  public static final List<String> BLOCKING_STATUSES = List.of(
+    UploadCsvStatus.IN_PROCESS.name(),
+    UploadCsvStatus.UPLOADED.name()
+  );
+
+
+  public static final String USERNAME = "USERNAME";
 
 }

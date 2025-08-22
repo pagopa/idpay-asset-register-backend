@@ -13,7 +13,7 @@ import java.util.Map;
 @AllArgsConstructor
 @Getter
 @Setter
-public class EprelResult {
+public class ProductValidationResult {
   private final Map<String, Product> validRecords;
   private final List<CSVRecord> invalidRecords;
   private final Map<CSVRecord, String> errorMessages;

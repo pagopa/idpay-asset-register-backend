@@ -3,7 +3,8 @@ package it.gov.pagopa.register.service.validator;
 import it.gov.pagopa.register.configuration.EprelValidationConfig;
 import it.gov.pagopa.register.connector.eprel.EprelConnector;
 import it.gov.pagopa.register.dto.utils.EprelProduct;
-import it.gov.pagopa.register.dto.utils.EprelResult;
+import it.gov.pagopa.register.dto.utils.ProductValidationResult;
+import it.gov.pagopa.register.enums.ProductStatus;
 import it.gov.pagopa.register.model.operation.Product;
 import it.gov.pagopa.register.repository.operation.ProductRepository;
 import org.apache.commons.csv.CSVRecord;
@@ -18,6 +19,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static it.gov.pagopa.register.constants.AssetRegisterConstants.*;
+import static it.gov.pagopa.register.utils.ObjectMaker.buildStatusChangeEventsList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -29,8 +31,6 @@ import static org.mockito.Mockito.when;
   EprelProductValidatorService.class
 })
 class EprelProductValidatorServiceTest {
-
-
 
   @MockitoBean
   private EprelConnector eprelConnector;
@@ -93,13 +93,13 @@ class EprelProductValidatorServiceTest {
 
     Product productWrongId = Product.builder()
       .organizationId("test")
-      .status("APPROVED")
+      .status(ProductStatus.UPLOADED.name())
       .build();
 
     Product productWrontStatus = Product.builder()
       .organizationId(orgId)
-      .status("REJECTED")
-      .motivation("Motivation")
+      .status(ProductStatus.APPROVED.name())
+      .statusChangeChronology(buildStatusChangeEventsList())
       .build();
 
     when(eprelConnector.callEprel("valid-code")).thenReturn(validProduct);
@@ -119,7 +119,7 @@ class EprelProductValidatorServiceTest {
     when(productRepository.findById("wrong-org-id-csv")).thenReturn(Optional.of(productWrongId));
     when(productRepository.findById("wrong-status-csv")).thenReturn(Optional.of(productWrontStatus));
 
-    EprelResult result = validatorService.validateRecords(records, EPREL_FIELDS, category, orgId, productFileId, null);
+    ProductValidationResult result = validatorService.validateRecords(records, EPREL_FIELDS, category, orgId, productFileId, null,"orgName");
 
     assertEquals(1, result.getValidRecords().size());
     assertEquals(5, result.getInvalidRecords().size());
