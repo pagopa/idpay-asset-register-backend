@@ -161,7 +161,7 @@ class ProductSpecificRepositoryTest {
 
     AggregationResults<EmailProductDTO> aggregationResults = mock(AggregationResults.class);
     when(aggregationResults.getMappedResults()).thenReturn(List.of(dto));
-    when(mongoTemplate.aggregate(any(Aggregation.class), eq("productjoin"), eq(EmailProductDTO.class)))
+    when(mongoTemplate.aggregate(any(Aggregation.class), eq("product"), eq(EmailProductDTO.class)))
       .thenReturn(aggregationResults);
 
     List<EmailProductDTO> results = repository.getProductNamesGroupedByEmail(List.of("gtin1", "gtin2"));
