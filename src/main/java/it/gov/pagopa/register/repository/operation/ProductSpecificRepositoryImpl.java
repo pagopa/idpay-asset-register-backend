@@ -9,7 +9,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.aggregation.*;
-
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 
@@ -96,16 +95,23 @@ public class ProductSpecificRepositoryImpl implements ProductSpecificRepository 
   @Override
   public List<EmailProductDTO> getProductNamesGroupedByEmail(List<String> gtinCodes) {
     Aggregation aggregation = Aggregation.newAggregation(
-      Aggregation.match(Criteria.where("gtinCode").in(gtinCodes)),
-      Aggregation.lookup("product_file", FIELD_PRODUCT_FILE_ID, FIELD_ID, "fileInfo"),
+      Aggregation.addFields()
+        .addField("productFileIdObj")
+        .withValue(ConvertOperators.ToObjectId.toObjectId("$productFileId"))
+        .build(),
+      Aggregation.match(Criteria.where("_id").in(gtinCodes)),
+      Aggregation.lookup("product_file", "productFileIdObj", "_id", "fileInfo"),
       Aggregation.unwind("fileInfo"),
       Aggregation.group("fileInfo.userEmail")
         .addToSet("productName").as("productNames")
     );
 
-    AggregationResults<EmailProductDTO> results = mongoTemplate.aggregate(aggregation, "productjoin", EmailProductDTO.class);
+    AggregationResults<EmailProductDTO> results =
+      mongoTemplate.aggregate(aggregation, "product", EmailProductDTO.class);
+
     return results.getMappedResults();
   }
+
 
   @Override
   public List<Product> findUpdatableProducts(List<String> productIds, ProductStatus currentStatus, ProductStatus targetStatus, String role) {
