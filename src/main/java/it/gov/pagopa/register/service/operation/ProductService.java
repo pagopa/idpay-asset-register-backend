@@ -91,8 +91,8 @@ public class ProductService {
         log.warn("[UPDATE_PRODUCT_STATUSES] - Some email notifications failed. Total failures: {}", failedEmails);
         return UpdateResultDTO.ko(AssetRegisterConstants.UpdateKeyConstant.EMAIL_ERROR_KEY);
       }
+      log.info("[UPDATE_PRODUCT_STATUSES] - All notifications sent successfully");
     }
-    log.info("[UPDATE_PRODUCT_STATUSES] - All notifications sent successfully");
     return UpdateResultDTO.ok();
   }
 
