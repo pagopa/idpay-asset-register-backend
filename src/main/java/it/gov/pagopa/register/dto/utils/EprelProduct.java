@@ -45,7 +45,16 @@ public class EprelProduct {
 
     private String volume;
     private String compartmentType;
-    private List<String> subCompartmentsTypes;
+    private List<SubCompartment> subCompartments;
+  }
+
+  @Data
+  @Builder
+  @AllArgsConstructor
+  @NoArgsConstructor
+  public static class SubCompartment {
+
+    private String subCompartmentType;
   }
 
   public String getFieldValue(String fieldName) {
