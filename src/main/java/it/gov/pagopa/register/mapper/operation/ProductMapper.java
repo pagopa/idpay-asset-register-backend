@@ -80,10 +80,7 @@ public class ProductMapper {
 
   public static Product mapEprelToProduct(CSVRecord csvRecord, EprelProduct eprelData, String orgId, String productFileId, String category, String organizationName) {
     String capacity = mapCapacity(category,eprelData);
-    String productName = CATEGORIES_TO_IT_S.get(category) + " " +
-      eprelData.getSupplierOrTrademark() + " " +
-      eprelData.getModelIdentifier() +
-      (!"N\\A".equals(capacity) ? " " + capacity : "");
+
     return Product.builder()
       .productFileId(productFileId)
       .organizationId(orgId)
@@ -98,8 +95,8 @@ public class ProductMapper {
       .brand(eprelData.getSupplierOrTrademark())
       .model(eprelData.getModelIdentifier())
       .energyClass(mapEnergyClass(eprelData.getEnergyClass()))
-      .capacity(mapCapacity(eprelData, category))
-      .productName(productName)
+      .capacity(capacity)
+      .productName(mapProductName(eprelData, category, capacity))
       .organizationName(organizationName)
       .statusChangeChronology(new ArrayList<>())
       .build();
@@ -172,10 +169,11 @@ public class ProductMapper {
     }
   }
 
-  public static String mapCapacity(EprelProduct eprel, String category){
-    if(category.equals(REFRIGERATINGAPPL)){
+  public static String mapProductName(EprelProduct eprel, String category, String capacity) {
+    String productType;
 
-      return eprel.getCompartments().stream()
+    if (category.equals(REFRIGERATINGAPPL)) {
+      productType = eprel.getCompartments().stream()
         .filter(c -> {
           if (REFRIGERATORS_CATEGORY.contains(c.getCompartmentType())) {
             return true;
@@ -189,10 +187,26 @@ public class ProductMapper {
           return false;
         })
         .findFirst()
-        .map(c -> "Frigorifero")
-        .orElse("Congelatore");
+        .map(c -> REFRIGERATOR_IT)
+        .orElse(FREEZER_IT);
+    } else {
+      productType = CATEGORIES_TO_IT_S.get(category);
     }
 
-    return category;
+    return buildProductName(productType, eprel, capacity);
   }
+
+  private static String buildProductName(String type, EprelProduct eprel, String capacity) {
+    StringBuilder name = new StringBuilder();
+    name.append(type).append(" ")
+      .append(eprel.getSupplierOrTrademark()).append(" ")
+      .append(eprel.getModelIdentifier());
+
+    if (!"N\\A".equals(capacity)) {
+      name.append(" ").append(capacity);
+    }
+
+    return name.toString();
+  }
+
 }

@@ -245,4 +245,7 @@ public class AssetRegisterConstants {
     FRESH_FOOD,
     CHILL
   );
+
+  public static final String FREEZER_IT = "Congelatore";
+  public static final String REFRIGERATOR_IT = "Frigorifero";
 }
