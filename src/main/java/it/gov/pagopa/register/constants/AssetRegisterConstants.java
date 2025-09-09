@@ -50,7 +50,7 @@ public class AssetRegisterConstants {
   public static final String RANGEHOODS_IT_P = "Cappe_Da_Cucina";
   public static final String DISHWASHERS_IT_P = "Lavastoviglie";
   public static final String TUMBLEDRYERS_IT_P = "Asciugatrici";
-  public static final String REFRIGERATINGAPPL_IT_P = "Frigoriferi";
+  public static final String REFRIGERATINGAPPL_IT_P = "Apparecchi_di_refrigerazione";
   public static final String COOKINGHOBS_IT_P = "Piani_Cottura";
   public static final String WASHINGMACHINES_IT_S = "Lavatrice";
   public static final String WASHERDRIERS_IT_S = "Lavasciuga";
@@ -58,7 +58,7 @@ public class AssetRegisterConstants {
   public static final String RANGEHOODS_IT_S = "Cappa da cucina";
   public static final String DISHWASHERS_IT_S = "Lavastoviglie";
   public static final String TUMBLEDRYERS_IT_S = "Asciugatrice";
-  public static final String REFRIGERATINGAPPL_IT_S = "Frigorifero";
+  public static final String REFRIGERATINGAPPL_IT_S = "Apparecchio di refrigerazione";
   public static final String COOKINGHOBS_IT_S = "Piano cottura";
   public static final Set<String> CATEGORIES = Set.of(
     WASHINGMACHINES,
@@ -229,4 +229,23 @@ public class AssetRegisterConstants {
 
   public static final String USERNAME = "USERNAME";
 
+// REFRIGERATORS CATEGORY
+  public static final String PANTRY = "PANTRY";
+  public static final String WINE_STORAGE = "WINE_STORAGE";
+  public static final String CELLAR = "CELLAR";
+  public static final String FRESH_FOOD = "FRESH_FOOD";
+  public static final String CHILL = "CHILL";
+
+  public static final String VARIABLE_TEMP = "VARIABLE_TEMP";
+
+  public static final Set<String> REFRIGERATORS_CATEGORY = Set.of(
+    PANTRY,
+    WINE_STORAGE,
+    CELLAR,
+    FRESH_FOOD,
+    CHILL
+  );
+
+  public static final String FREEZER_IT = "Congelatore";
+  public static final String REFRIGERATOR_IT = "Frigorifero";
 }
