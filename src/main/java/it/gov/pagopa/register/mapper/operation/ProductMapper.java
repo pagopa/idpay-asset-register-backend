@@ -181,7 +181,7 @@ public class ProductMapper {
           if (VARIABLE_TEMP.equals(c.getCompartmentType())) {
             return c.getSubCompartments() != null &&
               c.getSubCompartments().stream()
-                .map(EprelProduct.SubCompartment::getSubCompartmentType)
+                .map(EprelProduct.SubCompartment::getCompartmentType)
                 .anyMatch(REFRIGERATORS_CATEGORY::contains);
           }
           return false;

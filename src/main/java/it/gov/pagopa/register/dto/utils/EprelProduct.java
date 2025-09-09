@@ -54,7 +54,7 @@ public class EprelProduct {
   @NoArgsConstructor
   public static class SubCompartment {
 
-    private String subCompartmentType;
+    private String compartmentType;
   }
 
   public String getFieldValue(String fieldName) {
