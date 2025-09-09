@@ -183,7 +183,7 @@ class ProductMapperTest {
     List<EprelProduct.RefrigeratorCompartment> compartmentList = List.of(compartment);
 
     EprelProduct.SubCompartment subCompartment = new EprelProduct.SubCompartment();
-    subCompartment.setSubCompartmentType("CELLAR");
+    subCompartment.setCompartmentType("CELLAR");
 
     List<EprelProduct.SubCompartment> subCompartmentList = List.of(subCompartment);
     compartment.setSubCompartments(subCompartmentList);
@@ -215,7 +215,7 @@ class ProductMapperTest {
     List<EprelProduct.RefrigeratorCompartment> compartmentList = List.of(compartment);
 
     EprelProduct.SubCompartment subCompartment = new EprelProduct.SubCompartment();
-    subCompartment.setSubCompartmentType("FREEZER");
+    subCompartment.setCompartmentType("FREEZER");
 
     List<EprelProduct.SubCompartment> subCompartmentList = List.of(subCompartment);
     compartment.setSubCompartments(subCompartmentList);
