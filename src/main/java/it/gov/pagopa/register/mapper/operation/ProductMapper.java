@@ -98,7 +98,7 @@ public class ProductMapper {
       .brand(eprelData.getSupplierOrTrademark())
       .model(eprelData.getModelIdentifier())
       .energyClass(mapEnergyClass(eprelData.getEnergyClass()))
-      .capacity(capacity)
+      .capacity(mapCapacity(eprelData, category))
       .productName(productName)
       .organizationName(organizationName)
       .statusChangeChronology(new ArrayList<>())
@@ -170,5 +170,28 @@ public class ProductMapper {
     } catch (Exception e) {
       return null;
     }
+  }
+
+  public static String mapCapacity(EprelProduct eprel, String category){
+    if(category.equals(REFRIGERATINGAPPL)){
+
+      return eprel.getCompartments().stream()
+        .filter(c -> {
+          if (REFRIGERATORS_CATEGORY.contains(c.getCompartmentType())) {
+            return true;
+          }
+          if (VARIABLE_TEMP.equals(c.getCompartmentType())) {
+            return c.getSubCompartmentsTypes() != null &&
+              c.getSubCompartmentsTypes().stream()
+                .anyMatch(REFRIGERATORS_CATEGORY::contains);
+          }
+          return false;
+        })
+        .findFirst()
+        .map(c -> "Frigorifero")
+        .orElse("Congelatore");
+    }
+
+    return category;
   }
 }

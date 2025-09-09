@@ -27,6 +27,7 @@ public class EprelProduct {
   private String ratedCapacityWash;
   private String totalVolume;
   private List<Cavity> cavities;
+  private List<RefrigeratorCompartment> compartments;
 
   @Data
   @Builder
@@ -34,6 +35,17 @@ public class EprelProduct {
   @NoArgsConstructor
   public static class Cavity {
     private Integer volume;
+  }
+
+  @Data
+  @Builder
+  @AllArgsConstructor
+  @NoArgsConstructor
+  public static class RefrigeratorCompartment {
+
+    private String volume;
+    private String compartmentType;
+    private List<String> subCompartmentsTypes;
   }
 
   public String getFieldValue(String fieldName) {

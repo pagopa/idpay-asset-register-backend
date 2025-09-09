@@ -229,4 +229,20 @@ public class AssetRegisterConstants {
 
   public static final String USERNAME = "USERNAME";
 
+// REFRIGERATORS CATEGORY
+  public static final String PANTRY = "PANTRY";
+  public static final String WINE_STORAGE = "WINE_STORAGE";
+  public static final String CELLAR = "CELLAR";
+  public static final String FRESH_FOOD = "FRESH_FOOD";
+  public static final String CHILL = "CHILL";
+
+  public static final String VARIABLE_TEMP = "VARIABLE_TEMP";
+
+  public static final Set<String> REFRIGERATORS_CATEGORY = Set.of(
+    PANTRY,
+    WINE_STORAGE,
+    CELLAR,
+    FRESH_FOOD,
+    CHILL
+  );
 }
