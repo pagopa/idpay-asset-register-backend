@@ -98,7 +98,7 @@ class ProductMapperTest {
   }
 
   @Test
-  void testMapEprelToProduct() {
+  void testMapEprelToProductGeneric() {
     CSVRecord csvRecord = mock(CSVRecord.class);
     when(csvRecord.get("codeProduct")).thenReturn("PROD123");
     when(csvRecord.get("codeGtinEan")).thenReturn("GTIN123");
@@ -112,6 +112,122 @@ class ProductMapperTest {
     when(eprel.getEnergyClass()).thenReturn("A");
 
     Product product = ProductMapper.mapEprelToProduct(csvRecord, eprel, "org1", "file123", "WASHINGMACHINES","orgName");
+    assertEquals("BrandX", product.getBrand());
+  }
+
+  //Compartment con uno dei tipi refrigerator
+  @Test
+  void testMapEprelToProductRefrigerator() {
+    CSVRecord csvRecord = mock(CSVRecord.class);
+    when(csvRecord.get("codeProduct")).thenReturn("PROD123");
+    when(csvRecord.get("codeGtinEan")).thenReturn("GTIN123");
+    when(csvRecord.get("codeEprel")).thenReturn("EPREL123");
+    when(csvRecord.get("countryOfProduction")).thenReturn("Italy");
+
+    EprelProduct.RefrigeratorCompartment compartment = new EprelProduct.RefrigeratorCompartment();
+    compartment.setCompartmentType("CELLAR");
+    compartment.setVolume("5");
+
+    List<EprelProduct.RefrigeratorCompartment> compartmentList = List.of(compartment);
+
+    EprelProduct eprel = mock(EprelProduct.class);
+    when(eprel.getProductGroup()).thenReturn("GroupA");
+    when(eprel.getSupplierOrTrademark()).thenReturn("BrandX");
+    when(eprel.getModelIdentifier()).thenReturn("ModelX");
+    when(eprel.getEnergyClass()).thenReturn("A");
+    when(eprel.getCompartments()).thenReturn(compartmentList);
+
+    Product product = ProductMapper.mapEprelToProduct(csvRecord, eprel, "org1", "file123", "REFRIGERATINGAPPL","orgName");
+    assertEquals("BrandX", product.getBrand());
+  }
+
+  //Compartment senza uno dei tipi refrigerator
+  @Test
+  void testMapEprelToProductFreezer() {
+    CSVRecord csvRecord = mock(CSVRecord.class);
+    when(csvRecord.get("codeProduct")).thenReturn("PROD123");
+    when(csvRecord.get("codeGtinEan")).thenReturn("GTIN123");
+    when(csvRecord.get("codeEprel")).thenReturn("EPREL123");
+    when(csvRecord.get("countryOfProduction")).thenReturn("Italy");
+
+    EprelProduct.RefrigeratorCompartment compartment = new EprelProduct.RefrigeratorCompartment();
+    compartment.setCompartmentType("FREEZER");
+    compartment.setVolume("5");
+
+    List<EprelProduct.RefrigeratorCompartment> compartmentList = List.of(compartment);
+
+    EprelProduct eprel = mock(EprelProduct.class);
+    when(eprel.getProductGroup()).thenReturn("GroupA");
+    when(eprel.getSupplierOrTrademark()).thenReturn("BrandX");
+    when(eprel.getModelIdentifier()).thenReturn("ModelX");
+    when(eprel.getEnergyClass()).thenReturn("A");
+    when(eprel.getCompartments()).thenReturn(compartmentList);
+
+    Product product = ProductMapper.mapEprelToProduct(csvRecord, eprel, "org1", "file123", "REFRIGERATINGAPPL","orgName");
+    assertEquals("BrandX", product.getBrand());
+  }
+
+  //Compartment VARIABLE_TEMP con subcompartment di uno dei tipi refrigerator
+  @Test
+  void testMapEprelToProductSubRefrigerator() {
+    CSVRecord csvRecord = mock(CSVRecord.class);
+    when(csvRecord.get("codeProduct")).thenReturn("PROD123");
+    when(csvRecord.get("codeGtinEan")).thenReturn("GTIN123");
+    when(csvRecord.get("codeEprel")).thenReturn("EPREL123");
+    when(csvRecord.get("countryOfProduction")).thenReturn("Italy");
+
+    EprelProduct.RefrigeratorCompartment compartment = new EprelProduct.RefrigeratorCompartment();
+    compartment.setCompartmentType("VARIABLE_TEMP");
+    compartment.setVolume("5");
+
+    List<EprelProduct.RefrigeratorCompartment> compartmentList = List.of(compartment);
+
+    EprelProduct.SubCompartment subCompartment = new EprelProduct.SubCompartment();
+    subCompartment.setCompartmentType("CELLAR");
+
+    List<EprelProduct.SubCompartment> subCompartmentList = List.of(subCompartment);
+    compartment.setSubCompartments(subCompartmentList);
+
+    EprelProduct eprel = mock(EprelProduct.class);
+    when(eprel.getProductGroup()).thenReturn("GroupA");
+    when(eprel.getSupplierOrTrademark()).thenReturn("BrandX");
+    when(eprel.getModelIdentifier()).thenReturn("ModelX");
+    when(eprel.getEnergyClass()).thenReturn("A");
+    when(eprel.getCompartments()).thenReturn(compartmentList);
+
+    Product product = ProductMapper.mapEprelToProduct(csvRecord, eprel, "org1", "file123", "REFRIGERATINGAPPL","orgName");
+    assertEquals("BrandX", product.getBrand());
+  }
+
+  //Compartment VARIABLE_TEMP senza subcompartment di uno dei tipi refrigerator
+  @Test
+  void testMapEprelToProductSubFreezer() {
+    CSVRecord csvRecord = mock(CSVRecord.class);
+    when(csvRecord.get("codeProduct")).thenReturn("PROD123");
+    when(csvRecord.get("codeGtinEan")).thenReturn("GTIN123");
+    when(csvRecord.get("codeEprel")).thenReturn("EPREL123");
+    when(csvRecord.get("countryOfProduction")).thenReturn("Italy");
+
+    EprelProduct.RefrigeratorCompartment compartment = new EprelProduct.RefrigeratorCompartment();
+    compartment.setCompartmentType("VARIABLE_TEMP");
+    compartment.setVolume("5");
+
+    List<EprelProduct.RefrigeratorCompartment> compartmentList = List.of(compartment);
+
+    EprelProduct.SubCompartment subCompartment = new EprelProduct.SubCompartment();
+    subCompartment.setCompartmentType("FREEZER");
+
+    List<EprelProduct.SubCompartment> subCompartmentList = List.of(subCompartment);
+    compartment.setSubCompartments(subCompartmentList);
+
+    EprelProduct eprel = mock(EprelProduct.class);
+    when(eprel.getProductGroup()).thenReturn("GroupA");
+    when(eprel.getSupplierOrTrademark()).thenReturn("BrandX");
+    when(eprel.getModelIdentifier()).thenReturn("ModelX");
+    when(eprel.getEnergyClass()).thenReturn("A");
+    when(eprel.getCompartments()).thenReturn(compartmentList);
+
+    Product product = ProductMapper.mapEprelToProduct(csvRecord, eprel, "org1", "file123", "REFRIGERATINGAPPL","orgName");
     assertEquals("BrandX", product.getBrand());
   }
 

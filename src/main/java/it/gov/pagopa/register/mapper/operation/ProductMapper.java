@@ -80,10 +80,7 @@ public class ProductMapper {
 
   public static Product mapEprelToProduct(CSVRecord csvRecord, EprelProduct eprelData, String orgId, String productFileId, String category, String organizationName) {
     String capacity = mapCapacity(category,eprelData);
-    String productName = CATEGORIES_TO_IT_S.get(category) + " " +
-      eprelData.getSupplierOrTrademark() + " " +
-      eprelData.getModelIdentifier() +
-      (!"N\\A".equals(capacity) ? " " + capacity : "");
+
     return Product.builder()
       .productFileId(productFileId)
       .organizationId(orgId)
@@ -99,7 +96,7 @@ public class ProductMapper {
       .model(eprelData.getModelIdentifier())
       .energyClass(mapEnergyClass(eprelData.getEnergyClass()))
       .capacity(capacity)
-      .productName(productName)
+      .productName(mapProductName(eprelData, category, capacity))
       .organizationName(organizationName)
       .statusChangeChronology(new ArrayList<>())
       .build();
@@ -171,4 +168,45 @@ public class ProductMapper {
       return null;
     }
   }
+
+  public static String mapProductName(EprelProduct eprel, String category, String capacity) {
+    String productType;
+
+    if (category.equals(REFRIGERATINGAPPL)) {
+      productType = eprel.getCompartments().stream()
+        .filter(c -> {
+          if (REFRIGERATORS_CATEGORY.contains(c.getCompartmentType())) {
+            return true;
+          }
+          if (VARIABLE_TEMP.equals(c.getCompartmentType())) {
+            return c.getSubCompartments() != null &&
+              c.getSubCompartments().stream()
+                .map(EprelProduct.SubCompartment::getCompartmentType)
+                .anyMatch(REFRIGERATORS_CATEGORY::contains);
+          }
+          return false;
+        })
+        .findFirst()
+        .map(c -> REFRIGERATOR_IT)
+        .orElse(FREEZER_IT);
+    } else {
+      productType = CATEGORIES_TO_IT_S.get(category);
+    }
+
+    return buildProductName(productType, eprel, capacity);
+  }
+
+  private static String buildProductName(String type, EprelProduct eprel, String capacity) {
+    StringBuilder name = new StringBuilder();
+    name.append(type).append(" ")
+      .append(eprel.getSupplierOrTrademark()).append(" ")
+      .append(eprel.getModelIdentifier());
+
+    if (!"N\\A".equals(capacity)) {
+      name.append(" ").append(capacity);
+    }
+
+    return name.toString();
+  }
+
 }
