@@ -1,11 +1,15 @@
 package it.gov.pagopa.register.service.consumer;
 
 
+import io.github.resilience4j.retry.Retry;
+import io.github.resilience4j.retry.RetryConfig;
 import it.gov.pagopa.register.connector.eprel.EprelConnector;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cloud.stream.binder.Binding;
 import org.springframework.cloud.stream.binding.BindingsLifecycleController;
 import org.springframework.stereotype.Component;
+
+import java.time.Duration;
+import java.util.function.Supplier;
 
 @Component
 @Slf4j
@@ -15,7 +19,9 @@ public class ConsumerControlService {
   private final BindingsLifecycleController lifecycleController;
   private final EprelConnector eprelConnector;
 
-  public ConsumerControlService(BindingsLifecycleController lifecycleController, EprelConnector eprelConnector) {
+  public ConsumerControlService(
+      BindingsLifecycleController lifecycleController,
+      EprelConnector eprelConnector) {
     this.lifecycleController = lifecycleController;
     this.eprelConnector = eprelConnector;
   }
@@ -30,27 +36,28 @@ public class ConsumerControlService {
 
 
   public void startEprelHealthCheck() {
-    log.info("[EPREL_HEALTH] - Starting loop to wait for EPREL...");
+    log.info("[EPREL_HEALTH] - Starting retry with Resilience4j...");
 
-    boolean shouldContinue = true;
+    RetryConfig config = RetryConfig.custom()
+      .maxAttempts(Integer.MAX_VALUE)
+      .waitDuration(Duration.ofSeconds(10))
+      .retryExceptions(Exception.class)
+      .build();
 
-    while (shouldContinue) {
-      try {
-        eprelConnector.callEprel("2310908");
-        log.info("[EPREL_HEALTH] - EPREL is available. Restarting Kafka consumer.");
-        startConsumer();
-        shouldContinue = false;
-      } catch (Exception e) {
-        log.warn("[EPREL_HEALTH] - EPREL still unavailable. Retrying in 10 seconds...");
-        try {
-          Thread.sleep(10_000);
-        } catch (InterruptedException ie) {
-          Thread.currentThread().interrupt();
-          log.error("[EPREL_HEALTH] - Thread interrupted. Exiting health check.");
-          startConsumer();
-          shouldContinue = false;
-        }
-      }
+    Retry retry = Retry.of("eprelHealth", config);
+
+    Supplier<Void> retryableCall = Retry.decorateSupplier(retry, () -> {
+      eprelConnector.callEprel("2310908");
+      log.info("[EPREL_HEALTH] - EPREL is available. Restarting Kafka consumer.");
+      startConsumer();
+      return null;
+    });
+
+    try {
+      retryableCall.get();
+    } catch (Exception e) {
+      log.error("[EPREL_HEALTH] - Unexpected error in health check: {}", e.getMessage());
+      startConsumer();
     }
   }
 
