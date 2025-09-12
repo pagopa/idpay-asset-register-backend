@@ -12,6 +12,7 @@ public final class ExceptionConstants {
         public static final String TOO_MANY_REQUESTS = "TOO_MANY_REQUESTS";
         public static final String INVALID_REQUEST = "INVALID_REQUEST";
         public static final String REPORT_NOT_FOUND = "REPORT_NOT_FOUND";
+        public static final String EPREL_EXCEPTION = "EPREL_EXCEPTION";
 
         private ExceptionCode() {}
     }

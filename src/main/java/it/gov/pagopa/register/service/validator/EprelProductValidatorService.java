@@ -5,6 +5,7 @@ import it.gov.pagopa.register.connector.eprel.EprelConnector;
 import it.gov.pagopa.register.dto.utils.EprelProduct;
 import it.gov.pagopa.register.dto.utils.EprelValidationRule;
 import it.gov.pagopa.register.dto.utils.ProductValidationResult;
+import it.gov.pagopa.register.exception.operation.EprelException;
 import it.gov.pagopa.register.model.operation.Product;
 import it.gov.pagopa.register.repository.operation.ProductRepository;
 import lombok.AllArgsConstructor;
@@ -12,7 +13,9 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.csv.CSVRecord;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.HttpClientErrorException;
 
 import java.util.*;
 
@@ -79,17 +82,25 @@ public class EprelProductValidatorService {
     }
 
     log.info("[VALIDATE_RECORD] - Validating EPREL code: {}", eprelCode);
-    EprelProduct eprelData = eprelConnector.callEprel(eprelCode);
-    log.info("[VALIDATE_RECORD] - EPREL response: {}", eprelData);
-
-    if (eprelData == null) {
-      addError(csvRecord, "Product not found in EPREL", invalidRecords, errorMessages);
-      return;
+    EprelProduct eprelData;
+    try {
+      eprelData = eprelConnector.callEprel(eprelCode);
+      log.info("[VALIDATE_RECORD] - EPREL response: {}", eprelData);
+    } catch (HttpClientErrorException e) {
+      if (e.getStatusCode() == HttpStatus.NOT_FOUND) {
+        addError(csvRecord, "EPREL product not found for registration number", invalidRecords, errorMessages);
+        return;
+      } else {
+        throw new EprelException("EPREL server error");
+      }
+    } catch (Exception e) {
+      throw new EprelException("EPREL unexpected error");
     }
 
     if (WASHERDRIERS.equalsIgnoreCase(context.getCategory())) {
       eprelData.setEnergyClass(eprelData.getEnergyClassWash());
     }
+
 
     List<String> errors = validateFields(context, eprelData);
     if (!errors.isEmpty()) {

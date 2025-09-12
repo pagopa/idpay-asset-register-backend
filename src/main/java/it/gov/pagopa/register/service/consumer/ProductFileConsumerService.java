@@ -9,10 +9,12 @@ import it.gov.pagopa.register.connector.storage.FileStorageClient;
 import it.gov.pagopa.register.dto.operation.StorageEventDTO;
 import it.gov.pagopa.register.dto.utils.EventDetails;
 import it.gov.pagopa.register.dto.utils.ProductValidationResult;
+import it.gov.pagopa.register.exception.operation.EprelException;
 import it.gov.pagopa.register.model.operation.Product;
 import it.gov.pagopa.register.model.operation.ProductFile;
 import it.gov.pagopa.register.repository.operation.ProductFileRepository;
 import it.gov.pagopa.register.repository.operation.ProductRepository;
+import it.gov.pagopa.register.service.producer.ProductFileProducerService;
 import it.gov.pagopa.register.service.validator.CookinghobsValidatorService;
 import it.gov.pagopa.register.service.validator.EprelProductValidatorService;
 import it.gov.pagopa.register.utils.CsvUtils;
@@ -29,10 +31,7 @@ import java.nio.file.Path;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Matcher;
 
 import static it.gov.pagopa.register.constants.AssetRegisterConstants.*;
@@ -49,14 +48,20 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
   private final EprelProductValidatorService eprelProductValidator;
   private final CookinghobsValidatorService cookinghobsValidatorService;
   private final NotificationServiceImpl notificationService;
+  private final ProductFileProducerService productFileProducerService;
 
+  private final ConsumerControlService consumerControlService;
+  private final ObjectMapper objectMapper;
   protected ProductFileConsumerService(@Value("${spring.application.name}") String applicationName,
                                        ProductRepository productRepository,
                                        FileStorageClient fileStorageClient,
                                        ObjectMapper objectMapper,
                                        ProductFileRepository productFileRepository,
                                        EprelProductValidatorService eprelProductValidator,
-                                       CookinghobsValidatorService cookinghobsValidatorService, NotificationServiceImpl notificationService) {
+                                       CookinghobsValidatorService cookinghobsValidatorService,
+                                       NotificationServiceImpl notificationService,
+                                       ProductFileProducerService productFileProducerService,
+                                       ConsumerControlService consumerControlService){
     super(applicationName);
     this.productRepository = productRepository;
     this.fileStorageClient = fileStorageClient;
@@ -65,6 +70,9 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
     this.eprelProductValidator = eprelProductValidator;
     this.cookinghobsValidatorService = cookinghobsValidatorService;
     this.notificationService = notificationService;
+    this.productFileProducerService = productFileProducerService;
+    this.objectMapper = objectMapper;
+    this.consumerControlService = consumerControlService;
   }
 
   @Override
@@ -86,10 +94,34 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
   @Override
   public void execute(List<StorageEventDTO> events, Message<String> message) {
     log.info("[PRODUCT_UPLOAD] - Executing with {} events", events.size());
-    events.stream()
-      .filter(this::isValidEvent)
-      .forEach(this::processEvent);
+
+    List<StorageEventDTO> toRetry = new ArrayList<>();
+
+    for (StorageEventDTO event : events) {
+      if (isValidEvent(event)) {
+        try {
+          processEvent(event);
+        } catch (EprelException e) {
+          toRetry.add(event);
+        }
+      }
+    }
+    if (!toRetry.isEmpty()) {
+        consumerControlService.stopConsumer();
+        retryLater(toRetry);
+        consumerControlService.startEprelHealthCheck();
+      }
   }
+
+  private void retryLater(List<StorageEventDTO> events) {
+    try {
+      String json = objectMapper.writeValueAsString(events);
+      productFileProducerService.sendMessage(json);
+    } catch (Exception e) {
+      log.error("Retry Error", e);
+    }
+  }
+
 
   private boolean isValidEvent(StorageEventDTO event) {
     if (event == null || event.getData() == null) {

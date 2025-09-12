@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.web.client.HttpClientErrorException;
 
 import java.util.List;
 import java.util.Optional;
@@ -23,6 +24,7 @@ import static it.gov.pagopa.register.utils.ObjectMaker.buildStatusChangeEventsLi
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.springframework.http.HttpStatus.NOT_FOUND;
 
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration(classes = {
@@ -42,7 +44,7 @@ class EprelProductValidatorServiceTest {
   private ProductRepository productRepository;
 
   @Test
-  void testValidateRecords_withValidAndInvalidRecords() {
+  void testValidateRecords_withValidAndInvalidRecords(){
     String category = "WASHERDRIERS";
     String orgId = "org123";
     String productFileId = "file123";
@@ -81,7 +83,6 @@ class EprelProductValidatorServiceTest {
     validProduct.setProductGroup("WASHERDRIERS");
 
     EprelProduct invalidProduct = new EprelProduct();
-    invalidProduct.setEprelRegistrationNumber("invalid-code");
     invalidProduct.setEprelRegistrationNumber("valid-code");
     invalidProduct.setEnergyClass("B");
     invalidProduct.setOrgVerificationStatus("VERIFIED");
@@ -105,7 +106,7 @@ class EprelProductValidatorServiceTest {
     when(eprelConnector.callEprel("valid-code")).thenReturn(validProduct);
     when(eprelConnector.callEprel("valid-code-2")).thenReturn(validProduct);
     when(eprelConnector.callEprel("invalid-code")).thenReturn(invalidProduct);
-    when(eprelConnector.callEprel("null-code")).thenReturn(null);
+    when(eprelConnector.callEprel("null-code")).thenThrow(new HttpClientErrorException(NOT_FOUND));
 
     List<CSVRecord> records = List.of(
       validProductCsv,
