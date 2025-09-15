@@ -6,11 +6,11 @@ import it.gov.pagopa.register.connector.storage.FileStorageClient;
 import it.gov.pagopa.register.dto.operation.StorageEventDTO;
 import it.gov.pagopa.register.dto.operation.StorageEventDTO.StorageEventData;
 import it.gov.pagopa.register.dto.utils.ProductValidationResult;
+import it.gov.pagopa.register.event.producer.ProductFileProducer;
 import it.gov.pagopa.register.model.operation.Product;
 import it.gov.pagopa.register.model.operation.ProductFile;
 import it.gov.pagopa.register.repository.operation.ProductFileRepository;
 import it.gov.pagopa.register.repository.operation.ProductRepository;
-import it.gov.pagopa.register.service.producer.ProductFileProducerService;
 import it.gov.pagopa.register.service.validator.CookinghobsValidatorService;
 import it.gov.pagopa.register.service.validator.EprelProductValidatorService;
 import it.gov.pagopa.register.utils.CsvUtils;
@@ -57,7 +57,7 @@ class ProductFileConsumerServiceTest {
   @Mock
   private NotificationServiceImpl notificationService;
   @Mock
-  private ProductFileProducerService productFileProducerService;
+  private ProductFileProducer productFileProducer;
   @Mock
   private ConsumerControlService consumerControlService;
 
@@ -79,7 +79,7 @@ class ProductFileConsumerServiceTest {
       eprelProductValidator,
       cookinghobsValidatorService,
       notificationService,
-      productFileProducerService,
+      productFileProducer,
       consumerControlService);
   }
 

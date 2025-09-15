@@ -19,6 +19,7 @@ import java.util.function.Supplier;
 @Slf4j
 public class ConsumerControlService {
 
+
   public static final String PRODUCT_FILE_CONSUMER_IN_0 = "productFileConsumer-in-0";
   private final BindingsLifecycleController lifecycleController;
   private final EprelConnector eprelConnector;
@@ -31,16 +32,19 @@ public class ConsumerControlService {
   }
 
   public void stopConsumer() {
+    log.info("[CONSUMER-CONTROL-SERVICE] Stopping consumer '{}'", PRODUCT_FILE_CONSUMER_IN_0);
     lifecycleController.stop(PRODUCT_FILE_CONSUMER_IN_0);
+    log.info("[CONSUMER-CONTROL-SERVICE] Consumer '{}' stopped", PRODUCT_FILE_CONSUMER_IN_0);
   }
 
   public void startConsumer() {
+    log.info("[CONSUMER-CONTROL-SERVICE] Starting consumer '{}'", PRODUCT_FILE_CONSUMER_IN_0);
     lifecycleController.start(PRODUCT_FILE_CONSUMER_IN_0);
+    log.info("[CONSUMER-CONTROL-SERVICE] Consumer '{}' started", PRODUCT_FILE_CONSUMER_IN_0);
   }
 
-
   public void startEprelHealthCheck() {
-    log.info("[EPREL_HEALTH] - Starting retry");
+    log.info("[EPREL_HEALTH] - Starting retry health check");
 
     RetryConfig config = RetryConfig.custom()
       .maxAttempts(Integer.MAX_VALUE)
@@ -53,15 +57,16 @@ public class ConsumerControlService {
     Supplier<Void> retryableCall = Retry.decorateSupplier(retry, () -> {
       try {
         eprelConnector.callEprel("TEST");
+        log.info("[EPREL_HEALTH] - EPREL returned TEST successfully");
       } catch (HttpClientErrorException e) {
-        log.info("[EPREL_HEALTH] - EPREL returned client error {}, starting consumer anyway.", e.getStatusCode());
+        log.warn("[EPREL_HEALTH] - EPREL returned client error {} - starting consumer anyway", e.getStatusCode());
         startConsumer();
       } catch (HttpServerErrorException | ResourceAccessException e) {
+        log.error("[EPREL_HEALTH] - EPREL server error: {}", e.getMessage());
         throw new EprelException("EPREL server error: " + e.getMessage());
       }
       return null;
     });
-
 
     try {
       retryableCall.get();
@@ -70,7 +75,5 @@ public class ConsumerControlService {
       startConsumer();
     }
   }
-
 }
-
 

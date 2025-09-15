@@ -11,12 +11,12 @@ import it.gov.pagopa.register.connector.storage.FileStorageClient;
 import it.gov.pagopa.register.dto.operation.StorageEventDTO;
 import it.gov.pagopa.register.dto.utils.EventDetails;
 import it.gov.pagopa.register.dto.utils.ProductValidationResult;
+import it.gov.pagopa.register.event.producer.ProductFileProducer;
 import it.gov.pagopa.register.exception.operation.EprelException;
 import it.gov.pagopa.register.model.operation.Product;
 import it.gov.pagopa.register.model.operation.ProductFile;
 import it.gov.pagopa.register.repository.operation.ProductFileRepository;
 import it.gov.pagopa.register.repository.operation.ProductRepository;
-import it.gov.pagopa.register.service.producer.ProductFileProducerService;
 import it.gov.pagopa.register.service.validator.CookinghobsValidatorService;
 import it.gov.pagopa.register.service.validator.EprelProductValidatorService;
 import it.gov.pagopa.register.utils.CsvUtils;
@@ -51,7 +51,7 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
   private final EprelProductValidatorService eprelProductValidator;
   private final CookinghobsValidatorService cookinghobsValidatorService;
   private final NotificationServiceImpl notificationService;
-  private final ProductFileProducerService productFileProducerService;
+  private final ProductFileProducer productFileProducer;
 
   private final ConsumerControlService consumerControlService;
   private final ObjectMapper objectMapper;
@@ -63,7 +63,7 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
                                        EprelProductValidatorService eprelProductValidator,
                                        CookinghobsValidatorService cookinghobsValidatorService,
                                        NotificationServiceImpl notificationService,
-                                       ProductFileProducerService productFileProducerService,
+                                       ProductFileProducer productFileProducer,
                                        ConsumerControlService consumerControlService){
     super(applicationName);
     this.productRepository = productRepository;
@@ -73,7 +73,7 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
     this.eprelProductValidator = eprelProductValidator;
     this.cookinghobsValidatorService = cookinghobsValidatorService;
     this.notificationService = notificationService;
-    this.productFileProducerService = productFileProducerService;
+    this.productFileProducer = productFileProducer;
     this.objectMapper = objectMapper;
     this.consumerControlService = consumerControlService;
   }
@@ -119,7 +119,7 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
   private void retryLater(List<StorageEventDTO> events) {
     try {
       String json = objectMapper.writeValueAsString(events);
-      productFileProducerService.sendMessage(json);
+      productFileProducer.scheduleMessage(json);
     } catch (JsonProcessingException e) {
       for (StorageEventDTO event : events) {
         String subject = event.getSubject();
@@ -198,7 +198,7 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
     return url.substring(pathStart + 1);
   }
 
-  private void processFileFromStorage(String blobPath, String url, EventDetails eventDetails) {
+  private void processFileFromStorage(String blobPath, String url, EventDetails eventDetails) throws EprelException{
     ByteArrayOutputStream downloadedData;
     try {
         downloadedData = fileStorageClient.download(blobPath);
