@@ -1,5 +1,7 @@
 package it.gov.pagopa.register.service.consumer;
 
+import com.azure.storage.blob.models.BlobStorageException;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
@@ -25,6 +27,7 @@ import org.springframework.messaging.Message;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -117,8 +120,17 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
     try {
       String json = objectMapper.writeValueAsString(events);
       productFileProducerService.sendMessage(json);
-    } catch (Exception e) {
-      log.error("Retry Error", e);
+    } catch (JsonProcessingException e) {
+      for (StorageEventDTO event : events) {
+        String subject = event.getSubject();
+        EventDetails eventDetails = parseEventSubject(subject);
+        if (eventDetails == null) {
+          log.warn("[PRODUCT_UPLOAD] - Event details are null, skipping event");
+          return;
+        }
+        setProductFileStatus(eventDetails.getProductFileId(), String.valueOf(PARTIAL), 0);
+      }
+      log.error("JsonProcessingException: {}", e.getMessage());
     }
   }
 
@@ -187,21 +199,22 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
   }
 
   private void processFileFromStorage(String blobPath, String url, EventDetails eventDetails) {
-    try (ByteArrayOutputStream downloadedData = fileStorageClient.download(blobPath)) {
+    ByteArrayOutputStream downloadedData;
+    try {
+       downloadedData = fileStorageClient.download(blobPath);
       if (downloadedData == null) {
         log.warn("[PRODUCT_UPLOAD] - File not found or download failed for path: {} (from URL: {})", blobPath, url);
         setProductFileStatus(eventDetails.getProductFileId(), String.valueOf(PARTIAL), 0);
         return;
       }
-
-      log.info("[PRODUCT_UPLOAD] - File downloaded successfully from path: {}", blobPath);
-      processCsvFromStorage(downloadedData, eventDetails.getProductFileId(), eventDetails.getCategory(), eventDetails.getOrgId(), eventDetails.getOrganizationName());
-
-    } catch (Exception e) {
-      log.error("[PRODUCT_UPLOAD] - Error processing file {}: {}", eventDetails.getProductFileId(), e.getMessage(), e);
+    } catch (BlobStorageException e){
+      log.error("[PRODUCT_UPLOAD] - Azure Storage Error: {}",e.getMessage());
       setProductFileStatus(eventDetails.getProductFileId(), String.valueOf(PARTIAL), 0);
+      return;
     }
-  }
+    log.info("[PRODUCT_UPLOAD] - File downloaded successfully from path: {}", blobPath);
+    processCsvFromStorage(downloadedData, eventDetails.getProductFileId(), eventDetails.getCategory(), eventDetails.getOrgId(), eventDetails.getOrganizationName());
+    }
 
   public void processCsvFromStorage(ByteArrayOutputStream byteArrayOutputStream,
                                     String fileId,
@@ -222,8 +235,9 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
         validationResult = eprelProductValidator.validateRecords(records, EPREL_FIELDS, category, orgId, fileId, headers,organizationName);
       }
       processResult(validationResult.getValidRecords().values().stream().toList(), validationResult.getInvalidRecords(), validationResult.getErrorMessages(), fileId, headers, category);
-    } catch (Exception e) {
-      log.error("[UPLOAD_PRODUCT_FILE] - Generic Error ", e);
+    } catch (IOException e) {
+      log.error("[UPLOAD_PRODUCT_FILE] - Error while reading CSV", e);
+      setProductFileStatus(fileId, String.valueOf(PARTIAL), 0);
     }
   }
 
