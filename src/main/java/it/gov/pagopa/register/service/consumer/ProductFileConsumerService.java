@@ -124,10 +124,6 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
       for (StorageEventDTO event : events) {
         String subject = event.getSubject();
         EventDetails eventDetails = parseEventSubject(subject);
-        if (eventDetails == null) {
-          log.warn("[PRODUCT_UPLOAD] - Event details are null, skipping event");
-          return;
-        }
         setProductFileStatus(eventDetails.getProductFileId(), String.valueOf(PARTIAL), 0);
       }
       log.error("JsonProcessingException: {}", e.getMessage());

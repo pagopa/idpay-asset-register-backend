@@ -1,6 +1,7 @@
 package it.gov.pagopa.register.service.consumer;
 
 import com.azure.storage.blob.models.BlobStorageException;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import it.gov.pagopa.register.connector.notification.NotificationServiceImpl;
 import it.gov.pagopa.register.connector.storage.FileStorageClient;
@@ -8,6 +9,7 @@ import it.gov.pagopa.register.dto.operation.StorageEventDTO;
 import it.gov.pagopa.register.dto.operation.StorageEventDTO.StorageEventData;
 import it.gov.pagopa.register.dto.utils.ProductValidationResult;
 import it.gov.pagopa.register.event.producer.ProductFileProducer;
+import it.gov.pagopa.register.exception.operation.EprelException;
 import it.gov.pagopa.register.model.operation.Product;
 import it.gov.pagopa.register.model.operation.ProductFile;
 import it.gov.pagopa.register.repository.operation.ProductFileRepository;
@@ -152,6 +154,61 @@ class ProductFileConsumerServiceTest {
       assertDoesNotThrow(() -> service.execute(List.of(event), null));
     }}
 
+  @Test
+  void testExecute_validEvent_shouldProcessFile_butThrowEprelError() {
+    StorageEventData data = StorageEventData.builder()
+      .url("/CSV/ORG123/ORGNAME/WASHINGMACHINES/file123.csv")
+      .build();
+    StorageEventDTO event = StorageEventDTO.builder()
+      .subject("/blobs/CSV/ORG123/ORGNAME/WASHINGMACHINES/file123.csv")
+      .data(data)
+      .build();
+    ByteArrayOutputStream stream = new ByteArrayOutputStream();
+    when(fileStorageClient.download(anyString())).thenReturn(stream);
+    when(productFileRepository.findById(anyString()))
+      .thenReturn(Optional.of(new ProductFile()));
+    when(eprelProductValidator.validateRecords(any(), any(), any(), any(), any(), any(),any()))
+      .thenThrow(new EprelException("Erorr"));
+    try (MockedStatic<CsvUtils> utils = mockStatic(CsvUtils.class)) {
+      CSVRecord csvRecord = mock(CSVRecord.class);
+      utils.when(() -> CsvUtils.readHeader(any(ByteArrayOutputStream.class)))
+        .thenReturn(List.of("HEADER"));
+      utils.when(() -> CsvUtils.readCsvRecords(any(ByteArrayOutputStream.class)))
+        .thenReturn(List.of(csvRecord));
+    }
+
+    service.execute(List.of(event), null);
+    verify(consumerControlService).stopConsumer();
+    verify(consumerControlService).startEprelHealthCheck();
+  }
+
+  @Test
+  void testExecute_validEvent_shouldProcessFile_butThrowEprelErrorAndJSONException() throws JsonProcessingException {
+    StorageEventData data = StorageEventData.builder()
+      .url("/CSV/ORG123/ORGNAME/WASHINGMACHINES/file123.csv")
+      .build();
+    StorageEventDTO event = StorageEventDTO.builder()
+      .subject("/blobs/CSV/ORG123/ORGNAME/WASHINGMACHINES/file123.csv")
+      .data(data)
+      .build();
+    ByteArrayOutputStream stream = new ByteArrayOutputStream();
+    when(fileStorageClient.download(anyString())).thenReturn(stream);
+    when(productFileRepository.findById(anyString()))
+      .thenReturn(Optional.of(new ProductFile()));
+    when(eprelProductValidator.validateRecords(any(), any(), any(), any(), any(), any(),any()))
+      .thenThrow(new EprelException("Erorr"));
+    when(objectMapper.writeValueAsString(any())).thenThrow(new JsonProcessingException("Error during serialization") {});
+    try (MockedStatic<CsvUtils> utils = mockStatic(CsvUtils.class)) {
+      CSVRecord csvRecord = mock(CSVRecord.class);
+      utils.when(() -> CsvUtils.readHeader(any(ByteArrayOutputStream.class)))
+        .thenReturn(List.of("HEADER"));
+      utils.when(() -> CsvUtils.readCsvRecords(any(ByteArrayOutputStream.class)))
+        .thenReturn(List.of(csvRecord));
+    }
+
+    service.execute(List.of(event), null);
+    verify(consumerControlService).stopConsumer();
+  }
   @Test
   void testExecute_validEvent_shouldProcessFile_Eprel_InvalidRecords() {
     StorageEventData data = StorageEventData.builder()

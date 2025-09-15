@@ -88,6 +88,10 @@ public class EprelProductValidatorService {
     try {
       eprelData = eprelConnector.callEprel(eprelCode);
       log.info("[VALIDATE_RECORD] - EPREL response: {}", eprelData);
+      if(eprelCode.equals("2274434")){
+        log.warn("[VALIDATE_RECORD] - TEST - Exception Throwing");
+        throw new EprelException("2274434");
+      }
     } catch (HttpClientErrorException e) {
       addError(csvRecord, "EPREL client error", invalidRecords, errorMessages);
       return;
