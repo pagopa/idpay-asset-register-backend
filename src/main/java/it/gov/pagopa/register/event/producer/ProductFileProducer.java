@@ -20,7 +20,7 @@ public class ProductFileProducer {
     this.binder = binder;
   }
 
-  public void scheduleMessage(String payload) {
+  public boolean scheduleMessage(String payload) {
     log.info("[PRODUCT-FILE-PRODUCER] Sending message to binder '{}' with payload: {}", binder, payload);
     boolean sent = streamBridge.send("productFileProducer-out-0", binder, payload);
     if (sent) {
@@ -28,6 +28,7 @@ public class ProductFileProducer {
     } else {
       log.warn("[PRODUCT-FILE-PRODUCER] Failed to send message.");
     }
+    return sent;
   }
 }
 

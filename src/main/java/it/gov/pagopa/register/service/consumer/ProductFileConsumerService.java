@@ -119,14 +119,21 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
   private void retryLater(List<StorageEventDTO> events) {
     try {
       String json = objectMapper.writeValueAsString(events);
-      productFileProducer.scheduleMessage(json);
-    } catch (JsonProcessingException e) {
-      for (StorageEventDTO event : events) {
-        String subject = event.getSubject();
-        EventDetails eventDetails = parseEventSubject(subject);
-        setProductFileStatus(eventDetails.getProductFileId(), String.valueOf(PARTIAL), 0);
+      Boolean sent = productFileProducer.scheduleMessage(json);
+      if(Boolean.FALSE.equals(sent)){
+        unlockFile(events);
       }
+    } catch (JsonProcessingException e) {
+      unlockFile(events);
       log.error("JsonProcessingException: {}", e.getMessage());
+    }
+  }
+
+  private void unlockFile(List<StorageEventDTO> events) {
+    for (StorageEventDTO event : events) {
+      String subject = event.getSubject();
+      EventDetails eventDetails = parseEventSubject(subject);
+      setProductFileStatus(eventDetails.getProductFileId(), String.valueOf(PARTIAL), 0);
     }
   }
 
