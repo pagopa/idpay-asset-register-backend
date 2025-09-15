@@ -4,9 +4,13 @@ package it.gov.pagopa.register.service.consumer;
 import io.github.resilience4j.retry.Retry;
 import io.github.resilience4j.retry.RetryConfig;
 import it.gov.pagopa.register.connector.eprel.EprelConnector;
+import it.gov.pagopa.register.exception.operation.EprelException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cloud.stream.binding.BindingsLifecycleController;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
+import org.springframework.web.client.ResourceAccessException;
 
 import java.time.Duration;
 import java.util.function.Supplier;
@@ -36,22 +40,30 @@ public class ConsumerControlService {
 
 
   public void startEprelHealthCheck() {
-    log.info("[EPREL_HEALTH] - Starting retry with Resilience4j...");
+    log.info("[EPREL_HEALTH] - Starting retry");
 
     RetryConfig config = RetryConfig.custom()
       .maxAttempts(Integer.MAX_VALUE)
       .waitDuration(Duration.ofSeconds(10))
-      .retryExceptions(Exception.class)
+      .retryExceptions(EprelException.class)
       .build();
 
     Retry retry = Retry.of("eprelHealth", config);
 
     Supplier<Void> retryableCall = Retry.decorateSupplier(retry, () -> {
-      eprelConnector.callEprel("2310908");
-      log.info("[EPREL_HEALTH] - EPREL is available. Restarting Kafka consumer.");
-      startConsumer();
+      try {
+        eprelConnector.callEprel("TEST");
+        log.info("[EPREL_HEALTH] - EPREL is available. Restarting Kafka consumer.");
+        startConsumer();
+      } catch (HttpClientErrorException e) {
+        log.info("[EPREL_HEALTH] - EPREL returned client error {}, starting consumer anyway.", e.getStatusCode());
+        startConsumer();
+      } catch (HttpServerErrorException | ResourceAccessException e) {
+        throw new EprelException("EPREL server error: " + e.getMessage());
+      }
       return null;
     });
+
 
     try {
       retryableCall.get();

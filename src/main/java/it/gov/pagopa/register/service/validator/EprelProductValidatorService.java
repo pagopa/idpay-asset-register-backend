@@ -13,9 +13,10 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.csv.CSVRecord;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
+import org.springframework.web.client.ResourceAccessException;
 
 import java.util.*;
 
@@ -84,17 +85,13 @@ public class EprelProductValidatorService {
     log.info("[VALIDATE_RECORD] - Validating EPREL code: {}", eprelCode);
     EprelProduct eprelData;
     try {
-      eprelData = eprelConnector.callEprel(eprelCode);
+      eprelData = eprelConnector.callEprel("TEST");
       log.info("[VALIDATE_RECORD] - EPREL response: {}", eprelData);
     } catch (HttpClientErrorException e) {
-      if (e.getStatusCode() == HttpStatus.NOT_FOUND) {
-        addError(csvRecord, "EPREL product not found for registration number", invalidRecords, errorMessages);
-        return;
-      } else {
-        throw new EprelException("EPREL server error");
-      }
-    } catch (Exception e) {
-      throw new EprelException("EPREL unexpected error");
+      addError(csvRecord, "EPREL client error", invalidRecords, errorMessages);
+      return;
+    } catch (HttpServerErrorException | ResourceAccessException e) {
+      throw new EprelException("EPREL server error: " + e.getMessage());
     }
 
     if (WASHERDRIERS.equalsIgnoreCase(context.getCategory())) {
