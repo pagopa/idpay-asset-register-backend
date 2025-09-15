@@ -53,7 +53,6 @@ public class ConsumerControlService {
     Supplier<Void> retryableCall = Retry.decorateSupplier(retry, () -> {
       try {
         eprelConnector.callEprel("TEST");
-        startConsumer();
       } catch (HttpClientErrorException e) {
         log.info("[EPREL_HEALTH] - EPREL returned client error {}, starting consumer anyway.", e.getStatusCode());
         startConsumer();

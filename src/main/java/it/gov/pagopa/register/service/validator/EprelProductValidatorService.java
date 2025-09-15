@@ -85,7 +85,7 @@ public class EprelProductValidatorService {
     log.info("[VALIDATE_RECORD] - Validating EPREL code: {}", eprelCode);
     EprelProduct eprelData;
     try {
-      eprelData = eprelConnector.callEprel("TEST");
+      eprelData = eprelConnector.callEprel(eprelCode);
       log.info("[VALIDATE_RECORD] - EPREL response: {}", eprelData);
     } catch (HttpClientErrorException e) {
       addError(csvRecord, "EPREL client error", invalidRecords, errorMessages);

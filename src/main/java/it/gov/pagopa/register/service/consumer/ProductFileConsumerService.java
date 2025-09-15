@@ -201,11 +201,11 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
   private void processFileFromStorage(String blobPath, String url, EventDetails eventDetails) {
     ByteArrayOutputStream downloadedData;
     try {
-       downloadedData = fileStorageClient.download(blobPath);
-      if (downloadedData == null) {
-        log.warn("[PRODUCT_UPLOAD] - File not found or download failed for path: {} (from URL: {})", blobPath, url);
-        setProductFileStatus(eventDetails.getProductFileId(), String.valueOf(PARTIAL), 0);
-        return;
+        downloadedData = fileStorageClient.download(blobPath);
+        if (downloadedData == null) {
+          log.warn("[PRODUCT_UPLOAD] - File not found or download failed for path: {} (from URL: {})", blobPath, url);
+          setProductFileStatus(eventDetails.getProductFileId(), String.valueOf(PARTIAL), 0);
+          return;
       }
     } catch (BlobStorageException e){
       log.error("[PRODUCT_UPLOAD] - Azure Storage Error: {}",e.getMessage());
