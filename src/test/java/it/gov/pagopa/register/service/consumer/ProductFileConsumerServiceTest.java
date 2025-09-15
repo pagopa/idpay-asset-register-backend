@@ -1,5 +1,6 @@
 package it.gov.pagopa.register.service.consumer;
 
+import com.azure.storage.blob.models.BlobStorageException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import it.gov.pagopa.register.connector.notification.NotificationServiceImpl;
 import it.gov.pagopa.register.connector.storage.FileStorageClient;
@@ -25,6 +26,7 @@ import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.*;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -216,7 +218,7 @@ class ProductFileConsumerServiceTest {
 
   @Test
   void testProcessFileFromStorage_downloadThrowsException_setsEprelError() {
-    when(fileStorageClient.download(anyString())).thenThrow(new RuntimeException("boom"));
+    when(fileStorageClient.download(anyString())).thenThrow(new BlobStorageException(null,null,null));
     when(productFileRepository.findById(anyString()))
       .thenReturn(Optional.of(new ProductFile()));
 
@@ -282,7 +284,7 @@ class ProductFileConsumerServiceTest {
 
     try (MockedStatic<CsvUtils> utils = mockStatic(CsvUtils.class)) {
       utils.when(() -> CsvUtils.readHeader(any(ByteArrayOutputStream.class)))
-        .thenThrow(new RuntimeException("CSV read error"));
+        .thenThrow(new IOException("CSV read error"));
 
       assertDoesNotThrow(() -> service.processCsvFromStorage(csvContent, PRODUCT_FILE_ID, "OTHER", ORG_ID, "ORG_NAME"));
     }
