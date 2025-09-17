@@ -5,6 +5,7 @@ import it.gov.pagopa.register.connector.eprel.EprelConnector;
 import it.gov.pagopa.register.dto.utils.EprelProduct;
 import it.gov.pagopa.register.dto.utils.EprelValidationRule;
 import it.gov.pagopa.register.dto.utils.ProductValidationResult;
+import it.gov.pagopa.register.exception.operation.EprelException;
 import it.gov.pagopa.register.model.operation.Product;
 import it.gov.pagopa.register.repository.operation.ProductRepository;
 import lombok.AllArgsConstructor;
@@ -13,6 +14,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.csv.CSVRecord;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
+import org.springframework.web.client.ResourceAccessException;
 
 import java.util.*;
 
@@ -79,17 +83,23 @@ public class EprelProductValidatorService {
     }
 
     log.info("[VALIDATE_RECORD] - Validating EPREL code: {}", eprelCode);
-    EprelProduct eprelData = eprelConnector.callEprel(eprelCode);
-    log.info("[VALIDATE_RECORD] - EPREL response: {}", eprelData);
 
-    if (eprelData == null) {
-      addError(csvRecord, "Product not found in EPREL", invalidRecords, errorMessages);
+    EprelProduct eprelData;
+    try {
+      eprelData = eprelConnector.callEprel(eprelCode);
+      log.info("[VALIDATE_RECORD] - EPREL response: {}", eprelData);
+    } catch (HttpClientErrorException e) {
+      addError(csvRecord, "EPREL client error", invalidRecords, errorMessages);
       return;
+    } catch (HttpServerErrorException | ResourceAccessException e) {
+      log.error("[VALIDATE_RECORD] - TEST - Exception Throwing");
+      throw new EprelException("EPREL server error: " + e.getMessage());
     }
 
     if (WASHERDRIERS.equalsIgnoreCase(context.getCategory())) {
       eprelData.setEnergyClass(eprelData.getEnergyClassWash());
     }
+
 
     List<String> errors = validateFields(context, eprelData);
     if (!errors.isEmpty()) {

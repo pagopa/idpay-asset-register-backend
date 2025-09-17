@@ -23,20 +23,19 @@ public class EprelConnector {
       this.restTemplate = restTemplate;
     }
 
-    public EprelProduct callEprel(String registrationNumber) {
-        try {
-            URI uri = UriComponentsBuilder
-                    .fromUriString(eprelUrl)
-                    .buildAndExpand(registrationNumber)
-                    .toUri();
-            ResponseEntity<EprelProduct> response = restTemplate.getForEntity(uri, EprelProduct.class);
-            return response.getBody();
-        } catch (Exception e) {
-            log.error(e.getMessage());
-            return null;
-        }
-    }
+  public EprelProduct callEprel(String registrationNumber){
+    URI uri = UriComponentsBuilder
+      .fromUriString(eprelUrl)
+      .buildAndExpand(registrationNumber)
+      .toUri();
+
+    ResponseEntity<EprelProduct> response = restTemplate.getForEntity(uri, EprelProduct.class);
+    return response.getBody();
+  }
+
 }
+
+
 
 
 

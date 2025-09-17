@@ -1,5 +1,7 @@
 package it.gov.pagopa.register.service.consumer;
 
+import com.azure.storage.blob.models.BlobStorageException;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
@@ -9,6 +11,8 @@ import it.gov.pagopa.register.connector.storage.FileStorageClient;
 import it.gov.pagopa.register.dto.operation.StorageEventDTO;
 import it.gov.pagopa.register.dto.utils.EventDetails;
 import it.gov.pagopa.register.dto.utils.ProductValidationResult;
+import it.gov.pagopa.register.event.producer.ProductFileProducer;
+import it.gov.pagopa.register.exception.operation.EprelException;
 import it.gov.pagopa.register.model.operation.Product;
 import it.gov.pagopa.register.model.operation.ProductFile;
 import it.gov.pagopa.register.repository.operation.ProductFileRepository;
@@ -23,16 +27,14 @@ import org.springframework.messaging.Message;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Matcher;
 
 import static it.gov.pagopa.register.constants.AssetRegisterConstants.*;
@@ -49,14 +51,20 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
   private final EprelProductValidatorService eprelProductValidator;
   private final CookinghobsValidatorService cookinghobsValidatorService;
   private final NotificationServiceImpl notificationService;
+  private final ProductFileProducer productFileProducer;
 
+  private final ConsumerControlService consumerControlService;
+  private final ObjectMapper objectMapper;
   protected ProductFileConsumerService(@Value("${spring.application.name}") String applicationName,
                                        ProductRepository productRepository,
                                        FileStorageClient fileStorageClient,
                                        ObjectMapper objectMapper,
                                        ProductFileRepository productFileRepository,
                                        EprelProductValidatorService eprelProductValidator,
-                                       CookinghobsValidatorService cookinghobsValidatorService, NotificationServiceImpl notificationService) {
+                                       CookinghobsValidatorService cookinghobsValidatorService,
+                                       NotificationServiceImpl notificationService,
+                                       ProductFileProducer productFileProducer,
+                                       ConsumerControlService consumerControlService){
     super(applicationName);
     this.productRepository = productRepository;
     this.fileStorageClient = fileStorageClient;
@@ -65,6 +73,9 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
     this.eprelProductValidator = eprelProductValidator;
     this.cookinghobsValidatorService = cookinghobsValidatorService;
     this.notificationService = notificationService;
+    this.productFileProducer = productFileProducer;
+    this.objectMapper = objectMapper;
+    this.consumerControlService = consumerControlService;
   }
 
   @Override
@@ -86,10 +97,46 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
   @Override
   public void execute(List<StorageEventDTO> events, Message<String> message) {
     log.info("[PRODUCT_UPLOAD] - Executing with {} events", events.size());
-    events.stream()
-      .filter(this::isValidEvent)
-      .forEach(this::processEvent);
+
+    List<StorageEventDTO> toRetry = new ArrayList<>();
+
+    for (StorageEventDTO event : events) {
+      if (isValidEvent(event)) {
+        try {
+          processEvent(event);
+        } catch (EprelException e) {
+          toRetry.add(event);
+        }
+      }
+    }
+    if (!toRetry.isEmpty()) {
+        consumerControlService.stopConsumer();
+        retryLater(toRetry);
+        consumerControlService.startEprelHealthCheck();
+      }
   }
+
+  private void retryLater(List<StorageEventDTO> events) {
+    try {
+      String json = objectMapper.writeValueAsString(events);
+      Boolean sent = productFileProducer.scheduleMessage(json);
+      if(Boolean.FALSE.equals(sent)){
+        unlockFile(events);
+      }
+    } catch (JsonProcessingException e) {
+      unlockFile(events);
+      log.error("JsonProcessingException: {}", e.getMessage());
+    }
+  }
+
+  private void unlockFile(List<StorageEventDTO> events) {
+    for (StorageEventDTO event : events) {
+      String subject = event.getSubject();
+      EventDetails eventDetails = parseEventSubject(subject);
+      setProductFileStatus(eventDetails.getProductFileId(), String.valueOf(PARTIAL), 0);
+    }
+  }
+
 
   private boolean isValidEvent(StorageEventDTO event) {
     if (event == null || event.getData() == null) {
@@ -154,22 +201,23 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
     return url.substring(pathStart + 1);
   }
 
-  private void processFileFromStorage(String blobPath, String url, EventDetails eventDetails) {
-    try (ByteArrayOutputStream downloadedData = fileStorageClient.download(blobPath)) {
-      if (downloadedData == null) {
-        log.warn("[PRODUCT_UPLOAD] - File not found or download failed for path: {} (from URL: {})", blobPath, url);
-        setProductFileStatus(eventDetails.getProductFileId(), String.valueOf(PARTIAL), 0);
-        return;
+  private void processFileFromStorage(String blobPath, String url, EventDetails eventDetails) throws EprelException{
+    ByteArrayOutputStream downloadedData;
+    try {
+        downloadedData = fileStorageClient.download(blobPath);
+        if (downloadedData == null) {
+          log.warn("[PRODUCT_UPLOAD] - File not found or download failed for path: {} (from URL: {})", blobPath, url);
+          setProductFileStatus(eventDetails.getProductFileId(), String.valueOf(PARTIAL), 0);
+          return;
       }
-
-      log.info("[PRODUCT_UPLOAD] - File downloaded successfully from path: {}", blobPath);
-      processCsvFromStorage(downloadedData, eventDetails.getProductFileId(), eventDetails.getCategory(), eventDetails.getOrgId(), eventDetails.getOrganizationName());
-
-    } catch (Exception e) {
-      log.error("[PRODUCT_UPLOAD] - Error processing file {}: {}", eventDetails.getProductFileId(), e.getMessage(), e);
+    } catch (BlobStorageException e){
+      log.error("[PRODUCT_UPLOAD] - Azure Storage Error: {}",e.getMessage());
       setProductFileStatus(eventDetails.getProductFileId(), String.valueOf(PARTIAL), 0);
+      return;
     }
-  }
+    log.info("[PRODUCT_UPLOAD] - File downloaded successfully from path: {}", blobPath);
+    processCsvFromStorage(downloadedData, eventDetails.getProductFileId(), eventDetails.getCategory(), eventDetails.getOrgId(), eventDetails.getOrganizationName());
+    }
 
   public void processCsvFromStorage(ByteArrayOutputStream byteArrayOutputStream,
                                     String fileId,
@@ -190,8 +238,9 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
         validationResult = eprelProductValidator.validateRecords(records, EPREL_FIELDS, category, orgId, fileId, headers,organizationName);
       }
       processResult(validationResult.getValidRecords().values().stream().toList(), validationResult.getInvalidRecords(), validationResult.getErrorMessages(), fileId, headers, category);
-    } catch (Exception e) {
-      log.error("[UPLOAD_PRODUCT_FILE] - Generic Error ", e);
+    } catch (IOException e) {
+      log.error("[UPLOAD_PRODUCT_FILE] - Error while reading CSV", e);
+      setProductFileStatus(fileId, String.valueOf(PARTIAL), 0);
     }
   }
 
