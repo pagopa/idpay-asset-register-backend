@@ -56,17 +56,29 @@ spring:
       definition: productFileConsumer
     stream:
       binders:
-        kafka-asset-notification:
+        kafka-asset-notification-in:
           type: kafka
           environment:
             spring.cloud.stream:
               kafka.binder:
                 brokers: ${KAFKA_BROKER:}
                 configuration:
-                  sasl.jaas.config: ${KAFKA_REGISTER_PRODUCT_FILE_UPLOAD_SASL_JAAS_CONFIG:}
+                  sasl.jaas.config: ${KAFKA_REGISTER_PRODUCT_FILE_UPLOAD_CONSUMER_SASL_JAAS_CONFIG:}
+        kafka-asset-notification-out:
+          type: kafka
+          environment:
+            spring.cloud.stream:
+              kafka.binder:
+                brokers: ${KAFKA_BROKER:}
+                configuration:
+                  sasl.jaas.config: ${KAFKA_REGISTER_PRODUCT_FILE_UPLOAD_PRODUCER_SASL_JAAS_CONFIG:}
       bindings:
+        productFileProducer-out-0:
+          binder:  kafka-asset-notification-out
+          content-type: ${KAFKA_CONTENT_TYPE:application/json}
+          destination: ${KAFKA_ASSET_REGISTER:idpay-asset-register}
         productFileConsumer-in-0:
-          binder: kafka-asset-notification
+          binder: kafka-asset-notification-in
           content-type: ${KAFKA_CONTENT_TYPE:application/json}
           destination: ${KAFKA_ASSET_REGISTER:idpay-asset-register}
           group: ${KAFKA_COMMANDS_GROUP_IN:idpay-asset-register-consumer-group}
@@ -83,6 +95,14 @@ spring:
             metadata.max.age.ms: ${KAFKA_GROUP_CONFIG_METADATA_MAX_AGE_INTERVAL:180000}
             max.request.size: ${KAFKA_GROUP_CONFIG_METADATA_MAX_REQUEST_SIZE:1000000}
         bindings:
+          productFileProducer-out-0:
+            producer:
+              configuration:
+                #client.id: transactionOutcome
+                connections.max.idle.ms: ${KAFKA_TRANSACTION_OUTCOME_CONNECTION_MAX_IDLE_TIME:180000}
+                retry.backoff.ms: ${KAFKA_TRANSACTION_OUTCOME_KAFKA_RETRY_MS:${KAFKA_RETRY_MS:10000}}
+                linger.ms: ${KAFKA_TRANSACTION_OUTCOME_LINGER_MS:${KAFKA_LINGER_MS:2}}
+                batch.size: ${KAFKA_TRANSACTION_OUTCOME_BATCH_SIZE:${KAFKA_BATCH_SIZE:16384}}
           productFileConsumer-in-0:
             consumer:
               autoCommitOffset: ${KAFKA_COMMANDS_AUTO_COMMIT:${KAFKA_CONSUMER_CONFIG_AUTO_COMMIT:true}}

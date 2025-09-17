@@ -5,6 +5,7 @@ import it.gov.pagopa.register.connector.eprel.EprelConnector;
 import it.gov.pagopa.register.dto.utils.EprelProduct;
 import it.gov.pagopa.register.dto.utils.ProductValidationResult;
 import it.gov.pagopa.register.enums.ProductStatus;
+import it.gov.pagopa.register.exception.operation.EprelException;
 import it.gov.pagopa.register.model.operation.Product;
 import it.gov.pagopa.register.repository.operation.ProductRepository;
 import org.apache.commons.csv.CSVRecord;
@@ -14,6 +15,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
 
 import java.util.List;
 import java.util.Optional;
@@ -21,8 +24,10 @@ import java.util.Optional;
 import static it.gov.pagopa.register.constants.AssetRegisterConstants.*;
 import static it.gov.pagopa.register.utils.ObjectMaker.buildStatusChangeEventsList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.springframework.http.HttpStatus.*;
 
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration(classes = {
@@ -42,7 +47,7 @@ class EprelProductValidatorServiceTest {
   private ProductRepository productRepository;
 
   @Test
-  void testValidateRecords_withValidAndInvalidRecords() {
+  void testValidateRecords_withValidAndInvalidRecords(){
     String category = "WASHERDRIERS";
     String orgId = "org123";
     String productFileId = "file123";
@@ -81,7 +86,6 @@ class EprelProductValidatorServiceTest {
     validProduct.setProductGroup("WASHERDRIERS");
 
     EprelProduct invalidProduct = new EprelProduct();
-    invalidProduct.setEprelRegistrationNumber("invalid-code");
     invalidProduct.setEprelRegistrationNumber("valid-code");
     invalidProduct.setEnergyClass("B");
     invalidProduct.setOrgVerificationStatus("VERIFIED");
@@ -105,8 +109,8 @@ class EprelProductValidatorServiceTest {
     when(eprelConnector.callEprel("valid-code")).thenReturn(validProduct);
     when(eprelConnector.callEprel("valid-code-2")).thenReturn(validProduct);
     when(eprelConnector.callEprel("invalid-code")).thenReturn(invalidProduct);
-    when(eprelConnector.callEprel("null-code")).thenReturn(null);
-
+    when(eprelConnector.callEprel("null-code")).thenThrow(new HttpClientErrorException(NOT_FOUND));
+    when(eprelConnector.callEprel("bad-request")).thenThrow(new HttpServerErrorException(BAD_REQUEST));
     List<CSVRecord> records = List.of(
       validProductCsv,
       invalidProductCsv,
@@ -124,6 +128,26 @@ class EprelProductValidatorServiceTest {
     assertEquals(1, result.getValidRecords().size());
     assertEquals(5, result.getInvalidRecords().size());
     assertEquals(5, result.getErrorMessages().size());
-
   }
+
+  @Test
+  void testValidateRecords_assertThrow(){
+    String category = "WASHERDRIERS";
+    String orgId = "org123";
+    String productFileId = "file123";
+
+
+    CSVRecord nullProductCsv = mock(CSVRecord.class);
+    when(nullProductCsv.get(CODE_EPREL)).thenReturn("bad-request");
+
+
+    when(eprelConnector.callEprel("bad-request")).thenThrow(new HttpServerErrorException(INTERNAL_SERVER_ERROR));
+    List<CSVRecord> records = List.of(
+      nullProductCsv);
+
+    EprelException exception = assertThrows(EprelException.class, () ->
+      validatorService.validateRecords(records, EPREL_FIELDS, category, orgId, productFileId, null,"orgName")
+    );
+
+    assertEquals("EPREL server error: 500 INTERNAL_SERVER_ERROR",exception.getMessage());  }
 }
