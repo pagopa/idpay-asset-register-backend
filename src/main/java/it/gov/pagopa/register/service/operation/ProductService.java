@@ -64,11 +64,6 @@ public class ProductService {
   }
 
   public UpdateResultDTO updateProductStatusesWithNotification(
-    //List<String> productIds,
-    //ProductStatus currentStatus,
-    //ProductStatus targetStatus,
-    //String motivation,
-    //String formalMotivation,
     ProductUpdateStatusRequestDTO updateStatusDto,
     String role,
     String username
@@ -79,7 +74,6 @@ public class ProductService {
     List<Product> productsToUpdate = productRepository.findUpdatableProducts(updateStatusDto.getGtinCodes(), updateStatusDto.getCurrentStatus(), updateStatusDto.getTargetStatus(), role);
     log.debug("[UPDATE_PRODUCT_STATUSES] - Retrieved {} products for update", productsToUpdate.size());
 
-    //updateStatuses(productsToUpdate, targetStatus, motivation,formalMotivation, currentStatus,targetStatus,role,username);
     updateStatuses(productsToUpdate, role, username, updateStatusDto);
     List<Product> productsUpdated = productRepository.saveAll(productsToUpdate);
 
@@ -98,11 +92,6 @@ public class ProductService {
 
 
   private void updateStatuses(List<Product> products,
-                              //ProductStatus newStatus,
-                              //String motivation,
-                              //String formalMotivation,
-                              //ProductStatus currentStatus,
-                              //ProductStatus targetStatus,
                               String role,
                               String username,
                               ProductUpdateStatusRequestDTO updateStatusDto

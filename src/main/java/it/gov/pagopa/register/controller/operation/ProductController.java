@@ -64,11 +64,6 @@ public class ProductController {
     @RequestBody ProductUpdateStatusRequestDTO updateStatusDto
   ) {
     UpdateResultDTO result = productService.updateProductStatusesWithNotification(
-      //dto.getGtinCodes(),
-      //dto.getCurrentStatus(),
-      //dto.getTargetStatus(),
-      //dto.getMotivation(),
-      //dto.getFormalMotivation(),
       updateStatusDto,
       role,
       username
