@@ -160,6 +160,7 @@ class ProductServiceTest {
   void testUpdateProductStatuses_Success() {
     String organizationId = "org123";
     String motivation = "motivation";
+    String formalMotivation = "formal motivation";
     List<String> productIds = List.of("prod1", "prod2");
 
     Product product1 = Product.builder()
@@ -192,6 +193,7 @@ class ProductServiceTest {
       ProductStatus.WAIT_APPROVED,
       ProductStatus.APPROVED,
       motivation,
+      formalMotivation,
       UserRole.INVITALIA_ADMIN.getRole(),
       USERNAME
     );
@@ -207,6 +209,7 @@ class ProductServiceTest {
   void testUpdateProductStatuses_EmailFailure() {
     String organizationId = "org123";
     String motivation = "motivation";
+    String formalMotivation = "formal motivation";
     List<String> productIds = List.of("prod1", "prod2");
 
     Product product1 = Product.builder()
@@ -252,6 +255,7 @@ class ProductServiceTest {
       ProductStatus.UPLOADED,
       ProductStatus.REJECTED,
       motivation,
+      formalMotivation,
       UserRole.INVITALIA_ADMIN.getRole(),
       USERNAME
     );

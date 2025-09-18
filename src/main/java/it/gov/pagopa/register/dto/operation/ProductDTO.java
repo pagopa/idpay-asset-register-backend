@@ -36,5 +36,6 @@ public class ProductDTO {
   private String productName;
   private String capacity;
   private List<StatusChangeEvent> statusChangeChronology;
+  private String formalMotivation;
   private String organizationName;
 }

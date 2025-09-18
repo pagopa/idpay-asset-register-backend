@@ -68,6 +68,7 @@ public class ProductController {
       dto.getCurrentStatus(),
       dto.getTargetStatus(),
       dto.getMotivation(),
+      dto.getFormalMotivation(),
       role,
       username
     );

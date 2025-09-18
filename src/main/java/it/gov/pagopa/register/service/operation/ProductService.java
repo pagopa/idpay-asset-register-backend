@@ -71,6 +71,7 @@ public class ProductService {
     ProductStatus currentStatus,
     ProductStatus targetStatus,
     String motivation,
+    String formalMotivation,
     String role,
     String username
   ) {
@@ -80,13 +81,13 @@ public class ProductService {
     List<Product> productsToUpdate = productRepository.findUpdatableProducts(productIds, currentStatus, targetStatus, role);
     log.debug("[UPDATE_PRODUCT_STATUSES] - Retrieved {} products for update", productsToUpdate.size());
 
-    updateStatuses(productsToUpdate, targetStatus, motivation,currentStatus,targetStatus,role,username);
+    updateStatuses(productsToUpdate, targetStatus, motivation,formalMotivation, currentStatus,targetStatus,role,username);
     List<Product> productsUpdated = productRepository.saveAll(productsToUpdate);
 
     log.info("[UPDATE_PRODUCT_STATUSES] - Successfully updated {} products", productsUpdated.size());
 
     if(targetStatus.name().equals(ProductStatus.REJECTED.toString())) {
-      int failedEmails = notifyStatusUpdates(productsUpdated, targetStatus, motivation);
+      int failedEmails = notifyStatusUpdates(productsUpdated, targetStatus, formalMotivation);
       if (failedEmails != 0) {
         log.warn("[UPDATE_PRODUCT_STATUSES] - Some email notifications failed. Total failures: {}", failedEmails);
         return UpdateResultDTO.ko(AssetRegisterConstants.UpdateKeyConstant.EMAIL_ERROR_KEY);
@@ -100,6 +101,7 @@ public class ProductService {
   private void updateStatuses(List<Product> products,
                               ProductStatus newStatus,
                               String motivation,
+                              String formalMotivation,
                               ProductStatus currentStatus,
                               ProductStatus targetStatus,
                               String role,
@@ -109,6 +111,7 @@ public class ProductService {
       log.debug("[UPDATE_PRODUCT_STATUSES] - Updating product {} status from {} to {}",
         product.getGtinCode(), product.getStatus(), newStatus.name());
       product.setStatus(newStatus.name());
+      product.setFormalMotivation(formalMotivation);
       product.getStatusChangeChronology().add(StatusChangeEvent.builder()
         .username(username)
         .role(role.equals(UserRole.INVITALIA.getRole()) ? "L1" : "L2")
@@ -120,7 +123,7 @@ public class ProductService {
     });
   }
 
-  private int notifyStatusUpdates(List<Product> products, ProductStatus newStatus, String motivation) {
+  private int notifyStatusUpdates(List<Product> products, ProductStatus newStatus, String formalMotivation) {
     List<EmailProductDTO>  emailToProducts = productRepository.getProductNamesGroupedByEmail(
       products.stream().map(Product::getGtinCode).toList()
     );
@@ -131,7 +134,7 @@ public class ProductService {
       try {
         notificationService.sendEmailUpdateStatus(
           dto.getProductNames(),
-          motivation,
+          formalMotivation,
           newStatus.name(),
           dto.getId()
         );

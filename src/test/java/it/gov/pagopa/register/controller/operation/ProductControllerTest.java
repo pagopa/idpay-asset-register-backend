@@ -112,6 +112,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
       requestDTO.setCurrentStatus(ProductStatus.WAIT_APPROVED);
       requestDTO.setTargetStatus(ProductStatus.APPROVED);
       requestDTO.setMotivation("Valid reason");
+      requestDTO.setFormalMotivation("Valid formal reason");
 
       String requestBody = objectMapper.writeValueAsString(requestDTO);
 
@@ -120,6 +121,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         ProductStatus.WAIT_APPROVED,
         ProductStatus.APPROVED,
         "Valid reason",
+        "Valid formal reason",
         UserRole.INVITALIA_ADMIN.getRole(),
         USERNAME
       )).thenReturn(mockResponse);
