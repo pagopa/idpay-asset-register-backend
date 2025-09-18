@@ -61,14 +61,15 @@ public class ProductController {
   public ResponseEntity<UpdateResultDTO> updateProductsState(
     @RequestHeader("x-organization-role") @Pattern(regexp = ROLE_PATTERN) String role,
     @RequestHeader("x-user-name") String username,
-    @RequestBody ProductUpdateStatusRequestDTO dto
+    @RequestBody ProductUpdateStatusRequestDTO updateStatusDto
   ) {
     UpdateResultDTO result = productService.updateProductStatusesWithNotification(
-      dto.getGtinCodes(),
-      dto.getCurrentStatus(),
-      dto.getTargetStatus(),
-      dto.getMotivation(),
-      dto.getFormalMotivation(),
+      //dto.getGtinCodes(),
+      //dto.getCurrentStatus(),
+      //dto.getTargetStatus(),
+      //dto.getMotivation(),
+      //dto.getFormalMotivation(),
+      updateStatusDto,
       role,
       username
     );

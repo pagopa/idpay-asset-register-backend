@@ -117,11 +117,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
       String requestBody = objectMapper.writeValueAsString(requestDTO);
 
       when(productService.updateProductStatusesWithNotification(
-        productIds,
-        ProductStatus.WAIT_APPROVED,
-        ProductStatus.APPROVED,
-        "Valid reason",
-        "Valid formal reason",
+        requestDTO,
         UserRole.INVITALIA_ADMIN.getRole(),
         USERNAME
       )).thenReturn(mockResponse);

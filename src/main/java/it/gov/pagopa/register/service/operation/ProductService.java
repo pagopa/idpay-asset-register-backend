@@ -2,10 +2,7 @@ package it.gov.pagopa.register.service.operation;
 
 import it.gov.pagopa.register.connector.notification.NotificationService;
 import it.gov.pagopa.register.constants.AssetRegisterConstants;
-import it.gov.pagopa.register.dto.operation.EmailProductDTO;
-import it.gov.pagopa.register.dto.operation.ProductDTO;
-import it.gov.pagopa.register.dto.operation.ProductListDTO;
-import it.gov.pagopa.register.dto.operation.UpdateResultDTO;
+import it.gov.pagopa.register.dto.operation.*;
 import it.gov.pagopa.register.enums.ProductStatus;
 import it.gov.pagopa.register.enums.UserRole;
 import it.gov.pagopa.register.mapper.operation.ProductMapper;
@@ -67,27 +64,29 @@ public class ProductService {
   }
 
   public UpdateResultDTO updateProductStatusesWithNotification(
-    List<String> productIds,
-    ProductStatus currentStatus,
-    ProductStatus targetStatus,
-    String motivation,
-    String formalMotivation,
+    //List<String> productIds,
+    //ProductStatus currentStatus,
+    //ProductStatus targetStatus,
+    //String motivation,
+    //String formalMotivation,
+    ProductUpdateStatusRequestDTO updateStatusDto,
     String role,
     String username
   ) {
-    log.info("[UPDATE_PRODUCT_STATUSES] - Starting update - newStatus: {}, motivation: {}", targetStatus, motivation);
-    log.debug("[UPDATE_PRODUCT_STATUSES] - Product IDs to update: {}", productIds);
+    log.info("[UPDATE_PRODUCT_STATUSES] - Starting update - newStatus: {}, motivation: {}", updateStatusDto.getTargetStatus(), updateStatusDto.getMotivation());
+    log.debug("[UPDATE_PRODUCT_STATUSES] - Product IDs to update: {}", updateStatusDto.getGtinCodes());
 
-    List<Product> productsToUpdate = productRepository.findUpdatableProducts(productIds, currentStatus, targetStatus, role);
+    List<Product> productsToUpdate = productRepository.findUpdatableProducts(updateStatusDto.getGtinCodes(), updateStatusDto.getCurrentStatus(), updateStatusDto.getTargetStatus(), role);
     log.debug("[UPDATE_PRODUCT_STATUSES] - Retrieved {} products for update", productsToUpdate.size());
 
-    updateStatuses(productsToUpdate, targetStatus, motivation,formalMotivation, currentStatus,targetStatus,role,username);
+    //updateStatuses(productsToUpdate, targetStatus, motivation,formalMotivation, currentStatus,targetStatus,role,username);
+    updateStatuses(productsToUpdate, role, username, updateStatusDto);
     List<Product> productsUpdated = productRepository.saveAll(productsToUpdate);
 
     log.info("[UPDATE_PRODUCT_STATUSES] - Successfully updated {} products", productsUpdated.size());
 
-    if(targetStatus.name().equals(ProductStatus.REJECTED.toString())) {
-      int failedEmails = notifyStatusUpdates(productsUpdated, targetStatus, formalMotivation);
+    if(updateStatusDto.getTargetStatus().name().equals(ProductStatus.REJECTED.toString())) {
+      int failedEmails = notifyStatusUpdates(productsUpdated, updateStatusDto.getTargetStatus(), updateStatusDto.getFormalMotivation());
       if (failedEmails != 0) {
         log.warn("[UPDATE_PRODUCT_STATUSES] - Some email notifications failed. Total failures: {}", failedEmails);
         return UpdateResultDTO.ko(AssetRegisterConstants.UpdateKeyConstant.EMAIL_ERROR_KEY);
@@ -99,26 +98,27 @@ public class ProductService {
 
 
   private void updateStatuses(List<Product> products,
-                              ProductStatus newStatus,
-                              String motivation,
-                              String formalMotivation,
-                              ProductStatus currentStatus,
-                              ProductStatus targetStatus,
+                              //ProductStatus newStatus,
+                              //String motivation,
+                              //String formalMotivation,
+                              //ProductStatus currentStatus,
+                              //ProductStatus targetStatus,
                               String role,
-                              String username
+                              String username,
+                              ProductUpdateStatusRequestDTO updateStatusDto
   ) {
     products.forEach(product -> {
       log.debug("[UPDATE_PRODUCT_STATUSES] - Updating product {} status from {} to {}",
-        product.getGtinCode(), product.getStatus(), newStatus.name());
-      product.setStatus(newStatus.name());
-      product.setFormalMotivation(formalMotivation);
+        product.getGtinCode(), product.getStatus(), updateStatusDto.getTargetStatus().name());
+      product.setStatus(updateStatusDto.getTargetStatus().name());
+      product.setFormalMotivation(updateStatusDto.getFormalMotivation());
       product.getStatusChangeChronology().add(StatusChangeEvent.builder()
         .username(username)
         .role(role.equals(UserRole.INVITALIA.getRole()) ? "L1" : "L2")
         .updateDate(LocalDateTime.now())
-        .currentStatus(currentStatus)
-        .targetStatus(targetStatus)
-        .motivation(motivation)
+        .currentStatus(updateStatusDto.getCurrentStatus())
+        .targetStatus(updateStatusDto.getTargetStatus())
+        .motivation(updateStatusDto.getMotivation())
         .build());
     });
   }
