@@ -1,0 +1,153 @@
+package it.gov.pagopa.register.service.validator;
+
+import it.gov.pagopa.register.configuration.EprelValidationConfig;
+import it.gov.pagopa.register.connector.eprel.EprelConnector;
+import it.gov.pagopa.register.dto.utils.EprelProduct;
+import it.gov.pagopa.register.dto.utils.ProductValidationResult;
+import it.gov.pagopa.register.enums.ProductStatus;
+import it.gov.pagopa.register.exception.operation.EprelException;
+import it.gov.pagopa.register.model.operation.Product;
+import it.gov.pagopa.register.repository.operation.ProductRepository;
+import org.apache.commons.csv.CSVRecord;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
+
+import java.util.List;
+import java.util.Optional;
+
+import static it.gov.pagopa.register.constants.AssetRegisterConstants.*;
+import static it.gov.pagopa.register.utils.ObjectMaker.buildStatusChangeEventsList;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+import static org.springframework.http.HttpStatus.*;
+
+@ExtendWith(SpringExtension.class)
+@ContextConfiguration(classes = {
+  EprelValidationConfig.class,
+  EprelConnector.class,
+  EprelProductValidatorService.class
+})
+class EprelProductValidatorServiceTest {
+
+  @MockitoBean
+  private EprelConnector eprelConnector;
+
+  @Autowired
+  private EprelProductValidatorService validatorService;
+
+  @MockitoBean
+  private ProductRepository productRepository;
+
+  @Test
+  void testValidateRecords_withValidAndInvalidRecords(){
+    String category = "WASHERDRIERS";
+    String orgId = "org123";
+    String productFileId = "file123";
+
+    CSVRecord wrongOrgIdCsv = mock(CSVRecord.class);
+    when(wrongOrgIdCsv.get(CODE_EPREL)).thenReturn("valid-code");
+    when(wrongOrgIdCsv.get(CODE_GTIN_EAN)).thenReturn("wrong-org-id-csv");
+
+    CSVRecord wrongStatusCsv = mock(CSVRecord.class);
+    when(wrongStatusCsv.get(CODE_EPREL)).thenReturn("valid-code");
+    when(wrongStatusCsv.get(CODE_GTIN_EAN)).thenReturn("wrong-status-csv");
+
+    CSVRecord validProductCsv = mock(CSVRecord.class);
+    when(validProductCsv.get(CODE_EPREL)).thenReturn("valid-code");
+    when(validProductCsv.get(CODE_GTIN_EAN)).thenReturn("valid-gtin");
+
+    CSVRecord duplicatedProductCsv = mock(CSVRecord.class);
+    when(duplicatedProductCsv.get(CODE_EPREL)).thenReturn("valid-code-2");
+    when(duplicatedProductCsv.get(CODE_GTIN_EAN)).thenReturn("valid-gtin");
+
+    CSVRecord invalidProductCsv = mock(CSVRecord.class);
+    when(invalidProductCsv.get(CODE_EPREL)).thenReturn("invalid-code");
+
+    CSVRecord nullProductCsv = mock(CSVRecord.class);
+    when(nullProductCsv.get(CODE_EPREL)).thenReturn("null-code");
+
+
+    EprelProduct validProduct = new EprelProduct();
+    validProduct.setEprelRegistrationNumber("valid-code");
+    validProduct.setEnergyClass("B");
+    validProduct.setOrgVerificationStatus("VERIFIED");
+    validProduct.setTrademarkVerificationStatus("VERIFIED");
+    validProduct.setBlocked(Boolean.FALSE);
+    validProduct.setStatus("PUBLISHED");
+    validProduct.setEnergyClassWash("A");
+    validProduct.setProductGroup("WASHERDRIERS");
+
+    EprelProduct invalidProduct = new EprelProduct();
+    invalidProduct.setEprelRegistrationNumber("valid-code");
+    invalidProduct.setEnergyClass("B");
+    invalidProduct.setOrgVerificationStatus("VERIFIED");
+    invalidProduct.setTrademarkVerificationStatus("VERIFIED");
+    invalidProduct.setBlocked(Boolean.FALSE);
+    invalidProduct.setStatus("PUBLISHED");
+    invalidProduct.setEnergyClassWash("B");
+    invalidProduct.setProductGroup("WASHERDRIERS");
+
+    Product productWrongId = Product.builder()
+      .organizationId("test")
+      .status(ProductStatus.UPLOADED.name())
+      .build();
+
+    Product productWrontStatus = Product.builder()
+      .organizationId(orgId)
+      .status(ProductStatus.APPROVED.name())
+      .statusChangeChronology(buildStatusChangeEventsList())
+      .build();
+
+    when(eprelConnector.callEprel("valid-code")).thenReturn(validProduct);
+    when(eprelConnector.callEprel("valid-code-2")).thenReturn(validProduct);
+    when(eprelConnector.callEprel("invalid-code")).thenReturn(invalidProduct);
+    when(eprelConnector.callEprel("null-code")).thenThrow(new HttpClientErrorException(NOT_FOUND));
+    when(eprelConnector.callEprel("bad-request")).thenThrow(new HttpServerErrorException(BAD_REQUEST));
+    List<CSVRecord> records = List.of(
+      validProductCsv,
+      invalidProductCsv,
+      nullProductCsv,
+      duplicatedProductCsv,
+      wrongOrgIdCsv,
+      wrongStatusCsv
+    );
+
+    when(productRepository.findById("wrong-org-id-csv")).thenReturn(Optional.of(productWrongId));
+    when(productRepository.findById("wrong-status-csv")).thenReturn(Optional.of(productWrontStatus));
+
+    ProductValidationResult result = validatorService.validateRecords(records, EPREL_FIELDS, category, orgId, productFileId, null,"orgName");
+
+    assertEquals(1, result.getValidRecords().size());
+    assertEquals(5, result.getInvalidRecords().size());
+    assertEquals(5, result.getErrorMessages().size());
+  }
+
+  @Test
+  void testValidateRecords_assertThrow(){
+    String category = "WASHERDRIERS";
+    String orgId = "org123";
+    String productFileId = "file123";
+
+
+    CSVRecord nullProductCsv = mock(CSVRecord.class);
+    when(nullProductCsv.get(CODE_EPREL)).thenReturn("bad-request");
+
+
+    when(eprelConnector.callEprel("bad-request")).thenThrow(new HttpServerErrorException(INTERNAL_SERVER_ERROR));
+    List<CSVRecord> records = List.of(
+      nullProductCsv);
+
+    EprelException exception = assertThrows(EprelException.class, () ->
+      validatorService.validateRecords(records, EPREL_FIELDS, category, orgId, productFileId, null,"orgName")
+    );
+
+    assertEquals("EPREL server error: 500 INTERNAL_SERVER_ERROR",exception.getMessage());  }
+}
