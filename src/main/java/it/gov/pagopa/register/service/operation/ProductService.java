@@ -68,7 +68,7 @@ public class ProductService {
     String role,
     String username
   ) {
-    log.info("[UPDATE_PRODUCT_STATUSES] - Starting update - newStatus: {}, motivation: {}", updateStatusDto.getTargetStatus(), updateStatusDto.getMotivation());
+    log.info("[UPDATE_PRODUCT_STATUSES] - Starting update - newStatus: {}, motivation: {}, formalMotivation: {}", updateStatusDto.getTargetStatus(), updateStatusDto.getMotivation(), updateStatusDto.getFormalMotivation());
     log.debug("[UPDATE_PRODUCT_STATUSES] - Product IDs to update: {}", updateStatusDto.getGtinCodes());
 
     List<Product> productsToUpdate = productRepository.findUpdatableProducts(updateStatusDto.getGtinCodes(), updateStatusDto.getCurrentStatus(), updateStatusDto.getTargetStatus(), role);

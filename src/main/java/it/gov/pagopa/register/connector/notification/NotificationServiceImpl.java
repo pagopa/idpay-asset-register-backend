@@ -47,11 +47,11 @@ public class NotificationServiceImpl implements NotificationService {
   }
 
   @Override
-  public void sendEmailUpdateStatus(List<String> products, String motivation, String status, String recipientEmail) {
+  public void sendEmailUpdateStatus(List<String> products, String formalMotivation, String status, String recipientEmail) {
     EmailMessageDTO email = buildUpdateEmailMessageDTO(
       status,
       products,
-      motivation,
+      formalMotivation,
       emailProps.getTemplate().get(status.toLowerCase()),
       recipientEmail,
       emailProps.getSubject().get(status.toLowerCase())
@@ -59,7 +59,7 @@ public class NotificationServiceImpl implements NotificationService {
     notificationRestClient.sendEmail(email);
   }
 
-  private EmailMessageDTO buildUpdateEmailMessageDTO(String status, List<String> products, String motivation, String template, String recipientEmail, String subject) {
+  private EmailMessageDTO buildUpdateEmailMessageDTO(String status, List<String> products, String formalMotivation, String template, String recipientEmail, String subject) {
     Map<String, String> templateValues = new HashMap<>();
 
     List<String> placeholders = Optional.ofNullable(emailProps.getPlaceHolder().get(status.toLowerCase()))
@@ -76,7 +76,7 @@ public class NotificationServiceImpl implements NotificationService {
             .collect(Collectors.joining(""));
           templateValues.put(placeholder, htmlList);
         }
-        case "motivation" -> templateValues.put("motivation", motivation);
+        case "formalMotivation" -> templateValues.put("formalMotivation", formalMotivation);
         default ->
           log.warn("Placeholder not exists: {}", placeholder);
 
