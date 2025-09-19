@@ -25,4 +25,7 @@ public class ProductUpdateStatusRequestDTO {
 
   @NotBlank()
   private String motivation;
+
+  @NotBlank()
+  private String formalMotivation;
 }
