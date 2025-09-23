@@ -148,8 +148,8 @@ app:
       place-holder:
         ok: productFileName
         partial: productFileName
-        rejected: excludedList, formalMotivation
-        supervisioned: suspendedList, formalMotivation
+        rejected: excludedList, motivation
+        supervisioned: suspendedList, motivation
         approved: ripristinedList
     eprel:
       service:

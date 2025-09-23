@@ -69,7 +69,7 @@ class NotificationServiceImplTest {
   @Test
   void shouldSendEmailUpdateStatus() {
     List<String> products = List.of("P001", "P002");
-    String formalMotivation = "Motivazione di test";   // <-- rinominata
+    String formalMotivation = "Motivazione di test";
     String status = "REJECTED";
     String recipientEmail = "utente@example.it";
     notificationService.sendEmailUpdateStatus(products, formalMotivation, status, recipientEmail);
@@ -84,6 +84,7 @@ class NotificationServiceImplTest {
 
     String expectedHtmlList = "<li>P001</li><li>P002</li>";
     Map<String, String> expectedTemplateValues = Map.of(
+      "motivation" , formalMotivation,
       "excludedList", expectedHtmlList
     );
 
