@@ -84,7 +84,7 @@ class NotificationServiceImplTest {
 
     String expectedHtmlList = "<li>P001</li><li>P002</li>";
     Map<String, String> expectedTemplateValues = Map.of(
-      "motivation" , formalMotivation,
+      "formalMotivation" , formalMotivation,
       "excludedList", expectedHtmlList
     );
 

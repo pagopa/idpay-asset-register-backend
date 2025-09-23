@@ -76,7 +76,7 @@ public class NotificationServiceImpl implements NotificationService {
             .collect(Collectors.joining(""));
           templateValues.put(placeholder, htmlList);
         }
-        case "motivation" -> templateValues.put("motivation", formalMotivation);
+        case "formalMotivation" -> templateValues.put("formalMotivation", formalMotivation);
         default ->
           log.warn("Placeholder not exists: {}", placeholder);
 
