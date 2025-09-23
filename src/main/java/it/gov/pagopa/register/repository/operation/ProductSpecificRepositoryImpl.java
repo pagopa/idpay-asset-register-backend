@@ -50,7 +50,7 @@ public class ProductSpecificRepositoryImpl implements ProductSpecificRepository 
       criteria.and(Product.Fields.category).is(category);
     }
     if (productFileId != null) {
-      criteria.and(Product.Fields.productFileId).is(productFileId);
+      criteria.and(Product.Fields.statusChangeChronology).is(productFileId);
     }
     if (eprelCode != null) {
       criteria.and(Product.Fields.eprelCode).regex(".*" + eprelCode + ".*", "i");

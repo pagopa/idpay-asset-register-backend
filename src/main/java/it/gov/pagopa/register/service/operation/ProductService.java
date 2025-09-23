@@ -47,10 +47,10 @@ public class ProductService {
     Pageable pageable,
     String role
   ) {
-    log.info("[GET_PRODUCTS] - Fetching products for organizationId: {}, category: {}, productFileId: {}, eprelCode: {}, gtinCode: {}, productName: {}, brand: {}, model: {}, status: {}",
-      organizationId, category, productFileId, eprelCode, gtinCode,productName,brand, model, status);
+    log.info("[GET_PRODUCTS] - Fetching products for organizationId: {}, category: {}, productFileId: {}, eprelCode: {}, gtinCode: {}, productName: {}, brand: {}, model: {}, status: {}, sort: {}",
+      organizationId, category, productFileId, eprelCode, gtinCode, productName, brand, model, status, pageable.getSort());
 
-    Criteria criteria = productRepository.getCriteria(organizationId, category, productFileId, eprelCode, gtinCode,productName,brand, model, status);
+    Criteria criteria = productRepository.getCriteria(organizationId, category, productFileId, eprelCode, gtinCode, productName, brand, model, status);
 
     List<Product> entities = productRepository.findByFilter(criteria, pageable);
     Long count = productRepository.getCount(criteria);
