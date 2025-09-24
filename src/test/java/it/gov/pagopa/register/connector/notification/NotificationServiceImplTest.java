@@ -79,16 +79,19 @@ class NotificationServiceImplTest {
 
     EmailMessageDTO email = captor.getValue();
     assertEquals(recipientEmail, email.getRecipientEmail());
-    assertEquals("Prodotti Esclusi", email.getSubject());
+    assertEquals("Notifica di esclusione prodotto - Elenco informatico degli elettrodomestici", email.getSubject());
     assertEquals("Email_RDB_EsclusioneProdotti", email.getTemplateName());
 
     String expectedHtmlList = "<li>P001</li><li>P002</li>";
     Map<String, String> expectedTemplateValues = Map.of(
-      "excludedList", expectedHtmlList,
-      "formalMotivation", formalMotivation
+      "formalMotivation" , formalMotivation,
+      "excludedList", expectedHtmlList
     );
 
     assertEquals(expectedTemplateValues, email.getTemplateValues());
+
+
+
   }
 
 }

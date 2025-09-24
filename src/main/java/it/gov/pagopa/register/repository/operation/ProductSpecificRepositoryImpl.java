@@ -37,6 +37,8 @@ public class ProductSpecificRepositoryImpl implements ProductSpecificRepository 
                               String eprelCode,
                               String gtinCode,
                               String productName,
+                              String brand,
+                              String model,
                               String status) {
 
     Criteria criteria = new Criteria();
@@ -58,6 +60,12 @@ public class ProductSpecificRepositoryImpl implements ProductSpecificRepository 
     }
     if (productName != null) {
       criteria.and(Product.Fields.productName).regex(".*" + productName + ".*", "i");
+    }
+    if (brand != null) {
+      criteria.and(Product.Fields.brand).regex(".*" + brand + ".*", "i");
+    }
+    if (model != null) {
+      criteria.and(Product.Fields.model).regex(".*" + model + ".*", "i");
     }
     if (status != null) {
       criteria.and(Product.Fields.status).is(status);

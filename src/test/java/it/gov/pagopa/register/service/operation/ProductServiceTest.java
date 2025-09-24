@@ -74,6 +74,8 @@ class ProductServiceTest {
       null,
       null,
       null,
+      null,
+      null,
       null))
       .thenReturn(criteria);
 
@@ -83,6 +85,8 @@ class ProductServiceTest {
 
     ProductListDTO response = productService.fetchProductsByFilters(
       organizationId,
+      null,
+      null,
       null,
       null,
       null,
@@ -125,6 +129,8 @@ class ProductServiceTest {
       null,
       null,
       null,
+      null,
+      null,
       pageable,
       null);
 
@@ -148,7 +154,7 @@ class ProductServiceTest {
     when(productRepository.findByFilter(any(), any()))
       .thenThrow(new RuntimeException("Database error"));
 
-    RuntimeException exception = assertThrows(RuntimeException.class, () -> productService.fetchProductsByFilters(organizationId, null,  null, null, null, null,null,pageable, null));
+    RuntimeException exception = assertThrows(RuntimeException.class, () -> productService.fetchProductsByFilters(organizationId, null, null, null, null, null, null, null, null, pageable, null));
 
     assertEquals("Database error", exception.getMessage());
 

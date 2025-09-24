@@ -142,7 +142,7 @@ app:
       subject:
         ok: Prodotti elaborati con successo
         partial:  Elaborazione parziale dei prodotti
-        rejected: Prodotti Esclusi
+        rejected: Notifica di esclusione prodotto - Elenco informatico degli elettrodomestici
         supervisioned: Prodotti Contrassegnati
         approved: Prodotti Ripristinati
       place-holder:
