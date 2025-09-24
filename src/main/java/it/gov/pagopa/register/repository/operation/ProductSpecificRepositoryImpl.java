@@ -1,6 +1,7 @@
 package it.gov.pagopa.register.repository.operation;
 
 import it.gov.pagopa.register.dto.operation.EmailProductDTO;
+import it.gov.pagopa.register.dto.operation.ProductCriteriaDTO;
 import it.gov.pagopa.register.enums.ProductStatus;
 import it.gov.pagopa.register.enums.UserRole;
 import it.gov.pagopa.register.model.operation.Product;
@@ -31,44 +32,36 @@ public class ProductSpecificRepositoryImpl implements ProductSpecificRepository 
   }
 
   @Override
-  public Criteria getCriteria(String organizationId,
-                              String category,
-                              String productFileId,
-                              String eprelCode,
-                              String gtinCode,
-                              String productName,
-                              String brand,
-                              String model,
-                              String status) {
+  public Criteria getCriteria(ProductCriteriaDTO inputCriteria) {
 
     Criteria criteria = new Criteria();
 
-    if (organizationId != null) {
-      criteria.and(Product.Fields.organizationId).is(organizationId);
+    if (inputCriteria.getOrganizationId() != null) {
+      criteria.and(Product.Fields.organizationId).is(inputCriteria.getOrganizationId());
     }
-    if (category != null) {
-      criteria.and(Product.Fields.category).is(category);
+    if (inputCriteria.getCategory() != null) {
+      criteria.and(Product.Fields.category).is(inputCriteria.getCategory());
     }
-    if (productFileId != null) {
-      criteria.and(Product.Fields.productFileId).is(productFileId);
+    if (inputCriteria.getProductFileId() != null) {
+      criteria.and(Product.Fields.productFileId).is(inputCriteria.getProductFileId());
     }
-    if (eprelCode != null) {
-      criteria.and(Product.Fields.eprelCode).regex(".*" + eprelCode + ".*", "i");
+    if (inputCriteria.getEprelCode() != null) {
+      criteria.and(Product.Fields.eprelCode).regex(".*" + inputCriteria.getEprelCode() + ".*", "i");
     }
-    if (gtinCode != null) {
-      criteria.and(FIELD_ID).regex(".*" + gtinCode + ".*", "i");
+    if (inputCriteria.getGtinCode() != null) {
+      criteria.and(FIELD_ID).regex(".*" + inputCriteria.getGtinCode() + ".*", "i");
     }
-    if (productName != null) {
-      criteria.and(Product.Fields.productName).regex(".*" + productName + ".*", "i");
+    if (inputCriteria.getProductName() != null) {
+      criteria.and(Product.Fields.productName).regex(".*" + inputCriteria.getProductName() + ".*", "i");
     }
-    if (brand != null) {
-      criteria.and(Product.Fields.brand).regex(".*" + brand + ".*", "i");
+    if (inputCriteria.getBrand() != null) {
+      criteria.and(Product.Fields.brand).regex(".*" + inputCriteria.getBrand() + ".*", "i");
     }
-    if (model != null) {
-      criteria.and(Product.Fields.model).regex(".*" + model + ".*", "i");
+    if (inputCriteria.getModel() != null) {
+      criteria.and(Product.Fields.model).regex(".*" + inputCriteria.getModel() + ".*", "i");
     }
-    if (status != null) {
-      criteria.and(Product.Fields.status).is(status);
+    if (inputCriteria.getStatus() != null) {
+      criteria.and(Product.Fields.status).is(inputCriteria.getStatus());
     }
 
     return criteria;

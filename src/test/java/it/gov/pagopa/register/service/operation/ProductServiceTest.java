@@ -1,10 +1,7 @@
 package it.gov.pagopa.register.service.operation;
 
 import it.gov.pagopa.register.connector.notification.NotificationServiceImpl;
-import it.gov.pagopa.register.dto.operation.EmailProductDTO;
-import it.gov.pagopa.register.dto.operation.ProductListDTO;
-import it.gov.pagopa.register.dto.operation.ProductUpdateStatusRequestDTO;
-import it.gov.pagopa.register.dto.operation.UpdateResultDTO;
+import it.gov.pagopa.register.dto.operation.*;
 import it.gov.pagopa.register.enums.ProductStatus;
 import it.gov.pagopa.register.enums.UserRole;
 import it.gov.pagopa.register.model.operation.Product;
@@ -67,16 +64,12 @@ class ProductServiceTest {
 
     Criteria criteria = Criteria.where(Product.Fields.organizationId).is(organizationId);
 
-    when(productRepository.getCriteria(
-      organizationId,
-      null,
-      null,
-      null,
-      null,
-      null,
-      null,
-      null,
-      null))
+    when(
+      productRepository.getCriteria(
+        ProductCriteriaDTO.builder()
+          .organizationId(organizationId)
+          .build()
+      ))
       .thenReturn(criteria);
 
     when(productRepository.findByFilter(criteria, pageable))

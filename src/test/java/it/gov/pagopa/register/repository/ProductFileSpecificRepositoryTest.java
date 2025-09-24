@@ -1,6 +1,7 @@
 package it.gov.pagopa.register.repository;
 
 
+import it.gov.pagopa.register.dto.operation.ProductCriteriaDTO;
 import it.gov.pagopa.register.enums.UserRole;
 import it.gov.pagopa.register.model.operation.Product;
 import it.gov.pagopa.register.repository.operation.ProductSpecificRepositoryImpl;
@@ -58,7 +59,18 @@ class ProductFileSpecificRepositoryTest {
   @Test
   void testGetCriteria_AllFieldsPresent() {
     Criteria criteria = productSpecificRepository.getCriteria(
-      "org1", "cat",  "fileId", "eprel", "gtin","productName", "brand", "model", "status");
+      ProductCriteriaDTO.builder()
+        .organizationId("org1")
+        .category("cat")
+        .productFileId("fileId")
+        .eprelCode("eprel")
+        .gtinCode("gtin")
+        .productName("productName")
+        .brand("brand")
+        .model("model")
+        .status("status")
+        .build()
+    );
 
     assertNotNull(criteria);
     assertTrue(criteria.getCriteriaObject().containsKey("organizationId"));
@@ -75,7 +87,10 @@ class ProductFileSpecificRepositoryTest {
   @Test
   void testGetCriteria_OnlyOrgIdPresent() {
     Criteria criteria = productSpecificRepository.getCriteria(
-      "org1", null, null, null, null, null, null, null, null);
+      ProductCriteriaDTO.builder()
+        .organizationId("org1")
+        .build()
+    );
 
     assertEquals("org1", criteria.getCriteriaObject().get("organizationId"));
     assertEquals(1, criteria.getCriteriaObject().size());
