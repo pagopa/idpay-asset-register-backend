@@ -18,6 +18,8 @@ public interface ProductSpecificRepository {
                        String eprelCode,
                        String gtinCode,
                        String productName,
+                       String brand,
+                       String model,
                        String status);
 
   Long getCount(Criteria criteria);

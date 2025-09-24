@@ -37,6 +37,8 @@ public class ProductController {
     @RequestParam(required = false) @Pattern(regexp = GTIN_CODE) String gtinCode,
     @RequestParam(required = false) ProductStatus status,
     @RequestParam(required = false) ProductCategories category,
+    @RequestParam(required = false) @Pattern(regexp = ANY_TEXT) String  brand,
+    @RequestParam(required = false) @Pattern(regexp = ANY_TEXT) String  model,
     @PageableDefault(size = 20, sort = "registrationDate", direction = Sort.Direction.DESC) Pageable pageable
   ) {
     String categoryName = Optional.ofNullable(category).map(Enum::name).orElse(null);
@@ -49,6 +51,8 @@ public class ProductController {
       eprelCode,
       gtinCode,
       productName,
+      brand,
+      model,
       statusName,
       pageable,
       role

@@ -57,7 +57,7 @@ class ProductSpecificRepositoryTest {
 
   @Test
   void testGetCriteria_shouldBuildCorrectly() {
-    Criteria criteria = repository.getCriteria("org1", "cat","productFileId","code", "gtin", "productName", "status");
+    Criteria criteria = repository.getCriteria("org1", "cat","productFileId","code", "gtin", "productName", "brand", "model", "status");
 
     assertNotNull(criteria);
     assertEquals("org1", criteria.getCriteriaObject().get("organizationId"));
