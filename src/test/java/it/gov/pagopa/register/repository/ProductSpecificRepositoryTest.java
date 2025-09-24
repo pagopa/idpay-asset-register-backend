@@ -62,7 +62,7 @@ class ProductSpecificRepositoryTest {
       ProductCriteriaDTO.builder()
         .organizationId("org1")
         .category("cat")
-        .productFileId("fileId")
+        .productFileId("productFileId")
         .eprelCode("eprel")
         .gtinCode("gtin")
         .productName("productName")
