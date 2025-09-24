@@ -3,6 +3,7 @@ package it.gov.pagopa.register.service.operation;
 import it.gov.pagopa.register.connector.notification.NotificationServiceImpl;
 import it.gov.pagopa.register.dto.operation.EmailProductDTO;
 import it.gov.pagopa.register.dto.operation.ProductListDTO;
+import it.gov.pagopa.register.dto.operation.ProductUpdateStatusRequestDTO;
 import it.gov.pagopa.register.dto.operation.UpdateResultDTO;
 import it.gov.pagopa.register.enums.ProductStatus;
 import it.gov.pagopa.register.enums.UserRole;
@@ -73,6 +74,8 @@ class ProductServiceTest {
       null,
       null,
       null,
+      null,
+      null,
       null))
       .thenReturn(criteria);
 
@@ -82,6 +85,8 @@ class ProductServiceTest {
 
     ProductListDTO response = productService.fetchProductsByFilters(
       organizationId,
+      null,
+      null,
       null,
       null,
       null,
@@ -124,6 +129,8 @@ class ProductServiceTest {
       null,
       null,
       null,
+      null,
+      null,
       pageable,
       null);
 
@@ -147,7 +154,7 @@ class ProductServiceTest {
     when(productRepository.findByFilter(any(), any()))
       .thenThrow(new RuntimeException("Database error"));
 
-    RuntimeException exception = assertThrows(RuntimeException.class, () -> productService.fetchProductsByFilters(organizationId, null,  null, null, null, null,null,pageable, null));
+    RuntimeException exception = assertThrows(RuntimeException.class, () -> productService.fetchProductsByFilters(organizationId, null, null, null, null, null, null, null, null, pageable, null));
 
     assertEquals("Database error", exception.getMessage());
 
@@ -159,7 +166,6 @@ class ProductServiceTest {
   @Test
   void testUpdateProductStatuses_Success() {
     String organizationId = "org123";
-    String motivation = "motivation";
     List<String> productIds = List.of("prod1", "prod2");
 
     Product product1 = Product.builder()
@@ -180,6 +186,12 @@ class ProductServiceTest {
       .statusChangeChronology(buildStatusChangeEventsList())
       .build();
 
+    ProductUpdateStatusRequestDTO requestDTO = new ProductUpdateStatusRequestDTO();
+    requestDTO.setGtinCodes(productIds);
+    requestDTO.setCurrentStatus(ProductStatus.WAIT_APPROVED);
+    requestDTO.setTargetStatus(ProductStatus.APPROVED);
+    requestDTO.setMotivation("Valid reason");
+    requestDTO.setFormalMotivation("Valid formal reason");
 
     List<Product> productList = List.of(product1, product2);
     when(productRepository.findUpdatableProducts(productIds, ProductStatus.WAIT_APPROVED,ProductStatus.APPROVED, UserRole.INVITALIA_ADMIN.getRole()))
@@ -188,10 +200,7 @@ class ProductServiceTest {
     when(productRepository.saveAll(productList))
       .thenReturn(productList);
     UpdateResultDTO result = productService.updateProductStatusesWithNotification(
-      productIds,
-      ProductStatus.WAIT_APPROVED,
-      ProductStatus.APPROVED,
-      motivation,
+      requestDTO,
       UserRole.INVITALIA_ADMIN.getRole(),
       USERNAME
     );
@@ -247,11 +256,15 @@ class ProductServiceTest {
     doThrow(new RuntimeException("Email service error")).when(notificationService)
       .sendEmailUpdateStatus(List.of("name1", "name2"), motivation, ProductStatus.REJECTED.name(), "test@gmail.com");
 
+    ProductUpdateStatusRequestDTO requestDTO = new ProductUpdateStatusRequestDTO();
+    requestDTO.setGtinCodes(productIds);
+    requestDTO.setCurrentStatus(ProductStatus.UPLOADED);
+    requestDTO.setTargetStatus(ProductStatus.REJECTED);
+    requestDTO.setMotivation("Valid reason");
+    requestDTO.setFormalMotivation("Valid formal reason");
+
     UpdateResultDTO result = productService.updateProductStatusesWithNotification(
-      productIds,
-      ProductStatus.UPLOADED,
-      ProductStatus.REJECTED,
-      motivation,
+      requestDTO,
       UserRole.INVITALIA_ADMIN.getRole(),
       USERNAME
     );

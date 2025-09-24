@@ -2,10 +2,7 @@ package it.gov.pagopa.register.service.operation;
 
 import it.gov.pagopa.register.connector.notification.NotificationService;
 import it.gov.pagopa.register.constants.AssetRegisterConstants;
-import it.gov.pagopa.register.dto.operation.EmailProductDTO;
-import it.gov.pagopa.register.dto.operation.ProductDTO;
-import it.gov.pagopa.register.dto.operation.ProductListDTO;
-import it.gov.pagopa.register.dto.operation.UpdateResultDTO;
+import it.gov.pagopa.register.dto.operation.*;
 import it.gov.pagopa.register.enums.ProductStatus;
 import it.gov.pagopa.register.enums.UserRole;
 import it.gov.pagopa.register.mapper.operation.ProductMapper;
@@ -44,14 +41,16 @@ public class ProductService {
     String eprelCode,
     String gtinCode,
     String productName,
+    String brand,
+    String model,
     String status,
     Pageable pageable,
     String role
   ) {
-    log.info("[GET_PRODUCTS] - Fetching products for organizationId: {}, category: {}, productFileId: {}, eprelCode: {}, gtinCode: {}, productName: {}, status: {}",
-      organizationId, category, productFileId, eprelCode, gtinCode,productName,status);
+    log.info("[GET_PRODUCTS] - Fetching products for organizationId: {}, category: {}, productFileId: {}, eprelCode: {}, gtinCode: {}, productName: {}, brand: {}, model: {}, status: {}, sort: {}",
+      organizationId, category, productFileId, eprelCode, gtinCode, productName, brand, model, status, pageable.getSort());
 
-    Criteria criteria = productRepository.getCriteria(organizationId, category, productFileId, eprelCode, gtinCode,productName, status);
+    Criteria criteria = productRepository.getCriteria(organizationId, category, productFileId, eprelCode, gtinCode, productName, brand, model, status);
 
     List<Product> entities = productRepository.findByFilter(criteria, pageable);
     Long count = productRepository.getCount(criteria);
@@ -67,26 +66,23 @@ public class ProductService {
   }
 
   public UpdateResultDTO updateProductStatusesWithNotification(
-    List<String> productIds,
-    ProductStatus currentStatus,
-    ProductStatus targetStatus,
-    String motivation,
+    ProductUpdateStatusRequestDTO updateStatusDto,
     String role,
     String username
   ) {
-    log.info("[UPDATE_PRODUCT_STATUSES] - Starting update - newStatus: {}, motivation: {}", targetStatus, motivation);
-    log.debug("[UPDATE_PRODUCT_STATUSES] - Product IDs to update: {}", productIds);
+    log.info("[UPDATE_PRODUCT_STATUSES] - Starting update - newStatus: {}, motivation: {}, formalMotivation: {}", updateStatusDto.getTargetStatus(), updateStatusDto.getMotivation(), updateStatusDto.getFormalMotivation());
+    log.debug("[UPDATE_PRODUCT_STATUSES] - Product IDs to update: {}", updateStatusDto.getGtinCodes());
 
-    List<Product> productsToUpdate = productRepository.findUpdatableProducts(productIds, currentStatus, targetStatus, role);
+    List<Product> productsToUpdate = productRepository.findUpdatableProducts(updateStatusDto.getGtinCodes(), updateStatusDto.getCurrentStatus(), updateStatusDto.getTargetStatus(), role);
     log.debug("[UPDATE_PRODUCT_STATUSES] - Retrieved {} products for update", productsToUpdate.size());
 
-    updateStatuses(productsToUpdate, targetStatus, motivation,currentStatus,targetStatus,role,username);
+    updateStatuses(productsToUpdate, role, username, updateStatusDto);
     List<Product> productsUpdated = productRepository.saveAll(productsToUpdate);
 
     log.info("[UPDATE_PRODUCT_STATUSES] - Successfully updated {} products", productsUpdated.size());
 
-    if(targetStatus.name().equals(ProductStatus.REJECTED.toString())) {
-      int failedEmails = notifyStatusUpdates(productsUpdated, targetStatus, motivation);
+    if(updateStatusDto.getTargetStatus().name().equals(ProductStatus.REJECTED.toString())) {
+      int failedEmails = notifyStatusUpdates(productsUpdated, updateStatusDto.getTargetStatus(), updateStatusDto.getFormalMotivation());
       if (failedEmails != 0) {
         log.warn("[UPDATE_PRODUCT_STATUSES] - Some email notifications failed. Total failures: {}", failedEmails);
         return UpdateResultDTO.ko(AssetRegisterConstants.UpdateKeyConstant.EMAIL_ERROR_KEY);
@@ -98,29 +94,27 @@ public class ProductService {
 
 
   private void updateStatuses(List<Product> products,
-                              ProductStatus newStatus,
-                              String motivation,
-                              ProductStatus currentStatus,
-                              ProductStatus targetStatus,
                               String role,
-                              String username
+                              String username,
+                              ProductUpdateStatusRequestDTO updateStatusDto
   ) {
     products.forEach(product -> {
       log.debug("[UPDATE_PRODUCT_STATUSES] - Updating product {} status from {} to {}",
-        product.getGtinCode(), product.getStatus(), newStatus.name());
-      product.setStatus(newStatus.name());
+        product.getGtinCode(), product.getStatus(), updateStatusDto.getTargetStatus().name());
+      product.setStatus(updateStatusDto.getTargetStatus().name());
+      product.setFormalMotivation(updateStatusDto.getFormalMotivation());
       product.getStatusChangeChronology().add(StatusChangeEvent.builder()
         .username(username)
         .role(role.equals(UserRole.INVITALIA.getRole()) ? "L1" : "L2")
         .updateDate(LocalDateTime.now())
-        .currentStatus(currentStatus)
-        .targetStatus(targetStatus)
-        .motivation(motivation)
+        .currentStatus(updateStatusDto.getCurrentStatus())
+        .targetStatus(updateStatusDto.getTargetStatus())
+        .motivation(updateStatusDto.getMotivation())
         .build());
     });
   }
 
-  private int notifyStatusUpdates(List<Product> products, ProductStatus newStatus, String motivation) {
+  private int notifyStatusUpdates(List<Product> products, ProductStatus newStatus, String formalMotivation) {
     List<EmailProductDTO>  emailToProducts = productRepository.getProductNamesGroupedByEmail(
       products.stream().map(Product::getGtinCode).toList()
     );
@@ -131,7 +125,7 @@ public class ProductService {
       try {
         notificationService.sendEmailUpdateStatus(
           dto.getProductNames(),
-          motivation,
+          formalMotivation,
           newStatus.name(),
           dto.getId()
         );

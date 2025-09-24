@@ -142,14 +142,14 @@ app:
       subject:
         ok: Prodotti elaborati con successo
         partial:  Elaborazione parziale dei prodotti
-        rejected: Prodotti Esclusi
+        rejected: Notifica di esclusione prodotto - Elenco informatico degli elettrodomestici
         supervisioned: Prodotti Contrassegnati
         approved: Prodotti Ripristinati
       place-holder:
         ok: productFileName
         partial: productFileName
-        rejected: excludedList, motivation
-        supervisioned: suspendedList, motivation
+        rejected: excludedList, formalMotivation
+        supervisioned: suspendedList, formalMotivation
         approved: ripristinedList
     eprel:
       service:

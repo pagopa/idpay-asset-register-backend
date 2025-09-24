@@ -69,26 +69,29 @@ class NotificationServiceImplTest {
   @Test
   void shouldSendEmailUpdateStatus() {
     List<String> products = List.of("P001", "P002");
-    String motivation = "Motivazione di test";
+    String formalMotivation = "Motivazione di test";
     String status = "REJECTED";
     String recipientEmail = "utente@example.it";
-    notificationService.sendEmailUpdateStatus(products, motivation, status, recipientEmail);
+    notificationService.sendEmailUpdateStatus(products, formalMotivation, status, recipientEmail);
 
     ArgumentCaptor<EmailMessageDTO> captor = ArgumentCaptor.forClass(EmailMessageDTO.class);
     verify(restClientMock, times(1)).sendEmail(captor.capture());
 
     EmailMessageDTO email = captor.getValue();
     assertEquals(recipientEmail, email.getRecipientEmail());
-    assertEquals("Prodotti Esclusi", email.getSubject());
+    assertEquals("Notifica di esclusione prodotto - Elenco informatico degli elettrodomestici", email.getSubject());
     assertEquals("Email_RDB_EsclusioneProdotti", email.getTemplateName());
 
     String expectedHtmlList = "<li>P001</li><li>P002</li>";
     Map<String, String> expectedTemplateValues = Map.of(
-      "excludedList", expectedHtmlList,
-      "motivation", motivation
+      "formalMotivation" , formalMotivation,
+      "excludedList", expectedHtmlList
     );
 
     assertEquals(expectedTemplateValues, email.getTemplateValues());
+
+
+
   }
 
 }
