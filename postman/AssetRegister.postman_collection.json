@@ -123,7 +123,8 @@
 									"\r",
 									"pm.test(\"[GET CONSENT] Body matches expected structure\", function () {\r",
 									"    const responseJson = pm.response.json();\r",
-									"    const expectedVersionId = pm.environment.get(\"consentVersionId\");\r",
+									"    pm.collectionVariables.set(\"consentVersionId\",responseJson.versionId);\r",
+									"    const expectedVersionId = pm.collectionVariables.get(\"consentVersionId\");\r",
 									"\r",
 									"    pm.expect(responseJson).to.eql({\r",
 									"        versionId: expectedVersionId,\r",
@@ -12081,6 +12082,10 @@
 		},
 		{
 			"key": "productFileIds",
+			"value": ""
+		},
+		{
+			"key": "consentVersionId",
 			"value": ""
 		}
 	]
