@@ -1,6 +1,7 @@
 package it.gov.pagopa.register.repository.operation;
 
 import it.gov.pagopa.register.dto.operation.EmailProductDTO;
+import it.gov.pagopa.register.dto.operation.ProductCriteriaDTO;
 import it.gov.pagopa.register.enums.ProductStatus;
 import it.gov.pagopa.register.model.operation.Product;
 import org.springframework.data.domain.Pageable;
@@ -12,15 +13,7 @@ public interface ProductSpecificRepository {
 
   List<Product> findByFilter(Criteria criteria, Pageable pageable);
 
-  Criteria getCriteria(String organizationId,
-                       String category,
-                       String productFileId,
-                       String eprelCode,
-                       String gtinCode,
-                       String productName,
-                       String brand,
-                       String model,
-                       String status);
+  Criteria getCriteria(ProductCriteriaDTO criteria);
 
   Long getCount(Criteria criteria);
 
