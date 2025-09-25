@@ -1,6 +1,7 @@
 package it.gov.pagopa.register.repository;
 
 import it.gov.pagopa.register.dto.operation.EmailProductDTO;
+import it.gov.pagopa.register.dto.operation.ProductCriteriaDTO;
 import it.gov.pagopa.register.enums.ProductStatus;
 import it.gov.pagopa.register.enums.UserRole;
 import it.gov.pagopa.register.model.operation.Product;
@@ -57,7 +58,19 @@ class ProductSpecificRepositoryTest {
 
   @Test
   void testGetCriteria_shouldBuildCorrectly() {
-    Criteria criteria = repository.getCriteria("org1", "cat","productFileId","code", "gtin", "productName", "brand", "model", "status");
+    Criteria criteria = repository.getCriteria(
+      ProductCriteriaDTO.builder()
+        .organizationId("org1")
+        .category("cat")
+        .productFileId("productFileId")
+        .eprelCode("eprel")
+        .gtinCode("gtin")
+        .productName("productName")
+        .brand("brand")
+        .model("model")
+        .status("status")
+        .build()
+    );
 
     assertNotNull(criteria);
     assertEquals("org1", criteria.getCriteriaObject().get("organizationId"));
