@@ -802,7 +802,7 @@
 													"key": "csv",
 													"contentType": "text/csv",
 													"type": "file",
-													"src": "/C:/Users/anvitolo/Downloads/Eprel_Status_Not_Approved.csv"
+													"src": "./postman/Eprel_Status_Not_Approved.csv"
 												}
 											]
 										},
@@ -940,7 +940,7 @@
 													"key": "csv",
 													"contentType": "text/csv",
 													"type": "file",
-													"src": "/C:/Users/anvitolo/Downloads/Eprel_Status_Not_Approved.csv"
+													"src": "/postman/file/valid/cookinghobs_ok.csv"
 												}
 											]
 										},
@@ -1086,7 +1086,7 @@
 															"key": "csv",
 															"contentType": "text/csv",
 															"type": "file",
-															"src": "/C:/Users/anvitolo/OneDrive - NTT DATA EMEAL/Apps/Desktop/Registro Beni/CSV/Error/eprel_template_wrong_extension.txt"
+															"src": "/postman/file/valid/cookinghobs_ok.csv"
 														}
 													]
 												},
@@ -1160,7 +1160,7 @@
 															"key": "csv",
 															"contentType": "text/csv",
 															"type": "file",
-															"src": "/C:/Users/anvitolo/OneDrive - NTT DATA EMEAL/Apps/Desktop/Registro Beni/CSV/Error/eprel_template_wrong_extension.txt"
+															"src": "/postman/file/error/eprel_template_max_capacity.csv"
 														}
 													]
 												},
@@ -1234,7 +1234,7 @@
 															"key": "csv",
 															"contentType": "text/csv",
 															"type": "file",
-															"src": "/C:/Users/anvitolo/OneDrive - NTT DATA EMEAL/Apps/Desktop/Registro Beni/CSV/Error/eprel_template_wrong_header.csv"
+															"src": "/postman/file/error/eprel_template_wrong_header.csv"
 														}
 													]
 												},
@@ -1308,7 +1308,7 @@
 															"key": "csv",
 															"contentType": "text/csv",
 															"type": "file",
-															"src": "/C:/Users/anvitolo/OneDrive - NTT DATA EMEAL/Apps/Desktop/Registro Beni/CSV/Error/eprel_template_only_header.csv"
+															"src": "/postman/file/error/eprel_template_only_header.csv"
 														}
 													]
 												},
@@ -1382,7 +1382,7 @@
 															"key": "csv",
 															"contentType": "text/csv",
 															"type": "file",
-															"src": "/C:/Users/anvitolo/OneDrive - NTT DATA EMEAL/Apps/Desktop/Registro Beni/CSV/Error/eprel_template_max_row.csv"
+															"src": "/postman/file/error/eprel_template_max_row.csv"
 														}
 													]
 												},
@@ -1456,7 +1456,7 @@
 															"key": "csv",
 															"contentType": "text/csv",
 															"type": "file",
-															"src": "/C:/Users/anvitolo/OneDrive - NTT DATA EMEAL/Apps/Desktop/Registro Beni/CSV/Error/eprel_template_wrong_header.csv"
+															"src": "/postman/file/error/eprel_template_wrong_header.csv"
 														}
 													]
 												},
@@ -1530,7 +1530,7 @@
 															"key": "csv",
 															"contentType": "text/csv",
 															"type": "file",
-															"src": "/C:/Users/anvitolo/OneDrive - NTT DATA EMEAL/Apps/Desktop/Registro Beni/CSV/Error/cookinghobs_template_wrong_header.csv"
+															"src": "/postman/file/error/cookinghobs_template_wrong_header.csv"
 														}
 													]
 												},
@@ -1678,7 +1678,7 @@
 																	"key": "csv",
 																	"contentType": "text/csv",
 																	"type": "file",
-																	"src": "/C:/Users/anvitolo/OneDrive - NTT DATA EMEAL/Apps/Desktop/Registro Beni/CSV/Eprel/eprel_ko_categoria.csv"
+																	"src": "/postman/file/eprel-ko/eprel_ko_categoria.csv"
 																}
 															]
 														},
@@ -1900,7 +1900,7 @@
 																	"key": "csv",
 																	"contentType": "text/csv",
 																	"type": "file",
-																	"src": "/C:/Users/anvitolo/OneDrive - NTT DATA EMEAL/Apps/Desktop/Registro Beni/CSV/Eprel/eprel_ko_codice_gtiean.csv"
+																	"src": "/postman/file/eprel-ko/eprel_ko_codice_gtiean.csv"
 																}
 															]
 														},
@@ -2121,7 +2121,7 @@
 																	"key": "csv",
 																	"contentType": "text/csv",
 																	"type": "file",
-																	"src": "/C:/Users/anvitolo/OneDrive - NTT DATA EMEAL/Apps/Desktop/Registro Beni/CSV/Eprel/eprel_ko_codice_eprel.csv"
+																	"src": "/postman/file/eprel-ko/eprel_ko_codice_eprel.csv"
 																}
 															]
 														},
@@ -2342,7 +2342,7 @@
 																	"key": "csv",
 																	"contentType": "text/csv",
 																	"type": "file",
-																	"src": "/C:/Users/anvitolo/OneDrive - NTT DATA EMEAL/Apps/Desktop/Registro Beni/CSV/Eprel/eprel_ko_codice_prodotto.csv"
+																	"src": "/postman/file/eprel-ko/eprel_ko_codice_prodotto.csv"
 																}
 															]
 														},
@@ -2563,7 +2563,7 @@
 																	"key": "csv",
 																	"contentType": "text/csv",
 																	"type": "file",
-																	"src": "/C:/Users/anvitolo/OneDrive - NTT DATA EMEAL/Apps/Desktop/Registro Beni/CSV/Eprel/eprel_ko_paese di produzione.csv"
+																	"src": "/postman/file/eprel-ko/eprel_ko_paese di produzione.csv"
 																}
 															]
 														},
@@ -2794,7 +2794,7 @@
 															"key": "csv",
 															"contentType": "text/csv",
 															"type": "file",
-															"src": "/C:/Users/anvitolo/OneDrive - NTT DATA EMEAL/Apps/Desktop/Registro Beni/CSV/Valid/ITA/eprel_ok_Asciugatrici.csv"
+															"src": "/postman/file/valid/eprel_ok_Asciugatrici.csv"
 														}
 													]
 												},
@@ -2942,7 +2942,7 @@
 																	"key": "csv",
 																	"contentType": "text/csv",
 																	"type": "file",
-																	"src": "/C:/Users/anvitolo/OneDrive - NTT DATA EMEAL/Apps/Desktop/Registro Beni/CSV/Cookinghobs/cookinghobs_ko_categoria.csv"
+																	"src": "/postman/file/cookinghobs-ko/cookinghobs_ko_categoria.csv"
 																}
 															]
 														},
@@ -3163,7 +3163,7 @@
 																	"key": "csv",
 																	"contentType": "text/csv",
 																	"type": "file",
-																	"src": "/C:/Users/anvitolo/OneDrive - NTT DATA EMEAL/Apps/Desktop/Registro Beni/CSV/Cookinghobs/cookinghobs_ko_codice_gtiean.csv"
+																	"src": "/postman/file/cookinghobs-ko/cookinghobs_ko_codice_gtiean.csv"
 																}
 															]
 														},
@@ -3384,7 +3384,7 @@
 																	"key": "csv",
 																	"contentType": "text/csv",
 																	"type": "file",
-																	"src": "/C:/Users/anvitolo/OneDrive - NTT DATA EMEAL/Apps/Desktop/Registro Beni/CSV/Cookinghobs/cookinghobs_ko_codice_prodotto.csv"
+																	"src": "/postman/file/cookinghobs-ko/cookinghobs_ko_codice_prodotto.csv"
 																}
 															]
 														},
@@ -3605,7 +3605,7 @@
 																	"key": "csv",
 																	"contentType": "text/csv",
 																	"type": "file",
-																	"src": "/C:/Users/anvitolo/OneDrive - NTT DATA EMEAL/Apps/Desktop/Registro Beni/CSV/Cookinghobs/cookinghobs_ko_paese di produzione.csv"
+																	"src": "/postman/file/cookinghobs-ko/ookinghobs_ko_paese di produzione.csv"
 																}
 															]
 														},
@@ -3826,7 +3826,7 @@
 																	"key": "csv",
 																	"contentType": "text/csv",
 																	"type": "file",
-																	"src": "/C:/Users/anvitolo/OneDrive - NTT DATA EMEAL/Apps/Desktop/Registro Beni/CSV/Cookinghobs/cookinghobs_ko_marca.csv"
+																	"src": "/postman/file/cookinghobs-ko/cookinghobs_ko_marca.csv"
 																}
 															]
 														},
@@ -4047,7 +4047,7 @@
 																	"key": "csv",
 																	"contentType": "text/csv",
 																	"type": "file",
-																	"src": "/C:/Users/anvitolo/OneDrive - NTT DATA EMEAL/Apps/Desktop/Registro Beni/CSV/Cookinghobs/cookinghobs_ko_modello.csv"
+																	"src": "/postman/file/cookinghobs-ko/cookinghobs_ko_modello.csv"
 																}
 															]
 														},
@@ -4267,7 +4267,7 @@
 															"key": "csv",
 															"contentType": "text/csv",
 															"type": "file",
-															"src": "/C:/Users/anvitolo/OneDrive - NTT DATA EMEAL/Apps/Desktop/Registro Beni/CSV/Valid/ITA/cookinghobs_ok.csv"
+															"src": "/postman/file/valid/cookinghobs_ok.csv"
 														}
 													]
 												},
