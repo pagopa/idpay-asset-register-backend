@@ -1128,7 +1128,7 @@
 															"pm.test(\"[PRODUCT-FILE-UPLOADE][DIMENSION-ERROR] Response body contains expected fields with specific values\", function () {\r",
 															"    var jsonData = pm.response.json();\r",
 															"    pm.expect(jsonData).to.be.an(\"object\");\r",
-															"    pm.expect(jsonData).to.have.property(\"errorKey\", \"product.invalid.file.extension\");\r",
+															"    pm.expect(jsonData).to.have.property(\"errorKey\", \"product.invalid.file.maxsize\");\r",
 															"    pm.expect(jsonData).to.have.property(\"status\", \"KO\");\r",
 															"});\r",
 															""
