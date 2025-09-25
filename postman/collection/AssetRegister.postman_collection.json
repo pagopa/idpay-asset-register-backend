@@ -802,7 +802,7 @@
 													"key": "csv",
 													"contentType": "text/csv",
 													"type": "file",
-													"src": "./postman/Eprel_Status_Not_Approved.csv"
+													"src": "../file/valid/cookinghobs_ok.csv"
 												}
 											]
 										},
@@ -940,7 +940,7 @@
 													"key": "csv",
 													"contentType": "text/csv",
 													"type": "file",
-													"src": "/postman/file/valid/cookinghobs_ok.csv"
+													"src": "../file/valid/cookinghobs_ok.csv"
 												}
 											]
 										},
@@ -1086,7 +1086,7 @@
 															"key": "csv",
 															"contentType": "text/csv",
 															"type": "file",
-															"src": "/postman/file/valid/cookinghobs_ok.csv"
+															"src": "../file/valid/cookinghobs_ok.csv"
 														}
 													]
 												},
@@ -1160,7 +1160,7 @@
 															"key": "csv",
 															"contentType": "text/csv",
 															"type": "file",
-															"src": "/postman/file/error/eprel_template_max_capacity.csv"
+															"src": "../file/error/eprel_template_max_capacity.csv"
 														}
 													]
 												},
@@ -1234,7 +1234,7 @@
 															"key": "csv",
 															"contentType": "text/csv",
 															"type": "file",
-															"src": "/postman/file/error/eprel_template_wrong_header.csv"
+															"src": "../file/error/eprel_template_wrong_header.csv"
 														}
 													]
 												},
@@ -1308,7 +1308,7 @@
 															"key": "csv",
 															"contentType": "text/csv",
 															"type": "file",
-															"src": "/postman/file/error/eprel_template_only_header.csv"
+															"src": "../file/error/eprel_template_only_header.csv"
 														}
 													]
 												},
@@ -1382,7 +1382,7 @@
 															"key": "csv",
 															"contentType": "text/csv",
 															"type": "file",
-															"src": "/postman/file/error/eprel_template_max_row.csv"
+															"src": "../file/error/eprel_template_max_row.csv"
 														}
 													]
 												},
@@ -1456,7 +1456,7 @@
 															"key": "csv",
 															"contentType": "text/csv",
 															"type": "file",
-															"src": "/postman/file/error/eprel_template_wrong_header.csv"
+															"src": "../file/error/eprel_template_wrong_header.csv"
 														}
 													]
 												},
@@ -1530,7 +1530,7 @@
 															"key": "csv",
 															"contentType": "text/csv",
 															"type": "file",
-															"src": "/postman/file/error/cookinghobs_template_wrong_header.csv"
+															"src": "../file/error/cookinghobs_template_wrong_header.csv"
 														}
 													]
 												},
@@ -1678,7 +1678,7 @@
 																	"key": "csv",
 																	"contentType": "text/csv",
 																	"type": "file",
-																	"src": "/postman/file/eprel-ko/eprel_ko_categoria.csv"
+																	"src": "../file/eprel-ko/eprel_ko_categoria.csv"
 																}
 															]
 														},
@@ -1900,7 +1900,7 @@
 																	"key": "csv",
 																	"contentType": "text/csv",
 																	"type": "file",
-																	"src": "/postman/file/eprel-ko/eprel_ko_codice_gtiean.csv"
+																	"src": "../file/eprel-ko/eprel_ko_codice_gtiean.csv"
 																}
 															]
 														},
@@ -2121,7 +2121,7 @@
 																	"key": "csv",
 																	"contentType": "text/csv",
 																	"type": "file",
-																	"src": "/postman/file/eprel-ko/eprel_ko_codice_eprel.csv"
+																	"src": "../file/eprel-ko/eprel_ko_codice_eprel.csv"
 																}
 															]
 														},
@@ -2342,7 +2342,7 @@
 																	"key": "csv",
 																	"contentType": "text/csv",
 																	"type": "file",
-																	"src": "/postman/file/eprel-ko/eprel_ko_codice_prodotto.csv"
+																	"src": "../file/eprel-ko/eprel_ko_codice_prodotto.csv"
 																}
 															]
 														},
@@ -2563,7 +2563,7 @@
 																	"key": "csv",
 																	"contentType": "text/csv",
 																	"type": "file",
-																	"src": "/postman/file/eprel-ko/eprel_ko_paese di produzione.csv"
+																	"src": "../file/eprel-ko/eprel_ko_paese di produzione.csv"
 																}
 															]
 														},
@@ -2794,7 +2794,7 @@
 															"key": "csv",
 															"contentType": "text/csv",
 															"type": "file",
-															"src": "/postman/file/valid/eprel_ok_Asciugatrici.csv"
+															"src": "../file/valid/eprel_ok_Asciugatrici.csv"
 														}
 													]
 												},
@@ -2942,7 +2942,7 @@
 																	"key": "csv",
 																	"contentType": "text/csv",
 																	"type": "file",
-																	"src": "/postman/file/cookinghobs-ko/cookinghobs_ko_categoria.csv"
+																	"src": "../file/cookinghobs-ko/cookinghobs_ko_categoria.csv"
 																}
 															]
 														},
@@ -3163,7 +3163,7 @@
 																	"key": "csv",
 																	"contentType": "text/csv",
 																	"type": "file",
-																	"src": "/postman/file/cookinghobs-ko/cookinghobs_ko_codice_gtiean.csv"
+																	"src": "../file/cookinghobs-ko/cookinghobs_ko_codice_gtiean.csv"
 																}
 															]
 														},
@@ -3384,7 +3384,7 @@
 																	"key": "csv",
 																	"contentType": "text/csv",
 																	"type": "file",
-																	"src": "/postman/file/cookinghobs-ko/cookinghobs_ko_codice_prodotto.csv"
+																	"src": "../file/cookinghobs-ko/cookinghobs_ko_codice_prodotto.csv"
 																}
 															]
 														},
@@ -3605,7 +3605,7 @@
 																	"key": "csv",
 																	"contentType": "text/csv",
 																	"type": "file",
-																	"src": "/postman/file/cookinghobs-ko/ookinghobs_ko_paese di produzione.csv"
+																	"src": "../file/cookinghobs-ko/ookinghobs_ko_paese di produzione.csv"
 																}
 															]
 														},
@@ -3826,7 +3826,7 @@
 																	"key": "csv",
 																	"contentType": "text/csv",
 																	"type": "file",
-																	"src": "/postman/file/cookinghobs-ko/cookinghobs_ko_marca.csv"
+																	"src": "../file/cookinghobs-ko/cookinghobs_ko_marca.csv"
 																}
 															]
 														},
@@ -4047,7 +4047,7 @@
 																	"key": "csv",
 																	"contentType": "text/csv",
 																	"type": "file",
-																	"src": "/postman/file/cookinghobs-ko/cookinghobs_ko_modello.csv"
+																	"src": "../file/cookinghobs-ko/cookinghobs_ko_modello.csv"
 																}
 															]
 														},
@@ -4267,7 +4267,7 @@
 															"key": "csv",
 															"contentType": "text/csv",
 															"type": "file",
-															"src": "/postman/file/valid/cookinghobs_ok.csv"
+															"src": "../file/valid/cookinghobs_ok.csv"
 														}
 													]
 												},
