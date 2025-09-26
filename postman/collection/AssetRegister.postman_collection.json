@@ -1091,7 +1091,7 @@
 													]
 												},
 												"url": {
-													"raw": "{{baseUrlIdPay}}/register/product-files?category=TEST",
+													"raw": "{{baseUrlIdPay}}/register/product-files?category={{COOKINGHOBS}}",
 													"host": [
 														"{{baseUrlIdPay}}"
 													],
