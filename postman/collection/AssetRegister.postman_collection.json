@@ -11808,7 +11808,7 @@
 							}
 						],
 						"url": {
-							"raw": "{{baseUrlIdPay}}/register/products?page=0&size=10&AGgtinCode={{COOKINGHOBS}}&organizationId={{org_id_ope}}",
+							"raw": "{{baseUrlIdPay}}/register/products?page=0&size=10&organizationId={{org_id_ope}}&gtinCode={{COOKINGHOBS}}",
 							"host": [
 								"{{baseUrlIdPay}}"
 							],
