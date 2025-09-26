@@ -11832,7 +11832,11 @@
 								{
 									"key": "organizationId",
 									"value": "{{org_id_ope}}"
-								}
+								},
+                {
+                  "key": "gtinCode",
+                  "value": "{{COOKINGHOBS}}"
+                }
 							]
 						}
 					},
