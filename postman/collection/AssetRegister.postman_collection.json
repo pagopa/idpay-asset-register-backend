@@ -2563,7 +2563,7 @@
 																	"key": "csv",
 																	"contentType": "text/csv",
 																	"type": "file",
-																	"src": "../file/eprel-ko/eprel_ko_paese di produzione.csv"
+																	"src": "../file/eprel-ko/eprel_ko_paese_di_produzione.csv"
 																}
 															]
 														},
@@ -3605,7 +3605,7 @@
 																	"key": "csv",
 																	"contentType": "text/csv",
 																	"type": "file",
-																	"src": "../file/cookinghobs-ko/ookinghobs_ko_paese di produzione.csv"
+																	"src": "../file/cookinghobs-ko/cookinghobs_ko_paese_di_produzione.csv"
 																}
 															]
 														},
@@ -11808,7 +11808,7 @@
 							}
 						],
 						"url": {
-							"raw": "{{baseUrlIdPay}}/register/products?page=0&size=10&category={{COOKINGHOBS}}&organizationId={{org_id_ope}}",
+							"raw": "{{baseUrlIdPay}}/register/products?page=0&size=10&AGgtinCode={{COOKINGHOBS}}&organizationId={{org_id_ope}}",
 							"host": [
 								"{{baseUrlIdPay}}"
 							],
