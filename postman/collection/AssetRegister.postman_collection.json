@@ -11807,32 +11807,28 @@
 								"value": "application/json"
 							}
 						],
-						"url": {
-							"raw": "{{baseUrlIdPay}}/register/products?page=0&size=10&organizationId={{org_id_ope}}&gtinCode={{COOKINGHOBS}}",
-							"host": [
-								"{{baseUrlIdPay}}"
-							],
-							"path": [
-								"register",
-								"products"
-							],
-							"query": [
-								{
-									"key": "sort",
-									"value": "category,asc"
-								},
-								{
-									"key": "page",
-									"value": "1"
-								},
-								{
-									"key": "size",
-									"value": "10"
-								},
-								{
-									"key": "organizationId",
-									"value": "{{org_id_ope}}"
-								},
+            "url": {
+              "raw": "{{baseUrlIdPay}}/register/products?page=0&size=10&organizationId={{org_id_ope}}&gtinCode={{COOKINGHOBS}}",
+              "host": [
+                "{{baseUrlIdPay}}"
+              ],
+              "path": [
+                "register",
+                "products"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "10"
+                },
+                {
+                  "key": "organizationId",
+                  "value": "{{org_id_ope}}"
+                },
                 {
                   "key": "gtinCode",
                   "value": "{{COOKINGHOBS}}"
