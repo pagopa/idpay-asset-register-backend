@@ -2861,7 +2861,7 @@
                               "key": "csv",
                               "contentType": "text/csv",
                               "type": "file",
-                              "src": "..file/valid/eprel_ok_Asciugatrici.csv"
+                              "src": "../file/valid/eprel_ok_Asciugatrici.csv"
                             }
                           ]
                         },
@@ -4411,7 +4411,7 @@
                               "key": "csv",
                               "contentType": "text/csv",
                               "type": "file",
-                              "src": "..file/valid/cookinghobs_ok.csv"
+                              "src": "../file/valid/cookinghobs_ok.csv"
                             }
                           ]
                         },
