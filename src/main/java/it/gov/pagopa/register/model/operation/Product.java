@@ -1,5 +1,6 @@
 package it.gov.pagopa.register.model.operation;
 
+import it.gov.pagopa.register.dto.operation.FormalMotivationDTO;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -36,7 +37,7 @@ public class Product {
   private String energyClass;
   private String capacity;
   private ArrayList<StatusChangeEvent> statusChangeChronology;
-  private String formalMotivation;
+  private FormalMotivationDTO formalMotivation;
   private String productName;
   private String organizationName;
 }

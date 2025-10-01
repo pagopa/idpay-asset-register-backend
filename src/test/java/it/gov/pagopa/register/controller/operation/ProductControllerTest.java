@@ -1,10 +1,7 @@
 package it.gov.pagopa.register.controller.operation;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import it.gov.pagopa.register.dto.operation.ProductDTO;
-import it.gov.pagopa.register.dto.operation.ProductListDTO;
-import it.gov.pagopa.register.dto.operation.ProductUpdateStatusRequestDTO;
-import it.gov.pagopa.register.dto.operation.UpdateResultDTO;
+import it.gov.pagopa.register.dto.operation.*;
 import it.gov.pagopa.register.enums.ProductStatus;
 import it.gov.pagopa.register.enums.UserRole;
 import it.gov.pagopa.register.service.operation.ProductService;
@@ -16,6 +13,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
+import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 
@@ -110,13 +108,15 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
       UpdateResultDTO mockResponse = UpdateResultDTO.ok();
 
+      FormalMotivationDTO formalMotivationDto = new FormalMotivationDTO("Valid formal reason", LocalDateTime.now());
+
       List<String> productIds = List.of("prod-1", "prod-2");
       ProductUpdateStatusRequestDTO requestDTO = new ProductUpdateStatusRequestDTO();
       requestDTO.setGtinCodes(productIds);
       requestDTO.setCurrentStatus(ProductStatus.WAIT_APPROVED);
       requestDTO.setTargetStatus(ProductStatus.APPROVED);
       requestDTO.setMotivation("Valid reason");
-      requestDTO.setFormalMotivation("Valid formal reason");
+      requestDTO.setFormalMotivation(formalMotivationDto);
 
       String requestBody = objectMapper.writeValueAsString(requestDTO);
 

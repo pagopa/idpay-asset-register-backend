@@ -128,8 +128,8 @@ class ProductFileSpecificRepositoryTest {
     List<Product> result = productSpecificRepository.retrieveDistinctProductFileIdsBasedOnRole(orgId,null, UserRole.OPERATORE.getRole());
 
     assertEquals(1, result.size());
-    assertEquals("file123", result.get(0).getProductFileId());
-    assertEquals("catA", result.get(0).getCategory());
+    assertEquals("file123", result.getFirst().getProductFileId());
+    assertEquals("catA", result.getFirst().getCategory());
 
     verify(mongoTemplate).aggregate(any(Aggregation.class), eq("product"), eq(Product.class));
   }
@@ -225,8 +225,8 @@ class ProductFileSpecificRepositoryTest {
 
     List<Sort.Order> orders = sort.toList();
     assertEquals(1, orders.size());
-    assertEquals("registrationDate", orders.get(0).getProperty());
-    assertTrue(orders.get(0).isAscending());
+    assertEquals("registrationDate", orders.getFirst().getProperty());
+    assertTrue(orders.getFirst().isAscending());
   }
 
 }
