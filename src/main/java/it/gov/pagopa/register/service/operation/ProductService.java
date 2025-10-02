@@ -82,7 +82,7 @@ public class ProductService {
     String role,
     String username
   ) {
-    log.info("[UPDATE_PRODUCT_STATUSES] - Starting update - newStatus: {}, motivation: {}, formalMotivation: {}", updateStatusDto.getTargetStatus(), updateStatusDto.getMotivation(), updateStatusDto.getFormalMotivation());
+    log.info("[UPDATE_PRODUCT_STATUSES] - Starting update - newStatus: {}, motivation: {}, formalMotivation: {}", updateStatusDto.getTargetStatus(), updateStatusDto.getMotivation(), updateStatusDto.getFormalMotivation().getFormalMotivation());
     log.debug("[UPDATE_PRODUCT_STATUSES] - Product IDs to update: {}", updateStatusDto.getGtinCodes());
 
     List<Product> productsToUpdate = productRepository.findUpdatableProducts(updateStatusDto.getGtinCodes(), updateStatusDto.getCurrentStatus(), updateStatusDto.getTargetStatus(), role);
@@ -114,7 +114,11 @@ public class ProductService {
       log.debug("[UPDATE_PRODUCT_STATUSES] - Updating product {} status from {} to {}",
         product.getGtinCode(), product.getStatus(), updateStatusDto.getTargetStatus().name());
       product.setStatus(updateStatusDto.getTargetStatus().name());
-      product.setFormalMotivation(updateStatusDto.getFormalMotivation());
+      product.setFormalMotivation(
+        FormalMotivationDTO.builder()
+          .formalMotivation(updateStatusDto.getFormalMotivation().getFormalMotivation())
+          .updateDate(LocalDateTime.now())
+          .build());
       product.getStatusChangeChronology().add(StatusChangeEvent.builder()
         .username(username)
         .role(role.equals(UserRole.INVITALIA.getRole()) ? "L1" : "L2")
@@ -126,7 +130,7 @@ public class ProductService {
     });
   }
 
-  private int notifyStatusUpdates(List<Product> products, ProductStatus newStatus, String formalMotivation) {
+  private int notifyStatusUpdates(List<Product> products, ProductStatus newStatus, FormalMotivationDTO formalMotivation) {
     List<EmailProductDTO>  emailToProducts = productRepository.getProductNamesGroupedByEmail(
       products.stream().map(Product::getGtinCode).toList()
     );
@@ -137,7 +141,7 @@ public class ProductService {
       try {
         notificationService.sendEmailUpdateStatus(
           dto.getProductNames(),
-          formalMotivation,
+          formalMotivation.getFormalMotivation(),
           newStatus.name(),
           dto.getId()
         );

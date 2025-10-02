@@ -15,6 +15,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.core.query.Criteria;
 
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -161,6 +162,8 @@ class ProductServiceTest {
     String organizationId = "org123";
     List<String> productIds = List.of("prod1", "prod2");
 
+    FormalMotivationDTO formalMotivationDto = new FormalMotivationDTO("Valid formal reason", LocalDateTime.now());
+
     Product product1 = Product.builder()
       .gtinCode("prod1")
       .organizationId(organizationId)
@@ -184,7 +187,7 @@ class ProductServiceTest {
     requestDTO.setCurrentStatus(ProductStatus.WAIT_APPROVED);
     requestDTO.setTargetStatus(ProductStatus.APPROVED);
     requestDTO.setMotivation("Valid reason");
-    requestDTO.setFormalMotivation("Valid formal reason");
+    requestDTO.setFormalMotivation(formalMotivationDto);
 
     List<Product> productList = List.of(product1, product2);
     when(productRepository.findUpdatableProducts(productIds, ProductStatus.WAIT_APPROVED,ProductStatus.APPROVED, UserRole.INVITALIA_ADMIN.getRole()))
@@ -237,6 +240,8 @@ class ProductServiceTest {
     List<Product> productList = List.of(product1, product2);
     List<EmailProductDTO> emailProductDTOs = List.of(emailProductDTO);
 
+    FormalMotivationDTO formalMotivationDto = new FormalMotivationDTO("Valid formal reason", LocalDateTime.now());
+
     when(productRepository.findUpdatableProducts(productIds, ProductStatus.UPLOADED, ProductStatus.REJECTED, UserRole.INVITALIA_ADMIN.getRole()))
       .thenReturn(productList);
 
@@ -254,7 +259,7 @@ class ProductServiceTest {
     requestDTO.setCurrentStatus(ProductStatus.UPLOADED);
     requestDTO.setTargetStatus(ProductStatus.REJECTED);
     requestDTO.setMotivation("Valid reason");
-    requestDTO.setFormalMotivation("Valid formal reason");
+    requestDTO.setFormalMotivation(formalMotivationDto);
 
     UpdateResultDTO result = productService.updateProductStatusesWithNotification(
       requestDTO,

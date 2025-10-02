@@ -1,5 +1,6 @@
 package it.gov.pagopa.register.mapper.operation;
 
+import it.gov.pagopa.register.dto.operation.FormalMotivationDTO;
 import it.gov.pagopa.register.dto.operation.ProductDTO;
 import it.gov.pagopa.register.dto.utils.EprelProduct;
 import it.gov.pagopa.register.enums.ProductStatus;
@@ -76,7 +77,7 @@ public class ProductMapper {
       )
       .organizationName(organizationName)
       .statusChangeChronology(new ArrayList<>())
-      .formalMotivation("")
+      .formalMotivation(new FormalMotivationDTO())
       .build();
   }
 
@@ -101,7 +102,7 @@ public class ProductMapper {
       .productName(mapProductName(eprelData, category, capacity))
       .organizationName(organizationName)
       .statusChangeChronology(new ArrayList<>())
-      .formalMotivation("")
+      .formalMotivation(new FormalMotivationDTO())
       .build();
   }
 
