@@ -37,7 +37,8 @@ public class Product {
   private String energyClass;
   private String capacity;
   private ArrayList<StatusChangeEvent> statusChangeChronology;
-  private FormalMotivationDTO formalMotivation;
+  @Builder.Default
+  private FormalMotivationDTO formalMotivation = new FormalMotivationDTO("-", LocalDateTime.MIN);
   private String productName;
   private String organizationName;
 }
