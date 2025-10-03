@@ -54,7 +54,7 @@ public class ProductMapper {
       .productName(entity.getProductName())
       .capacity(("N\\A").equals(entity.getCapacity()) ? null : entity.getCapacity())
       .statusChangeChronology(role.equals(UserRole.OPERATORE.getRole()) ? null : entity.getStatusChangeChronology())
-      .formalMotivation(entity.getFormalMotivation())
+      .formalMotivation(entity.getFormalMotivation() == null ? new FormalMotivationDTO("-", null) : entity.getFormalMotivation())
       .organizationName(entity.getOrganizationName())
       .build();
   }
@@ -77,7 +77,7 @@ public class ProductMapper {
       )
       .organizationName(organizationName)
       .statusChangeChronology(new ArrayList<>())
-      .formalMotivation(new FormalMotivationDTO())
+      .formalMotivation(new FormalMotivationDTO("-", null))
       .build();
   }
 
@@ -102,7 +102,7 @@ public class ProductMapper {
       .productName(mapProductName(eprelData, category, capacity))
       .organizationName(organizationName)
       .statusChangeChronology(new ArrayList<>())
-      .formalMotivation(new FormalMotivationDTO())
+      .formalMotivation(new FormalMotivationDTO("-", null))
       .build();
   }
 
