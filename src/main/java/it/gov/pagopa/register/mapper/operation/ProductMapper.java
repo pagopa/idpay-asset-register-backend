@@ -77,7 +77,7 @@ public class ProductMapper {
       )
       .organizationName(organizationName)
       .statusChangeChronology(new ArrayList<>())
-      .formalMotivation(new FormalMotivationDTO("-", null))
+      .formalMotivation(new FormalMotivationDTO("-", LocalDateTime.MIN))
       .build();
   }
 
@@ -102,7 +102,7 @@ public class ProductMapper {
       .productName(mapProductName(eprelData, category, capacity))
       .organizationName(organizationName)
       .statusChangeChronology(new ArrayList<>())
-      .formalMotivation(new FormalMotivationDTO("-", null))
+      .formalMotivation(new FormalMotivationDTO("-", LocalDateTime.MIN))
       .build();
   }
 
