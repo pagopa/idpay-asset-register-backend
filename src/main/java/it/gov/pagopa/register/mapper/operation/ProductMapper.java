@@ -54,7 +54,7 @@ public class ProductMapper {
       .productName(entity.getProductName())
       .capacity(("N\\A").equals(entity.getCapacity()) ? null : entity.getCapacity())
       .statusChangeChronology(role.equals(UserRole.OPERATORE.getRole()) ? null : entity.getStatusChangeChronology())
-      .formalMotivation(entity.getFormalMotivation() == null ? new FormalMotivationDTO("-", null) : entity.getFormalMotivation())
+      .formalMotivation(entity.getFormalMotivation() == null ? new FormalMotivationDTO("-", LocalDateTime.MIN) : entity.getFormalMotivation())
       .organizationName(entity.getOrganizationName())
       .build();
   }
