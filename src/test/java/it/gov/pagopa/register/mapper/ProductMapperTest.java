@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.stream.Stream;
 
 import static it.gov.pagopa.register.utils.ObjectMaker.buildStatusChangeEventsList;
+import static it.gov.pagopa.register.constants.AssetRegisterConstants.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -201,11 +202,11 @@ class ProductMapperTest {
   @Test
   void testMapCookingHobToProduct() {
     CSVRecord csvRecord = mock(CSVRecord.class);
-    when(csvRecord.get("codeProduct")).thenReturn("PROD123");
-    when(csvRecord.get("codeGtinEan")).thenReturn("GTIN123");
-    when(csvRecord.get("countryOfProduction")).thenReturn("Italy");
-    when(csvRecord.get("brand")).thenReturn("BrandX");
-    when(csvRecord.get("model")).thenReturn("ModelX");
+    when(csvRecord.get(CODE_PRODUCT)).thenReturn("PROD123");
+    when(csvRecord.get(CODE_GTIN_EAN)).thenReturn("GTIN123");
+    when(csvRecord.get(COUNTRY_OF_PRODUCTION)).thenReturn("Italy");
+    when(csvRecord.get(BRAND)).thenReturn("BrandX");
+    when(csvRecord.get(MODEL)).thenReturn("ModelX");
 
     Product product = ProductMapper.mapCookingHobToProduct(csvRecord, "org1", "file123", "orgName");
     assertEquals("COOKINGHOBS", product.getCategory());
@@ -220,10 +221,10 @@ class ProductMapperTest {
   @Test
   void testMapEprelToProduct_Generic() {
     CSVRecord csvRecord = mock(CSVRecord.class);
-    when(csvRecord.get("codeProduct")).thenReturn("PROD123");
-    when(csvRecord.get("codeGtinEan")).thenReturn("GTIN123");
-    when(csvRecord.get("codeEprel")).thenReturn("EPREL123");
-    when(csvRecord.get("countryOfProduction")).thenReturn("Italy");
+    when(csvRecord.get(CODE_PRODUCT)).thenReturn("PROD123");
+    when(csvRecord.get(CODE_GTIN_EAN)).thenReturn("GTIN123");
+    when(csvRecord.get(CODE_EPREL)).thenReturn("EPREL123");
+    when(csvRecord.get(COUNTRY_OF_PRODUCTION)).thenReturn("Italy");
 
     EprelProduct eprel = mock(EprelProduct.class);
     when(eprel.getProductGroup()).thenReturn("GroupA");
@@ -231,7 +232,7 @@ class ProductMapperTest {
     when(eprel.getModelIdentifier()).thenReturn("ModelX");
     when(eprel.getEnergyClass()).thenReturn("A");
 
-    Product product = ProductMapper.mapEprelToProduct(csvRecord, eprel, "org1", "file123", "WASHINGMACHINES", "orgName");
+    Product product = ProductMapper.mapEprelToProduct(csvRecord, eprel, "org1", "file123", WASHINGMACHINES, "orgName");
     ProductDTO dto = ProductMapper.toDTO(product, UserRole.INVITALIA_ADMIN.getRole());
     assertEquals("BrandX", dto.getBrand());
     assertEquals("orgName", dto.getOrganizationName());
@@ -259,7 +260,7 @@ class ProductMapperTest {
 
     eprel.setCavities(List.of(c1, c2));
 
-    Product product = ProductMapper.mapEprelToProduct(csvRecord, eprel, "org1", "file123", "OVENS", "orgName");
+    Product product = ProductMapper.mapEprelToProduct(csvRecord, eprel, "org1", "file123", OVENS, "orgName");
     ProductDTO dto = ProductMapper.toDTO(product, UserRole.INVITALIA_ADMIN.getRole());
     assertNotNull(dto.getCapacity());
     assertTrue(dto.getCapacity().contains("50 l"), "Prima cavità con valore");
@@ -287,7 +288,7 @@ class ProductMapperTest {
     eprel.setEnergyClass("A");
     eprel.setCompartments(List.of(compartment));
 
-    Product product = ProductMapper.mapEprelToProduct(csvRecord, eprel, "org1", "file123", "REFRIGERATINGAPPL", "orgName");
+    Product product = ProductMapper.mapEprelToProduct(csvRecord, eprel, "org1", "file123", REFRIGERATINGAPPL, "orgName");
     ProductDTO dto = ProductMapper.toDTO(product, UserRole.INVITALIA_ADMIN.getRole());
     assertEquals("BrandX", dto.getBrand());
     assertTrue(dto.getProductName().contains("BrandX"));
@@ -316,7 +317,7 @@ class ProductMapperTest {
     eprel.setEnergyClass("A");
     eprel.setCompartments(List.of(compartment));
 
-    Product product = ProductMapper.mapEprelToProduct(csvRecord, eprel, "org1", "file123", "REFRIGERATINGAPPL", "orgName");
+    Product product = ProductMapper.mapEprelToProduct(csvRecord, eprel, "org1", "file123", REFRIGERATINGAPPL, "orgName");
     ProductDTO dto = ProductMapper.toDTO(product, UserRole.INVITALIA_ADMIN.getRole());
     assertEquals("BrandX", dto.getBrand());
     assertNotNull(dto.getProductName());
@@ -344,7 +345,7 @@ class ProductMapperTest {
     eprel.setEnergyClass("A");
     eprel.setCompartments(List.of(compartment));
 
-    Product product = ProductMapper.mapEprelToProduct(csvRecord, eprel, "org1", "file123", "REFRIGERATINGAPPL", "orgName");
+    Product product = ProductMapper.mapEprelToProduct(csvRecord, eprel, "org1", "file123", REFRIGERATINGAPPL, "orgName");
     assertEquals("BrandX", product.getBrand());
     assertNotNull(product.getProductName());
   }
@@ -391,21 +392,21 @@ class ProductMapperTest {
     EprelProduct unknown = new EprelProduct();
 
     return Stream.of(
-      Arguments.of("WASHINGMACHINES", washingMachine, "8 kg"),
-      Arguments.of("WASHINGMACHINES", washingMachineNull, "N\\A"),
-      Arguments.of("TUMBLEDRYERS", tumbleDryer, "7 kg"),
-      Arguments.of("TUMBLEDRYERS", tumbleDryerNull, "N\\A"),
-      Arguments.of("WASHERDRIERS", washerDrier, "6 kg"),
-      Arguments.of("WASHERDRIERS", washerDrierNull, "N\\A"),
-      Arguments.of("OVENS", oven, "65 l"),
-      Arguments.of("OVENS", ovenNullCavities, "N\\A"),
-      Arguments.of("OVENS", ovenNullVolume, "N\\A"),
-      Arguments.of("DISHWASHERS", dishwasher, "12 c"),
-      Arguments.of("DISHWASHERS", dishwasherNull, "N\\A"),
-      Arguments.of("REFRIGERATINGAPPL", fridge, "300 l"),
-      Arguments.of("REFRIGERATINGAPPL", fridgeNull, "N\\A"),
-      Arguments.of("UNKNOWN", unknown, "N\\A"),
-      Arguments.of("WASHINGMACHINES", null, "N\\A")
+    Arguments.of(WASHINGMACHINES, washingMachine, "8 kg"),
+    Arguments.of(WASHINGMACHINES, washingMachineNull, "N\\A"),
+    Arguments.of(TUMBLEDRYERS, tumbleDryer, "7 kg"),
+    Arguments.of(TUMBLEDRYERS, tumbleDryerNull, "N\\A"),
+    Arguments.of(WASHERDRIERS, washerDrier, "6 kg"),
+    Arguments.of(WASHERDRIERS, washerDrierNull, "N\\A"),
+    Arguments.of(OVENS, oven, "65 l"),
+    Arguments.of(OVENS, ovenNullCavities, "N\\A"),
+    Arguments.of(OVENS, ovenNullVolume, "N\\A"),
+    Arguments.of(DISHWASHERS, dishwasher, "12 c"),
+    Arguments.of(DISHWASHERS, dishwasherNull, "N\\A"),
+    Arguments.of(REFRIGERATINGAPPL, fridge, "300 l"),
+    Arguments.of(REFRIGERATINGAPPL, fridgeNull, "N\\A"),
+    Arguments.of("UNKNOWN", unknown, "N\\A"),
+    Arguments.of(WASHINGMACHINES, null, "N\\A")
     );
   }
 
@@ -418,11 +419,11 @@ class ProductMapperTest {
     e.setModelIdentifier("ModelZ");
     e.setEnergyClass("A");
 
-    String withCapacity = ProductMapper.mapProductName(e, "WASHINGMACHINES", "8 kg");
+    String withCapacity = ProductMapper.mapProductName(e, WASHINGMACHINES, "8 kg");
     assertTrue(withCapacity.endsWith("BrandZ ModelZ 8 kg"),
       "Se la capacity è valorizzata, deve comparire alla fine del nome");
 
-    String withoutCapacity = ProductMapper.mapProductName(e, "WASHINGMACHINES", "N\\A");
+    String withoutCapacity = ProductMapper.mapProductName(e, WASHINGMACHINES, "N\\A");
     assertTrue(withoutCapacity.endsWith("BrandZ ModelZ"),
       "Se la capacity è 'N\\A', non deve essere appesa");
     assertFalse(withoutCapacity.endsWith("N\\A"), "Non deve chiudersi con 'N\\A'");
@@ -436,14 +437,14 @@ class ProductMapperTest {
       .eprelCode("EPREL123")
       .gtinCode("GTIN123")
       .productCode("PROD123")
-      .category("COOKINGHOBS")
+      .category(COOKINGHOBS)
       .countryOfProduction("Italy")
       .model("ModelX")
       .brand("BrandX")
       .build();
 
     List<String> headers = List.of("eprelCode", "gtinCode", "productCode", "category", "countryOfProduction", "model", "brand");
-    CSVRecord csvRecord = ProductMapper.mapProductToCsvRow(product, "COOKINGHOBS", headers);
+    CSVRecord csvRecord = ProductMapper.mapProductToCsvRow(product, COOKINGHOBS, headers);
     assertNotNull(csvRecord);
     assertEquals("EPREL123", csvRecord.get(0));
     assertEquals("BrandX", csvRecord.get(6));
@@ -455,12 +456,12 @@ class ProductMapperTest {
       .eprelCode("EPREL123")
       .gtinCode("GTIN123")
       .productCode("PROD123")
-      .category("OVENS")
+      .category(OVENS)
       .countryOfProduction("Italy")
       .build();
 
     List<String> headers = List.of("eprelCode", "gtinCode", "productCode", "category", "countryOfProduction");
-    CSVRecord csvRecord = ProductMapper.mapProductToCsvRow(product, "OVENS", headers);
+    CSVRecord csvRecord = ProductMapper.mapProductToCsvRow(product, OVENS, headers);
     assertNotNull(csvRecord);
     assertEquals("OVENS", csvRecord.get(3));
     assertEquals("Italy", csvRecord.get(4));
