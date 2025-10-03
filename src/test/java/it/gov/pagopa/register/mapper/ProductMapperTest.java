@@ -147,8 +147,6 @@ class ProductMapperTest {
       .productCode(null)
       .countryOfProduction(null)
       .energyClass(null)
-      .linkEprel(null)
-      .batchName(null)
       .productName(null)
       .capacity(null)
       .statusChangeChronology(null)
@@ -169,8 +167,6 @@ class ProductMapperTest {
     assertEquals("", dto.getProductCode());
     assertEquals("", dto.getCountryOfProduction());
     assertEquals("", dto.getEnergyClass());
-    assertEquals("", dto.getLinkEprel());
-    assertEquals("", dto.getBatchName());
     assertEquals("", dto.getProductName());
     assertEquals("", dto.getCapacity());
     assertNotNull(dto.getStatusChangeChronology());
@@ -360,54 +356,31 @@ class ProductMapperTest {
 
   static Stream<Arguments> provideCapacityCases() {
     // WASHINGMACHINES
-    EprelProduct washingMachine = new EprelProduct();
-    washingMachine.setRatedCapacity("8");
+    EprelProduct washingMachine = EprelProduct.builder().ratedCapacity("8").build();
+    EprelProduct washingMachineNull = EprelProduct.builder().ratedCapacity(null).build();
 
-    EprelProduct washingMachineNull = new EprelProduct();
-    washingMachineNull.setRatedCapacity(null);
+    EprelProduct tumbleDryer = EprelProduct.builder().ratedCapacity("7").build();
+    EprelProduct tumbleDryerNull = EprelProduct.builder().ratedCapacity(null).build();
 
-    // TUMBLEDRYERS
-    EprelProduct tumbleDryer = new EprelProduct();
-    tumbleDryer.setRatedCapacity("7");
+    EprelProduct washerDrier = EprelProduct.builder().ratedCapacityWash("6").build();
+    EprelProduct washerDrierNull = EprelProduct.builder().ratedCapacityWash(null).build();
 
-    EprelProduct tumbleDryerNull = new EprelProduct();
-    tumbleDryerNull.setRatedCapacity(null);
+    EprelProduct oven = EprelProduct.builder()
+      .cavities(List.of(EprelProduct.Cavity.builder().volume(65).build()))
+      .build();
 
-    // WASHERDRIERS
-    EprelProduct washerDrier = new EprelProduct();
-    washerDrier.setRatedCapacityWash("6");
+    EprelProduct ovenNullCavities = EprelProduct.builder().cavities(null).build();
 
-    EprelProduct washerDrierNull = new EprelProduct();
-    washerDrierNull.setRatedCapacityWash(null);
+    EprelProduct ovenNullVolume = EprelProduct.builder()
+      .cavities(List.of(EprelProduct.Cavity.builder().volume(null).build()))
+      .build();
 
-    // OVENS
-    EprelProduct oven = new EprelProduct();
-    EprelProduct.Cavity cavity1 = new EprelProduct.Cavity();
-    cavity1.setVolume(65);
-    oven.setCavities(List.of(cavity1));
+    EprelProduct dishwasher = EprelProduct.builder().ratedCapacity("12").build();
+    EprelProduct dishwasherNull = EprelProduct.builder().ratedCapacity(null).build();
 
-    EprelProduct ovenNullCavities = new EprelProduct();
-    ovenNullCavities.setCavities(null);
+    EprelProduct fridge = EprelProduct.builder().totalVolume("300").build();
+    EprelProduct fridgeNull = EprelProduct.builder().totalVolume(null).build();
 
-    EprelProduct ovenNullVolume = new EprelProduct();
-    EprelProduct.Cavity nullVolumeCavity = new EprelProduct.Cavity();
-    ovenNullVolume.setCavities(List.of(nullVolumeCavity));
-
-    // DISHWASHERS
-    EprelProduct dishwasher = new EprelProduct();
-    dishwasher.setRatedCapacity("12");
-
-    EprelProduct dishwasherNull = new EprelProduct();
-    dishwasherNull.setRatedCapacity(null);
-
-    // REFRIGERATINGAPPL
-    EprelProduct fridge = new EprelProduct();
-    fridge.setTotalVolume("300");
-
-    EprelProduct fridgeNull = new EprelProduct();
-    fridgeNull.setTotalVolume(null);
-
-    // UNKNOWN
     EprelProduct unknown = new EprelProduct();
 
     return Stream.of(
