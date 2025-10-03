@@ -108,7 +108,7 @@ class ProductMapperTest {
 
     ProductDTO dto = ProductMapper.toDTO(product, UserRole.INVITALIA_ADMIN.getRole());
     assertNotNull(dto.getFormalMotivation(), "Deve valorizzare un FormalMotivationDTO di default");
-    assertEquals("-", dto.getFormalMotivation().getFormalMotivation());
+    assertEquals("", dto.getFormalMotivation().getFormalMotivation());
     assertEquals(LocalDateTime.MIN, dto.getFormalMotivation().getUpdateDate());
   }
 
@@ -123,13 +123,61 @@ class ProductMapperTest {
       .category("C")
       .brand("B")
       .capacity("10")
-      .formalMotivation(new FormalMotivationDTO(null, LocalDateTime.now()))
+      .formalMotivation(new FormalMotivationDTO(null, null))
       .organizationName("orgName")
       .build();
 
     ProductDTO dto = ProductMapper.toDTO(product, UserRole.INVITALIA_ADMIN.getRole());
-    assertEquals("-", dto.getFormalMotivation().getFormalMotivation(), "Campo null -> default '-'");
+    assertEquals("", dto.getFormalMotivation().getFormalMotivation(), "Campo null -> default ''");
     assertEquals(LocalDateTime.MIN, dto.getFormalMotivation().getUpdateDate(), "Anche la data va a MIN");
+  }
+
+  @Test
+  void testToDTO_NoFieldIsNull() {
+    Product product = Product.builder()
+      .organizationId(null)
+      .registrationDate(null)
+      .status(null)
+      .model(null)
+      .productGroup(null)
+      .category(null)
+      .brand(null)
+      .eprelCode(null)
+      .gtinCode(null)
+      .productCode(null)
+      .countryOfProduction(null)
+      .energyClass(null)
+      .linkEprel(null)
+      .batchName(null)
+      .productName(null)
+      .capacity(null)
+      .statusChangeChronology(null)
+      .formalMotivation(null)
+      .organizationName(null)
+      .build();
+
+    ProductDTO dto = ProductMapper.toDTO(product, UserRole.INVITALIA_ADMIN.getRole());
+    assertNotNull(dto);
+    assertEquals("", dto.getOrganizationId());
+    assertEquals("", dto.getStatus());
+    assertEquals("", dto.getModel());
+    assertEquals("", dto.getProductGroup());
+    assertEquals("", dto.getCategory());
+    assertEquals("", dto.getBrand());
+    assertEquals("", dto.getEprelCode());
+    assertEquals("", dto.getGtinCode());
+    assertEquals("", dto.getProductCode());
+    assertEquals("", dto.getCountryOfProduction());
+    assertEquals("", dto.getEnergyClass());
+    assertEquals("", dto.getLinkEprel());
+    assertEquals("", dto.getBatchName());
+    assertEquals("", dto.getProductName());
+    assertEquals("", dto.getCapacity());
+    assertNotNull(dto.getStatusChangeChronology());
+    assertNotNull(dto.getFormalMotivation());
+    assertEquals("", dto.getFormalMotivation().getFormalMotivation());
+    assertEquals(LocalDateTime.MIN, dto.getFormalMotivation().getUpdateDate());
+    assertEquals("", dto.getOrganizationName());
   }
 
   @Test

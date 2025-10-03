@@ -37,25 +37,32 @@ public class ProductMapper {
 
 
     return ProductDTO.builder()
-      .organizationId(entity.getOrganizationId())
+      .organizationId(entity.getOrganizationId() == null ? "" : entity.getOrganizationId())
       .registrationDate(entity.getRegistrationDate())
-      .status(role.equals(UserRole.OPERATORE.getRole()) && entity.getStatus().equals(ProductStatus.WAIT_APPROVED.name()) ? ProductStatus.UPLOADED.name() : entity.getStatus())
-      .model(entity.getModel())
-      .productGroup(entity.getProductGroup())
-      .category(CATEGORIES_TO_IT_S.get(entity.getCategory()))
-      .brand(entity.getBrand())
-      .eprelCode(entity.getEprelCode())
-      .gtinCode(entity.getGtinCode())
-      .productCode(entity.getProductCode())
-      .countryOfProduction(entity.getCountryOfProduction())
-      .energyClass(entity.getEnergyClass())
-      .linkEprel(generateEprelUrl(entity.getProductGroup(), entity.getEprelCode()))
-      .batchName(CATEGORIES_TO_IT_P.get(entity.getCategory())+"_"+entity.getProductFileId()+".csv")
-      .productName(entity.getProductName())
+      .status(role.equals(UserRole.OPERATORE.getRole()) && entity.getStatus() != null && entity.getStatus().equals(ProductStatus.WAIT_APPROVED.name()) ? ProductStatus.UPLOADED.name() : (entity.getStatus() == null ? "" : entity.getStatus()))
+      .model(entity.getModel() == null ? "" : entity.getModel())
+      .productGroup(entity.getProductGroup() == null ? "" : entity.getProductGroup())
+      .category(CATEGORIES_TO_IT_S.get(entity.getCategory()) == null ? "" : CATEGORIES_TO_IT_S.get(entity.getCategory()))
+      .brand(entity.getBrand() == null ? "" : entity.getBrand())
+      .eprelCode(entity.getEprelCode() == null ? "" : entity.getEprelCode())
+      .gtinCode(entity.getGtinCode() == null ? "" : entity.getGtinCode())
+      .productCode(entity.getProductCode() == null ? "" : entity.getProductCode())
+      .countryOfProduction(entity.getCountryOfProduction() == null ? "" : entity.getCountryOfProduction())
+      .energyClass(entity.getEnergyClass() == null ? "" : entity.getEnergyClass())
+      .linkEprel(generateEprelUrl(entity.getProductGroup(), entity.getEprelCode()) == null ? "" : generateEprelUrl(entity.getProductGroup(), entity.getEprelCode()))
+      .batchName((CATEGORIES_TO_IT_P.get(entity.getCategory()) == null ? "" : CATEGORIES_TO_IT_P.get(entity.getCategory())) + "_" + (entity.getProductFileId() == null ? "" : entity.getProductFileId()) + ".csv")
+      .productName(entity.getProductName() == null ? "" : entity.getProductName())
       .capacity(entity.getCapacity() == null || "N\\A".equals(entity.getCapacity()) ? "" : entity.getCapacity())
       .statusChangeChronology(entity.getStatusChangeChronology() == null || role.equals(UserRole.OPERATORE.getRole()) ? new ArrayList<>() : entity.getStatusChangeChronology())
-      .formalMotivation(entity.getFormalMotivation() == null || entity.getFormalMotivation().getFormalMotivation() == null || entity.getFormalMotivation().getUpdateDate() == null ? new FormalMotivationDTO("-", LocalDateTime.MIN) : entity.getFormalMotivation())
-      .organizationName(entity.getOrganizationName())
+      .formalMotivation(
+        entity.getFormalMotivation() == null
+          ? new FormalMotivationDTO("", LocalDateTime.MIN)
+          : new FormalMotivationDTO(
+              entity.getFormalMotivation().getFormalMotivation() == null ? "" : entity.getFormalMotivation().getFormalMotivation(),
+              entity.getFormalMotivation().getUpdateDate() == null ? LocalDateTime.MIN : entity.getFormalMotivation().getUpdateDate()
+            )
+      )
+      .organizationName(entity.getOrganizationName() == null ? "" : entity.getOrganizationName())
       .build();
   }
   public static Product mapCookingHobToProduct(CSVRecord csvRecord, String orgId, String productFileId,String organizationName) {
