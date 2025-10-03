@@ -54,9 +54,11 @@ class ProductMapperTest {
       .build();
 
     ProductDTO dto = ProductMapper.toDTO(product, UserRole.OPERATORE.getRole());
+
     assertNotNull(dto);
     assertEquals(ProductStatus.UPLOADED.name(), dto.getStatus());
-    assertNull(dto.getStatusChangeChronology(), "Per OPERATORE la chronology deve essere nascosta");
+    assertNotNull(dto.getStatusChangeChronology(), "Per OPERATORE deve essere lista vuota, non null");
+    assertTrue(dto.getStatusChangeChronology().isEmpty(), "La chronology deve essere nascosta come lista vuota");
     assertEquals("OK", dto.getFormalMotivation().getFormalMotivation());
   }
 
@@ -131,7 +133,7 @@ class ProductMapperTest {
   }
 
   @Test
-  void testToDTO_CapacityNA_BecomesNullInDTO() {
+  void testToDTO_CapacityNA_BecomesEmptyStringInDTO() {
     Product product = Product.builder()
       .organizationId("org1")
       .registrationDate(LocalDateTime.now())
@@ -146,8 +148,9 @@ class ProductMapperTest {
       .build();
 
     ProductDTO dto = ProductMapper.toDTO(product, UserRole.INVITALIA_ADMIN.getRole());
-    assertNull(dto.getCapacity(), "In DTO, 'N\\A' deve diventare null");
+    assertEquals("", dto.getCapacity(), "In DTO, 'N\\A' ora diventa stringa vuota");
   }
+
 
   // ---------- mapCookingHobToProduct ----------
 
