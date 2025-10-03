@@ -135,6 +135,7 @@ class ProductMapperTest {
   @Test
   void testToDTO_NoFieldIsNull() {
     Product product = Product.builder()
+      .gtinCode("dummy")
       .organizationId(null)
       .registrationDate(null)
       .status(null)
@@ -143,7 +144,6 @@ class ProductMapperTest {
       .category(null)
       .brand(null)
       .eprelCode(null)
-      .gtinCode(null)
       .productCode(null)
       .countryOfProduction(null)
       .energyClass(null)
@@ -232,9 +232,10 @@ class ProductMapperTest {
     when(eprel.getEnergyClass()).thenReturn("A");
 
     Product product = ProductMapper.mapEprelToProduct(csvRecord, eprel, "org1", "file123", "WASHINGMACHINES", "orgName");
-    assertEquals("BrandX", product.getBrand());
-    assertEquals("orgName", product.getOrganizationName());
-    assertNotNull(product.getFormalMotivation());
+    ProductDTO dto = ProductMapper.toDTO(product, UserRole.INVITALIA_ADMIN.getRole());
+    assertEquals("BrandX", dto.getBrand());
+    assertEquals("orgName", dto.getOrganizationName());
+    assertNotNull(dto.getFormalMotivation());
   }
 
   @Test
@@ -259,9 +260,10 @@ class ProductMapperTest {
     eprel.setCavities(List.of(c1, c2));
 
     Product product = ProductMapper.mapEprelToProduct(csvRecord, eprel, "org1", "file123", "OVENS", "orgName");
-    assertNotNull(product.getCapacity());
-    assertTrue(product.getCapacity().contains("50 l"), "Prima cavità con valore");
-    assertTrue(product.getCapacity().contains("N\\A"), "Seconda cavità senza volume -> N\\A");
+    ProductDTO dto = ProductMapper.toDTO(product, UserRole.INVITALIA_ADMIN.getRole());
+    assertNotNull(dto.getCapacity());
+    assertTrue(dto.getCapacity().contains("50 l"), "Prima cavità con valore");
+    assertTrue(dto.getCapacity().contains("N\\A"), "Seconda cavità senza volume -> N\\A");
   }
 
   // --- REFRIGERATINGAPPL: frigorifero vs freezer + VARIABLE_TEMP con subcompartments ---
@@ -286,9 +288,10 @@ class ProductMapperTest {
     eprel.setCompartments(List.of(compartment));
 
     Product product = ProductMapper.mapEprelToProduct(csvRecord, eprel, "org1", "file123", "REFRIGERATINGAPPL", "orgName");
-    assertEquals("BrandX", product.getBrand());
-    assertTrue(product.getProductName().contains("BrandX"));
-    assertTrue(product.getProductName().contains("ModelX"));
+    ProductDTO dto = ProductMapper.toDTO(product, UserRole.INVITALIA_ADMIN.getRole());
+    assertEquals("BrandX", dto.getBrand());
+    assertTrue(dto.getProductName().contains("BrandX"));
+    assertTrue(dto.getProductName().contains("ModelX"));
   }
 
   @Test
@@ -314,8 +317,9 @@ class ProductMapperTest {
     eprel.setCompartments(List.of(compartment));
 
     Product product = ProductMapper.mapEprelToProduct(csvRecord, eprel, "org1", "file123", "REFRIGERATINGAPPL", "orgName");
-    assertEquals("BrandX", product.getBrand());
-    assertNotNull(product.getProductName());
+    ProductDTO dto = ProductMapper.toDTO(product, UserRole.INVITALIA_ADMIN.getRole());
+    assertEquals("BrandX", dto.getBrand());
+    assertNotNull(dto.getProductName());
   }
 
   @Test
@@ -365,15 +369,18 @@ class ProductMapperTest {
     EprelProduct washerDrier = EprelProduct.builder().ratedCapacityWash("6").build();
     EprelProduct washerDrierNull = EprelProduct.builder().ratedCapacityWash(null).build();
 
-    EprelProduct oven = EprelProduct.builder()
-      .cavities(List.of(EprelProduct.Cavity.builder().volume(65).build()))
-      .build();
+    EprelProduct.Cavity c1 = new EprelProduct.Cavity();
+    c1.setVolume(65);
+    EprelProduct oven = new EprelProduct();
+    oven.setCavities(List.of(c1));
 
-    EprelProduct ovenNullCavities = EprelProduct.builder().cavities(null).build();
+    EprelProduct ovenNullCavities = new EprelProduct();
+    ovenNullCavities.setCavities(null);
 
-    EprelProduct ovenNullVolume = EprelProduct.builder()
-      .cavities(List.of(EprelProduct.Cavity.builder().volume(null).build()))
-      .build();
+    EprelProduct.Cavity nullVolumeCavity = new EprelProduct.Cavity();
+    nullVolumeCavity.setVolume(null);
+    EprelProduct ovenNullVolume = new EprelProduct();
+    ovenNullVolume.setCavities(List.of(nullVolumeCavity));
 
     EprelProduct dishwasher = EprelProduct.builder().ratedCapacity("12").build();
     EprelProduct dishwasherNull = EprelProduct.builder().ratedCapacity(null).build();
