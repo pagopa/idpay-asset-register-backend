@@ -52,8 +52,8 @@ public class ProductMapper {
       .linkEprel(generateEprelUrl(entity.getProductGroup(), entity.getEprelCode()))
       .batchName(CATEGORIES_TO_IT_P.get(entity.getCategory())+"_"+entity.getProductFileId()+".csv")
       .productName(entity.getProductName())
-      .capacity(("N\\A").equals(entity.getCapacity()) ? null : entity.getCapacity())
-      .statusChangeChronology(role.equals(UserRole.OPERATORE.getRole()) ? null : entity.getStatusChangeChronology())
+      .capacity(entity.getCapacity() == null || "N\\A".equals(entity.getCapacity()) ? "" : entity.getCapacity())
+      .statusChangeChronology(entity.getStatusChangeChronology() == null || role.equals(UserRole.OPERATORE.getRole()) ? new ArrayList<>() : entity.getStatusChangeChronology())
       .formalMotivation(entity.getFormalMotivation() == null || entity.getFormalMotivation().getFormalMotivation() == null || entity.getFormalMotivation().getUpdateDate() == null ? new FormalMotivationDTO("-", LocalDateTime.MIN) : entity.getFormalMotivation())
       .organizationName(entity.getOrganizationName())
       .build();
