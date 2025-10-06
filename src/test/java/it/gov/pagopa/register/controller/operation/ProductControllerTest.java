@@ -13,8 +13,10 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.Collections;
 import java.util.List;
 
@@ -109,7 +111,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
       UpdateResultDTO mockResponse = UpdateResultDTO.ok();
 
-      FormalMotivationDTO formalMotivationDto = new FormalMotivationDTO("Valid formal reason", OffsetDateTime.now());
+      FormalMotivationDTO formalMotivationDto = new FormalMotivationDTO("-", OffsetDateTime.ofInstant(Instant.EPOCH, ZoneOffset.UTC));
 
       List<String> productIds = List.of("prod-1", "prod-2");
       ProductUpdateStatusRequestDTO requestDTO = new ProductUpdateStatusRequestDTO();
