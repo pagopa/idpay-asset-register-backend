@@ -8,12 +8,16 @@ import it.gov.pagopa.register.enums.UserRole;
 import it.gov.pagopa.register.mapper.operation.ProductMapper;
 import it.gov.pagopa.register.model.operation.Product;
 import org.apache.commons.csv.CSVRecord;
+import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -49,7 +53,7 @@ class ProductMapperTest {
       .productFileId("file123")
       .statusChangeChronology(buildStatusChangeEventsList())
       .productName("CategoryA BrandX ModelX 10")
-      .formalMotivation(new FormalMotivationDTO("OK", LocalDateTime.now()))
+      .formalMotivation(new FormalMotivationDTO("OK", OffsetDateTime.now()))
       .organizationName("orgName")
       .build();
 
@@ -81,7 +85,7 @@ class ProductMapperTest {
       .productFileId("file123")
       .productName("CategoryA BrandX ModelX 10")
       .statusChangeChronology(buildStatusChangeEventsList())
-      .formalMotivation(new FormalMotivationDTO("Motivo", LocalDateTime.now()))
+      .formalMotivation(new FormalMotivationDTO("Motivo", OffsetDateTime.now()))
       .organizationName("orgName")
       .build();
 
@@ -123,13 +127,13 @@ class ProductMapperTest {
       .category("C")
       .brand("B")
       .capacity("10")
-      .formalMotivation(new FormalMotivationDTO(null, LocalDateTime.now()))
+      .formalMotivation(new FormalMotivationDTO(null, OffsetDateTime.now()))
       .organizationName("orgName")
       .build();
 
     ProductDTO dto = ProductMapper.toDTO(product, UserRole.INVITALIA_ADMIN.getRole());
     assertEquals("-", dto.getFormalMotivation().getFormalMotivation(), "Campo null -> default '-'");
-    assertEquals(LocalDateTime.MIN, dto.getFormalMotivation().getUpdateDate(), "Anche la data va a MIN");
+    assertEquals(OffsetDateTime.ofInstant(Instant.EPOCH, ZoneOffset.UTC), dto.getFormalMotivation().getUpdateDate(), "Anche la data va a MIN");
   }
 
   @Test
@@ -143,7 +147,7 @@ class ProductMapperTest {
       .category("C")
       .brand("B")
       .capacity("N\\A")
-      .formalMotivation(new FormalMotivationDTO("x", LocalDateTime.now()))
+      .formalMotivation(new FormalMotivationDTO("x", OffsetDateTime.now()))
       .organizationName("orgName")
       .build();
 

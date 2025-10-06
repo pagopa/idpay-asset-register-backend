@@ -10,9 +10,13 @@ import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.csv.CSVRecord;
 
+import java.time.Instant;
+import java.time.OffsetDateTime;
+
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -35,6 +39,9 @@ public class ProductMapper {
       return null;
     }
 
+    FormalMotivationDTO fm = entity.getFormalMotivation() != null
+      ? entity.getFormalMotivation()
+      : new FormalMotivationDTO("-", OffsetDateTime.ofInstant(Instant.EPOCH, ZoneOffset.UTC));
 
     return ProductDTO.builder()
       .organizationId(entity.getOrganizationId())
@@ -54,7 +61,7 @@ public class ProductMapper {
       .productName(entity.getProductName())
       .capacity(entity.getCapacity() == null || "N\\A".equals(entity.getCapacity()) ? "" : entity.getCapacity())
       .statusChangeChronology(entity.getStatusChangeChronology() == null || role.equals(UserRole.OPERATORE.getRole()) ? new ArrayList<>() : entity.getStatusChangeChronology())
-      .formalMotivation(entity.getFormalMotivation() == null || entity.getFormalMotivation().getFormalMotivation() == null || entity.getFormalMotivation().getUpdateDate() == null ? new FormalMotivationDTO("-", LocalDateTime.MIN) : entity.getFormalMotivation())
+      .formalMotivation(fm)
       .organizationName(entity.getOrganizationName())
       .build();
   }
@@ -77,7 +84,7 @@ public class ProductMapper {
       )
       .organizationName(organizationName)
       .statusChangeChronology(new ArrayList<>())
-      .formalMotivation(new FormalMotivationDTO("-", LocalDateTime.MIN))
+      .formalMotivation(new FormalMotivationDTO("-", OffsetDateTime.ofInstant(Instant.EPOCH, ZoneOffset.UTC)))
       .build();
   }
 
@@ -102,7 +109,7 @@ public class ProductMapper {
       .productName(mapProductName(eprelData, category, capacity))
       .organizationName(organizationName)
       .statusChangeChronology(new ArrayList<>())
-      .formalMotivation(new FormalMotivationDTO("-", LocalDateTime.MIN))
+      .formalMotivation(new FormalMotivationDTO("-", OffsetDateTime.ofInstant(Instant.EPOCH, ZoneOffset.UTC)))
       .build();
   }
 

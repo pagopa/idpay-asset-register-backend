@@ -14,6 +14,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.Collections;
 import java.util.List;
 
@@ -108,7 +109,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
       UpdateResultDTO mockResponse = UpdateResultDTO.ok();
 
-      FormalMotivationDTO formalMotivationDto = new FormalMotivationDTO("Valid formal reason", LocalDateTime.now());
+      FormalMotivationDTO formalMotivationDto = new FormalMotivationDTO("Valid formal reason", OffsetDateTime.now());
 
       List<String> productIds = List.of("prod-1", "prod-2");
       ProductUpdateStatusRequestDTO requestDTO = new ProductUpdateStatusRequestDTO();

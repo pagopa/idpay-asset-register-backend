@@ -9,8 +9,11 @@ import lombok.experimental.FieldNameConstants;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
+import java.time.OffsetDateTime;
 
 @Data
 @Builder
@@ -38,7 +41,7 @@ public class Product {
   private String capacity;
   private ArrayList<StatusChangeEvent> statusChangeChronology;
   @Builder.Default
-  private FormalMotivationDTO formalMotivation = new FormalMotivationDTO("-", LocalDateTime.MIN);
+  private FormalMotivationDTO formalMotivation = new FormalMotivationDTO("-", OffsetDateTime.ofInstant(Instant.EPOCH, ZoneOffset.UTC));
   private String productName;
   private String organizationName;
 }
