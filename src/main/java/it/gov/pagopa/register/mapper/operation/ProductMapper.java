@@ -14,7 +14,6 @@ import org.apache.commons.csv.CSVRecord;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -37,15 +36,6 @@ public class ProductMapper {
   private static String ldtToIsoZ(LocalDateTime ldt) {
     if (ldt == null) return null;
     return ldt.atOffset(UTC).format(ISO_Z);
-  }
-
-  public static LocalDateTime parseIsoToLdt(String s) {
-    if (s == null || s.isBlank()) return null;
-    try {
-      return OffsetDateTime.parse(s, ISO_Z).withOffsetSameInstant(UTC).toLocalDateTime();
-    } catch (Exception ignored) {
-      return LocalDateTime.parse(s);
-    }
   }
 
   public static ProductDTO toDTO(Product entity, String role){
