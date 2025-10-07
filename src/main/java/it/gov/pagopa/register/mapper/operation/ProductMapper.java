@@ -16,6 +16,7 @@ import java.io.StringWriter;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -29,11 +30,23 @@ public class ProductMapper {
 
   private ProductMapper() {}
 
-  private static OffsetDateTime toODT(LocalDateTime ldt) {
-    return ldt == null ? null : ldt.atOffset(ZoneOffset.UTC);
+  private static final LocalDateTime DEFAULT_EPOCH_LDT = LocalDateTime.of(1970,1,1,0,0);
+  private static final ZoneOffset UTC = ZoneOffset.UTC;
+  private static final DateTimeFormatter ISO_Z = DateTimeFormatter.ISO_OFFSET_DATE_TIME;
+
+  private static String ldtToIsoZ(LocalDateTime ldt) {
+    if (ldt == null) return null;
+    return ldt.atOffset(UTC).format(ISO_Z);
   }
 
-  private static final LocalDateTime DEFAULT_EPOCH_LDT = LocalDateTime.of(1970,1,1,0,0);
+  public static LocalDateTime parseIsoToLdt(String s) {
+    if (s == null || s.isBlank()) return null;
+    try {
+      return OffsetDateTime.parse(s, ISO_Z).withOffsetSameInstant(UTC).toLocalDateTime();
+    } catch (Exception ignored) {
+      return LocalDateTime.parse(s);
+    }
+  }
 
   public static ProductDTO toDTO(Product entity, String role){
     if (entity == null) return null;
@@ -44,12 +57,12 @@ public class ProductMapper {
 
     FormalMotivationDTO fmDTO = FormalMotivationDTO.builder()
       .formalMotivation(fm.getFormalMotivation())
-      .updateDate(toODT(fm.getUpdateDate()))
+      .updateDate(ldtToIsoZ(fm.getUpdateDate()))
       .build();
 
     return ProductDTO.builder()
       .organizationId(entity.getOrganizationId())
-      .registrationDate(entity.getRegistrationDate())
+      .registrationDate(ldtToIsoZ(entity.getRegistrationDate())) // <-- String
       .status(role.equals(UserRole.OPERATORE.getRole()) && entity.getStatus().equals(ProductStatus.WAIT_APPROVED.name())
         ? ProductStatus.UPLOADED.name()
         : entity.getStatus())
@@ -73,6 +86,7 @@ public class ProductMapper {
       .organizationName(entity.getOrganizationName())
       .build();
   }
+
 
   public static Product mapCookingHobToProduct(CSVRecord csvRecord, String orgId, String productFileId, String organizationName) {
     return Product.builder()
