@@ -1,7 +1,12 @@
 package it.gov.pagopa.register.service.operation;
 
 import it.gov.pagopa.register.connector.notification.NotificationServiceImpl;
-import it.gov.pagopa.register.dto.operation.*;
+import it.gov.pagopa.register.dto.operation.EmailProductDTO;
+import it.gov.pagopa.register.dto.operation.FormalMotivationDTO;
+import it.gov.pagopa.register.dto.operation.ProductCriteriaDTO;
+import it.gov.pagopa.register.dto.operation.ProductListDTO;
+import it.gov.pagopa.register.dto.operation.ProductUpdateStatusRequestDTO;
+import it.gov.pagopa.register.dto.operation.UpdateResultDTO;
 import it.gov.pagopa.register.enums.ProductStatus;
 import it.gov.pagopa.register.enums.UserRole;
 import it.gov.pagopa.register.model.operation.Product;
@@ -16,7 +21,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.core.query.Criteria;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 import static it.gov.pagopa.register.constants.AssetRegisterConstants.USERNAME;
@@ -37,7 +41,6 @@ class ProductServiceTest {
 
   @InjectMocks
   private ProductService productService;
-
 
   @Test
   void testGetProductsByPage_Success() {
@@ -60,44 +63,20 @@ class ProductServiceTest {
       .build();
 
     List<Product> productList = Arrays.asList(product1, product2);
-
-
     Criteria criteria = Criteria.where(Product.Fields.organizationId).is(organizationId);
 
-    when(
-      productRepository.getCriteria(
-        ProductCriteriaDTO.builder()
-          .organizationId(organizationId)
-          .build()
-      ))
-      .thenReturn(criteria);
-
-    when(productRepository.findByFilter(criteria, pageable))
-      .thenReturn(productList);
-
+    when(productRepository.getCriteria(ProductCriteriaDTO.builder().organizationId(organizationId).build())).thenReturn(criteria);
+    when(productRepository.findByFilter(criteria, pageable)).thenReturn(productList);
 
     ProductListDTO response = productService.fetchProductsByFilters(
-      organizationId,
-      null,
-      null,
-      null,
-      null,
-      null,
-      null,
-      null,
-      null,
-      pageable,
-      UserRole.OPERATORE.getRole());
+      organizationId, null, null, null, null, null, null, null, null, pageable, UserRole.OPERATORE.getRole());
 
     assertEquals(2, response.getContent().size());
     assertEquals(0, response.getPageNo());
     assertEquals(2, response.getPageSize());
     assertEquals(2, response.getTotalElements());
     assertEquals(1, response.getTotalPages());
-
-    verify(productRepository, times(1))
-      .findByFilter(any(Criteria.class), eq(pageable));
-
+    verify(productRepository, times(1)).findByFilter(any(Criteria.class), eq(pageable));
   }
 
   @Test
@@ -105,37 +84,17 @@ class ProductServiceTest {
     String organizationId = "org123";
     Pageable pageable = PageRequest.of(0, 2);
 
-
-
-    List<Product> productList = Collections.emptyList();
-
-
-    when(productRepository.findByFilter(any(), any()))
-      .thenReturn(productList);
-
+    when(productRepository.findByFilter(any(), any())).thenReturn(List.of());
 
     ProductListDTO response = productService.fetchProductsByFilters(
-      organizationId,
-      null,
-      null,
-      null,
-      null,
-      null,
-      null,
-      null,
-      null,
-      pageable,
-      null);
+      organizationId, null, null, null, null, null, null, null, null, pageable, null);
 
     assertEquals(0, response.getContent().size());
     assertEquals(0, response.getPageNo());
     assertEquals(2, response.getPageSize());
     assertEquals(0, response.getTotalElements());
     assertEquals(0, response.getTotalPages());
-
-    verify(productRepository, times(1))
-      .findByFilter(any(), any());
-
+    verify(productRepository, times(1)).findByFilter(any(), any());
   }
 
   @Test
@@ -143,17 +102,13 @@ class ProductServiceTest {
     String organizationId = "org123";
     Pageable pageable = PageRequest.of(0, 2);
 
+    when(productRepository.findByFilter(any(), any())).thenThrow(new RuntimeException("Database error"));
 
-    when(productRepository.findByFilter(any(), any()))
-      .thenThrow(new RuntimeException("Database error"));
-
-    RuntimeException exception = assertThrows(RuntimeException.class, () -> productService.fetchProductsByFilters(organizationId, null, null, null, null, null, null, null, null, pageable, null));
+    RuntimeException exception = assertThrows(RuntimeException.class, () ->
+      productService.fetchProductsByFilters(organizationId, null, null, null, null, null, null, null, null, pageable, null));
 
     assertEquals("Database error", exception.getMessage());
-
-    verify(productRepository, times(1))
-      .findByFilter(any(), any());
-
+    verify(productRepository, times(1)).findByFilter(any(), any());
   }
 
   @Test
@@ -166,7 +121,7 @@ class ProductServiceTest {
     Product product1 = Product.builder()
       .gtinCode("prod1")
       .organizationId(organizationId)
-      .status("WAIT_APPROVED")
+      .status(ProductStatus.WAIT_APPROVED.name())
       .productName("name1")
       .productFileId("file1")
       .statusChangeChronology(buildStatusChangeEventsList())
@@ -175,7 +130,7 @@ class ProductServiceTest {
     Product product2 = Product.builder()
       .gtinCode("prod2")
       .organizationId(organizationId)
-      .status("WAIT_APPROVED")
+      .status(ProductStatus.WAIT_APPROVED.name())
       .productName("name2")
       .productFileId("file1")
       .statusChangeChronology(buildStatusChangeEventsList())
@@ -189,28 +144,28 @@ class ProductServiceTest {
     requestDTO.setFormalMotivation(formalMotivationDto);
 
     List<Product> productList = List.of(product1, product2);
-    when(productRepository.findUpdatableProducts(productIds, ProductStatus.WAIT_APPROVED,ProductStatus.APPROVED, UserRole.INVITALIA_ADMIN.getRole()))
-      .thenReturn(productList);
 
-    when(productRepository.saveAll(productList))
-      .thenReturn(productList);
+    when(productRepository.findByIds(productIds)).thenReturn(productList);
+    when(productRepository.getAllowedInitialStates(ProductStatus.APPROVED, UserRole.INVITALIA_ADMIN.getRole()))
+      .thenReturn(List.of(ProductStatus.WAIT_APPROVED.name()));
+    when(productRepository.saveAll(productList)).thenReturn(productList);
+
     UpdateResultDTO result = productService.updateProductStatusesWithNotification(
       requestDTO,
       UserRole.INVITALIA_ADMIN.getRole(),
       USERNAME
     );
 
-
-    assertEquals("OK",result.getStatus());
-
-    verify(productRepository).findUpdatableProducts(productIds, ProductStatus.WAIT_APPROVED, ProductStatus.APPROVED, UserRole.INVITALIA_ADMIN.getRole());
+    assertEquals("OK", result.getStatus());
+    verify(productRepository).findByIds(productIds);
+    verify(productRepository).getAllowedInitialStates(ProductStatus.APPROVED, UserRole.INVITALIA_ADMIN.getRole());
     verify(productRepository).saveAll(productList);
-
+    verifyNoInteractions(notificationService);
   }
+
   @Test
   void testUpdateProductStatuses_EmailFailure() {
     String organizationId = "org123";
-    String motivation = "motivation";
     List<String> productIds = List.of("prod1", "prod2");
 
     Product product1 = Product.builder()
@@ -241,17 +196,16 @@ class ProductServiceTest {
 
     FormalMotivationDTO formalMotivationDto = new FormalMotivationDTO("Valid formal reason", "2025-10-04T12:34:56");
 
-    when(productRepository.findUpdatableProducts(productIds, ProductStatus.UPLOADED, ProductStatus.REJECTED, UserRole.INVITALIA_ADMIN.getRole()))
-      .thenReturn(productList);
-
-    when(productRepository.saveAll(productList))
-      .thenReturn(productList);
-
+    when(productRepository.findByIds(productIds)).thenReturn(productList);
+    when(productRepository.getAllowedInitialStates(ProductStatus.REJECTED, UserRole.INVITALIA.getRole()))
+      .thenReturn(List.of(ProductStatus.UPLOADED.name(), ProductStatus.SUPERVISED.name()));
+    when(productRepository.saveAll(productList)).thenReturn(productList);
     when(productRepository.getProductNamesGroupedByEmail(productList.stream().map(Product::getGtinCode).toList()))
       .thenReturn(emailProductDTOs);
 
-    doThrow(new RuntimeException("Email service error")).when(notificationService)
-      .sendEmailUpdateStatus(List.of("name1", "name2"), motivation, ProductStatus.REJECTED.name(), "test@gmail.com");
+    doThrow(new RuntimeException("Email service error"))
+      .when(notificationService)
+      .sendEmailUpdateStatus(List.of("name1", "name2"), "Valid formal reason", ProductStatus.REJECTED.name(), "test@gmail.com");
 
     ProductUpdateStatusRequestDTO requestDTO = new ProductUpdateStatusRequestDTO();
     requestDTO.setGtinCodes(productIds);
@@ -262,11 +216,13 @@ class ProductServiceTest {
 
     UpdateResultDTO result = productService.updateProductStatusesWithNotification(
       requestDTO,
-      UserRole.INVITALIA_ADMIN.getRole(),
+      UserRole.INVITALIA.getRole(),
       USERNAME
     );
 
-    assertEquals("KO",result.getStatus());
+    assertEquals("KO", result.getStatus());
+    verify(productRepository).findByIds(productIds);
+    verify(productRepository).getAllowedInitialStates(ProductStatus.REJECTED, UserRole.INVITALIA.getRole());
+    verify(notificationService).sendEmailUpdateStatus(List.of("name1", "name2"), "Valid formal reason", ProductStatus.REJECTED.name(), "test@gmail.com");
   }
-
 }
