@@ -15,7 +15,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.core.query.Criteria;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -162,7 +162,7 @@ class ProductServiceTest {
     String organizationId = "org123";
     List<String> productIds = List.of("prod1", "prod2");
 
-    FormalMotivationDTO formalMotivationDto = new FormalMotivationDTO("Valid formal reason", LocalDateTime.now());
+    FormalMotivationDTO formalMotivationDto = new FormalMotivationDTO("Valid formal reason", OffsetDateTime.now());
 
     Product product1 = Product.builder()
       .gtinCode("prod1")
@@ -240,7 +240,7 @@ class ProductServiceTest {
     List<Product> productList = List.of(product1, product2);
     List<EmailProductDTO> emailProductDTOs = List.of(emailProductDTO);
 
-    FormalMotivationDTO formalMotivationDto = new FormalMotivationDTO("Valid formal reason", LocalDateTime.now());
+    FormalMotivationDTO formalMotivationDto = new FormalMotivationDTO("Valid formal reason", OffsetDateTime.now());
 
     when(productRepository.findUpdatableProducts(productIds, ProductStatus.UPLOADED, ProductStatus.REJECTED, UserRole.INVITALIA_ADMIN.getRole()))
       .thenReturn(productList);

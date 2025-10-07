@@ -17,6 +17,7 @@ import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -117,7 +118,7 @@ public class ProductService {
       product.setFormalMotivation(
         FormalMotivationDTO.builder()
           .formalMotivation(updateStatusDto.getFormalMotivation().getFormalMotivation())
-          .updateDate(LocalDateTime.now())
+          .updateDate(OffsetDateTime.now())
           .build());
       product.getStatusChangeChronology().add(StatusChangeEvent.builder()
         .username(username)

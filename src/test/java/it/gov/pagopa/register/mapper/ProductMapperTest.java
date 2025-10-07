@@ -49,7 +49,7 @@ class ProductMapperTest {
       .productFileId("file123")
       .statusChangeChronology(buildStatusChangeEventsList())
       .productName("CategoryA BrandX ModelX 10")
-      .formalMotivation(new FormalMotivationDTO("OK", LocalDateTime.now()))
+      .formalMotivation(new FormalMotivationDTO("OK", OffsetDateTime.now()))
       .organizationName("orgName")
       .build();
 
@@ -81,7 +81,7 @@ class ProductMapperTest {
       .productFileId("file123")
       .productName("CategoryA BrandX ModelX 10")
       .statusChangeChronology(buildStatusChangeEventsList())
-      .formalMotivation(new FormalMotivationDTO("Motivo", LocalDateTime.now()))
+      .formalMotivation(new FormalMotivationDTO("Motivo", OffsetDateTime.now()))
       .organizationName("orgName")
       .build();
 
