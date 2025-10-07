@@ -6,7 +6,6 @@ import it.gov.pagopa.register.dto.operation.*;
 import it.gov.pagopa.register.enums.ProductStatus;
 import it.gov.pagopa.register.enums.UserRole;
 import it.gov.pagopa.register.mapper.operation.ProductMapper;
-import it.gov.pagopa.register.model.operation.FormalMotivation;
 import it.gov.pagopa.register.model.operation.Product;
 import it.gov.pagopa.register.model.operation.StatusChangeEvent;
 import it.gov.pagopa.register.repository.operation.ProductRepository;
@@ -86,7 +85,7 @@ public class ProductService {
     log.info("[UPDATE_PRODUCT_STATUSES] - Starting update - newStatus: {}, motivation: {}, formalMotivation: {}",
       updateStatusDto.getTargetStatus(),
       updateStatusDto.getMotivation(),
-      updateStatusDto.getFormalMotivation() != null ? updateStatusDto.getFormalMotivation().getFormalMotivation() : null);
+      updateStatusDto.getFormalMotivation() != null ? updateStatusDto.getFormalMotivation() : null);
 
     log.debug("[UPDATE_PRODUCT_STATUSES] - Product IDs to update: {}", updateStatusDto.getGtinCodes());
 
@@ -127,14 +126,7 @@ public class ProductService {
 
       product.setStatus(updateStatusDto.getTargetStatus().name());
 
-      product.setFormalMotivation(
-        FormalMotivation.builder()
-          .formalMotivation(updateStatusDto.getFormalMotivation() != null
-            ? updateStatusDto.getFormalMotivation().getFormalMotivation()
-            : null)
-          .updateDate(nowUtc)
-          .build()
-      );
+      product.setFormalMotivation(updateStatusDto.getFormalMotivation());
 
       if (product.getStatusChangeChronology() == null) {
         product.setStatusChangeChronology(new ArrayList<>());
@@ -151,7 +143,7 @@ public class ProductService {
     });
   }
 
-  private int notifyStatusUpdates(List<Product> products, ProductStatus newStatus, FormalMotivationDTO formalMotivation) {
+  private int notifyStatusUpdates(List<Product> products, ProductStatus newStatus, String formalMotivation) {
     List<EmailProductDTO> emailToProducts = productRepository.getProductNamesGroupedByEmail(
       products.stream().map(Product::getGtinCode).toList()
     );
@@ -162,7 +154,7 @@ public class ProductService {
       try {
         notificationService.sendEmailUpdateStatus(
           dto.getProductNames(),
-          formalMotivation != null ? formalMotivation.getFormalMotivation() : null,
+          formalMotivation,
           newStatus.name(),
           dto.getId()
         );

@@ -36,10 +36,7 @@ public class Product {
   private String energyClass;
   private String capacity;
   private ArrayList<StatusChangeEvent> statusChangeChronology;
-  @Builder.Default
-  private FormalMotivation formalMotivation = new FormalMotivation(
-    "-", LocalDateTime.of(1970, 1, 1, 0, 0)
-  );
+  private String formalMotivation;
   private String productName;
   private String organizationName;
 }

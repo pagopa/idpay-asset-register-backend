@@ -1,11 +1,9 @@
 package it.gov.pagopa.register.mapper.operation;
 
-import it.gov.pagopa.register.dto.operation.FormalMotivationDTO;
 import it.gov.pagopa.register.dto.operation.ProductDTO;
 import it.gov.pagopa.register.dto.utils.EprelProduct;
 import it.gov.pagopa.register.enums.ProductStatus;
 import it.gov.pagopa.register.enums.UserRole;
-import it.gov.pagopa.register.model.operation.FormalMotivation;
 import it.gov.pagopa.register.model.operation.Product;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
@@ -39,16 +37,6 @@ public class ProductMapper {
   }
 
   public static ProductDTO toDTO(Product entity, String role){
-    if (entity == null) return null;
-
-    FormalMotivation fm = entity.getFormalMotivation() != null
-      ? entity.getFormalMotivation()
-      : new FormalMotivation("-", DEFAULT_EPOCH_LDT);
-
-    FormalMotivationDTO fmDTO = FormalMotivationDTO.builder()
-      .formalMotivation(fm.getFormalMotivation())
-      .updateDate(ldtToIsoZ(fm.getUpdateDate()))
-      .build();
 
     return ProductDTO.builder()
       .organizationId(entity.getOrganizationId())
@@ -72,7 +60,7 @@ public class ProductMapper {
       .statusChangeChronology(entity.getStatusChangeChronology() == null || role.equals(UserRole.OPERATORE.getRole())
         ? new ArrayList<>()
         : entity.getStatusChangeChronology())
-      .formalMotivation(fmDTO)
+      .formalMotivation(entity.getFormalMotivation())
       .organizationName(entity.getOrganizationName())
       .build();
   }
@@ -94,7 +82,7 @@ public class ProductMapper {
       .productName(CATEGORIES_TO_IT_S.get(COOKINGHOBS) + " " + csvRecord.get(BRAND) + " " + csvRecord.get(MODEL))
       .organizationName(organizationName)
       .statusChangeChronology(new ArrayList<>())
-      .formalMotivation(new FormalMotivation("-", DEFAULT_EPOCH_LDT))
+      .formalMotivation("")
       .build();
   }
 
@@ -119,7 +107,7 @@ public class ProductMapper {
       .productName(mapProductName(eprelData, category, capacity))
       .organizationName(organizationName)
       .statusChangeChronology(new ArrayList<>())
-      .formalMotivation(new FormalMotivation("-", DEFAULT_EPOCH_LDT))
+      .formalMotivation("")
       .build();
   }
 

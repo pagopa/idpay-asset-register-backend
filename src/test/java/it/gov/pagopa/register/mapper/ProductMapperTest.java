@@ -5,7 +5,6 @@ import it.gov.pagopa.register.dto.utils.EprelProduct;
 import it.gov.pagopa.register.enums.ProductStatus;
 import it.gov.pagopa.register.enums.UserRole;
 import it.gov.pagopa.register.mapper.operation.ProductMapper;
-import it.gov.pagopa.register.model.operation.FormalMotivation;
 import it.gov.pagopa.register.model.operation.Product;
 import org.apache.commons.csv.CSVRecord;
 import org.junit.jupiter.api.Test;
@@ -27,11 +26,6 @@ class ProductMapperTest {
   // ---------- toDTO ----------
 
   @Test
-  void testToDTO_NullEntity() {
-    assertNull(ProductMapper.toDTO(null, null));
-  }
-
-  @Test
   void testToDTO_RoleOperatore_StatusDowngraded_AndChronologyHidden() {
     Product product = Product.builder()
       .organizationId("org1")
@@ -50,7 +44,7 @@ class ProductMapperTest {
       .productFileId("file123")
       .statusChangeChronology(buildStatusChangeEventsList())
       .productName("CategoryA BrandX ModelX 10")
-      .formalMotivation(new FormalMotivation("OK", LocalDateTime.of(2025,10,5,0,0)))
+      .formalMotivation("OK")
       .organizationName("orgName")
       .build();
 
@@ -60,8 +54,7 @@ class ProductMapperTest {
     assertEquals(ProductStatus.UPLOADED.name(), dto.getStatus());
     assertNotNull(dto.getStatusChangeChronology(), "Per OPERATORE deve essere lista vuota, non null");
     assertTrue(dto.getStatusChangeChronology().isEmpty(), "La chronology deve essere nascosta come lista vuota");
-    assertEquals("OK", dto.getFormalMotivation().getFormalMotivation());
-    assertEquals("2025-10-05T00:00:00Z", dto.getFormalMotivation().getUpdateDate());
+    assertEquals("OK", dto.getFormalMotivation());
 
   }
 
@@ -84,7 +77,7 @@ class ProductMapperTest {
       .productFileId("file123")
       .productName("CategoryA BrandX ModelX 10")
       .statusChangeChronology(buildStatusChangeEventsList())
-      .formalMotivation(new FormalMotivation("Motivo", LocalDateTime.of(2025,10,5,0,0)))
+      .formalMotivation("OK")
       .organizationName("orgName")
       .build();
 
@@ -92,15 +85,12 @@ class ProductMapperTest {
 
     assertEquals(ProductStatus.WAIT_APPROVED.name(), dto.getStatus());
     assertNotNull(dto.getStatusChangeChronology());
-    assertEquals("Motivo", dto.getFormalMotivation().getFormalMotivation());
-    assertEquals("2025-10-05T00:00:00Z", dto.getFormalMotivation().getUpdateDate());
+    assertEquals("OK", dto.getFormalMotivation());
 
   }
 
   @Test
   void testToDTO_FormalMotivationInnerFieldNull_ReplacedWithDefault() {
-    FormalMotivation fm = new FormalMotivation(null, null);
-
     Product product = Product.builder()
       .organizationId("org1")
       .registrationDate(LocalDateTime.of(2025,10,3,18,53,24))
@@ -110,13 +100,12 @@ class ProductMapperTest {
       .category("C")
       .brand("B")
       .capacity("10")
-      .formalMotivation(fm)
+      .formalMotivation(null)
       .organizationName("orgName")
       .build();
 
     ProductDTO dto = ProductMapper.toDTO(product, UserRole.INVITALIA.getRole());
-    assertNull(dto.getFormalMotivation().getFormalMotivation());
-    assertNull(dto.getFormalMotivation().getUpdateDate());
+    assertNull(dto.getFormalMotivation());
   }
 
   @Test
@@ -130,7 +119,7 @@ class ProductMapperTest {
       .category("C")
       .brand("B")
       .capacity("N\\A")
-      .formalMotivation(new FormalMotivation("-", LocalDateTime.now()))
+      .formalMotivation("OK")
       .organizationName("orgName")
       .build();
 
