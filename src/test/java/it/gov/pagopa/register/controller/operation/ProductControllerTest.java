@@ -39,6 +39,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
     @Autowired
     private ObjectMapper objectMapper;
 
+    private static final OffsetDateTime DEFAULT_EPOCH = OffsetDateTime.of(
+      1970, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC
+    );
+
     //Test con esito positivo
     @Test
     void testGetProducts_Success() throws Exception {
