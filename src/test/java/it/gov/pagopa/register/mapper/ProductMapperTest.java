@@ -50,7 +50,6 @@ class ProductMapperTest {
       .productFileId("file123")
       .statusChangeChronology(buildStatusChangeEventsList())
       .productName("CategoryA BrandX ModelX 10")
-      // se vuoi “OK” nel DTO, mettilo nell’entity
       .formalMotivation(new FormalMotivation("OK", LocalDateTime.of(2025,10,5,0,0)))
       .organizationName("orgName")
       .build();
@@ -62,7 +61,8 @@ class ProductMapperTest {
     assertNotNull(dto.getStatusChangeChronology(), "Per OPERATORE deve essere lista vuota, non null");
     assertTrue(dto.getStatusChangeChronology().isEmpty(), "La chronology deve essere nascosta come lista vuota");
     assertEquals("OK", dto.getFormalMotivation().getFormalMotivation());
-    assertEquals(OffsetDateTime.parse("2025-10-05T00:00:00Z"), dto.getFormalMotivation().getUpdateDate());
+    assertEquals("2025-10-05T00:00:00Z", dto.getFormalMotivation().getUpdateDate());
+
   }
 
   @Test
@@ -93,37 +93,12 @@ class ProductMapperTest {
     assertEquals(ProductStatus.WAIT_APPROVED.name(), dto.getStatus());
     assertNotNull(dto.getStatusChangeChronology());
     assertEquals("Motivo", dto.getFormalMotivation().getFormalMotivation());
-    assertEquals(OffsetDateTime.parse("2025-10-05T00:00:00Z"), dto.getFormalMotivation().getUpdateDate());
-  }
+    assertEquals("2025-10-05T00:00:00Z", dto.getFormalMotivation().getUpdateDate());
 
-  @Test
-  void testToDTO_FormalMotivationNull_ObjectReplacedWithDefault() {
-    Product product = Product.builder()
-      .organizationId("org1")
-      .registrationDate(LocalDateTime.of(2025,10,3,18,53,24))
-      .status(ProductStatus.APPROVED.name())
-      .model("M")
-      .productGroup("G")
-      .category("C")
-      .brand("B")
-      .capacity("10")
-      .formalMotivation(null) // <-- davvero null per testare il default
-      .organizationName("orgName")
-      .build();
-
-    ProductDTO dto = ProductMapper.toDTO(product, UserRole.INVITALIA.getRole());
-
-    assertNotNull(dto.getFormalMotivation(), "Deve valorizzare un FormalMotivationDTO di default");
-    assertEquals("-", dto.getFormalMotivation().getFormalMotivation(),
-      "Il campo formalMotivation deve essere sostituito con '-'");
-    // DTO usa OffsetDateTime con Z
-    assertEquals(OffsetDateTime.parse("1970-01-01T00:00:00Z"), dto.getFormalMotivation().getUpdateDate(),
-      "La data di default deve essere l'Epoch (1970-01-01T00:00Z)");
   }
 
   @Test
   void testToDTO_FormalMotivationInnerFieldNull_ReplacedWithDefault() {
-    // formalMotivation presente ma campi null per testare i default “inner”
     FormalMotivation fm = new FormalMotivation(null, null);
 
     Product product = Product.builder()

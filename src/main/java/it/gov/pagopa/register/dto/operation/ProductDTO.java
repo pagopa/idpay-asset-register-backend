@@ -21,7 +21,7 @@ public class ProductDTO {
   @Id
   private String gtinCode;
   private String organizationId;
-  private LocalDateTime registrationDate;
+  private String registrationDate;
   private String status;
   private String model;
   private String productGroup;
