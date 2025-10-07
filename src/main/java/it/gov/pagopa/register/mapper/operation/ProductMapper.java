@@ -1,11 +1,9 @@
 package it.gov.pagopa.register.mapper.operation;
 
-import it.gov.pagopa.register.dto.operation.FormalMotivationDTO;
 import it.gov.pagopa.register.dto.operation.ProductDTO;
 import it.gov.pagopa.register.dto.utils.EprelProduct;
 import it.gov.pagopa.register.enums.ProductStatus;
 import it.gov.pagopa.register.enums.UserRole;
-import it.gov.pagopa.register.model.operation.FormalMotivation;
 import it.gov.pagopa.register.model.operation.Product;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
@@ -15,7 +13,6 @@ import java.io.StringReader;
 import java.io.StringWriter;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -29,30 +26,12 @@ public class ProductMapper {
 
   private ProductMapper() {}
 
-  private static final LocalDateTime DEFAULT_EPOCH_LDT = LocalDateTime.of(1970,1,1,0,0);
-  private static final ZoneOffset UTC = ZoneOffset.UTC;
-  private static final DateTimeFormatter ISO_Z = DateTimeFormatter.ISO_OFFSET_DATE_TIME;
-
-  private static String ldtToIsoZ(LocalDateTime ldt) {
-    if (ldt == null) return null;
-    return ldt.atOffset(UTC).format(ISO_Z);
-  }
-
   public static ProductDTO toDTO(Product entity, String role){
     if (entity == null) return null;
 
-    FormalMotivation fm = entity.getFormalMotivation() != null
-      ? entity.getFormalMotivation()
-      : new FormalMotivation("-", DEFAULT_EPOCH_LDT);
-
-    FormalMotivationDTO fmDTO = FormalMotivationDTO.builder()
-      .formalMotivation(fm.getFormalMotivation())
-      .updateDate(ldtToIsoZ(fm.getUpdateDate()))
-      .build();
-
     return ProductDTO.builder()
       .organizationId(entity.getOrganizationId())
-      .registrationDate(ldtToIsoZ(entity.getRegistrationDate())) // <-- String
+      .registrationDate(entity.getRegistrationDate())
       .status(role.equals(UserRole.OPERATORE.getRole()) && entity.getStatus().equals(ProductStatus.WAIT_APPROVED.name())
         ? ProductStatus.UPLOADED.name()
         : entity.getStatus())
@@ -72,7 +51,7 @@ public class ProductMapper {
       .statusChangeChronology(entity.getStatusChangeChronology() == null || role.equals(UserRole.OPERATORE.getRole())
         ? new ArrayList<>()
         : entity.getStatusChangeChronology())
-      .formalMotivation(fmDTO)
+      .formalMotivation(entity.getFormalMotivation())
       .organizationName(entity.getOrganizationName())
       .build();
   }
@@ -94,7 +73,7 @@ public class ProductMapper {
       .productName(CATEGORIES_TO_IT_S.get(COOKINGHOBS) + " " + csvRecord.get(BRAND) + " " + csvRecord.get(MODEL))
       .organizationName(organizationName)
       .statusChangeChronology(new ArrayList<>())
-      .formalMotivation(new FormalMotivation("-", DEFAULT_EPOCH_LDT))
+      .formalMotivation("")
       .build();
   }
 
@@ -119,7 +98,7 @@ public class ProductMapper {
       .productName(mapProductName(eprelData, category, capacity))
       .organizationName(organizationName)
       .statusChangeChronology(new ArrayList<>())
-      .formalMotivation(new FormalMotivation("-", DEFAULT_EPOCH_LDT))
+      .formalMotivation("")
       .build();
   }
 

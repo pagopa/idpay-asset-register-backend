@@ -107,15 +107,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
       UpdateResultDTO mockResponse = UpdateResultDTO.ok();
 
-      FormalMotivationDTO formalMotivationDto = new FormalMotivationDTO("-", "2025-10-04T12:34:56");
-
       List<String> productIds = List.of("prod-1", "prod-2");
       ProductUpdateStatusRequestDTO requestDTO = new ProductUpdateStatusRequestDTO();
       requestDTO.setGtinCodes(productIds);
       requestDTO.setCurrentStatus(ProductStatus.WAIT_APPROVED);
       requestDTO.setTargetStatus(ProductStatus.APPROVED);
       requestDTO.setMotivation("Valid reason");
-      requestDTO.setFormalMotivation(formalMotivationDto);
+      requestDTO.setFormalMotivation("");
 
       String requestBody = objectMapper.writeValueAsString(requestDTO);
 

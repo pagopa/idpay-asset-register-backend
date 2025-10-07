@@ -2,7 +2,6 @@ package it.gov.pagopa.register.service.operation;
 
 import it.gov.pagopa.register.connector.notification.NotificationServiceImpl;
 import it.gov.pagopa.register.dto.operation.EmailProductDTO;
-import it.gov.pagopa.register.dto.operation.FormalMotivationDTO;
 import it.gov.pagopa.register.dto.operation.ProductCriteriaDTO;
 import it.gov.pagopa.register.dto.operation.ProductListDTO;
 import it.gov.pagopa.register.dto.operation.ProductUpdateStatusRequestDTO;
@@ -116,8 +115,6 @@ class ProductServiceTest {
     String organizationId = "org123";
     List<String> productIds = List.of("prod1", "prod2");
 
-    FormalMotivationDTO formalMotivationDto = new FormalMotivationDTO("Valid formal reason", "2025-10-04T12:34:56");
-
     Product product1 = Product.builder()
       .gtinCode("prod1")
       .organizationId(organizationId)
@@ -141,7 +138,7 @@ class ProductServiceTest {
     requestDTO.setCurrentStatus(ProductStatus.WAIT_APPROVED);
     requestDTO.setTargetStatus(ProductStatus.APPROVED);
     requestDTO.setMotivation("Valid reason");
-    requestDTO.setFormalMotivation(formalMotivationDto);
+    requestDTO.setFormalMotivation("OK");
 
     List<Product> productList = List.of(product1, product2);
 
@@ -194,8 +191,6 @@ class ProductServiceTest {
     List<Product> productList = List.of(product1, product2);
     List<EmailProductDTO> emailProductDTOs = List.of(emailProductDTO);
 
-    FormalMotivationDTO formalMotivationDto = new FormalMotivationDTO("Valid formal reason", "2025-10-04T12:34:56");
-
     when(productRepository.findByIds(productIds)).thenReturn(productList);
     when(productRepository.getAllowedInitialStates(ProductStatus.REJECTED, UserRole.INVITALIA.getRole()))
       .thenReturn(List.of(ProductStatus.UPLOADED.name(), ProductStatus.SUPERVISED.name()));
@@ -212,7 +207,7 @@ class ProductServiceTest {
     requestDTO.setCurrentStatus(ProductStatus.UPLOADED);
     requestDTO.setTargetStatus(ProductStatus.REJECTED);
     requestDTO.setMotivation("Valid reason");
-    requestDTO.setFormalMotivation(formalMotivationDto);
+    requestDTO.setFormalMotivation("OK");
 
     UpdateResultDTO result = productService.updateProductStatusesWithNotification(
       requestDTO,
