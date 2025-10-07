@@ -1,6 +1,5 @@
 package it.gov.pagopa.register.mapper;
 
-import it.gov.pagopa.register.dto.operation.FormalMotivationDTO;
 import it.gov.pagopa.register.dto.operation.ProductDTO;
 import it.gov.pagopa.register.dto.utils.EprelProduct;
 import it.gov.pagopa.register.enums.ProductStatus;
@@ -13,7 +12,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.springframework.cglib.core.Local;
 
 import java.time.*;
 import java.util.List;
@@ -25,9 +23,6 @@ import static org.mockito.Mockito.*;
 
 class ProductMapperTest {
 
-  private static final OffsetDateTime DEFAULT_EPOCH = OffsetDateTime.of(
-    1970, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC
-  );
 
   // ---------- toDTO ----------
 
@@ -145,14 +140,6 @@ class ProductMapperTest {
       .build();
 
     ProductDTO dto = ProductMapper.toDTO(product, UserRole.INVITALIA.getRole());
-
-    // Il mapper attuale passa through i valori: se vuoi defaultare anche i field null,
-    // aggiungi la logica nel mapper. Altrimenti aspettati null.
-    // Esempio A: se vuoi defaultare:
-    // assertEquals("-", dto.getFormalMotivation().getFormalMotivation());
-    // assertEquals(OffsetDateTime.parse("1970-01-01T00:00:00Z"), dto.getFormalMotivation().getUpdateDate());
-
-    // Esempio B: se mantieni pass-through, allora:
     assertNull(dto.getFormalMotivation().getFormalMotivation());
     assertNull(dto.getFormalMotivation().getUpdateDate());
   }
