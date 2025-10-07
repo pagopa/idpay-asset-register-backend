@@ -13,7 +13,6 @@ import java.io.StringReader;
 import java.io.StringWriter;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -27,20 +26,11 @@ public class ProductMapper {
 
   private ProductMapper() {}
 
-  private static final LocalDateTime DEFAULT_EPOCH_LDT = LocalDateTime.of(1970,1,1,0,0);
-  private static final ZoneOffset UTC = ZoneOffset.UTC;
-  private static final DateTimeFormatter ISO_Z = DateTimeFormatter.ISO_OFFSET_DATE_TIME;
-
-  private static String ldtToIsoZ(LocalDateTime ldt) {
-    if (ldt == null) return null;
-    return ldt.atOffset(UTC).format(ISO_Z);
-  }
-
   public static ProductDTO toDTO(Product entity, String role){
 
     return ProductDTO.builder()
       .organizationId(entity.getOrganizationId())
-      .registrationDate(ldtToIsoZ(entity.getRegistrationDate())) // <-- String
+      .registrationDate(entity.getRegistrationDate())
       .status(role.equals(UserRole.OPERATORE.getRole()) && entity.getStatus().equals(ProductStatus.WAIT_APPROVED.name())
         ? ProductStatus.UPLOADED.name()
         : entity.getStatus())

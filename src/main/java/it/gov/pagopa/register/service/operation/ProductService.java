@@ -17,7 +17,6 @@ import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;   // <-- per UTC
 import java.util.ArrayList;
 import java.util.List;
 
@@ -118,8 +117,6 @@ public class ProductService {
                               String username,
                               ProductUpdateStatusRequestDTO updateStatusDto) {
 
-    final LocalDateTime nowUtc = LocalDateTime.now(ZoneOffset.UTC); // <-- sempre UTC
-
     products.forEach(product -> {
       log.debug("[UPDATE_PRODUCT_STATUSES] - Updating product {} status from {} to {}",
         product.getGtinCode(), product.getStatus(), updateStatusDto.getTargetStatus().name());
@@ -135,7 +132,7 @@ public class ProductService {
       product.getStatusChangeChronology().add(StatusChangeEvent.builder()
         .username(username)
         .role(role.equals(UserRole.INVITALIA.getRole()) ? "L1" : "L2")
-        .updateDate(nowUtc)
+        .updateDate(LocalDateTime.now())
         .currentStatus(updateStatusDto.getCurrentStatus())
         .targetStatus(updateStatusDto.getTargetStatus())
         .motivation(updateStatusDto.getMotivation())
