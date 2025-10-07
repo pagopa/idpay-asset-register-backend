@@ -1,6 +1,5 @@
 package it.gov.pagopa.register.model.operation;
 
-import it.gov.pagopa.register.dto.operation.FormalMotivationDTO;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -41,7 +40,9 @@ public class Product {
   private String capacity;
   private ArrayList<StatusChangeEvent> statusChangeChronology;
   @Builder.Default
-  private FormalMotivationDTO formalMotivation = new FormalMotivationDTO("-", OffsetDateTime.ofInstant(Instant.EPOCH, ZoneOffset.UTC));
+  private FormalMotivation formalMotivation = new FormalMotivation(
+    "-", LocalDateTime.of(1970, 1, 1, 0, 0)
+  );
   private String productName;
   private String organizationName;
 }

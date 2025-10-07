@@ -1,6 +1,5 @@
 package it.gov.pagopa.register.repository;
 
-
 import it.gov.pagopa.register.dto.operation.ProductCriteriaDTO;
 import it.gov.pagopa.register.enums.UserRole;
 import it.gov.pagopa.register.model.operation.Product;

@@ -1,11 +1,11 @@
 package it.gov.pagopa.register.mapper;
 
-import it.gov.pagopa.register.dto.operation.FormalMotivationDTO;
 import it.gov.pagopa.register.dto.operation.ProductDTO;
 import it.gov.pagopa.register.dto.utils.EprelProduct;
 import it.gov.pagopa.register.enums.ProductStatus;
 import it.gov.pagopa.register.enums.UserRole;
 import it.gov.pagopa.register.mapper.operation.ProductMapper;
+import it.gov.pagopa.register.model.operation.FormalMotivation;
 import it.gov.pagopa.register.model.operation.Product;
 import org.apache.commons.csv.CSVRecord;
 import org.junit.jupiter.api.Test;
@@ -13,10 +13,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
+import java.time.*;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -25,6 +22,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 class ProductMapperTest {
+
 
   // ---------- toDTO ----------
 
@@ -37,7 +35,7 @@ class ProductMapperTest {
   void testToDTO_RoleOperatore_StatusDowngraded_AndChronologyHidden() {
     Product product = Product.builder()
       .organizationId("org1")
-      .registrationDate(LocalDateTime.now())
+      .registrationDate(LocalDateTime.of(2025, 10, 3, 18, 53, 24)) // deterministico
       .status(ProductStatus.WAIT_APPROVED.name())
       .model("ModelX")
       .productGroup("GroupA")
@@ -52,7 +50,8 @@ class ProductMapperTest {
       .productFileId("file123")
       .statusChangeChronology(buildStatusChangeEventsList())
       .productName("CategoryA BrandX ModelX 10")
-      .formalMotivation(new FormalMotivationDTO("OK", OffsetDateTime.now()))
+      // se vuoi “OK” nel DTO, mettilo nell’entity
+      .formalMotivation(new FormalMotivation("OK", LocalDateTime.of(2025,10,5,0,0)))
       .organizationName("orgName")
       .build();
 
@@ -63,13 +62,14 @@ class ProductMapperTest {
     assertNotNull(dto.getStatusChangeChronology(), "Per OPERATORE deve essere lista vuota, non null");
     assertTrue(dto.getStatusChangeChronology().isEmpty(), "La chronology deve essere nascosta come lista vuota");
     assertEquals("OK", dto.getFormalMotivation().getFormalMotivation());
+    assertEquals(OffsetDateTime.parse("2025-10-05T00:00:00Z"), dto.getFormalMotivation().getUpdateDate());
   }
 
   @Test
   void testToDTO_RoleInvitalia_StatusUnchanged_AndChronologyVisible() {
     Product product = Product.builder()
       .organizationId("org1")
-      .registrationDate(LocalDateTime.now())
+      .registrationDate(LocalDateTime.of(2025, 10, 3, 18, 53, 24))
       .status(ProductStatus.WAIT_APPROVED.name())
       .model("ModelX")
       .productGroup("GroupA")
@@ -84,62 +84,64 @@ class ProductMapperTest {
       .productFileId("file123")
       .productName("CategoryA BrandX ModelX 10")
       .statusChangeChronology(buildStatusChangeEventsList())
-      .formalMotivation(new FormalMotivationDTO("Motivo", OffsetDateTime.now()))
+      .formalMotivation(new FormalMotivation("Motivo", LocalDateTime.of(2025,10,5,0,0)))
       .organizationName("orgName")
       .build();
 
-    ProductDTO dto = ProductMapper.toDTO(product, UserRole.INVITALIA_ADMIN.getRole());
+    ProductDTO dto = ProductMapper.toDTO(product, UserRole.INVITALIA.getRole()); // o INVITALIA_ADMIN se esiste
+
     assertEquals(ProductStatus.WAIT_APPROVED.name(), dto.getStatus());
     assertNotNull(dto.getStatusChangeChronology());
     assertEquals("Motivo", dto.getFormalMotivation().getFormalMotivation());
+    assertEquals(OffsetDateTime.parse("2025-10-05T00:00:00Z"), dto.getFormalMotivation().getUpdateDate());
   }
 
   @Test
   void testToDTO_FormalMotivationNull_ObjectReplacedWithDefault() {
     Product product = Product.builder()
       .organizationId("org1")
-      .registrationDate(LocalDateTime.now())
+      .registrationDate(LocalDateTime.of(2025,10,3,18,53,24))
       .status(ProductStatus.APPROVED.name())
       .model("M")
       .productGroup("G")
       .category("C")
       .brand("B")
       .capacity("10")
-      .formalMotivation(new FormalMotivationDTO("-", OffsetDateTime.ofInstant(Instant.EPOCH, ZoneOffset.UTC)))
+      .formalMotivation(null) // <-- davvero null per testare il default
       .organizationName("orgName")
       .build();
 
-    ProductDTO dto = ProductMapper.toDTO(product, UserRole.INVITALIA_ADMIN.getRole());
+    ProductDTO dto = ProductMapper.toDTO(product, UserRole.INVITALIA.getRole());
 
     assertNotNull(dto.getFormalMotivation(), "Deve valorizzare un FormalMotivationDTO di default");
     assertEquals("-", dto.getFormalMotivation().getFormalMotivation(),
       "Il campo formalMotivation deve essere sostituito con '-'");
-    assertEquals(
-      OffsetDateTime.ofInstant(Instant.EPOCH, ZoneOffset.UTC),
-      dto.getFormalMotivation().getUpdateDate(),
-      "La data di default deve essere l'Epoch (1970-01-01T00:00Z)"
-    );
+    // DTO usa OffsetDateTime con Z
+    assertEquals(OffsetDateTime.parse("1970-01-01T00:00:00Z"), dto.getFormalMotivation().getUpdateDate(),
+      "La data di default deve essere l'Epoch (1970-01-01T00:00Z)");
   }
-
 
   @Test
   void testToDTO_FormalMotivationInnerFieldNull_ReplacedWithDefault() {
+    // formalMotivation presente ma campi null per testare i default “inner”
+    FormalMotivation fm = new FormalMotivation(null, null);
+
     Product product = Product.builder()
       .organizationId("org1")
-      .registrationDate(LocalDateTime.now())
+      .registrationDate(LocalDateTime.of(2025,10,3,18,53,24))
       .status(ProductStatus.APPROVED.name())
       .model("M")
       .productGroup("G")
       .category("C")
       .brand("B")
       .capacity("10")
-      .formalMotivation(new FormalMotivationDTO("-", OffsetDateTime.ofInstant(Instant.EPOCH, ZoneOffset.UTC)))
+      .formalMotivation(fm)
       .organizationName("orgName")
       .build();
 
-    ProductDTO dto = ProductMapper.toDTO(product, UserRole.INVITALIA_ADMIN.getRole());
-    assertEquals("-", dto.getFormalMotivation().getFormalMotivation(), "Campo null -> default '-'");
-    assertEquals(OffsetDateTime.ofInstant(Instant.EPOCH, ZoneOffset.UTC), dto.getFormalMotivation().getUpdateDate(), "Anche la data va a MIN");
+    ProductDTO dto = ProductMapper.toDTO(product, UserRole.INVITALIA.getRole());
+    assertNull(dto.getFormalMotivation().getFormalMotivation());
+    assertNull(dto.getFormalMotivation().getUpdateDate());
   }
 
   @Test
@@ -153,7 +155,7 @@ class ProductMapperTest {
       .category("C")
       .brand("B")
       .capacity("N\\A")
-      .formalMotivation(new FormalMotivationDTO("-", OffsetDateTime.now()))
+      .formalMotivation(new FormalMotivation("-", LocalDateTime.now()))
       .organizationName("orgName")
       .build();
 

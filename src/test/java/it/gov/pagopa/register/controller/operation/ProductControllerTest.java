@@ -13,7 +13,6 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
-import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.Collections;
@@ -41,6 +40,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    private static final OffsetDateTime DEFAULT_EPOCH = OffsetDateTime.of(
+      1970, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC
+    );
 
     //Test con esito positivo
     @Test
@@ -110,7 +113,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
       UpdateResultDTO mockResponse = UpdateResultDTO.ok();
 
-      FormalMotivationDTO formalMotivationDto = new FormalMotivationDTO("-", OffsetDateTime.ofInstant(Instant.EPOCH, ZoneOffset.UTC));
+      FormalMotivationDTO formalMotivationDto = new FormalMotivationDTO("-", DEFAULT_EPOCH);
 
       List<String> productIds = List.of("prod-1", "prod-2");
       ProductUpdateStatusRequestDTO requestDTO = new ProductUpdateStatusRequestDTO();
