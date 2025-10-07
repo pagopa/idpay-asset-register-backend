@@ -5,6 +5,7 @@ import it.gov.pagopa.register.dto.operation.ProductDTO;
 import it.gov.pagopa.register.dto.utils.EprelProduct;
 import it.gov.pagopa.register.enums.ProductStatus;
 import it.gov.pagopa.register.enums.UserRole;
+import it.gov.pagopa.register.model.operation.FormalMotivation;
 import it.gov.pagopa.register.model.operation.Product;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
@@ -13,6 +14,8 @@ import org.apache.commons.csv.CSVRecord;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -22,27 +25,34 @@ import static it.gov.pagopa.register.utils.CsvUtils.DELIMITER;
 import static it.gov.pagopa.register.utils.EprelUtils.generateEprelUrl;
 import static it.gov.pagopa.register.utils.EprelUtils.mapEnergyClass;
 
-
 public class ProductMapper {
-
-
 
   private ProductMapper() {}
 
+  private static OffsetDateTime toODT(LocalDateTime ldt) {
+    return ldt == null ? null : ldt.atOffset(ZoneOffset.UTC);
+  }
+
+  private static final LocalDateTime DEFAULT_EPOCH_LDT = LocalDateTime.of(1970,1,1,0,0);
+
   public static ProductDTO toDTO(Product entity, String role){
+    if (entity == null) return null;
 
-    if(entity==null){
-      return null;
-    }
-
-    FormalMotivationDTO fm = entity.getFormalMotivation() != null
+    FormalMotivation fm = entity.getFormalMotivation() != null
       ? entity.getFormalMotivation()
-      : new FormalMotivationDTO("-", LocalDateTime.of(1970, 01, 01, 00, 00));
+      : new FormalMotivation("-", DEFAULT_EPOCH_LDT);
+
+    FormalMotivationDTO fmDTO = FormalMotivationDTO.builder()
+      .formalMotivation(fm.getFormalMotivation())
+      .updateDate(toODT(fm.getUpdateDate()))
+      .build();
 
     return ProductDTO.builder()
       .organizationId(entity.getOrganizationId())
       .registrationDate(entity.getRegistrationDate())
-      .status(role.equals(UserRole.OPERATORE.getRole()) && entity.getStatus().equals(ProductStatus.WAIT_APPROVED.name()) ? ProductStatus.UPLOADED.name() : entity.getStatus())
+      .status(role.equals(UserRole.OPERATORE.getRole()) && entity.getStatus().equals(ProductStatus.WAIT_APPROVED.name())
+        ? ProductStatus.UPLOADED.name()
+        : entity.getStatus())
       .model(entity.getModel())
       .productGroup(entity.getProductGroup())
       .category(CATEGORIES_TO_IT_S.get(entity.getCategory()))
@@ -53,19 +63,22 @@ public class ProductMapper {
       .countryOfProduction(entity.getCountryOfProduction())
       .energyClass(entity.getEnergyClass())
       .linkEprel(generateEprelUrl(entity.getProductGroup(), entity.getEprelCode()))
-      .batchName(CATEGORIES_TO_IT_P.get(entity.getCategory())+"_"+entity.getProductFileId()+".csv")
+      .batchName(CATEGORIES_TO_IT_P.get(entity.getCategory()) + "_" + entity.getProductFileId() + ".csv")
       .productName(entity.getProductName())
       .capacity(entity.getCapacity() == null || "N\\A".equals(entity.getCapacity()) ? "" : entity.getCapacity())
-      .statusChangeChronology(entity.getStatusChangeChronology() == null || role.equals(UserRole.OPERATORE.getRole()) ? new ArrayList<>() : entity.getStatusChangeChronology())
-      .formalMotivation(fm)
+      .statusChangeChronology(entity.getStatusChangeChronology() == null || role.equals(UserRole.OPERATORE.getRole())
+        ? new ArrayList<>()
+        : entity.getStatusChangeChronology())
+      .formalMotivation(fmDTO)
       .organizationName(entity.getOrganizationName())
       .build();
   }
-  public static Product mapCookingHobToProduct(CSVRecord csvRecord, String orgId, String productFileId,String organizationName) {
+
+  public static Product mapCookingHobToProduct(CSVRecord csvRecord, String orgId, String productFileId, String organizationName) {
     return Product.builder()
       .productFileId(productFileId)
       .organizationId(orgId)
-      .registrationDate(LocalDateTime.now())
+      .registrationDate(LocalDateTime.now(ZoneOffset.UTC))
       .status(ProductStatus.UPLOADED.name())
       .productCode(csvRecord.get(CODE_PRODUCT))
       .gtinCode(csvRecord.get(CODE_GTIN_EAN))
@@ -74,23 +87,20 @@ public class ProductMapper {
       .brand(csvRecord.get(BRAND))
       .model(csvRecord.get(MODEL))
       .capacity("N\\A")
-      .productName(CATEGORIES_TO_IT_S.get(COOKINGHOBS) +" "+
-        csvRecord.get(BRAND)+" "+
-        csvRecord.get(MODEL)
-      )
+      .productName(CATEGORIES_TO_IT_S.get(COOKINGHOBS) + " " + csvRecord.get(BRAND) + " " + csvRecord.get(MODEL))
       .organizationName(organizationName)
       .statusChangeChronology(new ArrayList<>())
-      .formalMotivation(new FormalMotivationDTO("-", LocalDateTime.of(1970, 01, 01, 00, 00)))
+      .formalMotivation(new FormalMotivation("-", DEFAULT_EPOCH_LDT))
       .build();
   }
 
   public static Product mapEprelToProduct(CSVRecord csvRecord, EprelProduct eprelData, String orgId, String productFileId, String category, String organizationName) {
-    String capacity = mapCapacity(category,eprelData);
+    String capacity = mapCapacity(category, eprelData);
 
     return Product.builder()
       .productFileId(productFileId)
       .organizationId(orgId)
-      .registrationDate(LocalDateTime.now())
+      .registrationDate(LocalDateTime.now(ZoneOffset.UTC))
       .status(ProductStatus.UPLOADED.name())
       .productCode(csvRecord.get(CODE_PRODUCT))
       .gtinCode(csvRecord.get(CODE_GTIN_EAN))
@@ -105,33 +115,24 @@ public class ProductMapper {
       .productName(mapProductName(eprelData, category, capacity))
       .organizationName(organizationName)
       .statusChangeChronology(new ArrayList<>())
-      .formalMotivation(new FormalMotivationDTO("-", LocalDateTime.of(1970, 01, 01, 00, 00)))
+      .formalMotivation(new FormalMotivation("-", DEFAULT_EPOCH_LDT))
       .build();
   }
 
   public static String mapCapacity(String category, EprelProduct eprelData) {
-    if (eprelData == null) {
-      return "N\\A";
-    }
-
+    if (eprelData == null) return "N\\A";
     return switch (category) {
-      case WASHINGMACHINES, TUMBLEDRYERS ->
-        eprelData.getRatedCapacity() != null ? eprelData.getRatedCapacity() + " kg" : "N\\A";
-      case WASHERDRIERS ->
-        eprelData.getRatedCapacityWash() != null ? eprelData.getRatedCapacityWash() + " kg" : "N\\A";
+      case WASHINGMACHINES, TUMBLEDRYERS -> eprelData.getRatedCapacity() != null ? eprelData.getRatedCapacity() + " kg" : "N\\A";
+      case WASHERDRIERS -> eprelData.getRatedCapacityWash() != null ? eprelData.getRatedCapacityWash() + " kg" : "N\\A";
       case OVENS -> {
         if (eprelData.getCavities() != null && !eprelData.getCavities().isEmpty()) {
           yield eprelData.getCavities().stream()
             .map(cavity -> cavity.getVolume() != null ? cavity.getVolume() + " l" : "N\\A")
             .collect(Collectors.joining(" / "));
-        } else {
-          yield "N\\A";
-        }
+        } else yield "N\\A";
       }
-      case DISHWASHERS ->
-        eprelData.getRatedCapacity() != null ? eprelData.getRatedCapacity() + " c" : "N\\A";
-      case REFRIGERATINGAPPL ->
-        eprelData.getTotalVolume() != null ? eprelData.getTotalVolume() + " l" : "N\\A";
+      case DISHWASHERS -> eprelData.getRatedCapacity() != null ? eprelData.getRatedCapacity() + " c" : "N\\A";
+      case REFRIGERATINGAPPL -> eprelData.getTotalVolume() != null ? eprelData.getTotalVolume() + " l" : "N\\A";
       default -> "N\\A";
     };
   }
@@ -163,6 +164,7 @@ public class ProductMapper {
           product.getCountryOfProduction()
         );
       }
+
       CSVFormat format = CSVFormat.Builder.create()
         .setHeader(headers.toArray(new String[0]))
         .setSkipHeaderRecord(true)
@@ -178,13 +180,10 @@ public class ProductMapper {
 
   public static String mapProductName(EprelProduct eprel, String category, String capacity) {
     String productType;
-
     if (category.equals(REFRIGERATINGAPPL)) {
       productType = eprel.getCompartments().stream()
         .filter(c -> {
-          if (REFRIGERATORS_CATEGORY.contains(c.getCompartmentType())) {
-            return true;
-          }
+          if (REFRIGERATORS_CATEGORY.contains(c.getCompartmentType())) return true;
           if (VARIABLE_TEMP.equals(c.getCompartmentType())) {
             return c.getSubCompartments() != null &&
               c.getSubCompartments().stream()
@@ -199,7 +198,6 @@ public class ProductMapper {
     } else {
       productType = CATEGORIES_TO_IT_S.get(category);
     }
-
     return buildProductName(productType, eprel, capacity);
   }
 
@@ -208,12 +206,9 @@ public class ProductMapper {
     name.append(type).append(" ")
       .append(eprel.getSupplierOrTrademark()).append(" ")
       .append(eprel.getModelIdentifier());
-
     if (!"N\\A".equals(capacity)) {
       name.append(" ").append(capacity);
     }
-
     return name.toString();
   }
-
 }

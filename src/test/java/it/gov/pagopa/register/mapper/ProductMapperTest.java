@@ -6,12 +6,14 @@ import it.gov.pagopa.register.dto.utils.EprelProduct;
 import it.gov.pagopa.register.enums.ProductStatus;
 import it.gov.pagopa.register.enums.UserRole;
 import it.gov.pagopa.register.mapper.operation.ProductMapper;
+import it.gov.pagopa.register.model.operation.FormalMotivation;
 import it.gov.pagopa.register.model.operation.Product;
 import org.apache.commons.csv.CSVRecord;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.springframework.cglib.core.Local;
 
 import java.time.*;
 import java.util.List;
@@ -22,6 +24,10 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 class ProductMapperTest {
+
+  private static final OffsetDateTime DEFAULT_EPOCH = OffsetDateTime.of(
+    1970, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC
+  );
 
   // ---------- toDTO ----------
 
@@ -49,7 +55,7 @@ class ProductMapperTest {
       .productFileId("file123")
       .statusChangeChronology(buildStatusChangeEventsList())
       .productName("CategoryA BrandX ModelX 10")
-      .formalMotivation(new FormalMotivationDTO("OK", LocalDateTime.now()))
+      .formalMotivation(new FormalMotivation("-", LocalDateTime.now()))
       .organizationName("orgName")
       .build();
 
@@ -81,7 +87,7 @@ class ProductMapperTest {
       .productFileId("file123")
       .productName("CategoryA BrandX ModelX 10")
       .statusChangeChronology(buildStatusChangeEventsList())
-      .formalMotivation(new FormalMotivationDTO("Motivo", LocalDateTime.now()))
+      .formalMotivation(new FormalMotivation("-", LocalDateTime.now()))
       .organizationName("orgName")
       .build();
 
@@ -102,7 +108,7 @@ class ProductMapperTest {
       .category("C")
       .brand("B")
       .capacity("10")
-      .formalMotivation(new FormalMotivationDTO("-", LocalDateTime.of(1970, 01, 01, 00, 00)))
+      .formalMotivation(new FormalMotivation("-", LocalDateTime.of(1970, 1, 1, 00, 00)))
       .organizationName("orgName")
       .build();
 
@@ -112,7 +118,8 @@ class ProductMapperTest {
     assertEquals("-", dto.getFormalMotivation().getFormalMotivation(),
       "Il campo formalMotivation deve essere sostituito con '-'");
     assertEquals(
-      LocalDateTime.of(1970, 01, 01, 00, 00),
+      LocalDateTime.of(
+        1970, 1, 1, 0, 0, 0, 0),
       dto.getFormalMotivation().getUpdateDate(),
       "La data di default deve essere l'Epoch (1970-01-01T00:00Z)"
     );
@@ -130,13 +137,15 @@ class ProductMapperTest {
       .category("C")
       .brand("B")
       .capacity("10")
-      .formalMotivation(new FormalMotivationDTO("-", LocalDateTime.of(1970, 01, 01, 00, 00)))
+      .formalMotivation(new FormalMotivation("-", LocalDateTime.of(1970, 1, 1, 00, 00)))
       .organizationName("orgName")
       .build();
 
     ProductDTO dto = ProductMapper.toDTO(product, UserRole.INVITALIA_ADMIN.getRole());
     assertEquals("-", dto.getFormalMotivation().getFormalMotivation(), "Campo null -> default '-'");
-    assertEquals(LocalDateTime.of(1970, 01, 01, 00, 00), dto.getFormalMotivation().getUpdateDate(), "Anche la data va a MIN");
+    assertEquals(LocalDateTime.of(
+      1970, 1, 1, 0, 0, 0, 0
+    ), dto.getFormalMotivation().getUpdateDate(), "Anche la data va a MIN");
   }
 
   @Test
@@ -150,7 +159,7 @@ class ProductMapperTest {
       .category("C")
       .brand("B")
       .capacity("N\\A")
-      .formalMotivation(new FormalMotivationDTO("-", LocalDateTime.now()))
+      .formalMotivation(new FormalMotivation("-", LocalDateTime.now()))
       .organizationName("orgName")
       .build();
 

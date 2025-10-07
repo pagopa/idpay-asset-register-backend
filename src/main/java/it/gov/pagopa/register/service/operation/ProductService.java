@@ -6,6 +6,7 @@ import it.gov.pagopa.register.dto.operation.*;
 import it.gov.pagopa.register.enums.ProductStatus;
 import it.gov.pagopa.register.enums.UserRole;
 import it.gov.pagopa.register.mapper.operation.ProductMapper;
+import it.gov.pagopa.register.model.operation.FormalMotivation;
 import it.gov.pagopa.register.model.operation.Product;
 import it.gov.pagopa.register.model.operation.StatusChangeEvent;
 import it.gov.pagopa.register.repository.operation.ProductRepository;
@@ -17,9 +18,9 @@ import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;   // <-- per UTC
 import java.util.ArrayList;
 import java.util.List;
-
 
 @Slf4j
 @Service
@@ -82,10 +83,19 @@ public class ProductService {
     String role,
     String username
   ) {
-    log.info("[UPDATE_PRODUCT_STATUSES] - Starting update - newStatus: {}, motivation: {}, formalMotivation: {}", updateStatusDto.getTargetStatus(), updateStatusDto.getMotivation(), updateStatusDto.getFormalMotivation().getFormalMotivation());
+    log.info("[UPDATE_PRODUCT_STATUSES] - Starting update - newStatus: {}, motivation: {}, formalMotivation: {}",
+      updateStatusDto.getTargetStatus(),
+      updateStatusDto.getMotivation(),
+      updateStatusDto.getFormalMotivation() != null ? updateStatusDto.getFormalMotivation().getFormalMotivation() : null);
+
     log.debug("[UPDATE_PRODUCT_STATUSES] - Product IDs to update: {}", updateStatusDto.getGtinCodes());
 
-    List<Product> productsToUpdate = productRepository.findUpdatableProducts(updateStatusDto.getGtinCodes(), updateStatusDto.getCurrentStatus(), updateStatusDto.getTargetStatus(), role);
+    List<Product> productsToUpdate = productRepository.findUpdatableProducts(
+      updateStatusDto.getGtinCodes(),
+      updateStatusDto.getCurrentStatus(),
+      updateStatusDto.getTargetStatus(),
+      role
+    );
     log.debug("[UPDATE_PRODUCT_STATUSES] - Retrieved {} products for update", productsToUpdate.size());
 
     updateStatuses(productsToUpdate, role, username, updateStatusDto);
@@ -93,7 +103,7 @@ public class ProductService {
 
     log.info("[UPDATE_PRODUCT_STATUSES] - Successfully updated {} products", productsUpdated.size());
 
-    if(updateStatusDto.getTargetStatus().name().equals(ProductStatus.REJECTED.toString())) {
+    if (updateStatusDto.getTargetStatus().name().equals(ProductStatus.REJECTED.name())) {
       int failedEmails = notifyStatusUpdates(productsUpdated, updateStatusDto.getTargetStatus(), updateStatusDto.getFormalMotivation());
       if (failedEmails != 0) {
         log.warn("[UPDATE_PRODUCT_STATUSES] - Some email notifications failed. Total failures: {}", failedEmails);
@@ -104,25 +114,36 @@ public class ProductService {
     return UpdateResultDTO.ok();
   }
 
-
   private void updateStatuses(List<Product> products,
                               String role,
                               String username,
-                              ProductUpdateStatusRequestDTO updateStatusDto
-  ) {
+                              ProductUpdateStatusRequestDTO updateStatusDto) {
+
+    final LocalDateTime nowUtc = LocalDateTime.now(ZoneOffset.UTC); // <-- sempre UTC
+
     products.forEach(product -> {
       log.debug("[UPDATE_PRODUCT_STATUSES] - Updating product {} status from {} to {}",
         product.getGtinCode(), product.getStatus(), updateStatusDto.getTargetStatus().name());
+
       product.setStatus(updateStatusDto.getTargetStatus().name());
+
       product.setFormalMotivation(
-        FormalMotivationDTO.builder()
-          .formalMotivation(updateStatusDto.getFormalMotivation().getFormalMotivation())
-          .updateDate(LocalDateTime.now())
-          .build());
+        FormalMotivation.builder()
+          .formalMotivation(updateStatusDto.getFormalMotivation() != null
+            ? updateStatusDto.getFormalMotivation().getFormalMotivation()
+            : null)
+          .updateDate(nowUtc)
+          .build()
+      );
+
+      if (product.getStatusChangeChronology() == null) {
+        product.setStatusChangeChronology(new ArrayList<>());
+      }
+
       product.getStatusChangeChronology().add(StatusChangeEvent.builder()
         .username(username)
         .role(role.equals(UserRole.INVITALIA.getRole()) ? "L1" : "L2")
-        .updateDate(LocalDateTime.now())
+        .updateDate(nowUtc)
         .currentStatus(updateStatusDto.getCurrentStatus())
         .targetStatus(updateStatusDto.getTargetStatus())
         .motivation(updateStatusDto.getMotivation())
@@ -131,7 +152,7 @@ public class ProductService {
   }
 
   private int notifyStatusUpdates(List<Product> products, ProductStatus newStatus, FormalMotivationDTO formalMotivation) {
-    List<EmailProductDTO>  emailToProducts = productRepository.getProductNamesGroupedByEmail(
+    List<EmailProductDTO> emailToProducts = productRepository.getProductNamesGroupedByEmail(
       products.stream().map(Product::getGtinCode).toList()
     );
 
@@ -141,7 +162,7 @@ public class ProductService {
       try {
         notificationService.sendEmailUpdateStatus(
           dto.getProductNames(),
-          formalMotivation.getFormalMotivation(),
+          formalMotivation != null ? formalMotivation.getFormalMotivation() : null,
           newStatus.name(),
           dto.getId()
         );
@@ -164,4 +185,3 @@ public class ProductService {
       .build();
   }
 }
-
