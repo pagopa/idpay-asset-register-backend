@@ -6,7 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.OffsetDateTime;
+import java.time.LocalDateTime;
 
 @Data
 @Builder
@@ -15,5 +15,5 @@ import java.time.OffsetDateTime;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class FormalMotivationDTO {
   private String formalMotivation;
-  private OffsetDateTime updateDate;
+  private LocalDateTime updateDate;
 }

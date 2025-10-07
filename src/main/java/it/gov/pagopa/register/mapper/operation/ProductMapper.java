@@ -10,13 +10,9 @@ import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.csv.CSVRecord;
 
-import java.time.Instant;
-import java.time.OffsetDateTime;
-
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -41,7 +37,7 @@ public class ProductMapper {
 
     FormalMotivationDTO fm = entity.getFormalMotivation() != null
       ? entity.getFormalMotivation()
-      : new FormalMotivationDTO("-", OffsetDateTime.ofInstant(Instant.EPOCH, ZoneOffset.UTC));
+      : new FormalMotivationDTO("-", LocalDateTime.of(1970, 01, 01, 00, 00));
 
     return ProductDTO.builder()
       .organizationId(entity.getOrganizationId())
@@ -84,7 +80,7 @@ public class ProductMapper {
       )
       .organizationName(organizationName)
       .statusChangeChronology(new ArrayList<>())
-      .formalMotivation(new FormalMotivationDTO("-", OffsetDateTime.ofInstant(Instant.EPOCH, ZoneOffset.UTC)))
+      .formalMotivation(new FormalMotivationDTO("-", LocalDateTime.of(1970, 01, 01, 00, 00)))
       .build();
   }
 
@@ -109,7 +105,7 @@ public class ProductMapper {
       .productName(mapProductName(eprelData, category, capacity))
       .organizationName(organizationName)
       .statusChangeChronology(new ArrayList<>())
-      .formalMotivation(new FormalMotivationDTO("-", OffsetDateTime.ofInstant(Instant.EPOCH, ZoneOffset.UTC)))
+      .formalMotivation(new FormalMotivationDTO("-", LocalDateTime.of(1970, 01, 01, 00, 00)))
       .build();
   }
 

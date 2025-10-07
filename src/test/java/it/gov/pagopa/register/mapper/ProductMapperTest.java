@@ -13,10 +13,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
+import java.time.*;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -52,7 +49,7 @@ class ProductMapperTest {
       .productFileId("file123")
       .statusChangeChronology(buildStatusChangeEventsList())
       .productName("CategoryA BrandX ModelX 10")
-      .formalMotivation(new FormalMotivationDTO("OK", OffsetDateTime.now()))
+      .formalMotivation(new FormalMotivationDTO("OK", LocalDateTime.now()))
       .organizationName("orgName")
       .build();
 
@@ -84,7 +81,7 @@ class ProductMapperTest {
       .productFileId("file123")
       .productName("CategoryA BrandX ModelX 10")
       .statusChangeChronology(buildStatusChangeEventsList())
-      .formalMotivation(new FormalMotivationDTO("Motivo", OffsetDateTime.now()))
+      .formalMotivation(new FormalMotivationDTO("Motivo", LocalDateTime.now()))
       .organizationName("orgName")
       .build();
 
@@ -105,7 +102,7 @@ class ProductMapperTest {
       .category("C")
       .brand("B")
       .capacity("10")
-      .formalMotivation(new FormalMotivationDTO("-", OffsetDateTime.ofInstant(Instant.EPOCH, ZoneOffset.UTC)))
+      .formalMotivation(new FormalMotivationDTO("-", LocalDateTime.of(1970, 01, 01, 00, 00)))
       .organizationName("orgName")
       .build();
 
@@ -115,7 +112,7 @@ class ProductMapperTest {
     assertEquals("-", dto.getFormalMotivation().getFormalMotivation(),
       "Il campo formalMotivation deve essere sostituito con '-'");
     assertEquals(
-      OffsetDateTime.ofInstant(Instant.EPOCH, ZoneOffset.UTC),
+      LocalDateTime.of(1970, 01, 01, 00, 00),
       dto.getFormalMotivation().getUpdateDate(),
       "La data di default deve essere l'Epoch (1970-01-01T00:00Z)"
     );
@@ -133,13 +130,13 @@ class ProductMapperTest {
       .category("C")
       .brand("B")
       .capacity("10")
-      .formalMotivation(new FormalMotivationDTO("-", OffsetDateTime.ofInstant(Instant.EPOCH, ZoneOffset.UTC)))
+      .formalMotivation(new FormalMotivationDTO("-", LocalDateTime.of(1970, 01, 01, 00, 00)))
       .organizationName("orgName")
       .build();
 
     ProductDTO dto = ProductMapper.toDTO(product, UserRole.INVITALIA_ADMIN.getRole());
     assertEquals("-", dto.getFormalMotivation().getFormalMotivation(), "Campo null -> default '-'");
-    assertEquals(OffsetDateTime.ofInstant(Instant.EPOCH, ZoneOffset.UTC), dto.getFormalMotivation().getUpdateDate(), "Anche la data va a MIN");
+    assertEquals(LocalDateTime.of(1970, 01, 01, 00, 00), dto.getFormalMotivation().getUpdateDate(), "Anche la data va a MIN");
   }
 
   @Test
@@ -153,7 +150,7 @@ class ProductMapperTest {
       .category("C")
       .brand("B")
       .capacity("N\\A")
-      .formalMotivation(new FormalMotivationDTO("-", OffsetDateTime.now()))
+      .formalMotivation(new FormalMotivationDTO("-", LocalDateTime.now()))
       .organizationName("orgName")
       .build();
 
