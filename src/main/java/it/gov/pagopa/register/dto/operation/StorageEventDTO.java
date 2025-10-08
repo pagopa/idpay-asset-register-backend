@@ -15,6 +15,7 @@ public class StorageEventDTO {
     private String id;
     private String subject;
     private String eventType;
+    private String topic;
     private StorageEventData data;
     private LocalDateTime eventTime;
 
