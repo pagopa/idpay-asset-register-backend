@@ -1,5 +1,6 @@
 package it.gov.pagopa.register.dto.operation;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -11,6 +12,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class StorageEventDTO {
     private String id;
     private String subject;
@@ -23,6 +25,7 @@ public class StorageEventDTO {
     @NoArgsConstructor
     @AllArgsConstructor
     @Builder
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class StorageEventData {
         private String eTag;
         private Integer contentLength;
