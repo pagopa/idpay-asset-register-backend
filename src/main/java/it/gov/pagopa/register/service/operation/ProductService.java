@@ -6,7 +6,6 @@ import it.gov.pagopa.register.dto.operation.*;
 import it.gov.pagopa.register.enums.ProductStatus;
 import it.gov.pagopa.register.enums.UserRole;
 import it.gov.pagopa.register.mapper.operation.ProductMapper;
-import it.gov.pagopa.register.model.operation.FormalMotivation;
 import it.gov.pagopa.register.model.operation.Product;
 import it.gov.pagopa.register.model.operation.StatusChangeEvent;
 import it.gov.pagopa.register.repository.operation.ProductRepository;
@@ -18,7 +17,6 @@ import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;   // <-- per UTC
 import java.util.ArrayList;
 import java.util.List;
 
@@ -86,7 +84,7 @@ public class ProductService {
     log.info("[UPDATE_PRODUCT_STATUSES] - Starting update - newStatus: {}, motivation: {}, formalMotivation: {}",
       updateStatusDto.getTargetStatus(),
       updateStatusDto.getMotivation(),
-      updateStatusDto.getFormalMotivation() != null ? updateStatusDto.getFormalMotivation().getFormalMotivation() : null);
+      updateStatusDto.getFormalMotivation() != null ? updateStatusDto.getFormalMotivation() : null);
 
     log.debug("[UPDATE_PRODUCT_STATUSES] - Product IDs to update: {}", updateStatusDto.getGtinCodes());
 
@@ -119,22 +117,13 @@ public class ProductService {
                               String username,
                               ProductUpdateStatusRequestDTO updateStatusDto) {
 
-    final LocalDateTime nowUtc = LocalDateTime.now(ZoneOffset.UTC); // <-- sempre UTC
-
     products.forEach(product -> {
       log.debug("[UPDATE_PRODUCT_STATUSES] - Updating product {} status from {} to {}",
         product.getGtinCode(), product.getStatus(), updateStatusDto.getTargetStatus().name());
 
       product.setStatus(updateStatusDto.getTargetStatus().name());
 
-      product.setFormalMotivation(
-        FormalMotivation.builder()
-          .formalMotivation(updateStatusDto.getFormalMotivation() != null
-            ? updateStatusDto.getFormalMotivation().getFormalMotivation()
-            : null)
-          .updateDate(nowUtc)
-          .build()
-      );
+      product.setFormalMotivation(updateStatusDto.getFormalMotivation());
 
       if (product.getStatusChangeChronology() == null) {
         product.setStatusChangeChronology(new ArrayList<>());
@@ -143,7 +132,7 @@ public class ProductService {
       product.getStatusChangeChronology().add(StatusChangeEvent.builder()
         .username(username)
         .role(role.equals(UserRole.INVITALIA.getRole()) ? "L1" : "L2")
-        .updateDate(nowUtc)
+        .updateDate(LocalDateTime.now())
         .currentStatus(updateStatusDto.getCurrentStatus())
         .targetStatus(updateStatusDto.getTargetStatus())
         .motivation(updateStatusDto.getMotivation())
@@ -151,7 +140,7 @@ public class ProductService {
     });
   }
 
-  private int notifyStatusUpdates(List<Product> products, ProductStatus newStatus, FormalMotivationDTO formalMotivation) {
+  private int notifyStatusUpdates(List<Product> products, ProductStatus newStatus, String formalMotivation) {
     List<EmailProductDTO> emailToProducts = productRepository.getProductNamesGroupedByEmail(
       products.stream().map(Product::getGtinCode).toList()
     );
@@ -162,7 +151,7 @@ public class ProductService {
       try {
         notificationService.sendEmailUpdateStatus(
           dto.getProductNames(),
-          formalMotivation != null ? formalMotivation.getFormalMotivation() : null,
+          formalMotivation,
           newStatus.name(),
           dto.getId()
         );
