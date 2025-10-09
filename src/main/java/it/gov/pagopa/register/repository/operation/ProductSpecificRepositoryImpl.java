@@ -113,6 +113,12 @@ public class ProductSpecificRepositoryImpl implements ProductSpecificRepository 
     return results.getMappedResults();
   }
 
+  @Override
+  public List<Product> findByIds(List<String> productIds) {
+    Criteria criteria = new Criteria().and(FIELD_ID).in(productIds);
+    return mongoTemplate.find(Query.query(criteria), Product.class);
+  }
+
 
   @Override
   public List<Product> findUpdatableProducts(List<String> productIds, ProductStatus currentStatus, ProductStatus targetStatus, String role) {
@@ -231,7 +237,7 @@ public class ProductSpecificRepositoryImpl implements ProductSpecificRepository 
     return null;
   }
 
-  private List<String> getAllowedInitialStates(ProductStatus targetStatus, String role) {
+  public List<String> getAllowedInitialStates(ProductStatus targetStatus, String role) {
     Map<String, List<String>> validInitialStates = new HashMap<>();
 
     if (UserRole.INVITALIA.getRole().equalsIgnoreCase(role)) {

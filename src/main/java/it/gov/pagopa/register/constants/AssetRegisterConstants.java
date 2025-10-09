@@ -248,4 +248,13 @@ public class AssetRegisterConstants {
 
   public static final String FREEZER_IT = "Congelatore";
   public static final String REFRIGERATOR_IT = "Frigorifero";
+
+  //UPDATE STATUS MESSAGE ERROR
+  public static final String MIXED_STATUS_ERROR_KEY = "product.invalid.update.mixedStatus";
+  public static final String INVALID_CURRENT_STATUS_ERROR_KEY = "product.invalid.update.currentStatus";
+  public static final String PRODUCT_NOT_FOUND_ERROR_KEY = "product.invalid.update.notFound";
+  public static final String TRANSITION_NOT_ALLOWED_ERROR_KEY = "product.invalid.update.transitionNotAllowed";
+
+
 }
+

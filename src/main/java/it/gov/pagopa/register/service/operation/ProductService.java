@@ -19,7 +19,9 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
+import static it.gov.pagopa.register.constants.AssetRegisterConstants.*;
 
 @Slf4j
 @Service
@@ -82,18 +84,54 @@ public class ProductService {
     String role,
     String username
   ) {
-    log.info("[UPDATE_PRODUCT_STATUSES] - Starting update - newStatus: {}, motivation: {}, formalMotivation: {}", updateStatusDto.getTargetStatus(), updateStatusDto.getMotivation(), updateStatusDto.getFormalMotivation());
+    log.info("[UPDATE_PRODUCT_STATUSES] - Starting update - newStatus: {}, motivation: {}, formalMotivation: {}",
+      updateStatusDto.getTargetStatus(),
+      updateStatusDto.getMotivation(),
+      updateStatusDto.getFormalMotivation());
+
     log.debug("[UPDATE_PRODUCT_STATUSES] - Product IDs to update: {}", updateStatusDto.getGtinCodes());
 
-    List<Product> productsToUpdate = productRepository.findUpdatableProducts(updateStatusDto.getGtinCodes(), updateStatusDto.getCurrentStatus(), updateStatusDto.getTargetStatus(), role);
-    log.debug("[UPDATE_PRODUCT_STATUSES] - Retrieved {} products for update", productsToUpdate.size());
+    List<Product> requestedProducts = productRepository.findByIds(updateStatusDto.getGtinCodes());
+    log.debug("[UPDATE_PRODUCT_STATUSES] - Retrieved {} products for update", requestedProducts.size());
 
-    updateStatuses(productsToUpdate, role, username, updateStatusDto);
-    List<Product> productsUpdated = productRepository.saveAll(productsToUpdate);
+    if (requestedProducts.size() != updateStatusDto.getGtinCodes().size()) {
+      log.warn("[UPDATE_PRODUCT_STATUSES] - Some products not found or not accessible");
+      return UpdateResultDTO.ko(PRODUCT_NOT_FOUND_ERROR_KEY);
+    }
+
+    String distinctStatus = null;
+    for (Product p : requestedProducts) {
+      if (distinctStatus == null) {
+        distinctStatus = p.getStatus();
+      } else if (!distinctStatus.equals(p.getStatus())) {
+        log.warn("[UPDATE_PRODUCT_STATUSES] - Mixed current statuses in request: {}",
+          requestedProducts.stream().map(Product::getStatus).distinct().toList());
+        return UpdateResultDTO.ko(MIXED_STATUS_ERROR_KEY);
+      }
+    }
+
+    if (updateStatusDto.getCurrentStatus() == null
+      || !Objects.equals(distinctStatus, updateStatusDto.getCurrentStatus().name())) {
+      log.warn("[UPDATE_PRODUCT_STATUSES] - Provided currentStatus ({}) does not match actual ({})",
+        updateStatusDto.getCurrentStatus(), distinctStatus);
+      return UpdateResultDTO.ko(INVALID_CURRENT_STATUS_ERROR_KEY);
+    }
+
+    List<String> allowed = productRepository.getAllowedInitialStates(
+      updateStatusDto.getTargetStatus(), role);
+
+    if (allowed.isEmpty() || !allowed.contains(updateStatusDto.getCurrentStatus().name())) {
+      log.warn("[UPDATE_PRODUCT_STATUSES] - Transition not allowed: {} -> {} for role {}",
+        updateStatusDto.getCurrentStatus(), updateStatusDto.getTargetStatus(), role);
+      return UpdateResultDTO.ko(TRANSITION_NOT_ALLOWED_ERROR_KEY);
+    }
+
+    updateStatuses(requestedProducts, role, username, updateStatusDto);
+    List<Product> productsUpdated = productRepository.saveAll(requestedProducts);
 
     log.info("[UPDATE_PRODUCT_STATUSES] - Successfully updated {} products", productsUpdated.size());
 
-    if(updateStatusDto.getTargetStatus().name().equals(ProductStatus.REJECTED.toString())) {
+    if (updateStatusDto.getTargetStatus().name().equals(ProductStatus.REJECTED.name())) {
       int failedEmails = notifyStatusUpdates(productsUpdated, updateStatusDto.getTargetStatus(), updateStatusDto.getFormalMotivation());
       if (failedEmails != 0) {
         log.warn("[UPDATE_PRODUCT_STATUSES] - Some email notifications failed. Total failures: {}", failedEmails);
@@ -104,17 +142,23 @@ public class ProductService {
     return UpdateResultDTO.ok();
   }
 
-
   private void updateStatuses(List<Product> products,
                               String role,
                               String username,
-                              ProductUpdateStatusRequestDTO updateStatusDto
-  ) {
+                              ProductUpdateStatusRequestDTO updateStatusDto) {
+
     products.forEach(product -> {
       log.debug("[UPDATE_PRODUCT_STATUSES] - Updating product {} status from {} to {}",
         product.getGtinCode(), product.getStatus(), updateStatusDto.getTargetStatus().name());
+
       product.setStatus(updateStatusDto.getTargetStatus().name());
+
       product.setFormalMotivation(updateStatusDto.getFormalMotivation());
+
+      if (product.getStatusChangeChronology() == null) {
+        product.setStatusChangeChronology(new ArrayList<>());
+      }
+
       product.getStatusChangeChronology().add(StatusChangeEvent.builder()
         .username(username)
         .role(role.equals(UserRole.INVITALIA.getRole()) ? "L1" : "L2")
@@ -127,7 +171,7 @@ public class ProductService {
   }
 
   private int notifyStatusUpdates(List<Product> products, ProductStatus newStatus, String formalMotivation) {
-    List<EmailProductDTO>  emailToProducts = productRepository.getProductNamesGroupedByEmail(
+    List<EmailProductDTO> emailToProducts = productRepository.getProductNamesGroupedByEmail(
       products.stream().map(Product::getGtinCode).toList()
     );
 
@@ -160,4 +204,3 @@ public class ProductService {
       .build();
   }
 }
-
