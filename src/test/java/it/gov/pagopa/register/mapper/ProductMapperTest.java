@@ -55,7 +55,6 @@ class ProductMapperTest {
     assertNotNull(dto.getStatusChangeChronology(), "Per OPERATORE deve essere lista vuota, non null");
     assertTrue(dto.getStatusChangeChronology().isEmpty(), "La chronology deve essere nascosta come lista vuota");
     assertEquals("OK", dto.getFormalMotivation());
-
   }
 
   @Test
@@ -86,7 +85,6 @@ class ProductMapperTest {
     assertEquals(ProductStatus.WAIT_APPROVED.name(), dto.getStatus());
     assertNotNull(dto.getStatusChangeChronology());
     assertEquals("OK", dto.getFormalMotivation());
-
   }
 
   @Test

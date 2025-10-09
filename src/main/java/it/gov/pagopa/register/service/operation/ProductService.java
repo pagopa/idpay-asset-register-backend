@@ -19,6 +19,9 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+
+import static it.gov.pagopa.register.constants.AssetRegisterConstants.*;
 
 @Slf4j
 @Service
@@ -84,20 +87,47 @@ public class ProductService {
     log.info("[UPDATE_PRODUCT_STATUSES] - Starting update - newStatus: {}, motivation: {}, formalMotivation: {}",
       updateStatusDto.getTargetStatus(),
       updateStatusDto.getMotivation(),
-      updateStatusDto.getFormalMotivation() != null ? updateStatusDto.getFormalMotivation() : null);
+      updateStatusDto.getFormalMotivation());
 
     log.debug("[UPDATE_PRODUCT_STATUSES] - Product IDs to update: {}", updateStatusDto.getGtinCodes());
 
-    List<Product> productsToUpdate = productRepository.findUpdatableProducts(
-      updateStatusDto.getGtinCodes(),
-      updateStatusDto.getCurrentStatus(),
-      updateStatusDto.getTargetStatus(),
-      role
-    );
-    log.debug("[UPDATE_PRODUCT_STATUSES] - Retrieved {} products for update", productsToUpdate.size());
+    List<Product> requestedProducts = productRepository.findByIds(updateStatusDto.getGtinCodes());
+    log.debug("[UPDATE_PRODUCT_STATUSES] - Retrieved {} products for update", requestedProducts.size());
 
-    updateStatuses(productsToUpdate, role, username, updateStatusDto);
-    List<Product> productsUpdated = productRepository.saveAll(productsToUpdate);
+    if (requestedProducts.size() != updateStatusDto.getGtinCodes().size()) {
+      log.warn("[UPDATE_PRODUCT_STATUSES] - Some products not found or not accessible");
+      return UpdateResultDTO.ko(PRODUCT_NOT_FOUND_ERROR_KEY);
+    }
+
+    String distinctStatus = null;
+    for (Product p : requestedProducts) {
+      if (distinctStatus == null) {
+        distinctStatus = p.getStatus();
+      } else if (!distinctStatus.equals(p.getStatus())) {
+        log.warn("[UPDATE_PRODUCT_STATUSES] - Mixed current statuses in request: {}",
+          requestedProducts.stream().map(Product::getStatus).distinct().toList());
+        return UpdateResultDTO.ko(MIXED_STATUS_ERROR_KEY);
+      }
+    }
+
+    if (updateStatusDto.getCurrentStatus() == null
+      || !Objects.equals(distinctStatus, updateStatusDto.getCurrentStatus().name())) {
+      log.warn("[UPDATE_PRODUCT_STATUSES] - Provided currentStatus ({}) does not match actual ({})",
+        updateStatusDto.getCurrentStatus(), distinctStatus);
+      return UpdateResultDTO.ko(INVALID_CURRENT_STATUS_ERROR_KEY);
+    }
+
+    List<String> allowed = productRepository.getAllowedInitialStates(
+      updateStatusDto.getTargetStatus(), role);
+
+    if (allowed.isEmpty() || !allowed.contains(updateStatusDto.getCurrentStatus().name())) {
+      log.warn("[UPDATE_PRODUCT_STATUSES] - Transition not allowed: {} -> {} for role {}",
+        updateStatusDto.getCurrentStatus(), updateStatusDto.getTargetStatus(), role);
+      return UpdateResultDTO.ko(TRANSITION_NOT_ALLOWED_ERROR_KEY);
+    }
+
+    updateStatuses(requestedProducts, role, username, updateStatusDto);
+    List<Product> productsUpdated = productRepository.saveAll(requestedProducts);
 
     log.info("[UPDATE_PRODUCT_STATUSES] - Successfully updated {} products", productsUpdated.size());
 

@@ -27,6 +27,7 @@ public class ProductMapper {
   private ProductMapper() {}
 
   public static ProductDTO toDTO(Product entity, String role){
+    if (entity == null) return null;
 
     return ProductDTO.builder()
       .organizationId(entity.getOrganizationId())

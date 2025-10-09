@@ -113,7 +113,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
       requestDTO.setCurrentStatus(ProductStatus.WAIT_APPROVED);
       requestDTO.setTargetStatus(ProductStatus.APPROVED);
       requestDTO.setMotivation("Valid reason");
-      requestDTO.setFormalMotivation("-");
+      requestDTO.setFormalMotivation("");
 
       String requestBody = objectMapper.writeValueAsString(requestDTO);
 
