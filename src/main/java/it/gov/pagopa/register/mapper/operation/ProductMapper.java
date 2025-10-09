@@ -5,6 +5,7 @@ import it.gov.pagopa.register.dto.utils.EprelProduct;
 import it.gov.pagopa.register.enums.ProductStatus;
 import it.gov.pagopa.register.enums.UserRole;
 import it.gov.pagopa.register.model.operation.Product;
+import it.gov.pagopa.register.model.operation.StatusChangeEvent;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.csv.CSVRecord;
@@ -29,9 +30,28 @@ public class ProductMapper {
   public static ProductDTO toDTO(Product entity, String role){
     if (entity == null) return null;
 
+    List<StatusChangeEvent> chronology;
+
+    if (entity.getStatusChangeChronology() == null) {
+      chronology = new ArrayList<>();
+    } else if (UserRole.OPERATORE.getRole().equals(role)) {
+      chronology = entity.getStatusChangeChronology().stream()
+        .map(e -> StatusChangeEvent.builder()
+          .username("-")
+          .role("-")
+          .motivation("-")
+          .updateDate(e.getUpdateDate())
+          .currentStatus(e.getCurrentStatus())
+          .targetStatus(e.getTargetStatus())
+          .build())
+        .toList();
+    } else {
+      chronology = entity.getStatusChangeChronology();
+    }
+
     return ProductDTO.builder()
       .organizationId(entity.getOrganizationId())
-      .registrationDate(entity.getRegistrationDate())
+      .registrationDate(entity.getRegistrationDate().toString())
       .status(role.equals(UserRole.OPERATORE.getRole()) && entity.getStatus().equals(ProductStatus.WAIT_APPROVED.name())
         ? ProductStatus.UPLOADED.name()
         : entity.getStatus())
@@ -48,9 +68,7 @@ public class ProductMapper {
       .batchName(CATEGORIES_TO_IT_P.get(entity.getCategory()) + "_" + entity.getProductFileId() + ".csv")
       .productName(entity.getProductName())
       .capacity(entity.getCapacity() == null || "N\\A".equals(entity.getCapacity()) ? "" : entity.getCapacity())
-      .statusChangeChronology(entity.getStatusChangeChronology() == null || role.equals(UserRole.OPERATORE.getRole())
-        ? new ArrayList<>()
-        : entity.getStatusChangeChronology())
+      .statusChangeChronology(chronology)
       .formalMotivation(entity.getFormalMotivation())
       .organizationName(entity.getOrganizationName())
       .build();
