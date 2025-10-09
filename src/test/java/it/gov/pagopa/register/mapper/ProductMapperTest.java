@@ -6,6 +6,7 @@ import it.gov.pagopa.register.enums.ProductStatus;
 import it.gov.pagopa.register.enums.UserRole;
 import it.gov.pagopa.register.mapper.operation.ProductMapper;
 import it.gov.pagopa.register.model.operation.Product;
+import it.gov.pagopa.register.model.operation.StatusChangeEvent;
 import org.apache.commons.csv.CSVRecord;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -13,6 +14,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import java.time.*;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -26,7 +28,10 @@ class ProductMapperTest {
   // ---------- toDTO ----------
 
   @Test
-  void testToDTO_RoleOperatore_StatusDowngraded_AndChronologyHidden() {
+  void testToDTO_RoleOperatore_StatusDowngraded_AndChronologyMasked() {
+    // arrange
+    List<StatusChangeEvent> original = buildStatusChangeEventsList();
+
     Product product = Product.builder()
       .organizationId("org1")
       .registrationDate(LocalDateTime.of(2025, 10, 3, 18, 53, 24)) // deterministico
@@ -42,18 +47,40 @@ class ProductMapperTest {
       .energyClass("A")
       .capacity("10")
       .productFileId("file123")
-      .statusChangeChronology(buildStatusChangeEventsList())
+      .statusChangeChronology(new ArrayList<>(original))
       .productName("CategoryA BrandX ModelX 10")
       .formalMotivation("OK")
       .organizationName("orgName")
       .build();
 
+    // act
     ProductDTO dto = ProductMapper.toDTO(product, UserRole.OPERATORE.getRole());
 
+    // assert
     assertNotNull(dto);
+    // status viene “downgraded” per OPERATORE
     assertEquals(ProductStatus.UPLOADED.name(), dto.getStatus());
-    assertNotNull(dto.getStatusChangeChronology(), "Per OPERATORE deve essere lista vuota, non null");
-    assertTrue(dto.getStatusChangeChronology().isEmpty(), "La chronology deve essere nascosta come lista vuota");
+
+    // chronology viene offuscata, non vuotata
+    assertNotNull(dto.getStatusChangeChronology(), "Per OPERATORE non deve essere null");
+    assertEquals(original.size(), dto.getStatusChangeChronology().size(), "Cardinalità invariata");
+
+    for (int i = 0; i < original.size(); i++) {
+      StatusChangeEvent src = original.get(i);
+      StatusChangeEvent masked = dto.getStatusChangeChronology().get(i);
+
+      // campi sensibili offuscati
+      assertEquals("-", masked.getUsername());
+      assertEquals("-", masked.getRole());
+      assertEquals("-", masked.getMotivation());
+
+      // campi “tecnici” invariati
+      assertEquals(src.getUpdateDate(), masked.getUpdateDate());
+      assertEquals(src.getCurrentStatus(), masked.getCurrentStatus());
+      assertEquals(src.getTargetStatus(), masked.getTargetStatus());
+    }
+
+    // formalMotivation rimane il testo originale
     assertEquals("OK", dto.getFormalMotivation());
   }
 
