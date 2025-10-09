@@ -30,24 +30,7 @@ public class ProductMapper {
   public static ProductDTO toDTO(Product entity, String role){
     if (entity == null) return null;
 
-    List<StatusChangeEvent> chronology;
-
-    if (entity.getStatusChangeChronology() == null) {
-      chronology = new ArrayList<>();
-    } else if (UserRole.OPERATORE.getRole().equals(role)) {
-      chronology = entity.getStatusChangeChronology().stream()
-        .map(e -> StatusChangeEvent.builder()
-          .username("-")
-          .role("-")
-          .motivation("-")
-          .updateDate(e.getUpdateDate())
-          .currentStatus(e.getCurrentStatus())
-          .targetStatus(e.getTargetStatus())
-          .build())
-        .toList();
-    } else {
-      chronology = entity.getStatusChangeChronology();
-    }
+    List<StatusChangeEvent> chronology = getStatusChangeEvents(entity, role);
 
     return ProductDTO.builder()
       .organizationId(entity.getOrganizationId())
@@ -72,6 +55,28 @@ public class ProductMapper {
       .formalMotivation(entity.getFormalMotivation())
       .organizationName(entity.getOrganizationName())
       .build();
+  }
+
+  private static List<StatusChangeEvent> getStatusChangeEvents(Product entity, String role) {
+    List<StatusChangeEvent> chronology;
+
+    if (entity.getStatusChangeChronology() == null) {
+      chronology = new ArrayList<>();
+    } else if (UserRole.OPERATORE.getRole().equals(role)) {
+      chronology = entity.getStatusChangeChronology().stream()
+        .map(e -> StatusChangeEvent.builder()
+          .username("-")
+          .role("-")
+          .motivation("-")
+          .updateDate(e.getUpdateDate())
+          .currentStatus(e.getCurrentStatus())
+          .targetStatus(e.getTargetStatus())
+          .build())
+        .toList();
+    } else {
+      chronology = entity.getStatusChangeChronology();
+    }
+    return chronology;
   }
 
 
