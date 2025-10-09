@@ -84,7 +84,7 @@ class ProductMapperTest {
 
     assertEquals(ProductStatus.WAIT_APPROVED.name(), dto.getStatus());
     assertNotNull(dto.getStatusChangeChronology());
-    assertEquals("Motivo", dto.getFormalMotivation());
+    assertEquals("OK", dto.getFormalMotivation());
   }
 
   @Test
@@ -98,7 +98,7 @@ class ProductMapperTest {
       .category("C")
       .brand("B")
       .capacity("10")
-      .formalMotivation("OK")
+      .formalMotivation(null)
       .organizationName("orgName")
       .build();
 

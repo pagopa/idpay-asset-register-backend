@@ -207,7 +207,7 @@ class ProductServiceTest {
     requestDTO.setCurrentStatus(ProductStatus.UPLOADED);
     requestDTO.setTargetStatus(ProductStatus.REJECTED);
     requestDTO.setMotivation("Valid reason");
-    requestDTO.setFormalMotivation("OK");
+    requestDTO.setFormalMotivation("Valid formal reason");
 
     UpdateResultDTO result = productService.updateProductStatusesWithNotification(
       requestDTO,
