@@ -18,7 +18,6 @@ class EprelValidationConfigTest {
 
   private final EprelValidationConfig config = new EprelValidationConfig();
 
-
   @Nested
   @DisplayName("Configuration Initialization Tests")
   class ConfigurationInitializationTests {
@@ -34,7 +33,6 @@ class EprelValidationConfigTest {
     @DisplayName("Should contain all required validation rules")
     void shouldContainAllRequiredValidationRules() {
       LinkedHashMap<String, EprelValidationRule> schemas = config.getSchemas();
-      System.out.println(schemas.keySet());
       assertTrue(schemas.containsKey(ORG_VERIFICATION_STATUS), "Should contain ORG_VERIFICATION_STATUS rule");
       assertTrue(schemas.containsKey(TRADE_MARKER_VERIFICATION_STATUS), "Should contain TRADE_MARKER_VERIFICATION_STATUS rule");
       assertTrue(schemas.containsKey(BLOCKED), "Should contain BLOCKED rule");
@@ -80,8 +78,7 @@ class EprelValidationConfigTest {
       @Test
       @DisplayName("Should have correct error message")
       void shouldHaveCorrectErrorMessage() {
-        assertEquals("Lo stato di verifica dell'organizzazione non è VERIFICATO",
-          rule.getMessage(), "Should have correct error message");
+        assertEquals(ERROR_ORG, rule.getMessage(), "Should have correct error message");
       }
     }
 
@@ -122,8 +119,7 @@ class EprelValidationConfigTest {
       @Test
       @DisplayName("Should have correct error message")
       void shouldHaveCorrectErrorMessage() {
-        assertEquals("Lo stato di verifica del marchio non è VERIFICATO",
-          rule.getMessage(), "Should have correct error message");
+        assertEquals(ERROR_TRADEMARK, rule.getMessage(), "Should have correct error message");
       }
     }
 
@@ -164,8 +160,7 @@ class EprelValidationConfigTest {
       @Test
       @DisplayName("Should have correct error message")
       void shouldHaveCorrectErrorMessage() {
-        assertEquals("Il prodotto è BLOCCATO",
-          rule.getMessage(), "Should have correct error message");
+        assertEquals(ERROR_BLOCKED, rule.getMessage(), "Should have correct error message");
       }
     }
 
@@ -206,8 +201,7 @@ class EprelValidationConfigTest {
       @Test
       @DisplayName("Should have correct error message")
       void shouldHaveCorrectErrorMessage() {
-        assertEquals("Lo stato non è PUBBLICATO",
-          rule.getMessage(), "Should have correct error message");
+        assertEquals(ERROR_STATUS, rule.getMessage(), "Should have correct error message");
       }
     }
 
@@ -257,8 +251,8 @@ class EprelValidationConfigTest {
       @Test
       @DisplayName("Should have correct error message")
       void shouldHaveCorrectErrorMessage() {
-        assertEquals("La categoria EPREL non è compatibile con la categoria prevista",
-          rule.getMessage(), "Should have correct error message");
+        // Nota: la costante nel codice è ERROR_PRODUCT_GROU
+        assertEquals(ERROR_PRODUCT_GROU, rule.getMessage(), "Should have correct error message");
       }
     }
 
@@ -283,10 +277,10 @@ class EprelValidationConfigTest {
         "TUMBLEDRYERS, C",
         "REFRIGERATINGAPPL, D"
       })
-      @DisplayName("Should pass for valid (productGourp,energy class)")
+      @DisplayName("Should pass for valid (productGroup, energy class)")
       void shouldPassWhenProductEnergyClassIsValid(String productGroup, String energyClass) {
         assertTrue(rule.getRule().test(energyClass, productGroup),
-          "Should reject null energy class");
+          "Should accept valid energy class for product group");
       }
 
       @Test
@@ -299,10 +293,8 @@ class EprelValidationConfigTest {
       @Test
       @DisplayName("Should have correct error message")
       void shouldHaveCorrectErrorMessage() {
-        assertEquals("La classe energetica non è conforme",
-          rule.getMessage(), "Should have correct error message");
+        assertEquals(ERROR_ENERGY_CLASS, rule.getMessage(), "Should have correct error message");
       }
     }
-
   }
 }
