@@ -16,6 +16,7 @@ import org.springframework.data.mongodb.core.query.Query;
 import java.util.*;
 
 import static it.gov.pagopa.register.constants.AggregationConstants.*;
+import static it.gov.pagopa.register.constants.AssetRegisterConstants.*;
 
 @RequiredArgsConstructor
 public class ProductSpecificRepositoryImpl implements ProductSpecificRepository {
@@ -210,20 +211,20 @@ public class ProductSpecificRepositoryImpl implements ProductSpecificRepository 
       .addField(RUNTIME_FIELD_CATEGORY_IT)
       .withValue(
         ConditionalOperators.switchCases(
-          ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(FIELD_CATEGORY).equalToValue("WASHINGMACHINES")).then("Lavatrici"),
-          ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(FIELD_CATEGORY).equalToValue("WASHERDRIERS")).then("Lavasciuga"),
-          ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(FIELD_CATEGORY).equalToValue("OVENS")).then("Forni"),
-          ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(FIELD_CATEGORY).equalToValue("RANGEHOODS")).then("Cappe"),
-          ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(FIELD_CATEGORY).equalToValue("DISHWASHERS")).then("Lavastoviglie"),
-          ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(FIELD_CATEGORY).equalToValue("TUMBLEDRYERS")).then("Asciugatrici"),
-          ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(FIELD_CATEGORY).equalToValue("REFRIGERATINGAPPL")).then("Frigoriferi"),
-          ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(FIELD_CATEGORY).equalToValue("COOKINGHOBS")).then("Piani cottura")
+          ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(FIELD_CATEGORY).equalToValue(WASHINGMACHINES)).then(WASHINGMACHINES_IT_P),
+          ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(FIELD_CATEGORY).equalToValue(WASHERDRIERS)).then(WASHERDRIERS_IT_P),
+          ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(FIELD_CATEGORY).equalToValue(OVENS)).then(OVENS_IT_P),
+          ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(FIELD_CATEGORY).equalToValue(RANGEHOODS)).then(RANGEHOODS_IT_P),
+          ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(FIELD_CATEGORY).equalToValue(DISHWASHERS)).then(DISHWASHERS_IT_P),
+          ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(FIELD_CATEGORY).equalToValue(TUMBLEDRYERS)).then(TUMBLEDRYERS_IT_P),
+          ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(FIELD_CATEGORY).equalToValue(REFRIGERATINGAPPL)).then(REFRIGERATINGAPPL_IT_P),
+          ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(FIELD_CATEGORY).equalToValue(COOKINGHOBS)).then(COOKINGHOBS_IT_P)
         )
       ).build();
   }
 
   private Sort.Direction getSortDirection(Pageable pageable, String property) {
-    return Optional.of(pageable.getSort().getOrderFor(property))
+    return Optional.ofNullable(pageable.getSort().getOrderFor(property))
       .map(Sort.Order::getDirection)
       .orElse(Sort.Direction.ASC);
   }
