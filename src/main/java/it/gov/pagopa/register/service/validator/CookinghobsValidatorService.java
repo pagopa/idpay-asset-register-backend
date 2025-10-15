@@ -55,7 +55,9 @@ public class CookinghobsValidatorService {
   private void mapMotivations(Product existingProduct, Product newProduct) {
     if (REJECTED.name().equals(existingProduct.getStatus()) || UPLOADED.name().equals(existingProduct.getStatus())){
       newProduct.setStatusChangeChronology(existingProduct.getStatusChangeChronology());
+      log.info("[PRODUCT_UPLOAD] - Mapped statusChange motivation: {}", newProduct.getStatusChangeChronology().getLast().getMotivation());
       newProduct.setFormalMotivation(existingProduct.getFormalMotivation());
+      log.info("[PRODUCT_UPLOAD] - Mapped formalMotivation: {}", newProduct.getFormalMotivation());
     }
   }
 
