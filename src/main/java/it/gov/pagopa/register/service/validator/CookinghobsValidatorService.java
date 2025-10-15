@@ -44,6 +44,7 @@ public class CookinghobsValidatorService {
         log.info("[PRODUCT_UPLOAD] - Mapping product with GTIN code: {}", csvRecord.get(CODE_GTIN_EAN));
         Product product = mapCookingHobToProduct(csvRecord, orgId, productFileId, organizationName);
         optProduct.ifPresent(value -> mapMotivations(value, product));
+        log.info("[PRODUCT_UPLOAD] - Mapped product: {}", product.toString());
         validProduct.put(csvRecord.get(CODE_GTIN_EAN), product);
         log.info("[PRODUCT_UPLOAD] - Added cooking hob product: {}", csvRecord.get(CODE_GTIN_EAN));
       }

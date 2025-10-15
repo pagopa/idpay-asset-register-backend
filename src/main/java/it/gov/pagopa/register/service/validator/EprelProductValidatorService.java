@@ -116,8 +116,11 @@ public class EprelProductValidatorService {
       log.warn("[VALIDATE_RECORD] - Duplicate GTIN: {}", gtin);
     }
 
+    log.info("[PRODUCT_UPLOAD] - Mapping product: {}", gtin);
     Product product = mapEprelToProduct(csvRecord, eprelData, context.getOrgId(), context.getProductFileId(), context.getCategory(), context.getOrganizationName());
     existingProduct.ifPresent(value -> mapMotivations(value, product));
+
+    log.info("[PRODUCT_UPLOAD] - Mapped product: {}", product.toString());
 
     validRecords.put(gtin, product);
     log.info("[PRODUCT_UPLOAD] - Added product: {}", gtin);
