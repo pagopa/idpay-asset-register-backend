@@ -21,6 +21,8 @@ import org.springframework.web.client.ResourceAccessException;
 import java.util.*;
 
 import static it.gov.pagopa.register.constants.AssetRegisterConstants.*;
+import static it.gov.pagopa.register.enums.ProductStatus.REJECTED;
+import static it.gov.pagopa.register.enums.ProductStatus.UPLOADED;
 import static it.gov.pagopa.register.mapper.operation.ProductMapper.mapEprelToProduct;
 import static it.gov.pagopa.register.mapper.operation.ProductMapper.mapProductToCsvRow;
 import static it.gov.pagopa.register.utils.ValidationUtils.addError;
@@ -115,8 +117,18 @@ public class EprelProductValidatorService {
     }
 
     Product product = mapEprelToProduct(csvRecord, eprelData, context.getOrgId(), context.getProductFileId(), context.getCategory(), context.getOrganizationName());
+    existingProduct.ifPresent(value -> mapMotivations(value, product));
+
     validRecords.put(gtin, product);
     log.info("[PRODUCT_UPLOAD] - Added product: {}", gtin);
+  }
+
+  private void mapMotivations(Product existingProduct, Product newProduct) {
+    if (REJECTED.name().equals(existingProduct.getStatus())
+      || UPLOADED.name().equals(existingProduct.getStatus())){
+      newProduct.setStatusChangeChronology(existingProduct.getStatusChangeChronology());
+      newProduct.setFormalMotivation(existingProduct.getFormalMotivation());
+    }
   }
 
   private List<String> validateFields(ValidationContext context, EprelProduct eprelData) {
