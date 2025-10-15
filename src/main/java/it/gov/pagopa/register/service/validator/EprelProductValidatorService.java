@@ -127,8 +127,7 @@ public class EprelProductValidatorService {
   }
 
   private void mapMotivations(Product existingProduct, Product newProduct) {
-    if (REJECTED.name().equals(existingProduct.getStatus())
-      || UPLOADED.name().equals(existingProduct.getStatus())){
+    if (REJECTED.name().equals(existingProduct.getStatus())|| UPLOADED.name().equals(existingProduct.getStatus())){
       newProduct.setStatusChangeChronology(existingProduct.getStatusChangeChronology());
       newProduct.setFormalMotivation(existingProduct.getFormalMotivation());
     }
