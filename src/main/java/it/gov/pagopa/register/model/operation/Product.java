@@ -38,5 +38,6 @@ public class Product {
   private ArrayList<StatusChangeEvent> statusChangeChronology;
   private String formalMotivation;
   private String productName;
+  private String fullProductName;
   private String organizationName;
 }

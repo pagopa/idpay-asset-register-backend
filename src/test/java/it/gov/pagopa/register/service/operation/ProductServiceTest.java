@@ -48,6 +48,7 @@ class ProductServiceTest {
       .organizationId(ORG_ID).status(ProductStatus.UPLOADED.name())
       .brand("B1").model("M1").category("C1")
       .productName("C1 B1 M1")
+      .fullProductName("PO01 - C1 B1 M1")
       .registrationDate(LocalDateTime.now())
       .build();
 
@@ -55,6 +56,7 @@ class ProductServiceTest {
       .organizationId(ORG_ID).status(ProductStatus.UPLOADED.name())
       .brand("B2").model("M2").category("C2")
       .productName("C2 B2 M2")
+      .fullProductName("PO02 - C1 B1 M1")
       .registrationDate(LocalDateTime.now())
       .build();
 
@@ -63,7 +65,7 @@ class ProductServiceTest {
     when(productRepository.getCount(any(Criteria.class))).thenReturn(2L);
 
     ProductListDTO dto = productService.fetchProductsByFilters(
-      ORG_ID, null, null, null, null, null, null, null, ProductStatus.UPLOADED.name(),
+      ORG_ID, null, null, null, null, null, null, null, null, ProductStatus.UPLOADED.name(),
       pageable, UserRole.INVITALIA.getRole()
     );
 
@@ -74,6 +76,7 @@ class ProductServiceTest {
     assertEquals(2, dto.getTotalElements());
     assertEquals(1, dto.getTotalPages());
     assertEquals("C1 B1 M1", dto.getContent().get(0).getProductName());
+    assertEquals("PO01 - C1 B1 M1", dto.getContent().get(0).getFullProductName());
 
     verify(productRepository).getCriteria(any(ProductCriteriaDTO.class));
     verify(productRepository).findByFilter(any(Criteria.class), eq(pageable));
@@ -89,7 +92,7 @@ class ProductServiceTest {
     when(productRepository.getCount(any())).thenReturn(0L);
 
     ProductListDTO dto = productService.fetchProductsByFilters(
-      ORG_ID, null, null, null, null, null, null, null, null, pageable, null
+      ORG_ID, null, null, null, null, null, null, null, null, null, pageable, null
     );
 
     assertEquals(0, dto.getContent().size());
@@ -105,7 +108,7 @@ class ProductServiceTest {
     when(productRepository.findByFilter(any(), any())).thenThrow(new RuntimeException("DB error"));
 
     RuntimeException ex = assertThrows(RuntimeException.class, () ->
-      productService.fetchProductsByFilters(ORG_ID, null, null, null, null, null, null, null, null, pageable, null)
+      productService.fetchProductsByFilters(ORG_ID, null, null, null, null, null, null, null, null, null, pageable, null)
     );
     assertEquals("DB error", ex.getMessage());
   }

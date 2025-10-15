@@ -50,6 +50,7 @@ public class ProductMapper {
       .linkEprel(generateEprelUrl(entity.getProductGroup(), entity.getEprelCode()))
       .batchName(CATEGORIES_TO_IT_P.get(entity.getCategory()) + "_" + entity.getProductFileId() + ".csv")
       .productName(entity.getProductName())
+      .fullProductName(entity.getFullProductName())
       .capacity(entity.getCapacity() == null || "N\\A".equals(entity.getCapacity()) ? "" : entity.getCapacity())
       .statusChangeChronology(chronology)
       .formalMotivation(entity.getFormalMotivation())
@@ -94,6 +95,7 @@ public class ProductMapper {
       .model(csvRecord.get(MODEL))
       .capacity("N\\A")
       .productName(CATEGORIES_TO_IT_S.get(COOKINGHOBS) + " " + csvRecord.get(BRAND) + " " + csvRecord.get(MODEL))
+      .fullProductName(csvRecord.get(CODE_GTIN_EAN) + " - " + CATEGORIES_TO_IT_S.get(COOKINGHOBS) + " " + csvRecord.get(BRAND) + " " + csvRecord.get(MODEL))
       .organizationName(organizationName)
       .statusChangeChronology(new ArrayList<>())
       .formalMotivation("")
@@ -119,6 +121,7 @@ public class ProductMapper {
       .energyClass(mapEnergyClass(eprelData.getEnergyClass()))
       .capacity(capacity)
       .productName(mapProductName(eprelData, category, capacity))
+      .fullProductName(mapFullProductName(csvRecord.get(CODE_GTIN_EAN), eprelData, category, capacity))
       .organizationName(organizationName)
       .statusChangeChronology(new ArrayList<>())
       .formalMotivation("")
@@ -207,9 +210,44 @@ public class ProductMapper {
     return buildProductName(productType, eprel, capacity);
   }
 
+  public static String mapFullProductName(String gtinCode, EprelProduct eprel, String category, String capacity) {
+    String productType;
+    if (category.equals(REFRIGERATINGAPPL)) {
+      productType = eprel.getCompartments().stream()
+        .filter(c -> {
+          if (REFRIGERATORS_CATEGORY.contains(c.getCompartmentType())) return true;
+          if (VARIABLE_TEMP.equals(c.getCompartmentType())) {
+            return c.getSubCompartments() != null &&
+              c.getSubCompartments().stream()
+                .map(EprelProduct.SubCompartment::getCompartmentType)
+                .anyMatch(REFRIGERATORS_CATEGORY::contains);
+          }
+          return false;
+        })
+        .findFirst()
+        .map(c -> REFRIGERATOR_IT)
+        .orElse(FREEZER_IT);
+    } else {
+      productType = CATEGORIES_TO_IT_S.get(category);
+    }
+    return buildFullProductName(gtinCode, productType, eprel, capacity);
+  }
+
   private static String buildProductName(String type, EprelProduct eprel, String capacity) {
     StringBuilder name = new StringBuilder();
     name.append(type).append(" ")
+      .append(eprel.getSupplierOrTrademark()).append(" ")
+      .append(eprel.getModelIdentifier());
+    if (!"N\\A".equals(capacity)) {
+      name.append(" ").append(capacity);
+    }
+    return name.toString();
+  }
+
+  private static String buildFullProductName(String gtinCode, String type, EprelProduct eprel, String capacity) {
+    StringBuilder name = new StringBuilder();
+    name.append(gtinCode).append(" - ")
+      .append(type).append(" ")
       .append(eprel.getSupplierOrTrademark()).append(" ")
       .append(eprel.getModelIdentifier());
     if (!"N\\A".equals(capacity)) {
