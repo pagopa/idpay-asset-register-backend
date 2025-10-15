@@ -3,6 +3,7 @@ package it.gov.pagopa.register.service.validator;
 import it.gov.pagopa.register.dto.utils.ProductValidationResult;
 import it.gov.pagopa.register.enums.ProductStatus;
 import it.gov.pagopa.register.model.operation.Product;
+import it.gov.pagopa.register.model.operation.StatusChangeEvent;
 import it.gov.pagopa.register.repository.operation.ProductRepository;
 import org.apache.commons.csv.CSVRecord;
 import org.junit.jupiter.api.Test;
@@ -52,9 +53,22 @@ class CookinghobsValidatorServiceTest {
     CSVRecord wrongStatusCsv = mock(CSVRecord.class);
     when(wrongStatusCsv.get(CODE_GTIN_EAN)).thenReturn("wrong-status");
 
+    StatusChangeEvent ev = StatusChangeEvent.builder()
+      .username("user1")
+      .role("ROLE_A")
+      .motivation("motivo X")
+      .updateDate(java.time.LocalDateTime.now())
+      .currentStatus(ProductStatus.UPLOADED)
+      .targetStatus(ProductStatus.REJECTED)
+      .build();
+    java.util.ArrayList<StatusChangeEvent> chronology = new java.util.ArrayList<>();
+    chronology.add(ev);
+
     Product validProduct = Product.builder()
       .organizationId(orgId)
       .status(ProductStatus.REJECTED.name())
+      .formalMotivation("formal motivation")
+      .statusChangeChronology(chronology)
       .build();
 
     Product productWrongOrg = Product.builder()
@@ -80,4 +94,6 @@ class CookinghobsValidatorServiceTest {
     assertEquals(3, result.getInvalidRecords().size());
     assertEquals(3, result.getErrorMessages().size());
   }
+
+
 }
