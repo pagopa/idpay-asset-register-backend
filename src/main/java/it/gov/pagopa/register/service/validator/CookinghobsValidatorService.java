@@ -56,6 +56,9 @@ public class CookinghobsValidatorService {
     if (REJECTED.name().equals(existingProduct.getStatus()) || UPLOADED.name().equals(existingProduct.getStatus())){
       newProduct.setStatusChangeChronology(existingProduct.getStatusChangeChronology());
       log.info("[PRODUCT_UPLOAD] - Mapped statusChange motivation: {}", newProduct.getStatusChangeChronology().getLast().getMotivation());
+      log.info("[PRODUCT_UPLOAD] - Mapped last statusChange targetStatus: {}", newProduct.getStatusChangeChronology().getLast().getTargetStatus());
+      log.info("[PRODUCT_UPLOAD] - Mapped last statusChange role: {}", newProduct.getStatusChangeChronology().getLast().getRole());
+      log.info("[PRODUCT_UPLOAD] - Mapped last statusChange motivation: {}", newProduct.getStatusChangeChronology().getLast().getUpdateDate());
       newProduct.setFormalMotivation(existingProduct.getFormalMotivation());
       log.info("[PRODUCT_UPLOAD] - Mapped formalMotivation: {}", newProduct.getFormalMotivation());
     }
