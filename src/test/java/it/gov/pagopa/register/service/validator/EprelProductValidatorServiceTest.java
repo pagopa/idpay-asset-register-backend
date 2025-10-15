@@ -106,6 +106,8 @@ class EprelProductValidatorServiceTest {
       .statusChangeChronology(buildStatusChangeEventsList())
       .build();
 
+
+
     when(eprelConnector.callEprel("valid-code")).thenReturn(validProduct);
     when(eprelConnector.callEprel("valid-code-2")).thenReturn(validProduct);
     when(eprelConnector.callEprel("invalid-code")).thenReturn(invalidProduct);
@@ -119,6 +121,15 @@ class EprelProductValidatorServiceTest {
       wrongOrgIdCsv,
       wrongStatusCsv
     );
+
+    Product existingRejected = Product.builder()
+      .organizationId(orgId)
+      .status(ProductStatus.REJECTED.name())
+      .formalMotivation("any motivation")
+      .statusChangeChronology(buildStatusChangeEventsList()) // restituisce un ArrayList
+      .build();
+
+    when(productRepository.findById("valid-gtin")).thenReturn(Optional.of(existingRejected));
 
     when(productRepository.findById("wrong-org-id-csv")).thenReturn(Optional.of(productWrongId));
     when(productRepository.findById("wrong-status-csv")).thenReturn(Optional.of(productWrontStatus));
