@@ -23,8 +23,7 @@ import java.util.*;
 import static it.gov.pagopa.register.constants.AssetRegisterConstants.*;
 import static it.gov.pagopa.register.mapper.operation.ProductMapper.mapEprelToProduct;
 import static it.gov.pagopa.register.mapper.operation.ProductMapper.mapProductToCsvRow;
-import static it.gov.pagopa.register.utils.ValidationUtils.addError;
-import static it.gov.pagopa.register.utils.ValidationUtils.dbCheck;
+import static it.gov.pagopa.register.utils.ValidationUtils.*;
 
 @Component
 @RequiredArgsConstructor
@@ -114,10 +113,19 @@ public class EprelProductValidatorService {
       log.warn("[VALIDATE_RECORD] - Duplicate GTIN: {}", gtin);
     }
 
+    log.info("[PRODUCT_UPLOAD] - Mapping product: {}", gtin);
     Product product = mapEprelToProduct(csvRecord, eprelData, context.getOrgId(), context.getProductFileId(), context.getCategory(), context.getOrganizationName());
+    existingProduct.ifPresent(dbProduct -> {
+      product.setFormalMotivation(dbProduct.getFormalMotivation());
+      product.setStatusChangeChronology(dbProduct.getStatusChangeChronology());
+    });
+
+    log.info("[PRODUCT_UPLOAD] - Mapped product: {}", product.toString());
+
     validRecords.put(gtin, product);
     log.info("[PRODUCT_UPLOAD] - Added product: {}", gtin);
   }
+
 
   private List<String> validateFields(ValidationContext context, EprelProduct eprelData) {
     List<String> errors = new ArrayList<>();

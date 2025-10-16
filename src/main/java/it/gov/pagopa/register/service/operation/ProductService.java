@@ -43,6 +43,7 @@ public class ProductService {
     String eprelCode,
     String gtinCode,
     String productName,
+    String fullProductName,
     String brand,
     String model,
     String status,
@@ -60,6 +61,7 @@ public class ProductService {
         .eprelCode(eprelCode)
         .gtinCode(gtinCode)
         .productName(productName)
+        .fullProductName(fullProductName)
         .brand(brand)
         .model(model)
         .status(status)

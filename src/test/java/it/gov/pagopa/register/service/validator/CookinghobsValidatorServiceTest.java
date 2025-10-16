@@ -54,7 +54,9 @@ class CookinghobsValidatorServiceTest {
 
     Product validProduct = Product.builder()
       .organizationId(orgId)
-      .status(ProductStatus.REJECTED.name())
+      .status(ProductStatus.UPLOADED.name())
+      .formalMotivation("formal motivation")
+      .statusChangeChronology(null)
       .build();
 
     Product productWrongOrg = Product.builder()
@@ -80,4 +82,6 @@ class CookinghobsValidatorServiceTest {
     assertEquals(3, result.getInvalidRecords().size());
     assertEquals(3, result.getErrorMessages().size());
   }
+
+
 }

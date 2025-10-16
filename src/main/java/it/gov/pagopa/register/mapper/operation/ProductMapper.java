@@ -50,6 +50,7 @@ public class ProductMapper {
       .linkEprel(generateEprelUrl(entity.getProductGroup(), entity.getEprelCode()))
       .batchName(CATEGORIES_TO_IT_P.get(entity.getCategory()) + "_" + entity.getProductFileId() + ".csv")
       .productName(entity.getProductName())
+      .fullProductName(entity.getFullProductName())
       .capacity(entity.getCapacity() == null || "N\\A".equals(entity.getCapacity()) ? "" : entity.getCapacity())
       .statusChangeChronology(chronology)
       .formalMotivation(entity.getFormalMotivation())
@@ -79,7 +80,6 @@ public class ProductMapper {
     return chronology;
   }
 
-
   public static Product mapCookingHobToProduct(CSVRecord csvRecord, String orgId, String productFileId, String organizationName) {
     return Product.builder()
       .productFileId(productFileId)
@@ -93,7 +93,9 @@ public class ProductMapper {
       .brand(csvRecord.get(BRAND))
       .model(csvRecord.get(MODEL))
       .capacity("N\\A")
+      // qui non abbiamo EPREL, quindi teniamo la costruzione "semplice"
       .productName(CATEGORIES_TO_IT_S.get(COOKINGHOBS) + " " + csvRecord.get(BRAND) + " " + csvRecord.get(MODEL))
+      .fullProductName(csvRecord.get(CODE_GTIN_EAN) + " - " + CATEGORIES_TO_IT_S.get(COOKINGHOBS) + " " + csvRecord.get(BRAND) + " " + csvRecord.get(MODEL))
       .organizationName(organizationName)
       .statusChangeChronology(new ArrayList<>())
       .formalMotivation("")
@@ -118,7 +120,9 @@ public class ProductMapper {
       .model(eprelData.getModelIdentifier())
       .energyClass(mapEnergyClass(eprelData.getEnergyClass()))
       .capacity(capacity)
-      .productName(mapProductName(eprelData, category, capacity))
+      // ⬇️ usa il generico per entrambi i nomi
+      .productName(mapName(null, eprelData, category, capacity))
+      .fullProductName(mapName(csvRecord.get(CODE_GTIN_EAN), eprelData, category, capacity))
       .organizationName(organizationName)
       .statusChangeChronology(new ArrayList<>())
       .formalMotivation("")
@@ -184,11 +188,10 @@ public class ProductMapper {
     }
   }
 
-  public static String mapProductName(EprelProduct eprel, String category, String capacity) {
-    String productType;
-    if (category.equals(REFRIGERATINGAPPL)) {
-      productType = eprel.getCompartments().stream()
-        .filter(c -> {
+  private static String resolveProductType(EprelProduct eprel, String category) {
+    if (REFRIGERATINGAPPL.equals(category)) {
+      boolean isRefrigerator = eprel.getCompartments().stream()
+        .anyMatch(c -> {
           if (REFRIGERATORS_CATEGORY.contains(c.getCompartmentType())) return true;
           if (VARIABLE_TEMP.equals(c.getCompartmentType())) {
             return c.getSubCompartments() != null &&
@@ -197,24 +200,26 @@ public class ProductMapper {
                 .anyMatch(REFRIGERATORS_CATEGORY::contains);
           }
           return false;
-        })
-        .findFirst()
-        .map(c -> REFRIGERATOR_IT)
-        .orElse(FREEZER_IT);
+        });
+      return isRefrigerator ? REFRIGERATOR_IT : FREEZER_IT;
     } else {
-      productType = CATEGORIES_TO_IT_S.get(category);
+      return CATEGORIES_TO_IT_S.get(category);
     }
-    return buildProductName(productType, eprel, capacity);
   }
 
-  private static String buildProductName(String type, EprelProduct eprel, String capacity) {
-    StringBuilder name = new StringBuilder();
-    name.append(type).append(" ")
+  public static String mapName(String gtinOrNull, EprelProduct eprel, String category, String capacity) {
+    String type = resolveProductType(eprel, category);
+    StringBuilder sb = new StringBuilder();
+    if (gtinOrNull != null && !gtinOrNull.isBlank()) {
+      sb.append(gtinOrNull).append(" - ");
+    }
+    sb.append(type).append(" ")
       .append(eprel.getSupplierOrTrademark()).append(" ")
       .append(eprel.getModelIdentifier());
     if (!"N\\A".equals(capacity)) {
-      name.append(" ").append(capacity);
+      sb.append(" ").append(capacity);
     }
-    return name.toString();
+    return sb.toString();
   }
+
 }
