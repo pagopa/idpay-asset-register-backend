@@ -23,9 +23,6 @@ import static it.gov.pagopa.register.utils.ObjectMaker.buildStatusChangeEventsLi
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-/**
- * Test del ProductMapper con stub coerenti alle costanti usate nel mapper.
- */
 class ProductMapperTest {
 
   // ---------- toDTO ----------
@@ -213,7 +210,7 @@ class ProductMapperTest {
     assertNotNull(product.getProductName());
     assertTrue(product.getProductName().endsWith("8 kg"));
 
-    String expectedFull = ProductMapper.mapFullProductName("GTIN999", eprel, WASHINGMACHINES, "8 kg");
+    String expectedFull = ProductMapper.mapName("GTIN999", eprel, WASHINGMACHINES, "8 kg");
     assertEquals(expectedFull, product.getFullProductName(), "fullProductName (EPREL) deve combaciare esattamente");
 
     assertTrue(product.getFullProductName().contains("BrandX ModelX 8 kg"));
@@ -278,7 +275,7 @@ class ProductMapperTest {
     assertTrue(product.getProductName().contains("BrandX"));
     assertTrue(product.getProductName().contains("ModelX"));
 
-    String expectedFull = ProductMapper.mapFullProductName(
+    String expectedFull = ProductMapper.mapName(
       "GTIN555", eprel, REFRIGERATINGAPPL,
       ProductMapper.mapCapacity(REFRIGERATINGAPPL, eprel)
     );
@@ -314,7 +311,7 @@ class ProductMapperTest {
     assertNotNull(product.getProductName());
     assertNotNull(product.getFullProductName());
 
-    String expectedFull = ProductMapper.mapFullProductName(
+    String expectedFull = ProductMapper.mapName(
       "GTIN444", eprel, REFRIGERATINGAPPL,
       ProductMapper.mapCapacity(REFRIGERATINGAPPL, eprel)
     );
@@ -349,7 +346,7 @@ class ProductMapperTest {
     assertNotNull(product.getProductName());
     assertNotNull(product.getFullProductName());
 
-    String expectedFull = ProductMapper.mapFullProductName(
+    String expectedFull = ProductMapper.mapName(
       "GTIN333", eprel, REFRIGERATINGAPPL,
       ProductMapper.mapCapacity(REFRIGERATINGAPPL, eprel)
     );
@@ -440,11 +437,11 @@ class ProductMapperTest {
     e.setModelIdentifier("ModelZ");
     e.setEnergyClass("A");
 
-    String withCapacity = ProductMapper.mapProductName(e, WASHINGMACHINES, "8 kg");
+    String withCapacity = ProductMapper.mapName(null, e, WASHINGMACHINES, "8 kg");
     assertTrue(withCapacity.endsWith("BrandZ ModelZ 8 kg"),
       "Se la capacity è valorizzata, deve comparire alla fine del nome");
 
-    String withoutCapacity = ProductMapper.mapProductName(e, WASHINGMACHINES, "N\\A");
+    String withoutCapacity = ProductMapper.mapName(null, e, WASHINGMACHINES, "N\\A");
     assertTrue(withoutCapacity.endsWith("BrandZ ModelZ"),
       "Se la capacity è 'N\\A', non deve essere appesa");
     assertFalse(withoutCapacity.endsWith("N\\A"), "Non deve chiudersi con 'N\\A'");
@@ -457,13 +454,13 @@ class ProductMapperTest {
     e.setModelIdentifier("ModelZ");
     e.setEnergyClass("A");
 
-    String withCapacity = ProductMapper.mapFullProductName("GTIN111", e, WASHINGMACHINES, "8 kg");
-    assertEquals(withCapacity, ProductMapper.mapFullProductName("GTIN111", e, WASHINGMACHINES, "8 kg"),
+    String withCapacity = ProductMapper.mapName("GTIN111", e, WASHINGMACHINES, "8 kg");
+    assertEquals(withCapacity, ProductMapper.mapName("GTIN111", e, WASHINGMACHINES, "8 kg"),
       "Il fullProductName deve essere costruito esattamente");
     assertTrue(withCapacity.endsWith("BrandZ ModelZ 8 kg"),
       "Se la capacity è valorizzata, deve comparire alla fine del nome");
 
-    String withoutCapacity = ProductMapper.mapFullProductName("GTIN111", e, WASHINGMACHINES, "N\\A");
+    String withoutCapacity = ProductMapper.mapName("GTIN111", e, WASHINGMACHINES, "N\\A");
     assertTrue(withoutCapacity.endsWith("BrandZ ModelZ"),
       "Se la capacity è 'N\\A', non deve essere appesa");
     assertFalse(withoutCapacity.endsWith("N\\A"), "Non deve chiudersi con 'N\\A'");
