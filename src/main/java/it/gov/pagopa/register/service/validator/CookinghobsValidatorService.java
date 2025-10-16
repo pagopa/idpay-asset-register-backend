@@ -3,7 +3,6 @@ package it.gov.pagopa.register.service.validator;
 
 import it.gov.pagopa.register.dto.utils.ProductValidationResult;
 import it.gov.pagopa.register.model.operation.Product;
-import it.gov.pagopa.register.model.operation.StatusChangeEvent;
 import it.gov.pagopa.register.repository.operation.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -13,11 +12,10 @@ import org.springframework.stereotype.Component;
 import java.util.*;
 
 import static it.gov.pagopa.register.constants.AssetRegisterConstants.*;
-import static it.gov.pagopa.register.enums.ProductStatus.REJECTED;
-import static it.gov.pagopa.register.enums.ProductStatus.UPLOADED;
 import static it.gov.pagopa.register.mapper.operation.ProductMapper.mapCookingHobToProduct;
 import static it.gov.pagopa.register.mapper.operation.ProductMapper.mapProductToCsvRow;
 import static it.gov.pagopa.register.utils.ValidationUtils.dbCheck;
+import static it.gov.pagopa.register.utils.ValidationUtils.mapMotivations;
 
 @Component
 @RequiredArgsConstructor
@@ -53,27 +51,6 @@ public class CookinghobsValidatorService {
     return new ProductValidationResult(validProduct,invalidRecords,errorMessages);
   }
 
-  private void mapMotivations(Product existingProduct, Product newProduct) {
-    if (REJECTED.name().equals(existingProduct.getStatus()) || UPLOADED.name().equals(existingProduct.getStatus())) {
 
-      ArrayList<StatusChangeEvent> chronology = existingProduct.getStatusChangeChronology();
-      newProduct.setStatusChangeChronology(chronology);
-
-
-      if (chronology != null && !chronology.isEmpty()) {
-        StatusChangeEvent last = chronology.getLast();
-        log.info("[PRODUCT_UPLOAD] - Mapped last statusChange motivation: {}", last.getMotivation());
-        log.info("[PRODUCT_UPLOAD] - Mapped last statusChange targetStatus: {}", last.getTargetStatus());
-        log.info("[PRODUCT_UPLOAD] - Mapped last statusChange role: {}", last.getRole());
-        log.info("[PRODUCT_UPLOAD] - Mapped last statusChange updateDate: {}", last.getUpdateDate());
-      } else {
-        log.info("[PRODUCT_UPLOAD] - statusChangeChronology assente o vuota: nessun dettaglio da mappare");
-      }
-
-
-      newProduct.setFormalMotivation(existingProduct.getFormalMotivation());
-      log.info("[PRODUCT_UPLOAD] - Mapped formalMotivation: {}", newProduct.getFormalMotivation());
-    }
-  }
 
 }

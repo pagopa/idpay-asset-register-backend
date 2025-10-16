@@ -7,7 +7,6 @@ import it.gov.pagopa.register.dto.utils.EprelValidationRule;
 import it.gov.pagopa.register.dto.utils.ProductValidationResult;
 import it.gov.pagopa.register.exception.operation.EprelException;
 import it.gov.pagopa.register.model.operation.Product;
-import it.gov.pagopa.register.model.operation.StatusChangeEvent;
 import it.gov.pagopa.register.repository.operation.ProductRepository;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -22,12 +21,9 @@ import org.springframework.web.client.ResourceAccessException;
 import java.util.*;
 
 import static it.gov.pagopa.register.constants.AssetRegisterConstants.*;
-import static it.gov.pagopa.register.enums.ProductStatus.REJECTED;
-import static it.gov.pagopa.register.enums.ProductStatus.UPLOADED;
 import static it.gov.pagopa.register.mapper.operation.ProductMapper.mapEprelToProduct;
 import static it.gov.pagopa.register.mapper.operation.ProductMapper.mapProductToCsvRow;
-import static it.gov.pagopa.register.utils.ValidationUtils.addError;
-import static it.gov.pagopa.register.utils.ValidationUtils.dbCheck;
+import static it.gov.pagopa.register.utils.ValidationUtils.*;
 
 @Component
 @RequiredArgsConstructor
@@ -127,27 +123,6 @@ public class EprelProductValidatorService {
     log.info("[PRODUCT_UPLOAD] - Added product: {}", gtin);
   }
 
-  private void mapMotivations(Product existingProduct, Product newProduct) {
-    if (REJECTED.name().equals(existingProduct.getStatus()) || UPLOADED.name().equals(existingProduct.getStatus())) {
-
-      ArrayList<StatusChangeEvent> chronology = existingProduct.getStatusChangeChronology();
-      newProduct.setStatusChangeChronology(chronology);
-
-      if (chronology != null && !chronology.isEmpty()) {
-        StatusChangeEvent last = chronology.getLast();
-        log.info("[PRODUCT_UPLOAD] - Mapped statusChange motivation: {}", last.getMotivation());
-        log.info("[PRODUCT_UPLOAD] - Mapped last statusChange targetStatus: {}", last.getTargetStatus());
-        log.info("[PRODUCT_UPLOAD] - Mapped last statusChange role: {}", last.getRole());
-        log.info("[PRODUCT_UPLOAD] - Mapped last statusChange updateDate: {}", last.getUpdateDate());
-      } else {
-        log.info("[PRODUCT_UPLOAD] - statusChangeChronology assente o vuota: nessun dettaglio da mappare");
-      }
-
-
-      newProduct.setFormalMotivation(existingProduct.getFormalMotivation());
-      log.info("[PRODUCT_UPLOAD] - Mapped formalMotivation: {}", newProduct.getFormalMotivation());
-    }
-  }
 
   private List<String> validateFields(ValidationContext context, EprelProduct eprelData) {
     List<String> errors = new ArrayList<>();
