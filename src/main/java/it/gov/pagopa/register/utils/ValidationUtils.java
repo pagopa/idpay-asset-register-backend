@@ -2,6 +2,7 @@ package it.gov.pagopa.register.utils;
 
 import it.gov.pagopa.register.enums.ProductStatus;
 import it.gov.pagopa.register.model.operation.Product;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.csv.CSVRecord;
 
 import java.util.List;
@@ -11,9 +12,8 @@ import java.util.Optional;
 import static it.gov.pagopa.register.constants.AssetRegisterConstants.DIFFERENT_ORGANIZATIONID;
 import static it.gov.pagopa.register.constants.AssetRegisterConstants.STATUS_NOT_VALID;
 
+@Slf4j
 public class ValidationUtils {
-
-
 
   private ValidationUtils(){}
   public static boolean dbCheck(String orgId, CSVRecord csvRecord, Optional<Product> optProduct, List<CSVRecord> invalidRecords, Map<CSVRecord, String> errorMessages) {
@@ -36,5 +36,6 @@ public class ValidationUtils {
     invalidRecords.add(csvRecord);
     errorMessages.put(csvRecord, message);
   }
+
 
 }

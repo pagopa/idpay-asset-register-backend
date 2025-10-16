@@ -12,8 +12,6 @@ import org.springframework.stereotype.Component;
 import java.util.*;
 
 import static it.gov.pagopa.register.constants.AssetRegisterConstants.*;
-import static it.gov.pagopa.register.enums.ProductStatus.REJECTED;
-import static it.gov.pagopa.register.enums.ProductStatus.UPLOADED;
 import static it.gov.pagopa.register.mapper.operation.ProductMapper.mapCookingHobToProduct;
 import static it.gov.pagopa.register.mapper.operation.ProductMapper.mapProductToCsvRow;
 import static it.gov.pagopa.register.utils.ValidationUtils.dbCheck;
@@ -43,7 +41,10 @@ public class CookinghobsValidatorService {
         }
         log.info("[PRODUCT_UPLOAD] - Mapping product with GTIN code: {}", csvRecord.get(CODE_GTIN_EAN));
         Product product = mapCookingHobToProduct(csvRecord, orgId, productFileId, organizationName);
-        optProduct.ifPresent(value -> mapMotivations(value, product));
+        optProduct.ifPresent(dbProduct -> {
+          product.setFormalMotivation(dbProduct.getFormalMotivation());
+          product.setStatusChangeChronology(dbProduct.getStatusChangeChronology());
+        });
         log.info("[PRODUCT_UPLOAD] - Mapped product: {}", product.toString());
         validProduct.put(csvRecord.get(CODE_GTIN_EAN), product);
         log.info("[PRODUCT_UPLOAD] - Added cooking hob product: {}", csvRecord.get(CODE_GTIN_EAN));
@@ -52,16 +53,6 @@ public class CookinghobsValidatorService {
     return new ProductValidationResult(validProduct,invalidRecords,errorMessages);
   }
 
-  private void mapMotivations(Product existingProduct, Product newProduct) {
-    if (REJECTED.name().equals(existingProduct.getStatus()) || UPLOADED.name().equals(existingProduct.getStatus())){
-      newProduct.setStatusChangeChronology(existingProduct.getStatusChangeChronology());
-      log.info("[PRODUCT_UPLOAD] - Mapped statusChange motivation: {}", newProduct.getStatusChangeChronology().getLast().getMotivation());
-      log.info("[PRODUCT_UPLOAD] - Mapped last statusChange targetStatus: {}", newProduct.getStatusChangeChronology().getLast().getTargetStatus());
-      log.info("[PRODUCT_UPLOAD] - Mapped last statusChange role: {}", newProduct.getStatusChangeChronology().getLast().getRole());
-      log.info("[PRODUCT_UPLOAD] - Mapped last statusChange motivation: {}", newProduct.getStatusChangeChronology().getLast().getUpdateDate());
-      newProduct.setFormalMotivation(existingProduct.getFormalMotivation());
-      log.info("[PRODUCT_UPLOAD] - Mapped formalMotivation: {}", newProduct.getFormalMotivation());
-    }
-  }
+
 
 }
