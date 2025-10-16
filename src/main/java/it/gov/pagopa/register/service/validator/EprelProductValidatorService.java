@@ -115,7 +115,10 @@ public class EprelProductValidatorService {
 
     log.info("[PRODUCT_UPLOAD] - Mapping product: {}", gtin);
     Product product = mapEprelToProduct(csvRecord, eprelData, context.getOrgId(), context.getProductFileId(), context.getCategory(), context.getOrganizationName());
-    existingProduct.ifPresent(value -> mapMotivations(value, product));
+    existingProduct.ifPresent(dbProduct -> {
+      product.setFormalMotivation(dbProduct.getFormalMotivation());
+      product.setStatusChangeChronology(dbProduct.getStatusChangeChronology());
+    });
 
     log.info("[PRODUCT_UPLOAD] - Mapped product: {}", product.toString());
 

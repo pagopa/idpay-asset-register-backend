@@ -15,7 +15,6 @@ import static it.gov.pagopa.register.constants.AssetRegisterConstants.*;
 import static it.gov.pagopa.register.mapper.operation.ProductMapper.mapCookingHobToProduct;
 import static it.gov.pagopa.register.mapper.operation.ProductMapper.mapProductToCsvRow;
 import static it.gov.pagopa.register.utils.ValidationUtils.dbCheck;
-import static it.gov.pagopa.register.utils.ValidationUtils.mapMotivations;
 
 @Component
 @RequiredArgsConstructor
@@ -42,7 +41,10 @@ public class CookinghobsValidatorService {
         }
         log.info("[PRODUCT_UPLOAD] - Mapping product with GTIN code: {}", csvRecord.get(CODE_GTIN_EAN));
         Product product = mapCookingHobToProduct(csvRecord, orgId, productFileId, organizationName);
-        optProduct.ifPresent(value -> mapMotivations(value, product));
+        optProduct.ifPresent(dbProduct -> {
+          product.setFormalMotivation(dbProduct.getFormalMotivation());
+          product.setStatusChangeChronology(dbProduct.getStatusChangeChronology());
+        });
         log.info("[PRODUCT_UPLOAD] - Mapped product: {}", product.toString());
         validProduct.put(csvRecord.get(CODE_GTIN_EAN), product);
         log.info("[PRODUCT_UPLOAD] - Added cooking hob product: {}", csvRecord.get(CODE_GTIN_EAN));
