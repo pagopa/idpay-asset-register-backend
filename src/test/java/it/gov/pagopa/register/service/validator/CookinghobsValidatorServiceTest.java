@@ -66,9 +66,9 @@ class CookinghobsValidatorServiceTest {
 
     Product validProduct = Product.builder()
       .organizationId(orgId)
-      .status(ProductStatus.REJECTED.name())
+      .status(ProductStatus.UPLOADED.name())
       .formalMotivation("formal motivation")
-      .statusChangeChronology(chronology)
+      .statusChangeChronology(null)
       .build();
 
     Product productWrongOrg = Product.builder()
