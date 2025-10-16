@@ -8,7 +8,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
@@ -34,6 +33,7 @@ public class ProductDTO {
   private String linkEprel;
   private String batchName;
   private String productName;
+  private String fullProductName;
   private String capacity;
   private List<StatusChangeEvent> statusChangeChronology;
   private String formalMotivation;

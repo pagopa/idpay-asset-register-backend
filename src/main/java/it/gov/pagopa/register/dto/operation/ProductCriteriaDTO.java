@@ -12,6 +12,7 @@ public class ProductCriteriaDTO {
   private String eprelCode;
   private String gtinCode;
   private String productName;
+  private String fullProductName;
   private String brand;
   private String model;
   private String status;

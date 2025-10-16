@@ -55,6 +55,9 @@ public class ProductSpecificRepositoryImpl implements ProductSpecificRepository 
     if (inputCriteria.getProductName() != null) {
       criteria.and(Product.Fields.productName).regex(".*" + inputCriteria.getProductName() + ".*", "i");
     }
+    if (inputCriteria.getFullProductName() != null) {
+      criteria.and(Product.Fields.fullProductName).regex(".*" + inputCriteria.getFullProductName() + ".*", "i");
+    }
     if (inputCriteria.getBrand() != null) {
       criteria.and(Product.Fields.brand).regex(".*" + inputCriteria.getBrand() + ".*", "i");
     }
