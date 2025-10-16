@@ -7,6 +7,7 @@ import it.gov.pagopa.register.dto.utils.EprelValidationRule;
 import it.gov.pagopa.register.dto.utils.ProductValidationResult;
 import it.gov.pagopa.register.exception.operation.EprelException;
 import it.gov.pagopa.register.model.operation.Product;
+import it.gov.pagopa.register.model.operation.StatusChangeEvent;
 import it.gov.pagopa.register.repository.operation.ProductRepository;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -127,12 +128,22 @@ public class EprelProductValidatorService {
   }
 
   private void mapMotivations(Product existingProduct, Product newProduct) {
-    if (REJECTED.name().equals(existingProduct.getStatus())|| UPLOADED.name().equals(existingProduct.getStatus())){
-      newProduct.setStatusChangeChronology(existingProduct.getStatusChangeChronology());
-      log.info("[PRODUCT_UPLOAD] - Mapped last statusChange motivation: {}", newProduct.getStatusChangeChronology().getLast().getMotivation());
-      log.info("[PRODUCT_UPLOAD] - Mapped last statusChange targetStatus: {}", newProduct.getStatusChangeChronology().getLast().getTargetStatus());
-      log.info("[PRODUCT_UPLOAD] - Mapped last statusChange role: {}", newProduct.getStatusChangeChronology().getLast().getRole());
-      log.info("[PRODUCT_UPLOAD] - Mapped last statusChange motivation: {}", newProduct.getStatusChangeChronology().getLast().getUpdateDate());
+    if (REJECTED.name().equals(existingProduct.getStatus()) || UPLOADED.name().equals(existingProduct.getStatus())) {
+
+      ArrayList<StatusChangeEvent> chronology = existingProduct.getStatusChangeChronology();
+      newProduct.setStatusChangeChronology(chronology);
+
+      if (chronology != null && !chronology.isEmpty()) {
+        StatusChangeEvent last = chronology.getLast();
+        log.info("[PRODUCT_UPLOAD] - Mapped statusChange motivation: {}", last.getMotivation());
+        log.info("[PRODUCT_UPLOAD] - Mapped last statusChange targetStatus: {}", last.getTargetStatus());
+        log.info("[PRODUCT_UPLOAD] - Mapped last statusChange role: {}", last.getRole());
+        log.info("[PRODUCT_UPLOAD] - Mapped last statusChange updateDate: {}", last.getUpdateDate());
+      } else {
+        log.info("[PRODUCT_UPLOAD] - statusChangeChronology assente o vuota: nessun dettaglio da mappare");
+      }
+
+
       newProduct.setFormalMotivation(existingProduct.getFormalMotivation());
       log.info("[PRODUCT_UPLOAD] - Mapped formalMotivation: {}", newProduct.getFormalMotivation());
     }
