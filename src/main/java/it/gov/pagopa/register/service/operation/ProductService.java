@@ -155,7 +155,9 @@ public class ProductService {
 
       product.setStatus(updateStatusDto.getTargetStatus().name());
 
-      product.setFormalMotivation(updateStatusDto.getFormalMotivation());
+      if(updateStatusDto.getFormalMotivation() != null && !updateStatusDto.getFormalMotivation().isEmpty()){
+        product.setFormalMotivation(updateStatusDto.getFormalMotivation());
+      }
 
       if (product.getStatusChangeChronology() == null) {
         product.setStatusChangeChronology(new ArrayList<>());
