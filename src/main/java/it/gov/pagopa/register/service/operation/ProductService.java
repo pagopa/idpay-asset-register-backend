@@ -10,6 +10,7 @@ import it.gov.pagopa.register.model.operation.Product;
 import it.gov.pagopa.register.model.operation.StatusChangeEvent;
 import it.gov.pagopa.register.repository.operation.ProductRepository;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -155,7 +156,7 @@ public class ProductService {
 
       product.setStatus(updateStatusDto.getTargetStatus().name());
 
-      if(updateStatusDto.getFormalMotivation() != null && !updateStatusDto.getFormalMotivation().isEmpty()){
+      if(StringUtils.isNotBlank(updateStatusDto.getFormalMotivation())){
         product.setFormalMotivation(updateStatusDto.getFormalMotivation());
       }
 
