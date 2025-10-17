@@ -156,8 +156,10 @@ public class ProductService {
 
       product.setStatus(updateStatusDto.getTargetStatus().name());
 
+      log.debug("[UPDATE_PRODUCT_STATUSES] - RequestDTO formalMotivation {}", updateStatusDto.getFormalMotivation());
       if(StringUtils.isNotBlank(updateStatusDto.getFormalMotivation())){
         product.setFormalMotivation(updateStatusDto.getFormalMotivation());
+        log.debug("[UPDATE_PRODUCT_STATUSES] - Updated formalMotivation {}", product.getFormalMotivation());
       }
 
       if (product.getStatusChangeChronology() == null) {
