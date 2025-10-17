@@ -35,7 +35,8 @@ public class ProductMapper {
     return ProductDTO.builder()
       .organizationId(entity.getOrganizationId())
       .registrationDate(entity.getRegistrationDate().toString())
-      .status(role.equals(UserRole.OPERATORE.getRole()) && entity.getStatus().equals(ProductStatus.WAIT_APPROVED.name())
+      .status(role.equals(UserRole.OPERATORE.getRole()) &&
+        (entity.getStatus().equals(ProductStatus.WAIT_APPROVED.name()) || (entity.getStatus().equals(ProductStatus.SUPERVISED.name())))
         ? ProductStatus.UPLOADED.name()
         : entity.getStatus())
       .model(entity.getModel())
@@ -93,7 +94,6 @@ public class ProductMapper {
       .brand(csvRecord.get(BRAND))
       .model(csvRecord.get(MODEL))
       .capacity("N\\A")
-      // qui non abbiamo EPREL, quindi teniamo la costruzione "semplice"
       .productName(CATEGORIES_TO_IT_S.get(COOKINGHOBS) + " " + csvRecord.get(BRAND) + " " + csvRecord.get(MODEL))
       .fullProductName(csvRecord.get(CODE_GTIN_EAN) + " - " + CATEGORIES_TO_IT_S.get(COOKINGHOBS) + " " + csvRecord.get(BRAND) + " " + csvRecord.get(MODEL))
       .organizationName(organizationName)
@@ -120,7 +120,6 @@ public class ProductMapper {
       .model(eprelData.getModelIdentifier())
       .energyClass(mapEnergyClass(eprelData.getEnergyClass()))
       .capacity(capacity)
-      // ⬇️ usa il generico per entrambi i nomi
       .productName(mapName(null, eprelData, category, capacity))
       .fullProductName(mapName(csvRecord.get(CODE_GTIN_EAN), eprelData, category, capacity))
       .organizationName(organizationName)
