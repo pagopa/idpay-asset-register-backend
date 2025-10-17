@@ -33,6 +33,93 @@ class ProductMapperTest {
   }
 
   @Test
+  void testToDTO_RoleOperatore_StatusSupervised_Downgraded_ChronologyMasked() {
+    List<StatusChangeEvent> original = buildStatusChangeEventsList();
+
+    Product product = Product.builder()
+      .organizationId("org1")
+      .registrationDate(LocalDateTime.of(2025, 10, 3, 18, 53, 24))
+      .status(ProductStatus.SUPERVISED.name())
+      .model("ModelX")
+      .productGroup("GroupA")
+      .category("CategoryA")
+      .brand("BrandX")
+      .eprelCode("EPREL123")
+      .gtinCode("GTIN123")
+      .productCode("PROD123")
+      .countryOfProduction("Italy")
+      .energyClass("A")
+      .capacity("10")
+      .productFileId("file123")
+      .statusChangeChronology(new ArrayList<>(original))
+      .productName("CategoryA BrandX ModelX 10")
+      .fullProductName("GTIN123 - CategoryA BrandX ModelX 10")
+      .formalMotivation("OK")
+      .organizationName("orgName")
+      .build();
+
+    ProductDTO dto = ProductMapper.toDTO(product, UserRole.OPERATORE.getRole());
+
+    assertNotNull(dto);
+    assertEquals(ProductStatus.UPLOADED.name(), dto.getStatus(), "Con ruolo OPERATORE e stato SUPERVISED deve diventare UPLOADED");
+
+    assertNotNull(dto.getStatusChangeChronology());
+    assertEquals(original.size(), dto.getStatusChangeChronology().size());
+    for (int i = 0; i < original.size(); i++) {
+      StatusChangeEvent src = original.get(i);
+      StatusChangeEvent masked = dto.getStatusChangeChronology().get(i);
+      assertEquals("-", masked.getUsername());
+      assertEquals("-", masked.getRole());
+      assertEquals("-", masked.getMotivation());
+      assertEquals(src.getUpdateDate(), masked.getUpdateDate());
+      assertEquals(src.getCurrentStatus(), masked.getCurrentStatus());
+      assertEquals(src.getTargetStatus(), masked.getTargetStatus());
+    }
+
+    assertEquals("GTIN123 - CategoryA BrandX ModelX 10", dto.getFullProductName());
+    assertEquals("10", dto.getCapacity());
+  }
+
+  @Test
+  void testToDTO_RoleInvitalia_StatusSupervised_Unchanged_ChronologyVisible() {
+    Product product = Product.builder()
+      .organizationId("org1")
+      .registrationDate(LocalDateTime.of(2025, 10, 3, 18, 53, 24))
+      .status(ProductStatus.SUPERVISED.name()) // << nuovo caso
+      .model("ModelX")
+      .productGroup("GroupA")
+      .category("CategoryA")
+      .brand("BrandX")
+      .eprelCode("EPREL123")
+      .gtinCode("GTIN123")
+      .productCode("PROD123")
+      .countryOfProduction("Italy")
+      .energyClass("A")
+      .capacity("10")
+      .productFileId("file123")
+      .productName("CategoryA BrandX ModelX 10")
+      .fullProductName("GTIN123 - CategoryA BrandX ModelX 10")
+      .statusChangeChronology(buildStatusChangeEventsList())
+      .formalMotivation("OK")
+      .organizationName("orgName")
+      .build();
+
+    ProductDTO dto = ProductMapper.toDTO(product, UserRole.INVITALIA.getRole());
+
+    assertNotNull(dto);
+    assertEquals(ProductStatus.SUPERVISED.name(), dto.getStatus(), "Con ruolo non OPERATORE lo stato SUPERVISED deve restare invariato");
+
+    assertNotNull(dto.getStatusChangeChronology());
+    assertFalse(dto.getStatusChangeChronology().isEmpty(), "La chronology deve essere presente per ruoli non OPERATORE");
+    StatusChangeEvent first = dto.getStatusChangeChronology().get(0);
+    assertNotEquals("-", first.getUsername(), "Per ruoli non OPERATORE la chronology non deve essere mascherata");
+
+    assertEquals("OK", dto.getFormalMotivation());
+    assertEquals("GTIN123 - CategoryA BrandX ModelX 10", dto.getFullProductName());
+  }
+
+
+  @Test
   void testToDTO_ChronologyNull_ReturnsEmptyList() {
     Product product = Product.builder()
       .organizationId("org1")
