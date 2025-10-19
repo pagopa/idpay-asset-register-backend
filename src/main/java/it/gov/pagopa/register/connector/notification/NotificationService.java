@@ -7,5 +7,5 @@ public interface NotificationService  {
 
   void sendEmailPartial(String productFileId, String recipientEmail);
 
-  void sendEmailUpdateStatus(List<String> products, String motivation, String status, String recipientEmail);
+  void sendEmailUpdateStatus(List<String> products, String formalMotivation, String status, String recipientEmail);
 }

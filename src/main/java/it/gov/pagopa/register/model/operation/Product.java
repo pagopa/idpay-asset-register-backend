@@ -36,6 +36,8 @@ public class Product {
   private String energyClass;
   private String capacity;
   private ArrayList<StatusChangeEvent> statusChangeChronology;
+  private String formalMotivation;
   private String productName;
+  private String fullProductName;
   private String organizationName;
 }

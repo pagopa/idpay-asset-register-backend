@@ -1,6 +1,7 @@
 package it.gov.pagopa.register.repository.operation;
 
 import it.gov.pagopa.register.dto.operation.EmailProductDTO;
+import it.gov.pagopa.register.dto.operation.ProductCriteriaDTO;
 import it.gov.pagopa.register.enums.ProductStatus;
 import it.gov.pagopa.register.enums.UserRole;
 import it.gov.pagopa.register.model.operation.Product;
@@ -15,6 +16,7 @@ import org.springframework.data.mongodb.core.query.Query;
 import java.util.*;
 
 import static it.gov.pagopa.register.constants.AggregationConstants.*;
+import static it.gov.pagopa.register.constants.AssetRegisterConstants.*;
 
 @RequiredArgsConstructor
 public class ProductSpecificRepositoryImpl implements ProductSpecificRepository {
@@ -31,36 +33,39 @@ public class ProductSpecificRepositoryImpl implements ProductSpecificRepository 
   }
 
   @Override
-  public Criteria getCriteria(String organizationId,
-                              String category,
-                              String productFileId,
-                              String eprelCode,
-                              String gtinCode,
-                              String productName,
-                              String status) {
+  public Criteria getCriteria(ProductCriteriaDTO inputCriteria) {
 
     Criteria criteria = new Criteria();
 
-    if (organizationId != null) {
-      criteria.and(Product.Fields.organizationId).is(organizationId);
+    if (inputCriteria.getOrganizationId() != null) {
+      criteria.and(Product.Fields.organizationId).is(inputCriteria.getOrganizationId());
     }
-    if (category != null) {
-      criteria.and(Product.Fields.category).is(category);
+    if (inputCriteria.getCategory() != null) {
+      criteria.and(Product.Fields.category).is(inputCriteria.getCategory());
     }
-    if (productFileId != null) {
-      criteria.and(Product.Fields.productFileId).is(productFileId);
+    if (inputCriteria.getProductFileId() != null) {
+      criteria.and(Product.Fields.productFileId).is(inputCriteria.getProductFileId());
     }
-    if (eprelCode != null) {
-      criteria.and(Product.Fields.eprelCode).regex(".*" + eprelCode + ".*", "i");
+    if (inputCriteria.getEprelCode() != null) {
+      criteria.and(Product.Fields.eprelCode).regex(".*" + inputCriteria.getEprelCode() + ".*", "i");
     }
-    if (gtinCode != null) {
-      criteria.and(FIELD_ID).regex(".*" + gtinCode + ".*", "i");
+    if (inputCriteria.getGtinCode() != null) {
+      criteria.and(FIELD_ID).regex(".*" + inputCriteria.getGtinCode() + ".*", "i");
     }
-    if (productName != null) {
-      criteria.and(Product.Fields.productName).regex(".*" + productName + ".*", "i");
+    if (inputCriteria.getProductName() != null) {
+      criteria.and(Product.Fields.productName).regex(".*" + inputCriteria.getProductName() + ".*", "i");
     }
-    if (status != null) {
-      criteria.and(Product.Fields.status).is(status);
+    if (inputCriteria.getFullProductName() != null) {
+      criteria.and(Product.Fields.fullProductName).regex(".*" + inputCriteria.getFullProductName() + ".*", "i");
+    }
+    if (inputCriteria.getBrand() != null) {
+      criteria.and(Product.Fields.brand).regex(".*" + inputCriteria.getBrand() + ".*", "i");
+    }
+    if (inputCriteria.getModel() != null) {
+      criteria.and(Product.Fields.model).regex(".*" + inputCriteria.getModel() + ".*", "i");
+    }
+    if (inputCriteria.getStatus() != null) {
+      criteria.and(Product.Fields.status).is(inputCriteria.getStatus());
     }
 
     return criteria;
@@ -110,6 +115,12 @@ public class ProductSpecificRepositoryImpl implements ProductSpecificRepository 
       mongoTemplate.aggregate(aggregation, "product", EmailProductDTO.class);
 
     return results.getMappedResults();
+  }
+
+  @Override
+  public List<Product> findByIds(List<String> productIds) {
+    Criteria criteria = new Criteria().and(FIELD_ID).in(productIds);
+    return mongoTemplate.find(Query.query(criteria), Product.class);
   }
 
 
@@ -203,20 +214,20 @@ public class ProductSpecificRepositoryImpl implements ProductSpecificRepository 
       .addField(RUNTIME_FIELD_CATEGORY_IT)
       .withValue(
         ConditionalOperators.switchCases(
-          ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(FIELD_CATEGORY).equalToValue("WASHINGMACHINES")).then("Lavatrici"),
-          ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(FIELD_CATEGORY).equalToValue("WASHERDRIERS")).then("Lavasciuga"),
-          ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(FIELD_CATEGORY).equalToValue("OVENS")).then("Forni"),
-          ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(FIELD_CATEGORY).equalToValue("RANGEHOODS")).then("Cappe"),
-          ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(FIELD_CATEGORY).equalToValue("DISHWASHERS")).then("Lavastoviglie"),
-          ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(FIELD_CATEGORY).equalToValue("TUMBLEDRYERS")).then("Asciugatrici"),
-          ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(FIELD_CATEGORY).equalToValue("REFRIGERATINGAPPL")).then("Frigoriferi"),
-          ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(FIELD_CATEGORY).equalToValue("COOKINGHOBS")).then("Piani cottura")
+          ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(FIELD_CATEGORY).equalToValue(WASHINGMACHINES)).then(WASHINGMACHINES_IT_P),
+          ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(FIELD_CATEGORY).equalToValue(WASHERDRIERS)).then(WASHERDRIERS_IT_P),
+          ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(FIELD_CATEGORY).equalToValue(OVENS)).then(OVENS_IT_P),
+          ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(FIELD_CATEGORY).equalToValue(RANGEHOODS)).then(RANGEHOODS_IT_P),
+          ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(FIELD_CATEGORY).equalToValue(DISHWASHERS)).then(DISHWASHERS_IT_P),
+          ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(FIELD_CATEGORY).equalToValue(TUMBLEDRYERS)).then(TUMBLEDRYERS_IT_P),
+          ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(FIELD_CATEGORY).equalToValue(REFRIGERATINGAPPL)).then(REFRIGERATINGAPPL_IT_P),
+          ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(FIELD_CATEGORY).equalToValue(COOKINGHOBS)).then(COOKINGHOBS_IT_P)
         )
       ).build();
   }
 
   private Sort.Direction getSortDirection(Pageable pageable, String property) {
-    return Optional.of(pageable.getSort().getOrderFor(property))
+    return Optional.ofNullable(pageable.getSort().getOrderFor(property))
       .map(Sort.Order::getDirection)
       .orElse(Sort.Direction.ASC);
   }
@@ -230,7 +241,7 @@ public class ProductSpecificRepositoryImpl implements ProductSpecificRepository 
     return null;
   }
 
-  private List<String> getAllowedInitialStates(ProductStatus targetStatus, String role) {
+  public List<String> getAllowedInitialStates(ProductStatus targetStatus, String role) {
     Map<String, List<String>> validInitialStates = new HashMap<>();
 
     if (UserRole.INVITALIA.getRole().equalsIgnoreCase(role)) {

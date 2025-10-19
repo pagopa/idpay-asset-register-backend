@@ -32,11 +32,14 @@ public class ProductController {
     @RequestHeader(value = "x-organization-role", required = false, defaultValue = "operatore") @Pattern(regexp = ROLE_PATTERN) String role,
     @RequestParam(required = false) @Pattern(regexp = UUID_V4_PATTERN) String organizationId,
     @RequestParam(required = false) @Pattern(regexp = ANY_TEXT) String productName,
+    @RequestParam(required = false) @Pattern(regexp = ANY_TEXT) String fullProductName,
     @RequestParam(required = false) @Pattern(regexp = OBJECT_ID_PATTERN) String productFileId,
     @RequestParam(required = false) @Pattern(regexp = DIGITS_ONLY) String eprelCode,
     @RequestParam(required = false) @Pattern(regexp = GTIN_CODE) String gtinCode,
     @RequestParam(required = false) ProductStatus status,
     @RequestParam(required = false) ProductCategories category,
+    @RequestParam(required = false) @Pattern(regexp = ANY_TEXT) String  brand,
+    @RequestParam(required = false) @Pattern(regexp = ANY_TEXT) String  model,
     @PageableDefault(size = 20, sort = "registrationDate", direction = Sort.Direction.DESC) Pageable pageable
   ) {
     String categoryName = Optional.ofNullable(category).map(Enum::name).orElse(null);
@@ -49,6 +52,9 @@ public class ProductController {
       eprelCode,
       gtinCode,
       productName,
+      fullProductName,
+      brand,
+      model,
       statusName,
       pageable,
       role
@@ -61,13 +67,10 @@ public class ProductController {
   public ResponseEntity<UpdateResultDTO> updateProductsState(
     @RequestHeader("x-organization-role") @Pattern(regexp = ROLE_PATTERN) String role,
     @RequestHeader("x-user-name") String username,
-    @RequestBody ProductUpdateStatusRequestDTO dto
+    @RequestBody ProductUpdateStatusRequestDTO updateStatusDto
   ) {
     UpdateResultDTO result = productService.updateProductStatusesWithNotification(
-      dto.getGtinCodes(),
-      dto.getCurrentStatus(),
-      dto.getTargetStatus(),
-      dto.getMotivation(),
+      updateStatusDto,
       role,
       username
     );

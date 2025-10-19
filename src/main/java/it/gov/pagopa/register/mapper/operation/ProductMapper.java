@@ -5,6 +5,7 @@ import it.gov.pagopa.register.dto.utils.EprelProduct;
 import it.gov.pagopa.register.enums.ProductStatus;
 import it.gov.pagopa.register.enums.UserRole;
 import it.gov.pagopa.register.model.operation.Product;
+import it.gov.pagopa.register.model.operation.StatusChangeEvent;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.csv.CSVRecord;
@@ -12,6 +13,7 @@ import org.apache.commons.csv.CSVRecord;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -21,24 +23,22 @@ import static it.gov.pagopa.register.utils.CsvUtils.DELIMITER;
 import static it.gov.pagopa.register.utils.EprelUtils.generateEprelUrl;
 import static it.gov.pagopa.register.utils.EprelUtils.mapEnergyClass;
 
-
 public class ProductMapper {
-
-
 
   private ProductMapper() {}
 
   public static ProductDTO toDTO(Product entity, String role){
+    if (entity == null) return null;
 
-    if(entity==null){
-      return null;
-    }
-
+    List<StatusChangeEvent> chronology = getStatusChangeEvents(entity, role);
 
     return ProductDTO.builder()
       .organizationId(entity.getOrganizationId())
-      .registrationDate(entity.getRegistrationDate())
-      .status(role.equals(UserRole.OPERATORE.getRole()) && entity.getStatus().equals(ProductStatus.WAIT_APPROVED.name()) ? ProductStatus.UPLOADED.name() : entity.getStatus())
+      .registrationDate(entity.getRegistrationDate().toString())
+      .status(role.equals(UserRole.OPERATORE.getRole()) &&
+        (entity.getStatus().equals(ProductStatus.WAIT_APPROVED.name()) || (entity.getStatus().equals(ProductStatus.SUPERVISED.name())))
+        ? ProductStatus.UPLOADED.name()
+        : entity.getStatus())
       .model(entity.getModel())
       .productGroup(entity.getProductGroup())
       .category(CATEGORIES_TO_IT_S.get(entity.getCategory()))
@@ -49,18 +49,43 @@ public class ProductMapper {
       .countryOfProduction(entity.getCountryOfProduction())
       .energyClass(entity.getEnergyClass())
       .linkEprel(generateEprelUrl(entity.getProductGroup(), entity.getEprelCode()))
-      .batchName(CATEGORIES_TO_IT_P.get(entity.getCategory())+"_"+entity.getProductFileId()+".csv")
+      .batchName(CATEGORIES_TO_IT_P.get(entity.getCategory()) + "_" + entity.getProductFileId() + ".csv")
       .productName(entity.getProductName())
-      .capacity(("N\\A").equals(entity.getCapacity()) ? null : entity.getCapacity())
-      .statusChangeChronology(role.equals(UserRole.OPERATORE.getRole()) ? null : entity.getStatusChangeChronology())
+      .fullProductName(entity.getFullProductName())
+      .capacity(entity.getCapacity() == null || "N\\A".equals(entity.getCapacity()) ? "" : entity.getCapacity())
+      .statusChangeChronology(chronology)
+      .formalMotivation(entity.getFormalMotivation())
       .organizationName(entity.getOrganizationName())
       .build();
   }
-  public static Product mapCookingHobToProduct(CSVRecord csvRecord, String orgId, String productFileId,String organizationName) {
+
+  private static List<StatusChangeEvent> getStatusChangeEvents(Product entity, String role) {
+    List<StatusChangeEvent> chronology;
+
+    if (entity.getStatusChangeChronology() == null) {
+      chronology = new ArrayList<>();
+    } else if (UserRole.OPERATORE.getRole().equals(role)) {
+      chronology = entity.getStatusChangeChronology().stream()
+        .map(e -> StatusChangeEvent.builder()
+          .username("-")
+          .role("-")
+          .motivation("-")
+          .updateDate(e.getUpdateDate())
+          .currentStatus(e.getCurrentStatus())
+          .targetStatus(e.getTargetStatus())
+          .build())
+        .toList();
+    } else {
+      chronology = entity.getStatusChangeChronology();
+    }
+    return chronology;
+  }
+
+  public static Product mapCookingHobToProduct(CSVRecord csvRecord, String orgId, String productFileId, String organizationName) {
     return Product.builder()
       .productFileId(productFileId)
       .organizationId(orgId)
-      .registrationDate(LocalDateTime.now())
+      .registrationDate(LocalDateTime.now(ZoneOffset.UTC))
       .status(ProductStatus.UPLOADED.name())
       .productCode(csvRecord.get(CODE_PRODUCT))
       .gtinCode(csvRecord.get(CODE_GTIN_EAN))
@@ -69,22 +94,21 @@ public class ProductMapper {
       .brand(csvRecord.get(BRAND))
       .model(csvRecord.get(MODEL))
       .capacity("N\\A")
-      .productName(CATEGORIES_TO_IT_S.get(COOKINGHOBS) +" "+
-        csvRecord.get(BRAND)+" "+
-        csvRecord.get(MODEL)
-      )
+      .productName(CATEGORIES_TO_IT_S.get(COOKINGHOBS) + " " + csvRecord.get(BRAND) + " " + csvRecord.get(MODEL))
+      .fullProductName(csvRecord.get(CODE_GTIN_EAN) + " - " + CATEGORIES_TO_IT_S.get(COOKINGHOBS) + " " + csvRecord.get(BRAND) + " " + csvRecord.get(MODEL))
       .organizationName(organizationName)
       .statusChangeChronology(new ArrayList<>())
+      .formalMotivation("")
       .build();
   }
 
   public static Product mapEprelToProduct(CSVRecord csvRecord, EprelProduct eprelData, String orgId, String productFileId, String category, String organizationName) {
-    String capacity = mapCapacity(category,eprelData);
+    String capacity = mapCapacity(category, eprelData);
 
     return Product.builder()
       .productFileId(productFileId)
       .organizationId(orgId)
-      .registrationDate(LocalDateTime.now())
+      .registrationDate(LocalDateTime.now(ZoneOffset.UTC))
       .status(ProductStatus.UPLOADED.name())
       .productCode(csvRecord.get(CODE_PRODUCT))
       .gtinCode(csvRecord.get(CODE_GTIN_EAN))
@@ -96,35 +120,28 @@ public class ProductMapper {
       .model(eprelData.getModelIdentifier())
       .energyClass(mapEnergyClass(eprelData.getEnergyClass()))
       .capacity(capacity)
-      .productName(mapProductName(eprelData, category, capacity))
+      .productName(mapName(null, eprelData, category, capacity))
+      .fullProductName(mapName(csvRecord.get(CODE_GTIN_EAN), eprelData, category, capacity))
       .organizationName(organizationName)
       .statusChangeChronology(new ArrayList<>())
+      .formalMotivation("")
       .build();
   }
 
   public static String mapCapacity(String category, EprelProduct eprelData) {
-    if (eprelData == null) {
-      return "N\\A";
-    }
-
+    if (eprelData == null) return "N\\A";
     return switch (category) {
-      case WASHINGMACHINES, TUMBLEDRYERS ->
-        eprelData.getRatedCapacity() != null ? eprelData.getRatedCapacity() + " kg" : "N\\A";
-      case WASHERDRIERS ->
-        eprelData.getRatedCapacityWash() != null ? eprelData.getRatedCapacityWash() + " kg" : "N\\A";
+      case WASHINGMACHINES, TUMBLEDRYERS -> eprelData.getRatedCapacity() != null ? eprelData.getRatedCapacity() + " kg" : "N\\A";
+      case WASHERDRIERS -> eprelData.getRatedCapacityWash() != null ? eprelData.getRatedCapacityWash() + " kg" : "N\\A";
       case OVENS -> {
         if (eprelData.getCavities() != null && !eprelData.getCavities().isEmpty()) {
           yield eprelData.getCavities().stream()
             .map(cavity -> cavity.getVolume() != null ? cavity.getVolume() + " l" : "N\\A")
             .collect(Collectors.joining(" / "));
-        } else {
-          yield "N\\A";
-        }
+        } else yield "N\\A";
       }
-      case DISHWASHERS ->
-        eprelData.getRatedCapacity() != null ? eprelData.getRatedCapacity() + " c" : "N\\A";
-      case REFRIGERATINGAPPL ->
-        eprelData.getTotalVolume() != null ? eprelData.getTotalVolume() + " l" : "N\\A";
+      case DISHWASHERS -> eprelData.getRatedCapacity() != null ? eprelData.getRatedCapacity() + " c" : "N\\A";
+      case REFRIGERATINGAPPL -> eprelData.getTotalVolume() != null ? eprelData.getTotalVolume() + " l" : "N\\A";
       default -> "N\\A";
     };
   }
@@ -156,6 +173,7 @@ public class ProductMapper {
           product.getCountryOfProduction()
         );
       }
+
       CSVFormat format = CSVFormat.Builder.create()
         .setHeader(headers.toArray(new String[0]))
         .setSkipHeaderRecord(true)
@@ -169,15 +187,11 @@ public class ProductMapper {
     }
   }
 
-  public static String mapProductName(EprelProduct eprel, String category, String capacity) {
-    String productType;
-
-    if (category.equals(REFRIGERATINGAPPL)) {
-      productType = eprel.getCompartments().stream()
-        .filter(c -> {
-          if (REFRIGERATORS_CATEGORY.contains(c.getCompartmentType())) {
-            return true;
-          }
+  private static String resolveProductType(EprelProduct eprel, String category) {
+    if (REFRIGERATINGAPPL.equals(category)) {
+      boolean isRefrigerator = eprel.getCompartments().stream()
+        .anyMatch(c -> {
+          if (REFRIGERATORS_CATEGORY.contains(c.getCompartmentType())) return true;
           if (VARIABLE_TEMP.equals(c.getCompartmentType())) {
             return c.getSubCompartments() != null &&
               c.getSubCompartments().stream()
@@ -185,28 +199,26 @@ public class ProductMapper {
                 .anyMatch(REFRIGERATORS_CATEGORY::contains);
           }
           return false;
-        })
-        .findFirst()
-        .map(c -> REFRIGERATOR_IT)
-        .orElse(FREEZER_IT);
+        });
+      return isRefrigerator ? REFRIGERATOR_IT : FREEZER_IT;
     } else {
-      productType = CATEGORIES_TO_IT_S.get(category);
+      return CATEGORIES_TO_IT_S.get(category);
     }
-
-    return buildProductName(productType, eprel, capacity);
   }
 
-  private static String buildProductName(String type, EprelProduct eprel, String capacity) {
-    StringBuilder name = new StringBuilder();
-    name.append(type).append(" ")
+  public static String mapName(String gtinOrNull, EprelProduct eprel, String category, String capacity) {
+    String type = resolveProductType(eprel, category);
+    StringBuilder sb = new StringBuilder();
+    if (gtinOrNull != null && !gtinOrNull.isBlank()) {
+      sb.append(gtinOrNull).append(" - ");
+    }
+    sb.append(type).append(" ")
       .append(eprel.getSupplierOrTrademark()).append(" ")
       .append(eprel.getModelIdentifier());
-
     if (!"N\\A".equals(capacity)) {
-      name.append(" ").append(capacity);
+      sb.append(" ").append(capacity);
     }
-
-    return name.toString();
+    return sb.toString();
   }
 
 }

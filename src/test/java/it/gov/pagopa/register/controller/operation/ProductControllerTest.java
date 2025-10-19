@@ -1,10 +1,7 @@
 package it.gov.pagopa.register.controller.operation;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import it.gov.pagopa.register.dto.operation.ProductDTO;
-import it.gov.pagopa.register.dto.operation.ProductListDTO;
-import it.gov.pagopa.register.dto.operation.ProductUpdateStatusRequestDTO;
-import it.gov.pagopa.register.dto.operation.UpdateResultDTO;
+import it.gov.pagopa.register.dto.operation.*;
 import it.gov.pagopa.register.enums.ProductStatus;
 import it.gov.pagopa.register.enums.UserRole;
 import it.gov.pagopa.register.service.operation.ProductService;
@@ -65,6 +62,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
           , any()
           , any()
           , any()
+          , any()
+          , any()
+          , any()
         ))
         .thenReturn(mockResponse);
       mockMvc.perform(get("/idpay/register/products")
@@ -84,6 +84,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
     @Test
     void testGetProducts_ServiceThrowsException() throws Exception {
       when(productService.fetchProductsByFilters(eq("83843864-f3c0-4def-badb-7f197471b72e")
+          , any()
+          , any()
+          , any()
           , any()
           , any()
           , any()
@@ -112,14 +115,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
       requestDTO.setCurrentStatus(ProductStatus.WAIT_APPROVED);
       requestDTO.setTargetStatus(ProductStatus.APPROVED);
       requestDTO.setMotivation("Valid reason");
+      requestDTO.setFormalMotivation("");
 
       String requestBody = objectMapper.writeValueAsString(requestDTO);
 
       when(productService.updateProductStatusesWithNotification(
-        productIds,
-        ProductStatus.WAIT_APPROVED,
-        ProductStatus.APPROVED,
-        "Valid reason",
+        requestDTO,
         UserRole.INVITALIA_ADMIN.getRole(),
         USERNAME
       )).thenReturn(mockResponse);

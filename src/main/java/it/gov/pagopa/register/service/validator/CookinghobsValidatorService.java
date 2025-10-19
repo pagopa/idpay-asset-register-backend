@@ -39,11 +39,20 @@ public class CookinghobsValidatorService {
           errorMessages.put(duplicateGtinRow, DUPLICATE_GTIN_EAN);
           log.info("[PRODUCT_UPLOAD] - Duplicate error for record with GTIN code: {}", csvRecord.get(CODE_GTIN_EAN));
         }
-        validProduct.put(csvRecord.get(CODE_GTIN_EAN), mapCookingHobToProduct(csvRecord, orgId, productFileId, organizationName));
+        log.info("[PRODUCT_UPLOAD] - Mapping product with GTIN code: {}", csvRecord.get(CODE_GTIN_EAN));
+        Product product = mapCookingHobToProduct(csvRecord, orgId, productFileId, organizationName);
+        optProduct.ifPresent(dbProduct -> {
+          product.setFormalMotivation(dbProduct.getFormalMotivation());
+          product.setStatusChangeChronology(dbProduct.getStatusChangeChronology());
+        });
+        log.info("[PRODUCT_UPLOAD] - Mapped product: {}", product.toString());
+        validProduct.put(csvRecord.get(CODE_GTIN_EAN), product);
         log.info("[PRODUCT_UPLOAD] - Added cooking hob product: {}", csvRecord.get(CODE_GTIN_EAN));
       }
     }
     return new ProductValidationResult(validProduct,invalidRecords,errorMessages);
   }
+
+
 
 }

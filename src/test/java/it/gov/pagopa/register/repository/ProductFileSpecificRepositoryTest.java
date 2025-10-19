@@ -1,10 +1,12 @@
 package it.gov.pagopa.register.repository;
 
-
+import it.gov.pagopa.register.dto.operation.ProductCriteriaDTO;
 import it.gov.pagopa.register.enums.UserRole;
 import it.gov.pagopa.register.model.operation.Product;
 import it.gov.pagopa.register.repository.operation.ProductSpecificRepositoryImpl;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -21,13 +23,14 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class ProductFileSpecificRepositoryTest {
-
 
   @Mock
   private MongoTemplate mongoTemplate;
@@ -53,12 +56,21 @@ class ProductFileSpecificRepositoryTest {
     verify(mongoTemplate).find(any(Query.class), eq(Product.class));
   }
 
-
-
   @Test
   void testGetCriteria_AllFieldsPresent() {
     Criteria criteria = productSpecificRepository.getCriteria(
-      "org1", "cat",  "fileId", "eprel", "gtin","productName","status");
+      ProductCriteriaDTO.builder()
+        .organizationId("org1")
+        .category("cat")
+        .productFileId("fileId")
+        .eprelCode("eprel")
+        .gtinCode("gtin")
+        .productName("productName")
+        .brand("brand")
+        .model("model")
+        .status("status")
+        .build()
+    );
 
     assertNotNull(criteria);
     assertTrue(criteria.getCriteriaObject().containsKey("organizationId"));
@@ -67,13 +79,18 @@ class ProductFileSpecificRepositoryTest {
     assertTrue(criteria.getCriteriaObject().containsKey("eprelCode"));
     assertTrue(criteria.getCriteriaObject().containsKey("_id"));
     assertTrue(criteria.getCriteriaObject().containsKey("productName"));
+    assertTrue(criteria.getCriteriaObject().containsKey("brand"));
+    assertTrue(criteria.getCriteriaObject().containsKey("model"));
     assertTrue(criteria.getCriteriaObject().containsKey("status"));
   }
 
   @Test
   void testGetCriteria_OnlyOrgIdPresent() {
     Criteria criteria = productSpecificRepository.getCriteria(
-      "org1", null, null, null, null, null,null);
+      ProductCriteriaDTO.builder()
+        .organizationId("org1")
+        .build()
+    );
 
     assertEquals("org1", criteria.getCriteriaObject().get("organizationId"));
     assertEquals(1, criteria.getCriteriaObject().size());
@@ -108,11 +125,11 @@ class ProductFileSpecificRepositoryTest {
     when(mongoTemplate.aggregate(any(Aggregation.class), eq("product"), eq(Product.class)))
       .thenReturn(aggregationResults);
 
-    List<Product> result = productSpecificRepository.retrieveDistinctProductFileIdsBasedOnRole(orgId,null, UserRole.OPERATORE.getRole());
+    List<Product> result = productSpecificRepository.retrieveDistinctProductFileIdsBasedOnRole(orgId, null, UserRole.OPERATORE.getRole());
 
     assertEquals(1, result.size());
-    assertEquals("file123", result.get(0).getProductFileId());
-    assertEquals("catA", result.get(0).getCategory());
+    assertEquals("file123", result.getFirst().getProductFileId());
+    assertEquals("catA", result.getFirst().getCategory());
 
     verify(mongoTemplate).aggregate(any(Aggregation.class), eq("product"), eq(Product.class));
   }
@@ -139,8 +156,6 @@ class ProductFileSpecificRepositoryTest {
     Aggregation usedAggregation = aggregationCaptor.getValue();
     assertNotNull(usedAggregation);
   }
-
-
 
   @Test
   void testFindByFilter_SortByBatchNameDesc() {
@@ -188,7 +203,6 @@ class ProductFileSpecificRepositoryTest {
     assertNotNull(usedAggregation);
   }
 
-
   @Test
   void testFindByFilter_SortByOtherField() {
     Criteria criteria = Criteria.where("organizationId").is("org1");
@@ -208,8 +222,64 @@ class ProductFileSpecificRepositoryTest {
 
     List<Sort.Order> orders = sort.toList();
     assertEquals(1, orders.size());
-    assertEquals("registrationDate", orders.get(0).getProperty());
-    assertTrue(orders.get(0).isAscending());
+    assertEquals("registrationDate", orders.getFirst().getProperty());
+    assertTrue(orders.getFirst().isAscending());
   }
 
+  @Test
+  @DisplayName("findByIds - ritorna i prodotti richiesti")
+  void testFindByIds_ReturnsProducts() {
+    Product p1 = Product.builder().gtinCode("GTIN-1").status("UPLOADED").build();
+    Product p2 = Product.builder().gtinCode("GTIN-2").status("REJECTED").build();
+    when(mongoTemplate.find(any(Query.class), eq(Product.class))).thenReturn(List.of(p1, p2));
+
+    List<Product> result = productSpecificRepository.findByIds(List.of("GTIN-1", "GTIN-2"));
+
+    assertEquals(2, result.size());
+    Set<String> gtins = result.stream().map(Product::getGtinCode).collect(Collectors.toSet());
+    assertTrue(gtins.containsAll(List.of("GTIN-1", "GTIN-2")));
+  }
+
+  @Test
+  @DisplayName("findByIds - ritorna lista vuota se non trova nulla")
+  void testFindByIds_ReturnsEmptyWhenNoneFound() {
+    when(mongoTemplate.find(any(Query.class), eq(Product.class))).thenReturn(List.of());
+
+    List<Product> result = productSpecificRepository.findByIds(List.of("MISSING"));
+
+    assertNotNull(result);
+    assertTrue(result.isEmpty());
+  }
+
+  @Test
+  @DisplayName("findByIds - ignora duplicati in input")
+  void testFindByIds_IgnoresDuplicateIds() {
+    Product p2 = Product.builder().gtinCode("GTIN-2").status("REJECTED").build();
+    when(mongoTemplate.find(any(Query.class), eq(Product.class))).thenReturn(List.of(p2));
+
+    List<Product> result = productSpecificRepository.findByIds(List.of("GTIN-2", "GTIN-2"));
+
+    assertEquals(1, result.size());
+    assertEquals("GTIN-2", result.getFirst().getGtinCode());
+  }
+
+  @Nested
+  class EdgeCases {
+    @Test
+    void testFindByIds_EmptyInput() {
+      List<Product> result = productSpecificRepository.findByIds(List.of());
+      assertNotNull(result);
+      assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void testFindByIds_MixedExistingAndMissing() {
+      Product p1 = Product.builder().gtinCode("GTIN-1").status("UPLOADED").build();
+      when(mongoTemplate.find(any(Query.class), eq(Product.class))).thenReturn(List.of(p1));
+
+      List<Product> result = productSpecificRepository.findByIds(List.of("GTIN-1", "MISSING"));
+      assertEquals(1, result.size());
+      assertEquals("GTIN-1", result.getFirst().getGtinCode());
+    }
+  }
 }
