@@ -12,6 +12,9 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.aggregation.*;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Collation;
+import org.springframework.data.mongodb.core.query.Collation.ComparisonLevel;
+import org.springframework.data.mongodb.core.aggregation.AggregationOptions;
 
 import java.util.*;
 
@@ -21,15 +24,22 @@ import static it.gov.pagopa.register.constants.AssetRegisterConstants.*;
 @RequiredArgsConstructor
 public class ProductSpecificRepositoryImpl implements ProductSpecificRepository {
 
+  private static final Collation CASE_INSENSITIVE_COLLATION =
+    Collation.of("it").strength(ComparisonLevel.secondary());
 
   private final MongoTemplate mongoTemplate;
 
   @Override
   public List<Product> findByFilter(Criteria criteria, Pageable pageable) {
     Aggregation aggregation = buildAggregation(criteria, pageable);
-    return aggregation != null
-      ? aggregateResults(aggregation)
-      : mongoTemplate.find(Query.query(criteria).with(pageable), Product.class);
+    if (aggregation != null) {
+      return aggregateResults(aggregation);
+    }
+
+    Query q = Query.query(criteria).with(pageable)
+      .collation(CASE_INSENSITIVE_COLLATION);
+
+    return mongoTemplate.find(q, Product.class);
   }
 
   @Override
@@ -108,7 +118,7 @@ public class ProductSpecificRepositoryImpl implements ProductSpecificRepository 
       Aggregation.lookup("product_file", "productFileIdObj", "_id", "fileInfo"),
       Aggregation.unwind("fileInfo"),
       Aggregation.group("fileInfo.userEmail")
-        .addToSet("productName").as("productNames")
+        .addToSet("fullProductName").as("productNames")
     );
 
     AggregationResults<EmailProductDTO> results =
@@ -163,13 +173,18 @@ public class ProductSpecificRepositoryImpl implements ProductSpecificRepository 
   private Aggregation buildEnergyClassAggregation(Criteria criteria, Pageable pageable) {
     Sort.Direction direction = getSortDirection(pageable, FIELD_ENERGY_CLASS);
 
+    AggregationOptions opts = AggregationOptions.builder()
+      .collation(CASE_INSENSITIVE_COLLATION)   // la collation definita a livello classe
+      .build();
+
     return Aggregation.newAggregation(
       addEnergyRankField(),
       Aggregation.match(criteria),
       Aggregation.sort(Sort.by(direction, "energyRank")),
       Aggregation.skip(pageable.getOffset()),
       Aggregation.limit(pageable.getPageSize())
-    );
+    ).withOptions(opts);
+
   }
 
   private AggregationOperation addEnergyRankField() {
@@ -200,13 +215,18 @@ public class ProductSpecificRepositoryImpl implements ProductSpecificRepository 
       orders.add(new Sort.Order(getSortDirection(pageable, FIELD_CATEGORY), RUNTIME_FIELD_CATEGORY_IT));
     }
 
+    AggregationOptions opts = AggregationOptions.builder()
+      .collation(CASE_INSENSITIVE_COLLATION)
+      .build();
+
     return Aggregation.newAggregation(
       addCategoryTranslationField(),
       Aggregation.match(criteria),
       Aggregation.sort(Sort.by(orders)),
       Aggregation.skip(pageable.getOffset()),
       Aggregation.limit(pageable.getPageSize())
-    );
+    ).withOptions(opts);
+
   }
 
   private AggregationOperation addCategoryTranslationField() {
