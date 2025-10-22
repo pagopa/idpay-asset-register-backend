@@ -204,27 +204,38 @@ class ProductFileSpecificRepositoryTest {
   }
 
   @Test
-  void testFindByFilter_SortByOtherField() {
+  void testFindByFilter_SortByOtherField_shouldUseAggregationGenericSort() {
     Criteria criteria = Criteria.where("organizationId").is("org1");
     Pageable pageable = PageRequest.of(0, 10, Sort.by("registrationDate").ascending());
 
-    when(mongoTemplate.find(any(Query.class), eq(Product.class)))
-      .thenReturn(List.of(Product.builder().build()));
+    AggregationResults<Product> empty = new AggregationResults<>(List.of(), new org.bson.Document());
+    when(mongoTemplate.aggregate(any(Aggregation.class), eq("product"), eq(Product.class)))
+      .thenReturn(empty);
 
     productSpecificRepository.findByFilter(criteria, pageable);
 
-    ArgumentCaptor<Query> queryCaptor = ArgumentCaptor.forClass(Query.class);
-    verify(mongoTemplate).find(queryCaptor.capture(), eq(Product.class));
-    Query queryUsed = queryCaptor.getValue();
+    verify(mongoTemplate, never()).find(any(Query.class), eq(Product.class));
 
-    Sort sort = (Sort) ReflectionTestUtils.getField(queryUsed, "sort");
-    assertNotNull(sort);
+    ArgumentCaptor<Aggregation> aggCaptor = ArgumentCaptor.forClass(Aggregation.class);
+    verify(mongoTemplate).aggregate(aggCaptor.capture(), eq("product"), eq(Product.class));
 
-    List<Sort.Order> orders = sort.toList();
-    assertEquals(1, orders.size());
-    assertEquals("registrationDate", orders.getFirst().getProperty());
-    assertTrue(orders.getFirst().isAscending());
+    String pipeline = aggCaptor.getValue().toString();
+
+    int iMatch = pipeline.indexOf("$match");
+    int iSort  = pipeline.indexOf("$sort");
+    int iSkip  = pipeline.indexOf("$skip");
+    int iLimit = pipeline.indexOf("$limit");
+
+    assertTrue(iMatch >= 0, "manca $match");
+    assertTrue(iSort > iMatch, "manca/ordine errato di $sort");
+    assertTrue(iSkip > iSort, "manca/ordine errato di $skip");
+    assertTrue(iLimit > iSkip, "manca/ordine errato di $limit");
+
+    assertTrue(pipeline.contains("\"registrationDate\""), "il sort non è su registrationDate");
+    assertTrue(pipeline.contains("\"registrationDate\" : 1") || pipeline.toLowerCase().contains("asc"),
+      "il sort non è ascendente");
   }
+
 
   @Test
   @DisplayName("findByIds - ritorna i prodotti richiesti")

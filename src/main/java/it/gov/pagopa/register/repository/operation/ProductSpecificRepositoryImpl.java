@@ -1,5 +1,6 @@
 package it.gov.pagopa.register.repository.operation;
 
+import it.gov.pagopa.register.constants.AggregationConstants;
 import it.gov.pagopa.register.dto.operation.EmailProductDTO;
 import it.gov.pagopa.register.dto.operation.ProductCriteriaDTO;
 import it.gov.pagopa.register.enums.ProductStatus;
@@ -12,7 +13,6 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.aggregation.*;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
-
 import java.util.*;
 
 import static it.gov.pagopa.register.constants.AggregationConstants.*;
@@ -26,10 +26,24 @@ public class ProductSpecificRepositoryImpl implements ProductSpecificRepository 
 
   @Override
   public List<Product> findByFilter(Criteria criteria, Pageable pageable) {
-    Aggregation aggregation = buildAggregation(criteria, pageable);
-    return aggregation != null
-      ? aggregateResults(aggregation)
-      : mongoTemplate.find(Query.query(criteria).with(pageable), Product.class);
+   Aggregation special = buildAggregation(criteria, pageable);
+    if (special != null) return aggregateResults(special);
+
+    boolean hasSort = pageable.getSort().isSorted();
+    if (hasSort) {
+      boolean hasCiSort = pageable.getSort().stream()
+        .map(Sort.Order::getProperty)
+        .map(this::toDbField)
+        .anyMatch(AggregationConstants.CASE_INSENSITIVE_FIELDS::contains);
+
+      Aggregation agg = hasCiSort
+        ? buildCaseInsensitiveSortAggregation(criteria, pageable)
+        : buildGenericSortAggregation(criteria, pageable);
+
+      return aggregateResults(agg);
+    }
+
+    return mongoTemplate.find(Query.query(criteria).with(pageable), Product.class);
   }
 
   @Override
@@ -263,6 +277,74 @@ public class ProductSpecificRepositoryImpl implements ProductSpecificRepository 
       }
     }
     return validInitialStates.getOrDefault(targetStatus.name(), List.of());
+  }
+
+  private Aggregation buildCaseInsensitiveSortAggregation(Criteria criteria, Pageable pageable) {
+    List<AggregationOperation> ops = new ArrayList<>();
+
+    ops.add(Aggregation.match(criteria));
+
+    for (Sort.Order order : pageable.getSort()) {
+      String dbProp = toDbField(order.getProperty());
+      if (AggregationConstants.CASE_INSENSITIVE_FIELDS.contains(dbProp)) {
+        ops.add(Aggregation.addFields()
+          .addField(dbProp + AggregationConstants.LOWER_SUFFIX)
+          .withValue(new org.bson.Document("$toLower", "$" + dbProp))
+          .build());
+      }
+    }
+
+    List<Sort.Order> sortOrders = new ArrayList<>();
+    for (Sort.Order order : pageable.getSort()) {
+      String dbProp = toDbField(order.getProperty());
+      String sortKey = AggregationConstants.CASE_INSENSITIVE_FIELDS.contains(dbProp)
+        ? dbProp + AggregationConstants.LOWER_SUFFIX
+        : dbProp;
+      sortOrders.add(new Sort.Order(order.getDirection(), sortKey));
+    }
+    ops.add(Aggregation.sort(Sort.by(sortOrders)));
+
+    ops.add(Aggregation.skip(pageable.getOffset()));
+    ops.add(Aggregation.limit(pageable.getPageSize()));
+
+    ProjectionOperation project = Aggregation.project(Product.class);
+    for (Sort.Order order : pageable.getSort()) {
+      String dbProp = toDbField(order.getProperty());
+      if (AggregationConstants.CASE_INSENSITIVE_FIELDS.contains(dbProp)) {
+        project = project.andExclude(dbProp + AggregationConstants.LOWER_SUFFIX);
+      }
+    }
+    ops.add(project);
+
+    return Aggregation.newAggregation(ops);
+  }
+
+
+  private String toDbField(String prop) {
+    if ("gtinCode".equalsIgnoreCase(prop)) {
+      return "_id";
+    }
+    return prop;
+  }
+
+  private Aggregation buildGenericSortAggregation(Criteria criteria, Pageable pageable) {
+    List<AggregationOperation> ops = new ArrayList<>();
+    ops.add(Aggregation.match(criteria));
+
+    List<Sort.Order> sortOrders = new ArrayList<>();
+    for (Sort.Order o : pageable.getSort()) {
+      sortOrders.add(new Sort.Order(o.getDirection(), toDbField(o.getProperty())));
+    }
+    if (sortOrders.isEmpty()) {
+      sortOrders.add(Sort.Order.asc("_id"));
+    }
+    ops.add(Aggregation.sort(Sort.by(sortOrders)));
+
+    ops.add(Aggregation.skip(pageable.getOffset()));
+    ops.add(Aggregation.limit(pageable.getPageSize()));
+    ops.add(Aggregation.project(Product.class));
+
+    return Aggregation.newAggregation(ops);
   }
 
 
