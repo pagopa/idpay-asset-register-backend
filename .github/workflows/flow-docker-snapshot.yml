@@ -88,5 +88,3 @@ jobs:
               "POSTMAN_BRANCH": "${{ github.event.inputs.postman_branch }}",
               "TRIGGER_MESSAGE": "idpay-asset-register-backend"
             }
-
-
