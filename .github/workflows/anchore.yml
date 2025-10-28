@@ -75,12 +75,12 @@ jobs:
           webhook: ${{ secrets.CVE_SCAN_SLACK_WEBHOOK }}
           webhook-type: incoming-webhook
           payload: |
-              blocks:
-                - type: "header"
-                  text:
-                    type: "plain_text"
-                    text: "${{ github.event.repository.name }} - Notification Scan Result Failed on ${{ github.ref_type }} ${{ github.ref_name }}!"
-                - type: "section"
-                  text:
-                    type: "mrkdwn"
-                    text: "GitHub Action scan results:\n`CRITICAL`: ${{ env.CVE_CRITICAL }}\n`HIGH`: ${{ env.CVE_HIGH }}\n`MEDIUM`: ${{ env.CVE_MEDIUM }}\n\n<https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|See execution details on GitHub>"
+            blocks:
+              - type: "header"
+                text:
+                  type: "plain_text"
+                  text: "${{ github.event.repository.name }} - Notification Scan Result Failed on ${{ github.ref_type }} ${{ github.ref_name }}!"
+              - type: "section"
+                text:
+                  type: "mrkdwn"
+                  text: "GitHub Action scan results:\n`CRITICAL`: ${{ env.CVE_CRITICAL }}\n`HIGH`: ${{ env.CVE_HIGH }}\n`MEDIUM`: ${{ env.CVE_MEDIUM }}\n\n<https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|See execution details on GitHub>"
