@@ -1,9 +1,11 @@
 package it.gov.pagopa.register.constants;
 
 import it.gov.pagopa.register.model.operation.Product;
+import lombok.experimental.FieldNameConstants;
 
 import java.util.Set;
 
+@FieldNameConstants
 public class AggregationConstants {
 
   private AggregationConstants(){}
