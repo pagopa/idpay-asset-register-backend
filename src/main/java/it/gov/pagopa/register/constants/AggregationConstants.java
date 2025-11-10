@@ -1,11 +1,9 @@
 package it.gov.pagopa.register.constants;
 
 import it.gov.pagopa.register.model.operation.Product;
-import lombok.experimental.FieldNameConstants;
 
 import java.util.Set;
 
-@FieldNameConstants
 public class AggregationConstants {
 
   private AggregationConstants(){}
@@ -18,7 +16,6 @@ public class AggregationConstants {
   public static final String FIELD_ID = "_id";
   public static final String FIELD_STATUS = "status";
   public static final String RUNTIME_FIELD_CATEGORY_IT = "categoryIt";
-  public static final String FIELD_MOTIVTAION = "motivation";
 
   public static final String LOWER_SUFFIX = "_lower";
 
