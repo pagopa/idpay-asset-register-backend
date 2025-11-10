@@ -27,7 +27,9 @@ public class ProductSpecificRepositoryImpl implements ProductSpecificRepository 
   @Override
   public List<Product> findByFilter(Criteria criteria, Pageable pageable) {
    Aggregation special = buildAggregation(criteria, pageable);
-    if (special != null) return aggregateResults(special);
+    if (special != null) {
+      return aggregateResults(special);
+    }
 
     boolean hasSort = pageable.getSort().isSorted();
     if (hasSort) {
