@@ -2,6 +2,7 @@ package it.gov.pagopa.common.web.exception;
 
 import it.gov.pagopa.common.web.dto.ErrorDTO;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.ConstraintViolationException; // <-- IMPORT AGGIUNTO
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
@@ -22,43 +23,65 @@ import java.util.stream.Collectors;
 @Order(Ordered.HIGHEST_PRECEDENCE)
 public class ValidationExceptionHandler {
 
-    private final ErrorDTO templateValidationErrorDTO;
+  private final ErrorDTO templateValidationErrorDTO;
 
-    public ValidationExceptionHandler(@Nullable ErrorDTO templateValidationErrorDTO) {
-        this.templateValidationErrorDTO = Optional.ofNullable(templateValidationErrorDTO)
-                .orElse(new ErrorDTO("INVALID_REQUEST", "Invalid request"));
-    }
+  public ValidationExceptionHandler(@Nullable ErrorDTO templateValidationErrorDTO) {
+    this.templateValidationErrorDTO = Optional.ofNullable(templateValidationErrorDTO)
+      .orElse(new ErrorDTO("INVALID_REQUEST", "Invalid request"));
+  }
 
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ErrorDTO handleValidationExceptions(
-            MethodArgumentNotValidException ex, HttpServletRequest request) {
+  @ExceptionHandler(MethodArgumentNotValidException.class)
+  @ResponseStatus(HttpStatus.BAD_REQUEST)
+  public ErrorDTO handleValidationExceptions(
+    MethodArgumentNotValidException ex, HttpServletRequest request) {
 
-        String message = ex.getBindingResult().getAllErrors().stream()
-                .map(error -> {
-                    String fieldName = ((FieldError) error).getField();
-                    String errorMessage = error.getDefaultMessage();
-                    return String.format("[%s]: %s", fieldName, errorMessage);
-                }).collect(Collectors.joining("; "));
+    String message = ex.getBindingResult().getAllErrors().stream()
+      .map(error -> {
+        String fieldName = ((FieldError) error).getField();
+        String errorMessage = error.getDefaultMessage();
+        return String.format("[%s]: %s", fieldName, errorMessage);
+      }).collect(Collectors.joining("; "));
 
-        log.info("A MethodArgumentNotValidException occurred handling request {}: HttpStatus 400 - {}",
-                ErrorManager.getRequestDetails(request), message);
-        log.debug("Something went wrong while validating http request", ex);
+    log.info("A MethodArgumentNotValidException occurred handling request {}: HttpStatus 400 - {}",
+      ErrorManager.getRequestDetails(request), message);
+    log.debug("Something went wrong while validating http request", ex);
 
-        return new ErrorDTO(templateValidationErrorDTO.getCode(), message);
-    }
+    return new ErrorDTO(templateValidationErrorDTO.getCode(), message);
+  }
 
-    @ExceptionHandler(MissingRequestHeaderException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ErrorDTO handleMissingRequestHeaderExceptions(
-            MissingRequestHeaderException ex, HttpServletRequest request) {
+  @ExceptionHandler(MissingRequestHeaderException.class)
+  @ResponseStatus(HttpStatus.BAD_REQUEST)
+  public ErrorDTO handleMissingRequestHeaderExceptions(
+    MissingRequestHeaderException ex, HttpServletRequest request) {
 
-        String message = ex.getMessage();
+    String message = ex.getMessage();
 
-        log.info("A MissingRequestHeaderException occurred handling request {}: HttpStatus 400 - {}",
-                ErrorManager.getRequestDetails(request), message);
-        log.debug("Something went wrong handling request", ex);
+    log.info("A MissingRequestHeaderException occurred handling request {}: HttpStatus 400 - {}",
+      ErrorManager.getRequestDetails(request), message);
+    log.debug("Something went wrong handling request", ex);
 
-        return new ErrorDTO(templateValidationErrorDTO.getCode(), message);
-    }
+    return new ErrorDTO(templateValidationErrorDTO.getCode(), message);
+  }
+
+  @ExceptionHandler(ConstraintViolationException.class)
+  @ResponseStatus(HttpStatus.BAD_REQUEST)
+  public ErrorDTO handleConstraintViolationException(
+    ConstraintViolationException ex, HttpServletRequest request) {
+
+    String message = ex.getConstraintViolations().stream()
+      .map(cv -> {
+        String[] pathParts = cv.getPropertyPath().toString().split("\\.");
+        String fieldName = pathParts.length > 0 ? pathParts[pathParts.length - 1] : cv.getPropertyPath().toString();
+
+        String errorMessage = cv.getMessage();
+        return String.format("[%s]: %s", fieldName, errorMessage);
+      })
+      .collect(Collectors.joining("; "));
+
+    log.info("A ConstraintViolationException occurred handling request {}: HttpStatus 400 - {}",
+      ErrorManager.getRequestDetails(request), message);
+    log.debug("Something went wrong while validating http request parameters", ex);
+
+    return new ErrorDTO(templateValidationErrorDTO.getCode(), message);
+  }
 }
