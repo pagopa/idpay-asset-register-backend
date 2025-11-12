@@ -2,7 +2,7 @@ package it.gov.pagopa.common.web.exception;
 
 import it.gov.pagopa.common.web.dto.ErrorDTO;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.validation.ConstraintViolationException; // <-- IMPORT AGGIUNTO
+import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
