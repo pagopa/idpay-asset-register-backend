@@ -99,7 +99,7 @@ class ProductFileControllerTest {
 
     mockMvc.perform(get("/idpay/register/product-files/{productFileId}/report", TEST_ID_UPLOAD)
         .header("x-organization-id", "testOrg"))
-      .andExpect(status().isInternalServerError());
+      .andExpect(status().isBadRequest());
   }
 
   @Test
