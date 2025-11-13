@@ -25,9 +25,12 @@ import static it.gov.pagopa.register.utils.EprelUtils.mapEnergyClass;
 
 public class ProductMapper {
 
-  private ProductMapper() {}
+  private ProductMapper() {
+  }
 
-  public static ProductDTO toDTO(Product entity, String role){
+  private static final int MAX_NAME_LENGTH = 255;
+
+  public static ProductDTO toDTO(Product entity, String role) {
     if (entity == null) return null;
 
     List<StatusChangeEvent> chronology = getStatusChangeEvents(entity, role);
@@ -44,14 +47,14 @@ public class ProductMapper {
       .category(CATEGORIES_TO_IT_S.get(entity.getCategory()))
       .brand(entity.getBrand())
       .eprelCode(entity.getEprelCode())
-      .gtinCode(entity.getGtinCode())
-      .productCode(entity.getProductCode())
+      .gtinCode(normalizeCsvCode(entity.getGtinCode()))
+      .productCode(normalizeCsvCode(entity.getProductCode()))
       .countryOfProduction(entity.getCountryOfProduction())
       .energyClass(entity.getEnergyClass())
       .linkEprel(generateEprelUrl(entity.getProductGroup(), entity.getEprelCode()))
       .batchName(CATEGORIES_TO_IT_P.get(entity.getCategory()) + "_" + entity.getProductFileId() + ".csv")
-      .productName(entity.getProductName())
-      .fullProductName(entity.getFullProductName())
+      .productName(limitName(entity.getProductName()))
+      .fullProductName(limitName(entity.getFullProductName()))
       .capacity(entity.getCapacity() == null || "N\\A".equals(entity.getCapacity()) ? "" : entity.getCapacity())
       .statusChangeChronology(chronology)
       .formalMotivation(entity.getFormalMotivation())
@@ -82,20 +85,27 @@ public class ProductMapper {
   }
 
   public static Product mapCookingHobToProduct(CSVRecord csvRecord, String orgId, String productFileId, String organizationName) {
+
+    String codeProduct = normalizeCsvCode(csvRecord.get(CODE_PRODUCT));
+    String gtinCode = normalizeCsvCode(csvRecord.get(CODE_GTIN_EAN));
+
+    String productName = CATEGORIES_TO_IT_S.get(COOKINGHOBS) + " " + csvRecord.get(BRAND) + " " + csvRecord.get(MODEL);
+    String fullProductName = gtinCode + " - " + productName;
+
     return Product.builder()
       .productFileId(productFileId)
       .organizationId(orgId)
       .registrationDate(LocalDateTime.now(ZoneOffset.UTC))
       .status(ProductStatus.UPLOADED.name())
-      .productCode(csvRecord.get(CODE_PRODUCT))
-      .gtinCode(csvRecord.get(CODE_GTIN_EAN))
+      .productCode(codeProduct)
+      .gtinCode(gtinCode)
       .category(COOKINGHOBS)
       .countryOfProduction(csvRecord.get(COUNTRY_OF_PRODUCTION))
       .brand(csvRecord.get(BRAND))
       .model(csvRecord.get(MODEL))
       .capacity("N\\A")
-      .productName(CATEGORIES_TO_IT_S.get(COOKINGHOBS) + " " + csvRecord.get(BRAND) + " " + csvRecord.get(MODEL))
-      .fullProductName(csvRecord.get(CODE_GTIN_EAN) + " - " + CATEGORIES_TO_IT_S.get(COOKINGHOBS) + " " + csvRecord.get(BRAND) + " " + csvRecord.get(MODEL))
+      .productName(limitName(productName))
+      .fullProductName(limitName(fullProductName))
       .organizationName(organizationName)
       .statusChangeChronology(new ArrayList<>())
       .formalMotivation("")
@@ -105,23 +115,30 @@ public class ProductMapper {
   public static Product mapEprelToProduct(CSVRecord csvRecord, EprelProduct eprelData, String orgId, String productFileId, String category, String organizationName) {
     String capacity = mapCapacity(category, eprelData);
 
+    String codeProduct = normalizeCsvCode(csvRecord.get(CODE_PRODUCT));
+    String gtinCode = normalizeCsvCode(csvRecord.get(CODE_GTIN_EAN));
+    String normalizedCategory = category != null ? category.trim().replaceAll("\\s+", "") : null;
+
+    String productName = limitName(mapName(null, eprelData, normalizedCategory, capacity));
+    String fullProductName = limitName(mapName(gtinCode, eprelData, normalizedCategory, capacity));
+
     return Product.builder()
       .productFileId(productFileId)
       .organizationId(orgId)
       .registrationDate(LocalDateTime.now(ZoneOffset.UTC))
       .status(ProductStatus.UPLOADED.name())
-      .productCode(csvRecord.get(CODE_PRODUCT))
-      .gtinCode(csvRecord.get(CODE_GTIN_EAN))
+      .productCode(codeProduct)
+      .gtinCode(gtinCode)
       .eprelCode(csvRecord.get(CODE_EPREL))
-      .category(category)
+      .category(normalizedCategory)
       .productGroup(eprelData.getProductGroup())
       .countryOfProduction(csvRecord.get(COUNTRY_OF_PRODUCTION))
       .brand(eprelData.getSupplierOrTrademark())
       .model(eprelData.getModelIdentifier())
       .energyClass(mapEnergyClass(eprelData.getEnergyClass()))
       .capacity(capacity)
-      .productName(mapName(null, eprelData, category, capacity))
-      .fullProductName(mapName(csvRecord.get(CODE_GTIN_EAN), eprelData, category, capacity))
+      .productName(productName)
+      .fullProductName(fullProductName)
       .organizationName(organizationName)
       .statusChangeChronology(new ArrayList<>())
       .formalMotivation("")
@@ -131,8 +148,10 @@ public class ProductMapper {
   public static String mapCapacity(String category, EprelProduct eprelData) {
     if (eprelData == null) return "N\\A";
     return switch (category) {
-      case WASHINGMACHINES, TUMBLEDRYERS -> eprelData.getRatedCapacity() != null ? eprelData.getRatedCapacity() + " kg" : "N\\A";
-      case WASHERDRIERS -> eprelData.getRatedCapacityWash() != null ? eprelData.getRatedCapacityWash() + " kg" : "N\\A";
+      case WASHINGMACHINES, TUMBLEDRYERS ->
+        eprelData.getRatedCapacity() != null ? eprelData.getRatedCapacity() + " kg" : "N\\A";
+      case WASHERDRIERS ->
+        eprelData.getRatedCapacityWash() != null ? eprelData.getRatedCapacityWash() + " kg" : "N\\A";
       case OVENS -> {
         if (eprelData.getCavities() != null && !eprelData.getCavities().isEmpty()) {
           yield eprelData.getCavities().stream()
@@ -140,8 +159,10 @@ public class ProductMapper {
             .collect(Collectors.joining(" / "));
         } else yield "N\\A";
       }
-      case DISHWASHERS -> eprelData.getRatedCapacity() != null ? eprelData.getRatedCapacity() + " c" : "N\\A";
-      case REFRIGERATINGAPPL -> eprelData.getTotalVolume() != null ? eprelData.getTotalVolume() + " l" : "N\\A";
+      case DISHWASHERS ->
+        eprelData.getRatedCapacity() != null ? eprelData.getRatedCapacity() + " c" : "N\\A";
+      case REFRIGERATINGAPPL ->
+        eprelData.getTotalVolume() != null ? eprelData.getTotalVolume() + " l" : "N\\A";
       default -> "N\\A";
     };
   }
@@ -191,7 +212,8 @@ public class ProductMapper {
     if (REFRIGERATINGAPPL.equals(category)) {
       boolean isRefrigerator = eprel.getCompartments().stream()
         .anyMatch(c -> {
-          if (REFRIGERATORS_CATEGORY.contains(c.getCompartmentType())) return true;
+          if (REFRIGERATORS_CATEGORY.contains(c.getCompartmentType()))
+            return true;
           if (VARIABLE_TEMP.equals(c.getCompartmentType())) {
             return c.getSubCompartments() != null &&
               c.getSubCompartments().stream()
@@ -221,4 +243,20 @@ public class ProductMapper {
     return sb.toString();
   }
 
+  private static String normalizeCsvCode(String value) {
+    if (value == null) {
+      return null;
+    }
+    return value.trim().replaceAll("\\s+", "");
+  }
+
+  private static String limitName(String value) {
+    if (value == null) {
+      return null;
+    }
+    if (value.length() <= MAX_NAME_LENGTH) {
+      return value;
+    }
+    return value.substring(0, MAX_NAME_LENGTH);
+  }
 }
