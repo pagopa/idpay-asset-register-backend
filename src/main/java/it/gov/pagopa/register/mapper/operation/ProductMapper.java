@@ -29,6 +29,8 @@ public class ProductMapper {
   }
 
   private static final int MAX_NAME_LENGTH = 255;
+  private static final int MAX_FIELD_100 = 100;
+  private static final int MAX_GTIN_LENGTH = 14;
 
   public static ProductDTO toDTO(Product entity, String role) {
     if (entity == null) return null;
@@ -42,13 +44,13 @@ public class ProductMapper {
         (entity.getStatus().equals(ProductStatus.WAIT_APPROVED.name()) || (entity.getStatus().equals(ProductStatus.SUPERVISED.name())))
         ? ProductStatus.UPLOADED.name()
         : entity.getStatus())
-      .model(entity.getModel())
+      .model(sanitizeBrandOrModelForDto(entity.getModel()))
       .productGroup(entity.getProductGroup())
       .category(CATEGORIES_TO_IT_S.get(entity.getCategory()))
-      .brand(entity.getBrand())
+      .brand(sanitizeBrandOrModelForDto(entity.getBrand()))
       .eprelCode(entity.getEprelCode())
-      .gtinCode(normalizeCsvCode(entity.getGtinCode()))
-      .productCode(normalizeCsvCode(entity.getProductCode()))
+      .gtinCode(sanitizeGtinForDto(entity.getGtinCode()))
+      .productCode(sanitizeProductCodeForDto(entity.getProductCode()))
       .countryOfProduction(entity.getCountryOfProduction())
       .energyClass(entity.getEnergyClass())
       .linkEprel(generateEprelUrl(entity.getProductGroup(), entity.getEprelCode()))
@@ -258,5 +260,40 @@ public class ProductMapper {
       return value;
     }
     return value.substring(0, MAX_NAME_LENGTH);
+  }
+
+  private static String sanitizeBrandOrModelForDto(String value) {
+    if (value == null) {
+      return null;
+    }
+    String v = value.trim();
+    if (v.length() > MAX_FIELD_100) {
+      v = v.substring(0, MAX_FIELD_100);
+    }
+    return v;
+  }
+
+  private static String sanitizeProductCodeForDto(String value) {
+    if (value == null) {
+      return null;
+    }
+    String v = value.trim();
+    v = v.replaceAll("[^a-zA-Z0-9 ]", "");
+    if (v.length() > MAX_FIELD_100) {
+      v = v.substring(0, MAX_FIELD_100);
+    }
+    return v;
+  }
+
+  private static String sanitizeGtinForDto(String value) {
+    if (value == null) {
+      return null;
+    }
+    String v = value.replaceAll("\\s+", "");
+    v = v.replaceAll("[^a-zA-Z0-9]", "");
+    if (v.length() > MAX_GTIN_LENGTH) {
+      v = v.substring(0, MAX_GTIN_LENGTH);
+    }
+    return v;
   }
 }
