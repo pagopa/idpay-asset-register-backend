@@ -256,20 +256,29 @@ public class ProductMapper {
     if (value == null) {
       return null;
     }
-    if (value.length() <= MAX_NAME_LENGTH) {
-      return value;
+
+    String v = value.trim();
+
+    v = v.replaceAll("\\s+", " ");
+
+    if (v.length() > MAX_NAME_LENGTH) {
+      v = v.substring(0, MAX_NAME_LENGTH);
     }
-    return value.substring(0, MAX_NAME_LENGTH);
+
+    return v;
   }
 
   private static String sanitizeBrandOrModelForDto(String value) {
     if (value == null) {
       return null;
     }
-    String v = value.trim();
+
+    String v = value.trim().replaceAll("\\s+", " ");
+
     if (v.length() > MAX_FIELD_100) {
       v = v.substring(0, MAX_FIELD_100);
     }
+
     return v;
   }
 
@@ -277,11 +286,17 @@ public class ProductMapper {
     if (value == null) {
       return null;
     }
+
     String v = value.trim();
+
     v = v.replaceAll("[^a-zA-Z0-9 ]", "");
+
+    v = v.replaceAll("\\s+", " ");
+
     if (v.length() > MAX_FIELD_100) {
       v = v.substring(0, MAX_FIELD_100);
     }
+
     return v;
   }
 
@@ -289,11 +304,17 @@ public class ProductMapper {
     if (value == null) {
       return null;
     }
-    String v = value.replaceAll("\\s+", "");
+
+    String v = value.trim();
+
+    v = v.replaceAll("\\s+", "");
+
     v = v.replaceAll("[^a-zA-Z0-9]", "");
+
     if (v.length() > MAX_GTIN_LENGTH) {
       v = v.substring(0, MAX_GTIN_LENGTH);
     }
+
     return v;
   }
-}
+}  
