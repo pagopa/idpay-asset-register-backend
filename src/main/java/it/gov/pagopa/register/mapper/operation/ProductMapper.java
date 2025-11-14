@@ -317,5 +317,4 @@ public class ProductMapper {
 
     return v;
   }
-
-}
+}  
