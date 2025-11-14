@@ -1,6 +1,7 @@
 package it.gov.pagopa.common.web.exception;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import it.gov.pagopa.common.web.dto.ErrorDTO;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
@@ -24,6 +25,15 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
+import jakarta.validation.Path;
+import java.util.Set;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 @ExtendWith({SpringExtension.class, MockitoExtension.class})
 @WebMvcTest(value = {ValidationExceptionHandlerTest.TestController.class}, excludeAutoConfiguration = SecurityAutoConfiguration.class)
@@ -86,4 +96,26 @@ class ValidationExceptionHandlerTest {
                 .andExpect(MockMvcResultMatchers.jsonPath("$.message").value("Required request header 'data' for method parameter type String is not present"));
 
     }
+
+  @Test
+  void constraintViolationHandler_Else() {
+    ErrorDTO template = new ErrorDTO("INVALID_REQUEST", "Invalid request");
+    ValidationExceptionHandler handler = new ValidationExceptionHandler(template);
+
+    HttpServletRequest request = mock(HttpServletRequest.class);
+
+    ConstraintViolation<?> violation = mock(ConstraintViolation.class);
+    Path propertyPath = mock(Path.class);
+    when(propertyPath.toString()).thenReturn(".");
+    when(violation.getPropertyPath()).thenReturn(propertyPath);
+    when(violation.getMessage()).thenReturn("Error message");
+
+    ConstraintViolationException ex = mock(ConstraintViolationException.class);
+    when(ex.getConstraintViolations()).thenReturn(Set.of(violation));
+
+    ErrorDTO result = handler.handleConstraintViolationException(ex, request);
+
+    assertEquals("[.]: Error message", result.getMessage());
+    assertEquals("INVALID_REQUEST", result.getCode());
+  }
 }
