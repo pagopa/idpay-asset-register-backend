@@ -1,15 +1,19 @@
 package it.gov.pagopa.register.controller.clean;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+
 import it.gov.pagopa.register.dto.clean.CleanRequestDTO;
 import it.gov.pagopa.register.enums.UserRole;
 import it.gov.pagopa.register.service.clean.CleanService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.security.autoconfigure.SecurityAutoConfiguration;
+import org.springframework.boot.security.autoconfigure.UserDetailsServiceAutoConfiguration;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import tools.jackson.databind.ObjectMapper;
 
 import java.util.List;
 
@@ -17,7 +21,8 @@ import static it.gov.pagopa.register.constants.AssetRegisterConstants.USERNAME;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 
-@WebMvcTest(CleanController.class)
+@WebMvcTest(value={CleanController.class}, excludeAutoConfiguration =  { UserDetailsServiceAutoConfiguration.class , SecurityAutoConfiguration.class})
+@AutoConfigureMockMvc(addFilters = false)
 class CleanControllerTest {
 
   @Autowired

@@ -1,12 +1,13 @@
 package it.gov.pagopa.common.kafka.utils;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectReader;
+
 import lombok.Data;
 import org.junit.jupiter.api.Test;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectReader;
 
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -63,6 +64,6 @@ class CommonUtilitiesTest {
 
     assertNull(result);
     assertNotNull(errorRef.get());
-    assertTrue(errorRef.get() instanceof JsonProcessingException);
+    assertTrue(errorRef.get() instanceof JacksonException);
   }
 }
