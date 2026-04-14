@@ -62,7 +62,7 @@ class ValidationExceptionHandlerTest {
     private String data;
   }
 
-  private final ValidationDTO VALIDATION_DTO = new ValidationDTO("data");
+  private final ValidationDTO validationDTO = new ValidationDTO("data");
 
   @Test
   void handleMethodArgumentNotValidException() throws Exception {
@@ -82,7 +82,7 @@ class ValidationExceptionHandlerTest {
 
     mockMvc.perform(MockMvcRequestBuilders.put("/test")
         .contentType(MediaType.APPLICATION_JSON)
-        .content(objectMapper.writeValueAsString(VALIDATION_DTO))
+        .content(objectMapper.writeValueAsString(validationDTO))
         .accept(MediaType.APPLICATION_JSON))
       .andExpect(MockMvcResultMatchers.status().isBadRequest())
       .andExpect(MockMvcResultMatchers.jsonPath("$.code").value("INVALID_REQUEST"))

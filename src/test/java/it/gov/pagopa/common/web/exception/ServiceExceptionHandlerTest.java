@@ -54,6 +54,6 @@ class ServiceExceptionHandlerTest {
     mockMvc.perform(MockMvcRequestBuilders.get("/test")
         .contentType(MediaType.APPLICATION_JSON))
       .andExpect(MockMvcResultMatchers.status().isInternalServerError())
-      .andExpect(MockMvcResultMatchers.content().json("{\"stringCode\":\"RESPONSE\",\"longCode\":0}", false));
+      .andExpect(MockMvcResultMatchers.content().json("{\"stringCode\":\"RESPONSE\",\"longCode\":0}"));
   }
 }

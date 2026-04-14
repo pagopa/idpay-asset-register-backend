@@ -27,11 +27,13 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Collections;
+
 import static org.mockito.Mockito.doThrow;
 
 @ExtendWith(SpringExtension.class)
 @WebMvcTest(value = {
-  MongoExceptionHandlerTest.TestController.class}, excludeAutoConfiguration = { UserDetailsServiceAutoConfiguration.class , SecurityAutoConfiguration.class})
+  MongoExceptionHandlerTest.TestController.class}, excludeAutoConfiguration =  { UserDetailsServiceAutoConfiguration.class , SecurityAutoConfiguration.class})
 @AutoConfigureMockMvc(addFilters = false)
 @ContextConfiguration(classes = {MongoExceptionHandler.class,
   MongoExceptionHandlerTest.TestController.class, ErrorManager.class})
@@ -92,7 +94,7 @@ class MongoExceptionHandlerTest {
             """;
 
     final MongoWriteException mongoWriteException = new MongoWriteException(
-      new WriteError(16500, writeErrorMessage, BsonDocument.parse("{}")), new ServerAddress());
+      new WriteError(16500, writeErrorMessage, BsonDocument.parse("{}")), new ServerAddress(), Collections.emptyList());
     doThrow(
       new DataIntegrityViolationException(mongoWriteException.getMessage(), mongoWriteException))
       .when(testControllerSpy).testEndpoint();
@@ -115,7 +117,7 @@ class MongoExceptionHandlerTest {
     mockMvc.perform(MockMvcRequestBuilders.get("/test")
         .contentType(MediaType.APPLICATION_JSON))
       .andExpect(MockMvcResultMatchers.status().isInternalServerError())
-      .andExpect(MockMvcResultMatchers.jsonPath("$.message").value("Something gone wrong"));
+      .andExpect(MockMvcResultMatchers.content().json("{\"message\":\"Something gone wrong\"}"));
   }
 
   @Test
@@ -126,7 +128,6 @@ class MongoExceptionHandlerTest {
     mockMvc.perform(MockMvcRequestBuilders.get("/test")
         .contentType(MediaType.APPLICATION_JSON))
       .andExpect(MockMvcResultMatchers.status().isTooManyRequests())
-      .andExpect(MockMvcResultMatchers.jsonPath("$.message").value("Too Many Requests"));
-
+      .andExpect(MockMvcResultMatchers.content().json("{\"message\":\"Too Many Requests\"}"));
   }
 }
