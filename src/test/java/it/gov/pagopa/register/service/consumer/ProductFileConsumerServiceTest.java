@@ -1,12 +1,11 @@
 package it.gov.pagopa.register.service.consumer;
 
 import com.azure.storage.blob.models.BlobStorageException;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import it.gov.pagopa.register.connector.notification.NotificationServiceImpl;
 import it.gov.pagopa.register.connector.storage.FileStorageClient;
 import it.gov.pagopa.register.dto.operation.StorageEventDTO;
 import it.gov.pagopa.register.dto.operation.StorageEventDTO.StorageEventData;
+import it.gov.pagopa.register.dto.utils.EventDetails;
 import it.gov.pagopa.register.dto.utils.ProductValidationResult;
 import it.gov.pagopa.register.event.producer.ProductFileProducer;
 import it.gov.pagopa.register.exception.operation.EprelException;
@@ -17,7 +16,6 @@ import it.gov.pagopa.register.repository.operation.ProductRepository;
 import it.gov.pagopa.register.service.validator.CookinghobsValidatorService;
 import it.gov.pagopa.register.service.validator.EprelProductValidatorService;
 import it.gov.pagopa.register.utils.CsvUtils;
-import it.gov.pagopa.register.dto.utils.EventDetails;
 import org.apache.commons.csv.CSVRecord;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -26,19 +24,19 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.messaging.Message;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectReader;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.*;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectReader;
-import org.springframework.messaging.Message;
-
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(MockitoExtension.class)
 class ProductFileConsumerServiceTest {
@@ -183,7 +181,7 @@ class ProductFileConsumerServiceTest {
   }
 
   @Test
-  void testExecute_validEvent_shouldProcessFile_butThrowEprelErrorAndJSONException() throws JsonProcessingException {
+  void testExecute_validEvent_shouldProcessFile_butThrowEprelErrorAndJSONException() throws JacksonException {
     StorageEventData data = StorageEventData.builder()
       .url("/CSV/ORG123/ORGNAME/WASHINGMACHINES/file123.csv")
       .build();
@@ -197,7 +195,7 @@ class ProductFileConsumerServiceTest {
       .thenReturn(Optional.of(new ProductFile()));
     when(eprelProductValidator.validateRecords(any(), any(), any(), any(), any(), any(),any()))
       .thenThrow(new EprelException("Erorr"));
-    when(objectMapper.writeValueAsString(any())).thenThrow(new JsonProcessingException("Error during serialization") {});
+    when(objectMapper.writeValueAsString(any())).thenThrow(new JacksonException("Error during serialization") {});
     try (MockedStatic<CsvUtils> utils = mockStatic(CsvUtils.class)) {
       CSVRecord csvRecord = mock(CSVRecord.class);
       utils.when(() -> CsvUtils.readHeader(any(ByteArrayOutputStream.class)))

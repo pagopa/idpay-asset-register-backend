@@ -1,7 +1,5 @@
 package it.gov.pagopa.common.web.exception;
 
-import static org.mockito.Mockito.doThrow;
-
 import com.mongodb.MongoQueryException;
 import com.mongodb.MongoWriteException;
 import com.mongodb.ServerAddress;
@@ -12,8 +10,10 @@ import org.bson.BsonDocument;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.security.autoconfigure.SecurityAutoConfiguration;
+import org.springframework.boot.security.autoconfigure.UserDetailsServiceAutoConfiguration;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.mongodb.UncategorizedMongoDbException;
 import org.springframework.http.HttpHeaders;
@@ -21,20 +21,22 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.springframework.test.json.JsonCompareMode;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
+import java.util.Collections;
+
+import static org.mockito.Mockito.doThrow;
 
 @ExtendWith(SpringExtension.class)
 @WebMvcTest(value = {
-        MongoExceptionHandlerTest.TestController.class}, excludeAutoConfiguration = SecurityAutoConfiguration.class)
+  MongoExceptionHandlerTest.TestController.class}, excludeAutoConfiguration =  { UserDetailsServiceAutoConfiguration.class , SecurityAutoConfiguration.class})
+@AutoConfigureMockMvc(addFilters = false)
 @ContextConfiguration(classes = {MongoExceptionHandler.class,
-        MongoExceptionHandlerTest.TestController.class, ErrorManager.class})
+  MongoExceptionHandlerTest.TestController.class, ErrorManager.class})
 class MongoExceptionHandlerTest {
 
   @Autowired
@@ -66,18 +68,18 @@ class MongoExceptionHandlerTest {
         """;
 
     final MongoQueryException mongoQueryException = new MongoQueryException(
-            BsonDocument.parse(mongoFullErrorResponse), new ServerAddress());
+      BsonDocument.parse(mongoFullErrorResponse), new ServerAddress());
     doThrow(
-            new UncategorizedMongoDbException(mongoQueryException.getMessage(), mongoQueryException))
-            .when(testControllerSpy).testEndpoint();
+      new UncategorizedMongoDbException(mongoQueryException.getMessage(), mongoQueryException))
+      .when(testControllerSpy).testEndpoint();
 
     mockMvc.perform(MockMvcRequestBuilders.get("/test")
-                    .contentType(MediaType.APPLICATION_JSON))
-            .andExpect(MockMvcResultMatchers.status().isTooManyRequests())
-            .andExpect(MockMvcResultMatchers.jsonPath("$.message").value("Too Many Requests"))
-            .andExpect(MockMvcResultMatchers.header().exists(HttpHeaders.RETRY_AFTER))
-            .andExpect(MockMvcResultMatchers.header().string(HttpHeaders.RETRY_AFTER, "1"))
-            .andExpect(MockMvcResultMatchers.header().string("Retry-After-Ms", "34"));
+        .contentType(MediaType.APPLICATION_JSON))
+      .andExpect(MockMvcResultMatchers.status().isTooManyRequests())
+      .andExpect(MockMvcResultMatchers.jsonPath("$.message").value("Too Many Requests"))
+      .andExpect(MockMvcResultMatchers.header().exists(HttpHeaders.RETRY_AFTER))
+      .andExpect(MockMvcResultMatchers.header().string(HttpHeaders.RETRY_AFTER, "1"))
+      .andExpect(MockMvcResultMatchers.header().string("Retry-After-Ms", "34"));
   }
 
   @Test
@@ -92,40 +94,40 @@ class MongoExceptionHandlerTest {
             """;
 
     final MongoWriteException mongoWriteException = new MongoWriteException(
-            new WriteError(16500, writeErrorMessage, BsonDocument.parse("{}")), new ServerAddress(), List.of("error-label"));
+      new WriteError(16500, writeErrorMessage, BsonDocument.parse("{}")), new ServerAddress(), Collections.emptyList());
     doThrow(
-            new DataIntegrityViolationException(mongoWriteException.getMessage(), mongoWriteException))
-            .when(testControllerSpy).testEndpoint();
+      new DataIntegrityViolationException(mongoWriteException.getMessage(), mongoWriteException))
+      .when(testControllerSpy).testEndpoint();
 
     mockMvc.perform(MockMvcRequestBuilders.get("/test")
-                    .contentType(MediaType.APPLICATION_JSON))
-            .andExpect(MockMvcResultMatchers.status().isTooManyRequests())
-            .andExpect(MockMvcResultMatchers.jsonPath("$.message").value("Too Many Requests"))
-            .andExpect(MockMvcResultMatchers.header().exists(HttpHeaders.RETRY_AFTER))
-            .andExpect(MockMvcResultMatchers.header().string(HttpHeaders.RETRY_AFTER, "1"))
-            .andExpect(MockMvcResultMatchers.header().string("Retry-After-Ms", "34"));
+        .contentType(MediaType.APPLICATION_JSON))
+      .andExpect(MockMvcResultMatchers.status().isTooManyRequests())
+      .andExpect(MockMvcResultMatchers.jsonPath("$.message").value("Too Many Requests"))
+      .andExpect(MockMvcResultMatchers.header().exists(HttpHeaders.RETRY_AFTER))
+      .andExpect(MockMvcResultMatchers.header().string(HttpHeaders.RETRY_AFTER, "1"))
+      .andExpect(MockMvcResultMatchers.header().string("Retry-After-Ms", "34"));
   }
 
   @Test
   void handleUncategorizedMongoDbExceptionNotRequestRateTooLarge() throws Exception {
 
     doThrow(new UncategorizedMongoDbException("DUMMY", new Exception()))
-            .when(testControllerSpy).testEndpoint();
+      .when(testControllerSpy).testEndpoint();
 
     mockMvc.perform(MockMvcRequestBuilders.get("/test")
-                    .contentType(MediaType.APPLICATION_JSON))
-            .andExpect(MockMvcResultMatchers.status().isInternalServerError())
-            .andExpect(MockMvcResultMatchers.content().json("{\"message\":\"Something gone wrong\"}", JsonCompareMode.LENIENT));
+        .contentType(MediaType.APPLICATION_JSON))
+      .andExpect(MockMvcResultMatchers.status().isInternalServerError())
+      .andExpect(MockMvcResultMatchers.content().json("{\"message\":\"Something gone wrong\"}"));
   }
 
   @Test
   void handleMongoRequestRateTooLargeRetryExpiredException() throws Exception {
     doThrow(new MongoRequestRateTooLargeRetryExpiredException("FLOWNAME",3,3,0,100,34L,new Exception()))
-            .when(testControllerSpy).testEndpoint();
+      .when(testControllerSpy).testEndpoint();
 
     mockMvc.perform(MockMvcRequestBuilders.get("/test")
-                    .contentType(MediaType.APPLICATION_JSON))
-            .andExpect(MockMvcResultMatchers.status().isTooManyRequests())
-            .andExpect(MockMvcResultMatchers.content().json("{\"message\":\"Too Many Requests\"}", JsonCompareMode.LENIENT));
+        .contentType(MediaType.APPLICATION_JSON))
+      .andExpect(MockMvcResultMatchers.status().isTooManyRequests())
+      .andExpect(MockMvcResultMatchers.content().json("{\"message\":\"Too Many Requests\"}"));
   }
 }

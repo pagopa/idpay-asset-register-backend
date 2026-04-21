@@ -1,10 +1,6 @@
 package it.gov.pagopa.register.service.consumer;
 
 import com.azure.storage.blob.models.BlobStorageException;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectReader;
 import it.gov.pagopa.common.kafka.BaseKafkaConsumer;
 import it.gov.pagopa.register.connector.notification.NotificationServiceImpl;
 import it.gov.pagopa.register.connector.storage.FileStorageClient;
@@ -25,6 +21,10 @@ import org.apache.commons.csv.CSVRecord;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.messaging.Message;
 import org.springframework.stereotype.Service;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectReader;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -104,7 +104,7 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
       if (isValidEvent(event)) {
         try {
           processEvent(event);
-        } catch (EprelException e) {
+        } catch (EprelException _) {
           toRetry.add(event);
         }
       }
@@ -123,7 +123,7 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
       if(Boolean.FALSE.equals(sent)){
         unlockFile(events);
       }
-    } catch (JsonProcessingException e) {
+    } catch (JacksonException e) {
       unlockFile(events);
       log.error("JsonProcessingException: {}", e.getMessage());
     }

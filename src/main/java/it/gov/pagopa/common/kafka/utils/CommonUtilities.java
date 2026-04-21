@@ -1,8 +1,8 @@
 package it.gov.pagopa.common.kafka.utils;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectReader;
 import org.springframework.messaging.Message;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectReader;
 
 import java.util.function.Consumer;
 
@@ -14,7 +14,7 @@ public class CommonUtilities {
         try {
             String payload = readMessagePayload(message);
             return objectReader.readValue(payload);
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             onError.accept(e);
             return null;
         }
