@@ -1,9 +1,9 @@
 package it.gov.pagopa.common.kafka.utils;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectReader;
 import it.gov.pagopa.common.kafka.BaseKafkaConsumer;
 import org.springframework.messaging.Message;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectReader;
 
 
 public class BaseConsumer extends BaseKafkaConsumer<String> {

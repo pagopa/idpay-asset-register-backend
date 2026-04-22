@@ -4,8 +4,8 @@ import com.mongodb.MongoException;
 import it.gov.pagopa.common.config.CustomMongoHealthIndicator;
 import org.bson.Document;
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.actuate.health.Health;
-import org.springframework.boot.actuate.health.Status;
+import org.springframework.boot.health.contributor.Health;
+import org.springframework.boot.health.contributor.Status;
 import org.springframework.data.mongodb.core.MongoTemplate;
 
 import static org.assertj.core.api.Assertions.assertThat;

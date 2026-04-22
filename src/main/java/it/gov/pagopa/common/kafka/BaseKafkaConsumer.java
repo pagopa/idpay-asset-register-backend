@@ -1,6 +1,5 @@
 package it.gov.pagopa.common.kafka;
 
-import com.fasterxml.jackson.databind.ObjectReader;
 import it.gov.pagopa.common.kafka.utils.CommonUtilities;
 import it.gov.pagopa.common.kafka.constants.KafkaConstants;
 import lombok.extern.slf4j.Slf4j;
@@ -8,6 +7,7 @@ import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.Message;
 import reactor.util.context.Context;
+import tools.jackson.databind.ObjectReader;
 
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
