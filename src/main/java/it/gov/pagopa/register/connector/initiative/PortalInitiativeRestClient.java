@@ -10,8 +10,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import java.util.List;
 
 @FeignClient(
-  name = "${app.rest-client.initiative.service.name}",
-  url = "${app.rest-client.initiative.service.base-url}"
+  name = "${app.rest-client.portal-initiative.service.name}",
+  url = "${app.rest-client.portal-initiative.service.base-url}"
 )
 public interface PortalInitiativeRestClient {
 

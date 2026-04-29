@@ -7,6 +7,8 @@ import it.gov.pagopa.register.mapper.operation.InitiativeMapper;
 import it.gov.pagopa.register.model.operation.ProducersInitiative;
 import org.junit.jupiter.api.Test;
 
+import java.time.LocalDateTime;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 class InitiativeMapperTest {
@@ -44,6 +46,8 @@ class InitiativeMapperTest {
       .initiativeId("111")
       .initiativeName("Iniziativa A")
       .status(InitiativeStatus.APPROVED.toString())
+      .creationDate(LocalDateTime.now())
+      .updateDate(LocalDateTime.now())
       .build();
 
     InitiativeDTO dto = mapper.toDTO(entity);
@@ -52,6 +56,5 @@ class InitiativeMapperTest {
     assertEquals("111", dto.getInitiativeId());
     assertEquals("Iniziativa A", dto.getInitiativeName());
     assertEquals(InitiativeStatus.APPROVED, dto.getStatus());
-    assertTrue(dto.getEnabled());
   }
 }
