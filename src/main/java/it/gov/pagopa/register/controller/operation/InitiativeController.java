@@ -6,7 +6,7 @@ import jakarta.validation.constraints.Pattern;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -25,7 +25,7 @@ public class InitiativeController {
 
   private final InitiativeService service;
 
-  @PostMapping("/initiative")
+  @GetMapping("/initiative")
   public ResponseEntity<List<InitiativeDTO>> getInitiativeEnabled(
     @RequestHeader("x-organization-role") @Pattern(regexp = ROLE_PATTERN) String role,
     @RequestHeader("x-organization-id") @Pattern(regexp = UUID_V4_PATTERN) String organizationId
