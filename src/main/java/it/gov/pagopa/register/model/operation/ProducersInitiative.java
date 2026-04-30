@@ -18,7 +18,7 @@ public class ProducersInitiative {
   @Id
   private String id;
 
-  private String producersId;
+  private String producerId;
   private String initiativeId;
 
   private String initiativeName;

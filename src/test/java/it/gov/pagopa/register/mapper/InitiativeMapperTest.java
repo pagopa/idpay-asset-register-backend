@@ -17,7 +17,7 @@ class InitiativeMapperTest {
   @Test
   void toDTO_ProducersInitiative() {
     ProducersInitiative entity = ProducersInitiative.builder()
-      .producersId("123")
+      .producerId("123")
       .initiativeId("111")
       .initiativeName("Iniziativa A")
       .initiativeStatus(InitiativeStatus.APPROVED)

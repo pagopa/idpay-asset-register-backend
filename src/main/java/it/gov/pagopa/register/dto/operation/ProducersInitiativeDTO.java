@@ -10,7 +10,7 @@ import java.time.LocalDate;
 @AllArgsConstructor
 public class ProducersInitiativeDTO {
 
-  private String producersId;
+  private String producerId;
   private String initiativeId;
   private String initiativeName;
   private String initiativeStatus;

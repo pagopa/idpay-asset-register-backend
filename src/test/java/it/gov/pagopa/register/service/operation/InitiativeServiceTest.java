@@ -49,7 +49,7 @@ class InitiativeServiceTest {
       .enabled(false)
       .build();
 
-    when(repository.findByProducersId(organizationId))
+    when(repository.findByProducerId(organizationId))
       .thenReturn(List.of(enabled, disabled));
 
     // when
@@ -64,7 +64,7 @@ class InitiativeServiceTest {
     assertEquals("Test initiative", dto.getInitiativeName());
     assertTrue(dto.getEnabled());
 
-    verify(repository).findByProducersId(organizationId);
+    verify(repository).findByProducerId(organizationId);
     verifyNoInteractions(portalInitiativeService);
   }
 

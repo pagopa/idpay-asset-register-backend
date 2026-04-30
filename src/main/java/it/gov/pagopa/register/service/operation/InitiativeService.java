@@ -24,7 +24,7 @@ public class InitiativeService {
   public List<InitiativeDTO> getInitiatives(String role, String organizationId) {
 
     if(role.equals(UserRole.OPERATORE.getRole()))
-      return repository.findByProducersId(organizationId)
+      return repository.findByProducerId(organizationId)
         .stream()
         .filter(ProducersInitiative::getEnabled)
         .map(InitiativeMapper::toDTO)
