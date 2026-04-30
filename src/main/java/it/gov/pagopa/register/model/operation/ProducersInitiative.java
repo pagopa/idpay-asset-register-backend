@@ -1,12 +1,14 @@
 package it.gov.pagopa.register.model.operation;
 
 import it.gov.pagopa.register.dto.operation.InitiativeStatus;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import java.time.OffsetDateTime;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Data
 @Builder
@@ -24,8 +26,8 @@ public class ProducersInitiative {
   private String initiativeName;
   private InitiativeStatus initiativeStatus;
 
-  private LocalDate initiativeStartDate;
-  private LocalDate initiativeEndDate;
+  private LocalDateTime initiativeStartDate;
+  private LocalDateTime initiativeEndDate;
 
   private String initiativeServiceId;
   private String initiativeOrganizationName;
@@ -33,6 +35,6 @@ public class ProducersInitiative {
   private Boolean enabled;
   private String source;
 
-  private OffsetDateTime createdAt;
-  private OffsetDateTime updatedAt;
+  private LocalDateTime createdAt;
+  private LocalDateTime updatedAt;
 }

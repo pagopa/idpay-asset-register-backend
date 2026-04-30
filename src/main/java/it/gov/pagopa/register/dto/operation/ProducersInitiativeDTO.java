@@ -1,8 +1,11 @@
 package it.gov.pagopa.register.dto.operation;
 
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Data
 @Builder
@@ -15,8 +18,8 @@ public class ProducersInitiativeDTO {
   private String initiativeName;
   private String initiativeStatus;
 
-  private LocalDate initiativeStartDate;
-  private LocalDate initiativeEndDate;
+  private LocalDateTime initiativeStartDate;
+  private LocalDateTime initiativeEndDate;
 
   private String initiativeServiceId;
   private String initiativeOrganizationName;

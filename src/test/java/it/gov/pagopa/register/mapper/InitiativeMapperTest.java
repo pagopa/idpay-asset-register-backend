@@ -24,6 +24,8 @@ class InitiativeMapperTest {
       .initiativeServiceId("service1")
       .initiativeOrganizationName("MIMIT")
       .enabled(true)
+      .initiativeStartDate(LocalDateTime.now())
+      .initiativeEndDate(LocalDateTime.now())
       .build();
 
     InitiativeDTO dto = InitiativeMapper.toDTO(entity);
