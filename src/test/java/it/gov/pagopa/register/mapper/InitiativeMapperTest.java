@@ -13,8 +13,6 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class InitiativeMapperTest {
 
-  private final InitiativeMapper mapper = new InitiativeMapper();
-
 
   @Test
   void toDTO_ProducersInitiative() {
@@ -28,7 +26,7 @@ class InitiativeMapperTest {
       .enabled(true)
       .build();
 
-    InitiativeDTO dto = mapper.toDTO(entity);
+    InitiativeDTO dto = InitiativeMapper.toDTO(entity);
 
     assertNotNull(dto);
     assertEquals("111", dto.getInitiativeId());
@@ -50,7 +48,7 @@ class InitiativeMapperTest {
       .updateDate(LocalDateTime.now())
       .build();
 
-    InitiativeDTO dto = mapper.toDTO(entity);
+    InitiativeDTO dto = InitiativeMapper.toDTO(entity);
 
     assertNotNull(dto);
     assertEquals("111", dto.getInitiativeId());
