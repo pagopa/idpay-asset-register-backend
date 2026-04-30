@@ -7,5 +7,6 @@ public enum InitiativeStatus {
   TO_CHECK,
   SUSPENDED,
   DRAFT,
-  CLOSED
+  CLOSED,
+  EVALUATING
 }
