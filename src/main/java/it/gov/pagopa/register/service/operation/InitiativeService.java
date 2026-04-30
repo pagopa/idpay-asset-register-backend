@@ -14,12 +14,10 @@ import java.util.List;
 public class InitiativeService {
 
   private final ProducersInitiativeRepository repository;
-  private final InitiativeMapper mapper;
   private final PortalInitiativeService portalInitiativeService;
 
-  public InitiativeService(ProducersInitiativeRepository repository, InitiativeMapper mapper, PortalInitiativeService portalInitiativeService) {
+  public InitiativeService(ProducersInitiativeRepository repository, PortalInitiativeService portalInitiativeService) {
     this.repository = repository;
-    this.mapper = mapper;
     this.portalInitiativeService = portalInitiativeService;
   }
 
@@ -29,7 +27,7 @@ public class InitiativeService {
       return repository.findByProducersId(organizationId)
         .stream()
         .filter(ProducersInitiative::getEnabled)
-        .map(mapper::toDTO)
+        .map(InitiativeMapper::toDTO)
         .toList();
 
     return portalInitiativeService.getInitiatives(organizationId);

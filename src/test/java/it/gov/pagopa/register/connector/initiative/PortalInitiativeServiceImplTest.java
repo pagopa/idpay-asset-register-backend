@@ -1,8 +1,8 @@
 package it.gov.pagopa.register.connector.initiative;
 
 import it.gov.pagopa.register.dto.operation.InitiativeDTO;
+import it.gov.pagopa.register.dto.operation.InitiativeStatus;
 import it.gov.pagopa.register.dto.operation.InitiativeSummaryDTO;
-import it.gov.pagopa.register.mapper.operation.InitiativeMapper;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -22,9 +22,6 @@ class PortalInitiativeServiceImplTest {
   @Mock
   private PortalInitiativeRestClient portalInitiativeRestClient;
 
-  @Mock
-  private InitiativeMapper mapper;
-
   @InjectMocks
   private PortalInitiativeServiceImpl service;
 
@@ -35,34 +32,32 @@ class PortalInitiativeServiceImplTest {
     String organizationId = "org-123";
 
     InitiativeSummaryDTO summaryDTO = InitiativeSummaryDTO.builder()
-        .initiativeId("111")
-        .initiativeName("Iniziativa A")
-        .status("ACTIVE")
-        .creationDate(LocalDateTime.now())
-        .build();
-
-    InitiativeDTO initiativeDTO = InitiativeDTO.builder()
-        .initiativeId("111")
-        .initiativeName("Iniziativa A")
-        .build();
+      .initiativeId("111")
+      .initiativeName("Iniziativa A")
+      .status("PUBLISHED")
+      .creationDate(LocalDateTime.of(2024, 1, 10, 10, 0))
+      .build();
 
     when(portalInitiativeRestClient.getInitiativeSummary(organizationId, null))
-        .thenReturn(ResponseEntity.ok(List.of(summaryDTO)));
-
-    when(mapper.toDTO(summaryDTO))
-        .thenReturn(initiativeDTO);
+      .thenReturn(ResponseEntity.ok(List.of(summaryDTO)));
 
     // when
     List<InitiativeDTO> result = service.getInitiatives(organizationId);
 
     // then
     assertEquals(1, result.size());
-    assertEquals("111", result.get(0).getInitiativeId());
-    assertEquals("Iniziativa A", result.get(0).getInitiativeName());
+
+    InitiativeDTO dto = result.get(0);
+    assertEquals("111", dto.getInitiativeId());
+    assertEquals("Iniziativa A", dto.getInitiativeName());
+    assertEquals(InitiativeStatus.PUBLISHED, dto.getStatus());
+    assertEquals(
+      summaryDTO.getCreationDate().toLocalDate(),
+      dto.getStartDate()
+    );
 
     verify(portalInitiativeRestClient)
-        .getInitiativeSummary(organizationId, null);
-    verify(mapper).toDTO(summaryDTO);
-    verifyNoMoreInteractions(portalInitiativeRestClient, mapper);
+      .getInitiativeSummary(organizationId, null);
+    verifyNoMoreInteractions(portalInitiativeRestClient);
   }
 }

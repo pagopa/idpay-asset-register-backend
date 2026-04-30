@@ -15,15 +15,13 @@ public class PortalInitiativeServiceImpl implements PortalInitiativeService {
 
   private final PortalInitiativeRestClient portalInitiativeRestClient;
 
-  private final InitiativeMapper mapper;
-
   @Override
   public List<InitiativeDTO> getInitiatives(String organizationId) {
     return portalInitiativeRestClient
       .getInitiativeSummary(organizationId, null)
       .getBody()
       .stream()
-      .map(mapper::toDTO)
+      .map(InitiativeMapper::toDTO)
       .toList();
   }
 }

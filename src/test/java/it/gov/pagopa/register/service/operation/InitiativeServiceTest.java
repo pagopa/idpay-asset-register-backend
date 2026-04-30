@@ -2,8 +2,8 @@ package it.gov.pagopa.register.service.operation;
 
 import it.gov.pagopa.register.connector.initiative.PortalInitiativeService;
 import it.gov.pagopa.register.dto.operation.InitiativeDTO;
+import it.gov.pagopa.register.dto.operation.InitiativeStatus;
 import it.gov.pagopa.register.enums.UserRole;
-import it.gov.pagopa.register.mapper.operation.InitiativeMapper;
 import it.gov.pagopa.register.model.operation.ProducersInitiative;
 import it.gov.pagopa.register.repository.operation.ProducersInitiativeRepository;
 import org.junit.jupiter.api.Test;
@@ -15,6 +15,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -22,9 +23,6 @@ class InitiativeServiceTest {
 
   @Mock
   private ProducersInitiativeRepository repository;
-
-  @Mock
-  private InitiativeMapper mapper;
 
   @Mock
   private PortalInitiativeService portalInitiativeService;
@@ -40,35 +38,33 @@ class InitiativeServiceTest {
     String role = UserRole.OPERATORE.getRole();
 
     ProducersInitiative enabled = ProducersInitiative.builder()
-        .initiativeId("111")
-        .enabled(true)
-        .build();
+      .initiativeId("111")
+      .initiativeName("Test initiative")
+      .enabled(true)
+      .initiativeStatus(InitiativeStatus.PUBLISHED)
+      .build();
 
     ProducersInitiative disabled = ProducersInitiative.builder()
-        .initiativeId("222")
-        .enabled(false)
-        .build();
-
-    InitiativeDTO dto = InitiativeDTO.builder()
-        .initiativeId("111")
-        .build();
+      .initiativeId("222")
+      .enabled(false)
+      .build();
 
     when(repository.findByProducersId(organizationId))
-        .thenReturn(List.of(enabled, disabled));
-
-    when(mapper.toDTO(enabled))
-        .thenReturn(dto);
+      .thenReturn(List.of(enabled, disabled));
 
     // when
     List<InitiativeDTO> result =
-        service.getInitiatives(role, organizationId);
+      service.getInitiatives(role, organizationId);
 
     // then
     assertEquals(1, result.size());
-    assertEquals("111", result.get(0).getInitiativeId());
+
+    InitiativeDTO dto = result.get(0);
+    assertEquals("111", dto.getInitiativeId());
+    assertEquals("Test initiative", dto.getInitiativeName());
+    assertTrue(dto.getEnabled());
 
     verify(repository).findByProducersId(organizationId);
-    verify(mapper).toDTO(enabled);
     verifyNoInteractions(portalInitiativeService);
   }
 
@@ -80,15 +76,15 @@ class InitiativeServiceTest {
     String role = UserRole.INVITALIA.getRole();
 
     InitiativeDTO dto = InitiativeDTO.builder()
-        .initiativeId("999")
-        .build();
+      .initiativeId("999")
+      .build();
 
     when(portalInitiativeService.getInitiatives(organizationId))
-        .thenReturn(List.of(dto));
+      .thenReturn(List.of(dto));
 
     // when
     List<InitiativeDTO> result =
-        service.getInitiatives(role, organizationId);
+      service.getInitiatives(role, organizationId);
 
     // then
     assertEquals(1, result.size());
@@ -96,6 +92,5 @@ class InitiativeServiceTest {
 
     verify(portalInitiativeService).getInitiatives(organizationId);
     verifyNoInteractions(repository);
-    verifyNoInteractions(mapper);
   }
 }

@@ -7,7 +7,9 @@ import it.gov.pagopa.register.model.operation.ProducersInitiative;
 
 public class InitiativeMapper {
 
-  public InitiativeDTO toDTO(ProducersInitiative entity) {
+  private InitiativeMapper(){}
+
+  public static InitiativeDTO toDTO(ProducersInitiative entity) {
     return InitiativeDTO.builder()
       .initiativeId(entity.getInitiativeId())
       .initiativeName(entity.getInitiativeName())
@@ -20,7 +22,7 @@ public class InitiativeMapper {
       .build();
   }
 
-  public InitiativeDTO toDTO(InitiativeSummaryDTO dto) {
+  public static InitiativeDTO toDTO(InitiativeSummaryDTO dto) {
     return InitiativeDTO.builder()
       .initiativeId(dto.getInitiativeId())
       .initiativeName(dto.getInitiativeName())
