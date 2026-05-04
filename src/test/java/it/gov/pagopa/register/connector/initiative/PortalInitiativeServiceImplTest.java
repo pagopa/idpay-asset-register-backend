@@ -52,7 +52,7 @@ class PortalInitiativeServiceImplTest {
     assertEquals("Iniziativa A", dto.getInitiativeName());
     assertEquals(InitiativeStatus.PUBLISHED, dto.getStatus());
     assertEquals(
-      summaryDTO.getCreationDate().toLocalDate(),
+      summaryDTO.getStartDate(),
       dto.getStartDate()
     );
 

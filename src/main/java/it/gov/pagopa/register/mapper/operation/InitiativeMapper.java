@@ -27,7 +27,9 @@ public class InitiativeMapper {
       .initiativeId(dto.getInitiativeId())
       .initiativeName(dto.getInitiativeName())
       .status(InitiativeStatus.valueOf(dto.getStatus()))
-      .startDate(dto.getCreationDate().toLocalDate())
+      .startDate(dto.getStartDate())
+      .endDate(dto.getEndDate())
+      .enabled(true)
       .build();
   }
 }
