@@ -110,21 +110,21 @@ public class ProductFileService {
     throw new ReportNotFoundException("Report not available for file: " + productFile.getFileName());
   }
 
-  public ProductFileResult uploadFile(MultipartFile file, String category, String organizationId,
+  public ProductFileResult uploadFile(MultipartFile file, String category,  String initiativeId, String organizationId,
                                       String userId, String userEmail, String organizationName) {
     try {
-      ProductFileResult result = validateFile(file, category, organizationId, userId, userEmail, organizationName);
+      ProductFileResult result = validateFile(file, category, initiativeId, organizationId, userId, userEmail, organizationName);
 
       if (result.isKo()) {
         return result;
       }
 
       ProductFile productFile = saveProductFile(
-        category, organizationId, userId, userEmail,
+        category, organizationId, initiativeId, userId, userEmail,
         file.getOriginalFilename(), result.getRecords(), organizationName
       );
 
-      String path = String.format("CSV/%s/%s/%s/%s.csv", organizationId, organizationName, category, productFile.getId());
+      String path = String.format("CSV/%s/%s/%s/%s/%s.csv", initiativeId, organizationId, organizationName, category, productFile.getId());
       fileStorageClient.upload(file.getInputStream(), path, file.getContentType());
 
       log.info(FILE_PROCESSED_LOG, file.getOriginalFilename());
@@ -136,10 +136,11 @@ public class ProductFileService {
     }
   }
 
-  public ProductFileResult validateFile(MultipartFile file, String category, String organizationId,
+  public ProductFileResult validateFile(MultipartFile file, String category, String initiativeId, String organizationId,
                                         String userId, String userEmail, String organizationName) {
-    if (productFileRepository.existsByOrganizationIdAndUploadStatusIn(organizationId, BLOCKING_STATUSES)) {
-      log.warn("[PROCESS_FILE] - Existing file in UPLOADED or IN_PROCESS state for org: {}", organizationId);
+
+    if (productFileRepository.existsByInitiativeIdByOrganizationIdAndUploadStatusIn(initiativeId, organizationId, BLOCKING_STATUSES)) {
+      log.warn("[PROCESS_FILE] - Existing file in UPLOADED or IN_PROCESS state for org: {} and initiative: {}", organizationId, initiativeId);
       return ProductFileResult.ko(AssetRegisterConstants.UploadKeyConstant.UPLOAD_ALREADY_IN_PROGRESS);
     }
 
@@ -147,19 +148,19 @@ public class ProductFileService {
       String originalFileName = file.getOriginalFilename();
       log.info("[PROCESS_FILE] - Processing file: {} for organizationId: {}", originalFileName, organizationId);
 
-      ValidationResultDTO validation = productFileValidator.validateFile(file, category);
+      ValidationResultDTO validation = productFileValidator.validateFile(file, category, initiativeId);
       if (validation.isKo()) {
         log.warn(VALIDATION_FAILED_LOG, originalFileName);
         return ProductFileResult.ko(validation.getErrorKey());
       }
 
       ValidationResultDTO recordValidation = productFileValidator.validateRecords(
-        validation.getRecords(), validation.getHeaders(), category);
+        validation.getRecords(), category, initiativeId);
 
       if (recordValidation.isKo()) {
         log.warn(VALIDATION_FAILED_LOG, originalFileName);
 
-        ProductFile productFile = saveProductFile(category, organizationId, userId, userEmail,
+        ProductFile productFile = saveProductFile(category, organizationId, initiativeId, userId, userEmail,
           originalFileName, validation.getRecords(), organizationName);
 
         uploadFormalErrorFile(file, recordValidation, validation.getHeaders(), productFile);
@@ -188,7 +189,7 @@ public class ProductFileService {
       tempFilePath
     );
 
-    String destination = REPORT_FORMAL_ERROR + productFile.getId() + CSV;
+    String destination = REPORT_FORMAL_ERROR + productFile.getInitiativeId() + "/" + productFile.getId() + CSV;
     fileStorageClient.upload(Files.newInputStream(tempFilePath), destination, file.getContentType());
 
     Files.deleteIfExists(tempFilePath);
@@ -204,7 +205,7 @@ public class ProductFileService {
     return Files.createTempFile("errors-", ".csv");
   }
 
-  private ProductFile saveProductFile(String category, String organizationId, String userId, String userEmail,
+  private ProductFile saveProductFile(String category, String organizationId, String initiativeId, String userId, String userEmail,
                                       String originalFileName, List<CSVRecord> records, String organizationName) {
 
     return productFileRepository.save(ProductFile.builder()
@@ -218,6 +219,7 @@ public class ProductFileService {
       .dateUpload(LocalDateTime.now())
       .userEmail(userEmail)
       .organizationName(organizationName)
+      .initiativeId(initiativeId)
       .build());
   }
 

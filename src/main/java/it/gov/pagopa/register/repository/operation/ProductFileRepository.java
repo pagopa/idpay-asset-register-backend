@@ -14,6 +14,6 @@ public interface ProductFileRepository extends MongoRepository<ProductFile, Stri
 
   Optional<ProductFile> findByIdAndOrganizationId(String id, String organizationId);
 
-  boolean existsByOrganizationIdAndUploadStatusIn(String organizationId, List<String> uploadStatuses);
+  boolean existsByInitiativeIdByOrganizationIdAndUploadStatusIn(String initiativeId, String organizationId, List<String> uploadStatuses);
 
 }

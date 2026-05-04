@@ -35,16 +35,17 @@ public class ProductFileController {
     return ResponseEntity.ok().body(productFileService.getFilesByPage(organizationId, pageable));
   }
 
-  @PostMapping(value = "/product-files", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @PostMapping(value = "product-files", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   public ResponseEntity<ProductFileResult> uploadProductFile(
     @RequestHeader("x-organization-id") @Pattern(regexp = UUID_V4_PATTERN) String organizationId,
     @RequestHeader("x-organization-name") String organizationName,
     @RequestHeader("x-user-id") @Pattern(regexp = UUID_V4_PATTERN) String userId,
     @RequestHeader("x-user-email") @Email String userEmail,
     @RequestParam("category") String category,
+    @RequestParam("initiativeId") String initiativeId,
     @RequestPart("csv") MultipartFile csv
   ) {
-    ProductFileResult result = productFileService.uploadFile(csv, category, organizationId, userId, userEmail, organizationName);
+    ProductFileResult result = productFileService.uploadFile(csv, category, initiativeId, organizationId, userId, userEmail, organizationName);
     return ResponseEntity.ok(result);
   }
 
@@ -55,9 +56,10 @@ public class ProductFileController {
     @RequestHeader("x-user-id") @Pattern(regexp = UUID_V4_PATTERN) String userId,
     @RequestHeader("x-user-email") @Email String userEmail,
     @RequestParam("category") String category,
+    @RequestParam("initiativeId") String initiativeId,
     @RequestPart("csv") MultipartFile csv
   ) {
-    ProductFileResult result = productFileService.validateFile(csv, category, organizationId, userId, userEmail, organizationName);
+    ProductFileResult result = productFileService.validateFile(csv, category, initiativeId, organizationId, userId, userEmail, organizationName);
     return ResponseEntity.ok(result);
   }
 

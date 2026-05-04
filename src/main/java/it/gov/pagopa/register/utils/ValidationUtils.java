@@ -23,7 +23,9 @@ public class ValidationUtils {
       if (!orgId.equals(optProduct.get().getOrganizationId())) {
         addError(csvRecord, DIFFERENT_ORGANIZATIONID, invalidRecords, errorMessages);
         dbCheck = false;
-      } else if (!ProductStatus.REJECTED.toString().equals(optProduct.get().getStatus()) &&
+      }
+      // TODO utilizzare initiativeConfig
+      else if (!ProductStatus.REJECTED.toString().equals(optProduct.get().getStatus()) &&
         !ProductStatus.UPLOADED.toString().equals(optProduct.get().getStatus())) {
         addError(csvRecord, STATUS_NOT_VALID, invalidRecords, errorMessages);
         dbCheck = false;

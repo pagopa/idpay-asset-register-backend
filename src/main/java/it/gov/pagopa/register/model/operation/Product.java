@@ -24,6 +24,7 @@ public class Product {
   private String gtinCode;
   private String productFileId;
   private String organizationId;
+  private String initiativeId;
   private LocalDateTime registrationDate;
   private String status;
   private String model;

@@ -82,7 +82,7 @@ class ProductFileConsumerServiceTest {
       cookinghobsValidatorService,
       notificationService,
       productFileProducer,
-      consumerControlService);
+      consumerControlService, initiativeConfigMap);
   }
 
 

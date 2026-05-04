@@ -19,6 +19,7 @@ public class ProductFile {
   private String category;
   private String userId;
   private String organizationId;
+  private String initiativeId;
   private String fileName;
   private String uploadStatus;
   private LocalDateTime dateUpload;

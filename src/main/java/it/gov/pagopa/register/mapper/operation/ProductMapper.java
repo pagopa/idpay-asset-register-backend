@@ -245,14 +245,14 @@ public class ProductMapper {
     return sb.toString();
   }
 
-  private static String normalizeCsvCode(String value) {
+  public static String normalizeCsvCode(String value) {
     if (value == null) {
       return null;
     }
     return value.trim().replaceAll("\\s+", "");
   }
 
-  private static String limitName(String value) {
+  public static String limitName(String value) {
     if (value == null) {
       return null;
     }
@@ -317,4 +317,4 @@ public class ProductMapper {
 
     return v;
   }
-}  
+}
