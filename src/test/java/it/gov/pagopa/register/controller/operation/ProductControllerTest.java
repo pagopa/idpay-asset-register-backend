@@ -1,17 +1,24 @@
 package it.gov.pagopa.register.controller.operation;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import it.gov.pagopa.register.dto.operation.*;
+
+import it.gov.pagopa.register.dto.operation.ProductDTO;
+import it.gov.pagopa.register.dto.operation.ProductListDTO;
+import it.gov.pagopa.register.dto.operation.ProductUpdateStatusRequestDTO;
+import it.gov.pagopa.register.dto.operation.UpdateResultDTO;
 import it.gov.pagopa.register.enums.ProductStatus;
 import it.gov.pagopa.register.enums.UserRole;
 import it.gov.pagopa.register.service.operation.ProductService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.security.autoconfigure.SecurityAutoConfiguration;
+import org.springframework.boot.security.autoconfigure.UserDetailsServiceAutoConfiguration;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import tools.jackson.databind.ObjectMapper;
 
 import java.util.Collections;
 import java.util.List;
@@ -27,7 +34,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 
 
-  @WebMvcTest(ProductController.class)
+  @WebMvcTest(value={ProductController.class}, excludeAutoConfiguration =  { UserDetailsServiceAutoConfiguration.class , SecurityAutoConfiguration.class})
+  @AutoConfigureMockMvc(addFilters = false)
   class ProductControllerTest {
 
     @Autowired
