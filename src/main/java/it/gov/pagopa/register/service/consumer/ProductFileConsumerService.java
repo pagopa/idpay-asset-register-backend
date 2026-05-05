@@ -2,8 +2,8 @@ package it.gov.pagopa.register.service.consumer;
 
 import com.azure.storage.blob.models.BlobStorageException;
 import it.gov.pagopa.common.kafka.BaseKafkaConsumer;
-import it.gov.pagopa.register.configuration.initiative.CategoryConfig;
-import it.gov.pagopa.register.configuration.initiative.InitiativeConfig;
+import it.gov.pagopa.register.configuration.initiative.model.CategoryConfig;
+import it.gov.pagopa.register.configuration.initiative.model.InitiativeConfig;
 import it.gov.pagopa.register.configuration.initiative.InitiativeConfigMap;
 import it.gov.pagopa.register.connector.notification.NotificationServiceImpl;
 import it.gov.pagopa.register.connector.storage.FileStorageClient;

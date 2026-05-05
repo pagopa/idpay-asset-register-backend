@@ -35,7 +35,7 @@ public class ProductFileController {
     return ResponseEntity.ok().body(productFileService.getFilesByPage(organizationId, pageable));
   }
 
-  @PostMapping(value = "product-files", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @PostMapping(value = "/product-files", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   public ResponseEntity<ProductFileResult> uploadProductFile(
     @RequestHeader("x-organization-id") @Pattern(regexp = UUID_V4_PATTERN) String organizationId,
     @RequestHeader("x-organization-name") String organizationName,

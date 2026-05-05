@@ -1,6 +1,8 @@
-package it.gov.pagopa.register.service.validator.rule;
+package it.gov.pagopa.register.service.validator.rule.csv;
 
-import it.gov.pagopa.register.configuration.initiative.ValidationRule;
+import it.gov.pagopa.register.configuration.initiative.model.ValidationRule;
+import it.gov.pagopa.register.service.validator.rule.RuleContext;
+import it.gov.pagopa.register.service.validator.rule.RuleExecutor;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -14,12 +16,18 @@ public class MaxLengthRuleExecutor implements RuleExecutor {
   @Override
   public boolean evaluate(
       ValidationRule rule,
-      RuleContext ctx
+      RuleContext context
   ) {
-    CsvRuleContext context = (CsvRuleContext) ctx;
-    String value = context.getValue(rule.getField());
 
-    return value == null || Integer.parseInt(value) <= Integer.parseInt(rule.getValue());
+    CsvRuleContext ctx = (CsvRuleContext) context;
+    String value = ctx.getValue(rule.getField());
+
+    if (value == null) {
+      return true;
+    }
+
+    int maxLength = Integer.parseInt(rule.getValue());
+    return value.length() <= maxLength;
   }
 
   @Override

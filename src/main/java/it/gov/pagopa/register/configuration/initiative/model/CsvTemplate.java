@@ -1,9 +1,8 @@
-package it.gov.pagopa.register.configuration.initiative;
+package it.gov.pagopa.register.configuration.initiative.model;
 
 import lombok.Data;
 
 import java.util.List;
-import java.util.Map;
 
 @Data
 public class CsvTemplate {

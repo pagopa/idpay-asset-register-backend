@@ -2,8 +2,9 @@ package it.gov.pagopa.register.service.validator;
 
 import it.gov.pagopa.register.configuration.ProductFileValidationConfig;
 import it.gov.pagopa.register.configuration.initiative.*;
+import it.gov.pagopa.register.configuration.initiative.model.*;
 import it.gov.pagopa.register.dto.operation.ValidationResultDTO;
-import it.gov.pagopa.register.service.validator.rule.CsvRuleContext;
+import it.gov.pagopa.register.service.validator.rule.csv.CsvRuleContext;
 import it.gov.pagopa.register.service.validator.rule.RuleDispatcher;
 import it.gov.pagopa.register.service.validator.rule.RuleExecutor;
 import it.gov.pagopa.register.utils.CsvUtils;
@@ -167,15 +168,11 @@ public class ProductFileValidatorService {
 
     List<String> errors = new ArrayList<>();
 
-    for (CsvHeader header : csvTemplate.getHeaders()) {
-
-      String columnName = header.getName();
-
-      List<ValidationRule> rules =
+    List<ValidationRule> rules =
         csvTemplate.getRules();
 
       if (rules == null || rules.isEmpty()) {
-        continue;
+        return errors;
       }
 
       for (ValidationRule rule : rules) {
@@ -183,62 +180,25 @@ public class ProductFileValidatorService {
         RuleExecutor ruleExecutor =
           ruleDispatcher.resolve(rule.getType());
 
+        CsvRuleContext csvRuleContext =
+          new CsvRuleContext(csvRecord,category);
+
         boolean valid = ruleExecutor.evaluate(
           rule,
-          new CsvRuleContext(csvRecord,category)
+          csvRuleContext
         );
 
         if (!valid) {
           errors.add(
-            buildErrorMessage(rule, columnName, category)
+            ruleExecutor.errorMessage(
+              rule,
+              csvRuleContext
+             )
           );
         }
       }
-    }
+
     return errors;
   }
 
-  /**
-   * Costruzione del messaggio di errore CSV
-   */
-  private String buildErrorMessage(
-    ValidationRule validation,
-    String columnName,
-    String category
-  ) {
-
-    String base =
-      "Errore di validazione sulla colonna '" + columnName + "': ";
-
-    return switch (validation.getType()) {
-
-      case "REGEX" ->
-        base + "il valore non rispetta il formato richiesto";
-
-      case "MAX_LENGTH" ->
-        base + "la lunghezza supera il limite massimo consentito ("
-          + validation.getValue() + " caratteri)";
-
-      case "MIN_LENGTH" ->
-        base + "la lunghezza è inferiore al minimo richiesto ("
-          + validation.getValue() + " caratteri)";
-
-      case "NOT_BLANK" ->
-        base + "il valore è obbligatorio e non può essere vuoto";
-
-      case "ENUM", "IN" ->
-        base + "il valore non è tra quelli consentiti: ";
-          //+ validation.getAllowedValues();
-
-      case "IN_VALID_CATEGORIES" ->
-        base + "la categoria indicata non è valida per questa iniziativa";
-
-      case "EQUALS_INPUT_CATEGORY" ->
-        base + "la categoria nel CSV non coincide con quella richiesta ("
-          + category + ")";
-
-      default ->
-        base + "regola di validazione non soddisfatta";
-    };
-  }
 }

@@ -1,7 +1,11 @@
 package it.gov.pagopa.register.service.validator.external.check;
 
-import it.gov.pagopa.register.configuration.initiative.*;
+import it.gov.pagopa.register.configuration.initiative.mapper.MappingContext;
 import it.gov.pagopa.register.configuration.initiative.mapper.ProductMapperStrategy;
+import it.gov.pagopa.register.configuration.initiative.model.CategoryConfig;
+import it.gov.pagopa.register.configuration.initiative.model.CategoryExternalCheck;
+import it.gov.pagopa.register.configuration.initiative.model.ExternalCheckTemplate;
+import it.gov.pagopa.register.configuration.initiative.model.InitiativeConfig;
 import it.gov.pagopa.register.constants.AssetRegisterConstants;
 import it.gov.pagopa.register.dto.utils.ProductValidationResult;
 import it.gov.pagopa.register.model.operation.Product;
@@ -44,47 +48,64 @@ public class ExternalCheckService {
       boolean skip = false;
 
       String key = mapper.extractBusinessKey(csvRecord, categoryConfig);
-      Optional<Product> existing = productRepository.findByIdAndInitiativeId(key,initiativeId);
+      Optional<Product> existing =
+        productRepository.findByIdAndInitiativeId(key, initiativeId);
 
       if (!ValidationUtils.dbCheck(
-          orgId, csvRecord, existing, invalidRecords, errorMessages)) {
-        skip = true;
+        orgId, csvRecord, existing, invalidRecords, errorMessages)) {
+        continue;
       }
 
-      if (!skip && validProducts.containsKey(key)) {
-        invalidRecords.add(mapper.mapToCsvRow(validProducts.remove(key), headers));
-        //TODO Error Message Should Depend On Initiative
+      if (validProducts.containsKey(key)) {
+        invalidRecords.add(
+          mapper.mapToCsvRow(validProducts.remove(key), headers)
+        );
         errorMessages.put(csvRecord, AssetRegisterConstants.DUPLICATE_GTIN_EAN);
-        skip = true;
+        continue;
       }
 
-      if (!skip) {
-        for (CategoryExternalCheck check : categoryConfig.getExternalChecks()) {
+      Map<String, Object> externalData = new HashMap<>();
 
-          ExternalCheckTemplate template =
-              initiativeConfig.getExternalCheckTemplates().get(check.getName());
+      for (CategoryExternalCheck check : categoryConfig.getExternalChecks()) {
 
-          ExternalCheckResult result =
-              externalCheckExecutor.execute(
-                  csvRecord, template, check.getParameters(), category);
+        ExternalCheckTemplate template =
+          initiativeConfig.getExternalCheckTemplates()
+            .get(check.getName());
 
-          if (!result.isValid()) {
-            invalidRecords.add(csvRecord);
-            errorMessages.put(csvRecord, result.getErrorMessage());
-            skip = true;
-            break;
-          }
+        ExternalCheckResult checkResult =
+          externalCheckExecutor.execute(
+            csvRecord,
+            template,
+            check.getParameters(),
+            category
+          );
+
+        if (!checkResult.isValid()) {
+          invalidRecords.add(csvRecord);
+          errorMessages.put(csvRecord, checkResult.getErrorMessage());
+          skip = true;
+          break;
         }
+        externalData.putAll(checkResult.getExternalData());
       }
 
       if (skip) {
         continue;
       }
 
+      MappingContext mappingContext =
+        new MappingContext(externalData);
+
       Product product =
-          mapper.mapToProduct(
-              csvRecord, category, orgId, initiativeId,
-              productFileId, organizationName);
+        mapper.mapToProduct(
+          csvRecord,
+          category,
+          orgId,
+          initiativeId,
+          productFileId,
+          organizationName,
+          mappingContext
+        );
 
       existing.ifPresent(db -> {
         product.setFormalMotivation(db.getFormalMotivation());

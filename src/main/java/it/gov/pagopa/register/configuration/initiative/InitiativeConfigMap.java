@@ -1,5 +1,6 @@
 package it.gov.pagopa.register.configuration.initiative;
 
+import it.gov.pagopa.register.configuration.initiative.model.InitiativeConfig;
 import org.springframework.stereotype.Component;
 import java.util.List;
 import java.util.Map;

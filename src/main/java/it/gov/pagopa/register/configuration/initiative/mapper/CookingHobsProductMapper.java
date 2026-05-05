@@ -1,12 +1,16 @@
 package it.gov.pagopa.register.configuration.initiative.mapper;
 
-import it.gov.pagopa.register.configuration.initiative.CategoryConfig;
+import it.gov.pagopa.register.configuration.initiative.model.CategoryConfig;
 import it.gov.pagopa.register.enums.ProductStatus;
 import it.gov.pagopa.register.mapper.operation.ProductMapper;
 import it.gov.pagopa.register.model.operation.Product;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.csv.CSVRecord;
 import org.springframework.stereotype.Component;
 
+import java.io.StringReader;
+import java.io.StringWriter;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
@@ -15,6 +19,7 @@ import java.util.List;
 import static it.gov.pagopa.register.constants.AssetRegisterConstants.*;
 import static it.gov.pagopa.register.mapper.operation.ProductMapper.limitName;
 import static it.gov.pagopa.register.mapper.operation.ProductMapper.normalizeCsvCode;
+import static it.gov.pagopa.register.utils.CsvUtils.DELIMITER;
 
 @Component("COOKINGHOBS")
 public class CookingHobsProductMapper implements ProductMapperStrategy {
@@ -32,7 +37,8 @@ public class CookingHobsProductMapper implements ProductMapperStrategy {
     String orgId,
     String initiativeId,
     String productFileId,
-    String organizationName
+    String organizationName,
+    MappingContext context
   ) {
 
     String codeProduct = normalizeCsvCode(csvRecord.get(CODE_PRODUCT));
@@ -47,6 +53,7 @@ public class CookingHobsProductMapper implements ProductMapperStrategy {
       .registrationDate(LocalDateTime.now(ZoneOffset.UTC))
       .status(ProductStatus.UPLOADED.name())
       .productCode(codeProduct)
+      .initiativeId(initiativeId)
       .gtinCode(gtinCode)
       .category(COOKINGHOBS)
       .countryOfProduction(csvRecord.get(COUNTRY_OF_PRODUCTION))
@@ -58,11 +65,39 @@ public class CookingHobsProductMapper implements ProductMapperStrategy {
       .organizationName(organizationName)
       .statusChangeChronology(new ArrayList<>())
       .formalMotivation("")
+
       .build();
   }
 
   @Override
   public CSVRecord mapToCsvRow(Product product, List<String> headers) {
-    return ProductMapper.mapProductToCsvRow(product, COOKINGHOBS, headers);
+    try {
+      StringWriter out = new StringWriter();
+      CSVPrinter printer = new CSVPrinter(out, CSVFormat.Builder.create()
+        .setHeader(headers.toArray(new String[0]))
+        .setDelimiter(DELIMITER)
+        .build());
+
+      printer.printRecord(
+        product.getEprelCode(),
+        product.getGtinCode(),
+        product.getProductCode(),
+        product.getCategory(),
+        product.getCountryOfProduction(),
+        product.getModel(),
+        product.getBrand()
+      );
+
+      CSVFormat format = CSVFormat.Builder.create()
+        .setHeader(headers.toArray(new String[0]))
+        .setSkipHeaderRecord(true)
+        .setDelimiter(DELIMITER)
+        .setTrim(true)
+        .build();
+      List<CSVRecord> records = format.parse(new StringReader(out.toString())).getRecords();
+      return records.isEmpty() ? null : records.getFirst();
+    } catch (Exception e) {
+      return null;
+    }
   }
 }

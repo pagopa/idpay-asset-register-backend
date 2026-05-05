@@ -1,8 +1,8 @@
 package it.gov.pagopa.register.service.validator.external.check;
 
-import it.gov.pagopa.register.configuration.initiative.ExternalCheckTemplate;
-import it.gov.pagopa.register.configuration.initiative.ValidationRule;
-import it.gov.pagopa.register.service.validator.rule.ExternalRuleContext;
+import it.gov.pagopa.register.configuration.initiative.model.ExternalCheckTemplate;
+import it.gov.pagopa.register.configuration.initiative.model.ValidationRule;
+import it.gov.pagopa.register.service.validator.rule.external.ExternalRuleContext;
 import it.gov.pagopa.register.service.validator.rule.RuleDispatcher;
 import it.gov.pagopa.register.service.validator.rule.RuleExecutor;
 import it.gov.pagopa.register.service.validator.external.system.ExternalSystemClient;

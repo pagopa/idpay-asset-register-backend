@@ -1,4 +1,4 @@
-package it.gov.pagopa.register.configuration.initiative;
+package it.gov.pagopa.register.configuration.initiative.model;
 
 import lombok.Data;
 

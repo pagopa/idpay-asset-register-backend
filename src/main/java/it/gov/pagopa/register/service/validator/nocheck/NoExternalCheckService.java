@@ -1,6 +1,6 @@
 package it.gov.pagopa.register.service.validator.nocheck;
 
-import it.gov.pagopa.register.configuration.initiative.CategoryConfig;
+import it.gov.pagopa.register.configuration.initiative.model.CategoryConfig;
 import it.gov.pagopa.register.configuration.initiative.mapper.ProductMapperStrategy;
 import it.gov.pagopa.register.dto.utils.ProductValidationResult;
 import it.gov.pagopa.register.model.operation.Product;
@@ -83,7 +83,8 @@ public class NoExternalCheckService {
             orgId,
             initiativeId,
             productFileId,
-            organizationName
+            organizationName,
+            null
           );
 
         existing.ifPresent(dbProduct -> {

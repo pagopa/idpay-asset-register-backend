@@ -1,6 +1,6 @@
 package it.gov.pagopa.register.configuration.initiative.mapper;
 
-import it.gov.pagopa.register.configuration.initiative.CategoryConfig;
+import it.gov.pagopa.register.configuration.initiative.model.CategoryConfig;
 import it.gov.pagopa.register.model.operation.Product;
 import org.apache.commons.csv.CSVRecord;
 
@@ -21,14 +21,17 @@ public interface ProductMapperStrategy {
   /**
    * Mapping CSV → Product
    */
+
   Product mapToProduct(
     CSVRecord csvRecord,
     String category,
     String orgId,
     String initiativeId,
     String productFileId,
-    String organizationName
+    String organizationName,
+    MappingContext context
   );
+
 
   /**
    * Mapping Product → CSVRecord (per error report)
