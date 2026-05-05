@@ -26,9 +26,11 @@ public class InitiativeMapper {
     return InitiativeDTO.builder()
       .initiativeId(dto.getInitiativeId())
       .initiativeName(dto.getInitiativeName())
+      .organizationName(dto.getOrganizationName())
       .status(InitiativeStatus.valueOf(dto.getStatus()))
       .startDate(dto.getStartDate())
       .endDate(dto.getEndDate())
+      .serviceId(dto.getServiceId())
       .enabled(true)
       .build();
   }
