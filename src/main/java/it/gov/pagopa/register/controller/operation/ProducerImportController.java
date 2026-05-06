@@ -19,7 +19,7 @@ public class ProducerImportController {
 
   private final ProducerImportService producerImportService;
 
-  @PostMapping(value = "/producers", consumes = {MediaType.APPLICATION_JSON_VALUE, "application/x-ndjson"})
+  @PostMapping(value = "/producers", consumes = {MediaType.APPLICATION_JSON_VALUE})
   public ResponseEntity<ProducerImportResultDTO> importProducers(@RequestBody String json) {
     return ResponseEntity.ok(producerImportService.importJson(json));
   }
