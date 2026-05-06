@@ -216,6 +216,7 @@ public class ProductService {
 
       int failedEmails =
         notifyStatusUpdates(
+          initiativeConfig.getInitiativeName(),
           updatedProducts,
           updateStatusDto.getTargetStatus(),
           updateStatusDto.getFormalMotivation()
@@ -265,7 +266,7 @@ public class ProductService {
     });
   }
 
-  private int notifyStatusUpdates(List<Product> products, ProductStatus newStatus, String formalMotivation) {
+  private int notifyStatusUpdates(String initiativeName, List<Product> products, ProductStatus newStatus, String formalMotivation) {
     List<EmailProductDTO> emailToProducts = productRepository.getProductNamesGroupedByEmail(
       products.stream().map(Product::getGtinCode).toList()
     );
@@ -275,6 +276,7 @@ public class ProductService {
     for (EmailProductDTO dto : emailToProducts) {
       try {
         notificationService.sendEmailUpdateStatus(
+          initiativeName,
           dto.getProductNames(),
           formalMotivation,
           newStatus.name(),

@@ -31,7 +31,8 @@ public class NoExternalCheckService {
     String productFileId,
     List<String> headers,
     String organizationName,
-    CategoryConfig categoryConfig
+    CategoryConfig categoryConfig,
+    List<String> allowedReloadStatuses
   ) {
 
     ProductMapperStrategy mapper = mapperByCategory.get(category);
@@ -55,7 +56,7 @@ public class NoExternalCheckService {
         productRepository.findByIdAndInitiativeId(businessKey, initiativeId);
 
       // DB check
-      if (!dbCheck(orgId, csvRecord, existing, invalidRecords, errorMessages)) {
+      if (!dbCheck(orgId, csvRecord, existing, invalidRecords, errorMessages, allowedReloadStatuses)) {
         isValidRecord = false;
       }
 

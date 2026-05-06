@@ -6,16 +6,17 @@ import it.gov.pagopa.register.configuration.initiative.model.CategoryConfig;
 import it.gov.pagopa.register.configuration.initiative.model.CategoryExternalCheck;
 import it.gov.pagopa.register.configuration.initiative.model.ExternalCheckTemplate;
 import it.gov.pagopa.register.configuration.initiative.model.InitiativeConfig;
-import it.gov.pagopa.register.constants.AssetRegisterConstants;
 import it.gov.pagopa.register.dto.utils.ProductValidationResult;
 import it.gov.pagopa.register.model.operation.Product;
 import it.gov.pagopa.register.repository.operation.ProductRepository;
-import it.gov.pagopa.register.utils.ValidationUtils;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.csv.CSVRecord;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
+
+import static it.gov.pagopa.register.constants.AssetRegisterConstants.DUPLICATE_GTIN_EAN;
+import static it.gov.pagopa.register.utils.ValidationUtils.dbCheck;
 
 @Component
 @RequiredArgsConstructor
@@ -34,7 +35,8 @@ public class ExternalCheckService {
       List<String> headers,
       String organizationName,
       InitiativeConfig initiativeConfig,
-      CategoryConfig categoryConfig
+      CategoryConfig categoryConfig,
+      List<String> allowedReloadStatuses
   ) {
 
     ProductMapperStrategy mapper = mapperByCategory.get(category);
@@ -45,74 +47,80 @@ public class ExternalCheckService {
 
     for (CSVRecord csvRecord : records) {
 
-      boolean skip = false;
+      boolean isValidRecord = true;
 
-      String key = mapper.extractBusinessKey(csvRecord, categoryConfig);
+      String businessKey = mapper.extractBusinessKey(csvRecord, categoryConfig);
       Optional<Product> existing =
-        productRepository.findByIdAndInitiativeId(key, initiativeId);
+        productRepository.findByIdAndInitiativeId(businessKey, initiativeId);
 
-      if (!ValidationUtils.dbCheck(
-        orgId, csvRecord, existing, invalidRecords, errorMessages)) {
-        continue;
+      if (!dbCheck(
+        orgId, csvRecord, existing, invalidRecords, errorMessages, allowedReloadStatuses)) {
+        isValidRecord = false;
       }
 
-      if (validProducts.containsKey(key)) {
-        invalidRecords.add(
-          mapper.mapToCsvRow(validProducts.remove(key), headers)
-        );
-        errorMessages.put(csvRecord, AssetRegisterConstants.DUPLICATE_GTIN_EAN);
-        continue;
+      if (isValidRecord && validProducts.containsKey(businessKey)) {
+
+        Product duplicate = validProducts.remove(businessKey);
+
+        CSVRecord duplicateRow =
+          mapper.mapToCsvRow(duplicate, headers);
+
+        invalidRecords.add(duplicateRow);
+        // TODO generic error key
+        errorMessages.put(duplicateRow, DUPLICATE_GTIN_EAN);
+
+        isValidRecord = false;
       }
 
       Map<String, Object> externalData = new HashMap<>();
 
-      for (CategoryExternalCheck check : categoryConfig.getExternalChecks()) {
+      if (isValidRecord) {
 
-        ExternalCheckTemplate template =
-          initiativeConfig.getExternalCheckTemplates()
-            .get(check.getName());
+        for (CategoryExternalCheck check : categoryConfig.getExternalChecks()) {
 
-        ExternalCheckResult checkResult =
-          externalCheckExecutor.execute(
+          ExternalCheckTemplate template =
+            initiativeConfig.getExternalCheckTemplates()
+              .get(check.getName());
+
+          ExternalCheckResult checkResult =
+            externalCheckExecutor.execute(
+              csvRecord,
+              template,
+              check.getParameters(),
+              category
+            );
+
+          if (!checkResult.isValid()) {
+            invalidRecords.add(csvRecord);
+            errorMessages.put(csvRecord, checkResult.getErrorMessage());
+            isValidRecord = false;
+          }
+          externalData.putAll(checkResult.getExternalData());
+        }
+      }
+      if (isValidRecord) {
+
+        MappingContext mappingContext =
+          new MappingContext(externalData);
+
+        Product product =
+          mapper.mapToProduct(
             csvRecord,
-            template,
-            check.getParameters(),
-            category
+            category,
+            orgId,
+            initiativeId,
+            productFileId,
+            organizationName,
+            mappingContext
           );
 
-        if (!checkResult.isValid()) {
-          invalidRecords.add(csvRecord);
-          errorMessages.put(csvRecord, checkResult.getErrorMessage());
-          skip = true;
-          break;
-        }
-        externalData.putAll(checkResult.getExternalData());
+        existing.ifPresent(db -> {
+          product.setFormalMotivation(db.getFormalMotivation());
+          product.setStatusChangeChronology(db.getStatusChangeChronology());
+        });
+
+        validProducts.put(businessKey, product);
       }
-
-      if (skip) {
-        continue;
-      }
-
-      MappingContext mappingContext =
-        new MappingContext(externalData);
-
-      Product product =
-        mapper.mapToProduct(
-          csvRecord,
-          category,
-          orgId,
-          initiativeId,
-          productFileId,
-          organizationName,
-          mappingContext
-        );
-
-      existing.ifPresent(db -> {
-        product.setFormalMotivation(db.getFormalMotivation());
-        product.setStatusChangeChronology(db.getStatusChangeChronology());
-      });
-
-      validProducts.put(key, product);
     }
 
     return new ProductValidationResult(validProducts, invalidRecords, errorMessages);

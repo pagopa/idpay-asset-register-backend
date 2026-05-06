@@ -87,6 +87,6 @@ public class ExternalCheckExecutor {
     }
 
     // Tutte le validazioni superate
-    return ExternalCheckResult.ok();
+    return ExternalCheckResult.ok(externalData);
   }
 }

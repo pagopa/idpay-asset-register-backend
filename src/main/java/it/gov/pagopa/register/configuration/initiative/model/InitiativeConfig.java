@@ -10,6 +10,7 @@ import java.util.Map;
 public class InitiativeConfig {
 
   private String initiativeId;
+  private String initiativeName;
   /**
    * Configurazione per categoria (lookup diretto via input category)
    */
@@ -29,6 +30,8 @@ public class InitiativeConfig {
    * Macchina a stati del prodotto per ruolo
    */
   private Map<String, Map<ProductStatus, List<ProductStatus>>> stateTransitions;
+
+  private List<String> allowedReloadStatuses;
   public boolean isTransitionAllowed(
     String role,
     ProductStatus currentStatus,

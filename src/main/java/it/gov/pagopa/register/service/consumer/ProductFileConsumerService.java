@@ -236,21 +236,22 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
       List<CSVRecord> records = CsvUtils.readCsvRecords(byteArrayOutputStream);
       log.info("[PRODUCT_UPLOAD] - Valid CSV headers: {}", headers);
       InitiativeConfig initiativeConfig = initiativeConfigMap.get(initiativeId);
+      List<String> allowedReloadStatuses = initiativeConfig.getAllowedReloadStatuses();
       CategoryConfig categoryConfig = initiativeConfig.getCategories().get(category);
       ProductValidationResult validationResult;
       if (categoryConfig.getExternalChecks().isEmpty()) {
-        validationResult = noExternalCheckService.validateRecords(records,category, orgId, initiativeId, fileId,headers, organizationName,categoryConfig);
+        validationResult = noExternalCheckService.validateRecords(records,category, orgId, initiativeId, fileId,headers, organizationName,categoryConfig,allowedReloadStatuses);
       } else {
-        validationResult = externalCheckService.validateRecords(records, category, orgId,initiativeId, fileId, headers, organizationName,initiativeConfig,categoryConfig);
+        validationResult = externalCheckService.validateRecords(records, category, orgId,initiativeId, fileId, headers, organizationName,initiativeConfig,categoryConfig,allowedReloadStatuses);
       }
-      processResult(validationResult.getValidRecords().values().stream().toList(), validationResult.getInvalidRecords(), validationResult.getErrorMessages(), initiativeId, fileId, headers, category);
+      processResult(initiativeConfig.getInitiativeName(), validationResult.getValidRecords().values().stream().toList(), validationResult.getInvalidRecords(), validationResult.getErrorMessages(), initiativeId, fileId, headers, category);
     } catch (IOException e) {
       log.error("[UPLOAD_PRODUCT_FILE] - Error while reading CSV", e);
       setProductFileStatus(fileId, String.valueOf(PARTIAL), 0);
     }
   }
 
-  private void processResult(List<Product> validProduct, List<CSVRecord> errors, Map<CSVRecord, String> messages, String initiativeId, String productFileId, List<String> headers, String category) {
+  private void processResult(String initiativeName, List<Product> validProduct, List<CSVRecord> errors, Map<CSVRecord, String> messages, String initiativeId, String productFileId, List<String> headers, String category) {
     if (!validProduct.isEmpty()) {
       List<Product> savedProduct = productRepository.saveAll(validProduct);
       log.info("[PRODUCT_UPLOAD] - Saved {} valid products for file {}", savedProduct.size(), productFileId);
@@ -258,17 +259,17 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
         processErrorRecords(errors, messages, initiativeId, productFileId, headers);
         String userEmail = setProductFileStatus(productFileId, String.valueOf(PARTIAL), validProduct.size());
         log.info("[PRODUCT_UPLOAD] - File {} processed with {} errors", productFileId, errors.size());
-        notificationService.sendEmailPartial(CATEGORIES_TO_IT_P.get(category) + "_" + productFileId + CSV, userEmail);
+        notificationService.sendEmailPartial(initiativeName,CATEGORIES_TO_IT_P.get(category) + "_" + productFileId + CSV, userEmail);
       } else {
         String userEmail = setProductFileStatus(productFileId, String.valueOf(LOADED), savedProduct.size());
         log.info("[PRODUCT_UPLOAD] - File {} processed successfully with no errors", productFileId);
-        notificationService.sendEmailOk(CATEGORIES_TO_IT_P.get(category)  + "_" + productFileId + CSV, userEmail);
+        notificationService.sendEmailOk(initiativeName, CATEGORIES_TO_IT_P.get(category)  + "_" + productFileId + CSV, userEmail);
       }
     } else if (!errors.isEmpty()) {
       processErrorRecords(errors, messages,initiativeId, productFileId, headers);
       String userEmail = setProductFileStatus(productFileId, String.valueOf(PARTIAL), 0);
       log.info("[PRODUCT_UPLOAD] - File {} processed with {} errors", productFileId, errors.size());
-      notificationService.sendEmailPartial(CATEGORIES_TO_IT_P.get(category)  + "_" + productFileId + CSV, userEmail);
+      notificationService.sendEmailPartial(initiativeName, CATEGORIES_TO_IT_P.get(category)  + "_" + productFileId + CSV, userEmail);
     }
   }
 
@@ -284,7 +285,7 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
         tempFilePath = Files.createTempFile("errors-", CSV);
       }
       CsvUtils.writeCsvWithErrors(errors, headers, messages,  tempFilePath);
-      String destination = REPORT_PARTIAL_ERROR + initiativeId + "/" +productFileId + CSV;
+      String destination = REPORT_PARTIAL_ERROR + initiativeId + "/" + productFileId + CSV;
       fileStorageClient.upload(Files.newInputStream(tempFilePath), destination, "text/csv");
       Files.deleteIfExists(tempFilePath);
       log.info("[PRODUCT_UPLOAD] - Error file uploaded to {}", destination);

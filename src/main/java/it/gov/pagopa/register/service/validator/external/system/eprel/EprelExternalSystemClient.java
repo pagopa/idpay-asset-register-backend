@@ -11,7 +11,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 @Component
@@ -30,12 +29,12 @@ public class EprelExternalSystemClient implements ExternalSystemClient {
 
   @Override
   public Map<String, Object> fetch(
-      CSVRecord record,
+      CSVRecord csvRecord,
       ExternalCheckTemplate template
   ) {
 
     // Recupero del valore di input dal CSV
-    String eprelCode = record.get(template.getInputField());
+    String eprelCode = csvRecord.get(template.getInputField());
 
     if (!StringUtils.hasText(eprelCode)) {
       throw new IllegalArgumentException(
@@ -55,7 +54,7 @@ public class EprelExternalSystemClient implements ExternalSystemClient {
     log.debug("[EPREL] Dati ricevuti per codice {}: {}", eprelCode, eprelProduct);
 
     // Conversione verso struttura generica
-    return mapToExternalData(eprelProduct, template.getRules());
+    return mapToExternalData(eprelProduct);
   }
 
   /**
@@ -63,15 +62,10 @@ public class EprelExternalSystemClient implements ExternalSystemClient {
    * contenente solo i campi richiesti dalle regole.
    */
   private Map<String, Object> mapToExternalData(
-      EprelProduct eprelProduct,
-      List<?> rules
+      EprelProduct eprelProduct
   ) {
 
     Map<String, Object> data = new HashMap<>();
-
-    // NOTA:
-    // Estraggo solo i campi che potrebbero servire alle regole.
-    // Potrebbero però essere necessari campi extra per la persistenza.
 
     data.put("status", eprelProduct.getStatus());
     data.put("energyClass", eprelProduct.getEnergyClass());
@@ -80,7 +74,12 @@ public class EprelExternalSystemClient implements ExternalSystemClient {
     data.put("productGroup", eprelProduct.getProductGroup());
     data.put("orgVerificationStatus", eprelProduct.getOrgVerificationStatus());
     data.put("trademarkVerificationStatus", eprelProduct.getTrademarkVerificationStatus());
-
+    data.put("supplierOrTrademark", eprelProduct.getSupplierOrTrademark());
+    data.put("modelIdentifier", eprelProduct.getModelIdentifier());
+    data.put("getRatedCapacity", eprelProduct.getRatedCapacity());
+    data.put("getRatedCapacityWas", eprelProduct.getRatedCapacityWash());
+    data.put("cavities", eprelProduct.getCavities());
+    data.put("totalVolume", eprelProduct.getTotalVolume());
     return data;
   }
 }
