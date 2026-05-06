@@ -36,7 +36,10 @@ class ProducerImportControllerTest {
     Mockito.when(producerImportService.importJson(anyString()))
       .thenReturn(ProducerImportResultDTO.builder()
         .status("OK")
+        .totalRecords(2)
         .importedRecords(2)
+        .failedRecords(0)
+        .message("Producer import completed successfully")
         .build());
 
     mockMvc.perform(post("/idpay/register/producers")
@@ -47,6 +50,9 @@ class ProducerImportControllerTest {
           """))
       .andExpect(status().isOk())
       .andExpect(jsonPath("$.status").value("OK"))
-      .andExpect(jsonPath("$.importedRecords").value(2));
+      .andExpect(jsonPath("$.totalRecords").value(2))
+      .andExpect(jsonPath("$.importedRecords").value(2))
+      .andExpect(jsonPath("$.failedRecords").value(0))
+      .andExpect(jsonPath("$.message").value("Producer import completed successfully"));
   }
 }

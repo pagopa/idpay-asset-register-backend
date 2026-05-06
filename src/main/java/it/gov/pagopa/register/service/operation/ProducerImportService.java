@@ -7,6 +7,8 @@ import it.gov.pagopa.register.model.operation.ProducersInitiative;
 import it.gov.pagopa.register.repository.operation.ProducersInitiativeRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.QueryTimeoutException;
+import org.springframework.dao.TransientDataAccessResourceException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -27,6 +29,7 @@ import java.util.Map;
 public class ProducerImportService {
 
   private static final String CSV_SOURCE = "CSV";
+  private static final int SAVE_BATCH_SIZE = 1000;
 
   private final ProducersInitiativeRepository producersInitiativeRepository;
   private final ObjectMapper objectMapper;
@@ -37,13 +40,11 @@ public class ProducerImportService {
 
     try {
       List<ProducersInitiative> producers = parseJson(json);
-      producersInitiativeRepository.saveAll(producers);
+      ProducerImportResultDTO result = saveInBatches(producers);
 
-      log.info("[IMPORT_PRODUCERS] - Imported {} producer records from json", producers.size());
-      return ProducerImportResultDTO.builder()
-        .status("OK")
-        .importedRecords(producers.size())
-        .build();
+      log.info("[IMPORT_PRODUCERS] - Import completed. totalRecords={}, importedRecords={}, failedRecords={}",
+        result.getTotalRecords(), result.getImportedRecords(), result.getFailedRecords());
+      return result;
     } catch (JacksonException e) {
       log.warn("[IMPORT_PRODUCERS] - Invalid json payload: {}", e.getMessage());
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid JSON payload", e);
@@ -53,12 +54,76 @@ public class ProducerImportService {
     }
   }
 
+  private ProducerImportResultDTO saveInBatches(List<ProducersInitiative> producers) {
+    int importedRecords = 0;
+    int failedRecords = 0;
+    RuntimeException lastError = null;
+
+    log.info("[IMPORT_PRODUCERS] - Saving {} producer records in batches of {}",
+      producers.size(), SAVE_BATCH_SIZE);
+
+    for (int start = 0; start < producers.size(); start += SAVE_BATCH_SIZE) {
+      int end = Math.min(start + SAVE_BATCH_SIZE, producers.size());
+      List<ProducersInitiative> batch = producers.subList(start, end);
+
+      try {
+        producersInitiativeRepository.saveAll(batch);
+        importedRecords += batch.size();
+        log.info("[IMPORT_PRODUCERS] - Saved batch {}/{} records. importedRecords={}, remainingRecords={}",
+          start + 1, end, importedRecords, producers.size() - importedRecords - failedRecords);
+      } catch (RuntimeException e) {
+        failedRecords += batch.size();
+        lastError = e;
+        log.error("[IMPORT_PRODUCERS] - Failed saving batch {}/{} records. importedRecords={}, failedRecords={}, error={}",
+          start + 1, end, importedRecords, failedRecords, e.getMessage(), e);
+      }
+    }
+
+    if (failedRecords > 0) {
+      String message = "Producer import partially failed. totalRecords=%d, importedRecords=%d, failedRecords=%d"
+        .formatted(producers.size(), importedRecords, failedRecords);
+      HttpStatus status = isRequestTimeout(lastError) ? HttpStatus.REQUEST_TIMEOUT : HttpStatus.INTERNAL_SERVER_ERROR;
+      log.error("[IMPORT_PRODUCERS] - {}", message, lastError);
+      throw new ResponseStatusException(status, message, lastError);
+    }
+
+    return ProducerImportResultDTO.builder()
+      .status("OK")
+      .totalRecords(producers.size())
+      .importedRecords(importedRecords)
+      .failedRecords(0)
+      .message("Producer import completed successfully")
+      .build();
+  }
+
+  private boolean isRequestTimeout(Throwable error) {
+    Throwable current = error;
+    while (current != null) {
+      if (current instanceof QueryTimeoutException || current instanceof TransientDataAccessResourceException) {
+        return true;
+      }
+      String message = current.getMessage();
+      if (message != null) {
+        String lowerCaseMessage = message.toLowerCase();
+        if (message.contains("408")
+          || lowerCaseMessage.contains("request timeout")
+          || lowerCaseMessage.contains("timed out")
+          || lowerCaseMessage.contains("timeout")) {
+          return true;
+        }
+      }
+      current = current.getCause();
+    }
+    return false;
+  }
+
   private List<ProducersInitiative> parseJson(String json) throws JacksonException {
     if (json == null || json.isBlank()) {
       throw new IllegalArgumentException("JSON payload is empty");
     }
 
     String trimmedJson = json.strip();
+
     List<ProducerImportJsonDTO> records;
 
     if (trimmedJson.startsWith("[")) {
