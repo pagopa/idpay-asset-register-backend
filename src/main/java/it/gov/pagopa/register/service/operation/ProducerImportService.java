@@ -30,6 +30,8 @@ public class ProducerImportService {
 
   private static final String CSV_SOURCE = "CSV";
   private static final int SAVE_BATCH_SIZE = 1000;
+  private static final String INITIATIVE_START_DATE = "initiativeStartDate";
+  private static final String INITIATIVE_END_DATE = "initiativeEndDate";
 
   private final ProducersInitiativeRepository producersInitiativeRepository;
   private final ObjectMapper objectMapper;
@@ -167,8 +169,8 @@ public class ProducerImportService {
     dto.setInitiativeId(stringValue(record.get("initiativeId")));
     dto.setInitiativeName(stringValue(record.get("initiativeName")));
     dto.setInitiativeStatus(stringValue(record.get("initiativeStatus"), record.get("InitiativeStatus")));
-    dto.setInitiativeStartDate(stringValue(record.get("initiativeStartDate")));
-    dto.setInitiativeEndDate(stringValue(record.get("initiativeEndDate")));
+    dto.setInitiativeStartDate(stringValue(record.get(INITIATIVE_START_DATE)));
+    dto.setInitiativeEndDate(stringValue(record.get(INITIATIVE_END_DATE)));
     dto.setInitiativeServiceId(stringValue(record.get("initiativeServiceId")));
     dto.setInitiativeOrganizationName(stringValue(record.get("initiativeOrganizationName")));
     return dto;
@@ -193,9 +195,9 @@ public class ProducerImportService {
       .initiativeName(requiredValue(dto.getInitiativeName(), "initiativeName"))
       .initiativeStatus(parseInitiativeStatus(requiredValue(dto.getInitiativeStatus(), "initiativeStatus")))
       .initiativeStartDate(parseJsonDate(
-        requiredValue(dto.getInitiativeStartDate(), "initiativeStartDate"), "initiativeStartDate"))
+        requiredValue(dto.getInitiativeStartDate(), INITIATIVE_START_DATE), INITIATIVE_START_DATE))
       .initiativeEndDate(parseJsonDate(
-        requiredValue(dto.getInitiativeEndDate(), "initiativeEndDate"), "initiativeEndDate"))
+        requiredValue(dto.getInitiativeEndDate(), INITIATIVE_END_DATE), INITIATIVE_END_DATE))
       .initiativeServiceId(requiredValue(dto.getInitiativeServiceId(), "initiativeServiceId"))
       .initiativeOrganizationName(requiredValue(dto.getInitiativeOrganizationName(), "initiativeOrganizationName"))
       .source(CSV_SOURCE)
