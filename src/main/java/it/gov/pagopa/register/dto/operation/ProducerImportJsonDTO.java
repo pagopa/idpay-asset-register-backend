@@ -4,7 +4,6 @@ import lombok.Data;
 
 @Data
 public class ProducerImportJsonDTO {
-  private String id;
   private String producerId;
   private String initiativeId;
   private String initiativeName;
@@ -13,8 +12,4 @@ public class ProducerImportJsonDTO {
   private String initiativeEndDate;
   private String initiativeServiceId;
   private String initiativeOrganizationName;
-  private Boolean enabled;
-  private String source;
-  private String createdAt;
-  private String updatedAt;
 }
