@@ -22,6 +22,7 @@ import java.time.format.DateTimeParseException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 @Slf4j
 @Service
@@ -149,36 +150,36 @@ public class ProducerImportService {
 
     LocalDateTime now = LocalDateTime.now();
     return records.stream()
-      .map(record -> toProducer(record, now))
+      .map(producerImportJsonDTO -> toProducer(producerImportJsonDTO, now))
       .toList();
   }
 
   private ProducerImportJsonDTO readJsonLine(String line) {
     try {
-      Map<String, Object> record = objectMapper.readValue(line, new TypeReference<Map<String, Object>>() {
+      Map<String, Object> producerFields = objectMapper.readValue(line, new TypeReference<Map<String, Object>>() {
       });
-      return toJsonDTO(record);
+      return toJsonDTO(producerFields);
     } catch (JacksonException e) {
       throw new IllegalArgumentException("Invalid JSON line", e);
     }
   }
 
-  private ProducerImportJsonDTO toJsonDTO(Map<String, Object> record) {
+  private ProducerImportJsonDTO toJsonDTO(Map<String, Object> producerFields) {
     ProducerImportJsonDTO dto = new ProducerImportJsonDTO();
-    dto.setProducerId(stringValue(record.get("producerId")));
-    dto.setInitiativeId(stringValue(record.get("initiativeId")));
-    dto.setInitiativeName(stringValue(record.get("initiativeName")));
-    dto.setInitiativeStatus(stringValue(record.get("initiativeStatus"), record.get("InitiativeStatus")));
-    dto.setInitiativeStartDate(stringValue(record.get(INITIATIVE_START_DATE)));
-    dto.setInitiativeEndDate(stringValue(record.get(INITIATIVE_END_DATE)));
-    dto.setInitiativeServiceId(stringValue(record.get("initiativeServiceId")));
-    dto.setInitiativeOrganizationName(stringValue(record.get("initiativeOrganizationName")));
+    dto.setProducerId(stringValue(producerFields.get("producerId")));
+    dto.setInitiativeId(stringValue(producerFields.get("initiativeId")));
+    dto.setInitiativeName(stringValue(producerFields.get("initiativeName")));
+    dto.setInitiativeStatus(stringValue(producerFields.get("initiativeStatus"), producerFields.get("InitiativeStatus")));
+    dto.setInitiativeStartDate(stringValue(producerFields.get(INITIATIVE_START_DATE)));
+    dto.setInitiativeEndDate(stringValue(producerFields.get(INITIATIVE_END_DATE)));
+    dto.setInitiativeServiceId(stringValue(producerFields.get("initiativeServiceId")));
+    dto.setInitiativeOrganizationName(stringValue(producerFields.get("initiativeOrganizationName")));
     return dto;
   }
 
   private String stringValue(Object... values) {
     return Arrays.stream(values)
-      .filter(value -> value != null)
+      .filter(Objects::nonNull)
       .findFirst()
       .map(Object::toString)
       .orElse(null);
@@ -225,10 +226,11 @@ public class ProducerImportService {
   private LocalDateTime parseJsonDate(String value, String fieldName) {
     try {
       return OffsetDateTime.parse(value).toLocalDateTime();
-    } catch (DateTimeParseException e) {
+    } catch (DateTimeParseException offsetDateTimeException) {
       try {
         return LocalDateTime.parse(value);
       } catch (DateTimeParseException ex) {
+        ex.addSuppressed(offsetDateTimeException);
         throw new IllegalArgumentException("Invalid date field [%s]".formatted(fieldName), ex);
       }
     }

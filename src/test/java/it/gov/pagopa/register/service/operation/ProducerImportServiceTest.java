@@ -137,9 +137,10 @@ class ProducerImportServiceTest {
       .thenAnswer(invocation -> invocation.getArgument(0))
       .thenThrow(new QueryTimeoutException("Mongo returned 408 request timeout"));
 
+    String jsonPayload = json.toString();
     ResponseStatusException exception = assertThrows(
       ResponseStatusException.class,
-      () -> producerImportService.importJson(json.toString())
+      () -> producerImportService.importJson(jsonPayload)
     );
 
     assertEquals(HttpStatus.REQUEST_TIMEOUT, exception.getStatusCode());
