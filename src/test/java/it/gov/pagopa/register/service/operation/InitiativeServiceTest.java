@@ -32,44 +32,51 @@ class InitiativeServiceTest {
   private InitiativeService service;
 
   @Test
-  void getInitiatives_WhenRoleIsOperatore_ReturnsOnlyEnabledInitiatives() {
+  void getInitiatives_WhenRoleIsOperatore_ReturnsEnabledInitiativesOrderedByName() {
 
     // given
     String organizationId = "org-123";
     String role = UserRole.OPERATORE.getRole();
 
-    ProducersInitiative enabled = ProducersInitiative.builder()
+    ProducersInitiative firstInitiative = ProducersInitiative.builder()
       .initiativeId("111")
-      .initiativeName("Test initiative")
+      .initiativeName("Alpha initiative")
       .enabled(true)
       .initiativeStatus(InitiativeStatus.PUBLISHED)
       .initiativeEndDate(LocalDateTime.now())
       .initiativeStartDate(LocalDateTime.now())
       .build();
 
-    ProducersInitiative disabled = ProducersInitiative.builder()
-      .initiativeId("222")
-      .enabled(false)
+    ProducersInitiative secondInitiative = ProducersInitiative.builder()
+      .initiativeId("333")
+      .initiativeName("Beta initiative")
+      .enabled(true)
+      .initiativeStatus(InitiativeStatus.PUBLISHED)
       .initiativeEndDate(LocalDateTime.now())
       .initiativeStartDate(LocalDateTime.now())
       .build();
 
-    when(repository.findByProducerId(organizationId))
-      .thenReturn(List.of(enabled, disabled));
+    when(repository.findByProducerIdAndEnabledTrueOrderByInitiativeNameAsc(organizationId))
+      .thenReturn(List.of(firstInitiative, secondInitiative));
 
     // when
     List<InitiativeDTO> result =
       service.getInitiatives(role, organizationId);
 
     // then
-    assertEquals(1, result.size());
+    assertEquals(2, result.size());
 
-    InitiativeDTO dto = result.get(0);
-    assertEquals("111", dto.getInitiativeId());
-    assertEquals("Test initiative", dto.getInitiativeName());
-    assertTrue(dto.getEnabled());
+    InitiativeDTO firstDto = result.get(0);
+    assertEquals("111", firstDto.getInitiativeId());
+    assertEquals("Alpha initiative", firstDto.getInitiativeName());
+    assertTrue(firstDto.getEnabled());
 
-    verify(repository).findByProducerId(organizationId);
+    InitiativeDTO secondDto = result.get(1);
+    assertEquals("333", secondDto.getInitiativeId());
+    assertEquals("Beta initiative", secondDto.getInitiativeName());
+    assertTrue(secondDto.getEnabled());
+
+    verify(repository).findByProducerIdAndEnabledTrueOrderByInitiativeNameAsc(organizationId);
     verifyNoInteractions(portalInitiativeService);
   }
 
