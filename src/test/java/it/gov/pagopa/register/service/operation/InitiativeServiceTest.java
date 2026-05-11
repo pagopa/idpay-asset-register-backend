@@ -47,6 +47,15 @@ class InitiativeServiceTest {
       .initiativeStartDate(LocalDateTime.now())
       .build();
 
+    ProducersInitiative disabledInitiative = ProducersInitiative.builder()
+      .initiativeId("222")
+      .initiativeName("Disabled initiative")
+      .enabled(false)
+      .initiativeStatus(InitiativeStatus.PUBLISHED)
+      .initiativeEndDate(LocalDateTime.now())
+      .initiativeStartDate(LocalDateTime.now())
+      .build();
+
     ProducersInitiative secondInitiative = ProducersInitiative.builder()
       .initiativeId("333")
       .initiativeName("Beta initiative")
@@ -56,8 +65,8 @@ class InitiativeServiceTest {
       .initiativeStartDate(LocalDateTime.now())
       .build();
 
-    when(repository.findByProducerIdAndEnabledTrueOrderByInitiativeNameAsc(organizationId))
-      .thenReturn(List.of(firstInitiative, secondInitiative));
+    when(repository.findByProducerIdOrderByInitiativeNameAsc(organizationId))
+      .thenReturn(List.of(firstInitiative, secondInitiative, disabledInitiative));
 
     // when
     List<InitiativeDTO> result =
@@ -66,7 +75,7 @@ class InitiativeServiceTest {
     // then
     assertEquals(2, result.size());
 
-    InitiativeDTO firstDto = result.get(0);
+    InitiativeDTO firstDto = result.getFirst();
     assertEquals("111", firstDto.getInitiativeId());
     assertEquals("Alpha initiative", firstDto.getInitiativeName());
     assertTrue(firstDto.getEnabled());
@@ -76,7 +85,7 @@ class InitiativeServiceTest {
     assertEquals("Beta initiative", secondDto.getInitiativeName());
     assertTrue(secondDto.getEnabled());
 
-    verify(repository).findByProducerIdAndEnabledTrueOrderByInitiativeNameAsc(organizationId);
+    verify(repository).findByProducerIdOrderByInitiativeNameAsc(organizationId);
     verifyNoInteractions(portalInitiativeService);
   }
 
@@ -100,7 +109,7 @@ class InitiativeServiceTest {
 
     // then
     assertEquals(1, result.size());
-    assertEquals("999", result.get(0).getInitiativeId());
+    assertEquals("999", result.getFirst().getInitiativeId());
 
     verify(portalInitiativeService).getInitiatives(organizationId);
     verifyNoInteractions(repository);

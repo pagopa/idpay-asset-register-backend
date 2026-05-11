@@ -8,5 +8,5 @@ import java.util.List;
 public interface ProducersInitiativeRepository
   extends MongoRepository<ProducersInitiative, String> {
 
-  List<ProducersInitiative> findByProducerIdAndEnabledTrueOrderByInitiativeNameAsc(String producerId);
+  List<ProducersInitiative> findByProducerIdOrderByInitiativeNameAsc(String producerId);
 }

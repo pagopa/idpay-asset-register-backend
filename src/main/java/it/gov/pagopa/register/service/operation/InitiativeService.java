@@ -4,6 +4,7 @@ import it.gov.pagopa.register.connector.initiative.PortalInitiativeService;
 import it.gov.pagopa.register.dto.operation.InitiativeDTO;
 import it.gov.pagopa.register.enums.UserRole;
 import it.gov.pagopa.register.mapper.operation.InitiativeMapper;
+import it.gov.pagopa.register.model.operation.ProducersInitiative;
 import it.gov.pagopa.register.repository.operation.ProducersInitiativeRepository;
 import org.springframework.stereotype.Service;
 
@@ -23,8 +24,9 @@ public class InitiativeService {
   public List<InitiativeDTO> getInitiatives(String role, String organizationId) {
 
     if(role.equals(UserRole.OPERATORE.getRole()))
-      return repository.findByProducerIdAndEnabledTrueOrderByInitiativeNameAsc(organizationId)
+      return repository.findByProducerIdOrderByInitiativeNameAsc(organizationId)
         .stream()
+        .filter(ProducersInitiative::getEnabled)
         .map(InitiativeMapper::toDTO)
         .toList();
 
