@@ -68,13 +68,13 @@ public class ProductFileService {
       .build();
   }
 
-  public FileReportDTO downloadReport(String id, String organizationId) {
-    log.info("[DOWNLOAD_REPORT] - Downloading report for id: {} and organizationId: {}", id, organizationId);
+  public FileReportDTO downloadReport(String id, String organizationId, String initiativeId) {
+    log.info("[DOWNLOAD_REPORT] - Downloading report for id: {}, organizationId: {}, initiativeId: {}", id, organizationId, initiativeId);
 
-    ProductFile productFile = productFileRepository.findByIdAndOrganizationId(id, organizationId)
+    ProductFile productFile = productFileRepository.findByIdAndOrganizationIdAndInitiativeId(id, organizationId, initiativeId)
       .orElseThrow(() -> {
-        log.error("[DOWNLOAD_REPORT] - Report not found with id: {}", id);
-        return new ReportNotFoundException("Report not found with id: " + id);
+        log.error("[DOWNLOAD_REPORT] - Report not found for id: {} and initiative: {}", id, initiativeId);
+        return new ReportNotFoundException("Report not found");
       });
 
     String filePath = resolveReportPath(productFile);
@@ -82,11 +82,9 @@ public class ProductFileService {
     ByteArrayOutputStream result = fileStorageClient.download(filePath);
 
     if (result == null) {
-      log.error("[DOWNLOAD_REPORT] - Report not found on Azure for path: {}", filePath);
-      throw new ReportNotFoundException("Report not found on Azure for path: " + filePath);
+      log.error("[DOWNLOAD_REPORT] - File missing on Azure for path: {}", filePath);
+      throw new ReportNotFoundException("File not found on storage");
     }
-
-    log.info("[DOWNLOAD_REPORT] - Report downloaded successfully for file: {}", productFile.getFileName());
 
     return FileReportDTO.builder()
       .data(result.toByteArray())
@@ -97,17 +95,19 @@ public class ProductFileService {
   private String resolveReportPath(ProductFile productFile) {
     String id = productFile.getId();
     String status = productFile.getUploadStatus();
+    String initiativeId = productFile.getInitiativeId();
 
+    String pathPrefix;
     if (UploadCsvStatus.PARTIAL.name().equals(status)) {
-      return REPORT_PARTIAL_ERROR + id + CSV;
+      pathPrefix = REPORT_PARTIAL_ERROR;
+    } else if (UploadCsvStatus.FORMAL_ERROR.name().equals(status)) {
+      pathPrefix = REPORT_FORMAL_ERROR;
+    } else {
+      log.error("[DOWNLOAD_REPORT] - Report not available for file: {} with status: {}", productFile.getFileName(), status);
+      throw new ReportNotFoundException("Report not available for file: " + productFile.getFileName());
     }
 
-    if (UploadCsvStatus.FORMAL_ERROR.name().equals(status)) {
-      return REPORT_FORMAL_ERROR + id + CSV;
-    }
-
-    log.error("[DOWNLOAD_REPORT] - Report not available for file: {}", productFile.getFileName());
-    throw new ReportNotFoundException("Report not available for file: " + productFile.getFileName());
+    return pathPrefix + initiativeId + "/" + id + CSV;
   }
 
   public ProductFileResult uploadFile(MultipartFile file, String category, String organizationId,

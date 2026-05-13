@@ -22,25 +22,27 @@ import static it.gov.pagopa.register.constants.ValidationPatterns.*;
 
 @Validated
 @RestController
-@RequestMapping("/idpay/register")
+@RequestMapping("/idpay/register/initiatives")
 @RequiredArgsConstructor
 public class ProductFileController {
 
   private final ProductFileService productFileService;
 
-  @GetMapping("/product-files")
+  @GetMapping("/{initiativeId}/product-files")
   public ResponseEntity<ProductFileResponseDTO> getProductFileList(
     @RequestHeader("x-organization-id") @Pattern(regexp = UUID_V4_PATTERN) String organizationId,
+    @PathVariable("initiativeId") String initiativeId,
     @PageableDefault(size = 20, sort = "dateUpload", direction = Sort.Direction.DESC) Pageable pageable) {
     return ResponseEntity.ok().body(productFileService.getFilesByPage(organizationId, pageable));
   }
 
-  @PostMapping(value = "/product-files", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @PostMapping(value = "/{initiativeId}/product-files", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   public ResponseEntity<ProductFileResult> uploadProductFile(
     @RequestHeader("x-organization-id") @Pattern(regexp = UUID_V4_PATTERN) String organizationId,
     @RequestHeader("x-organization-name") String organizationName,
     @RequestHeader("x-user-id") @Pattern(regexp = UUID_V4_PATTERN) String userId,
     @RequestHeader("x-user-email") @Email String userEmail,
+    @RequestParam("initiativeId") String initiativeId,
     @RequestParam("category") String category,
     @RequestPart("csv") MultipartFile csv
   ) {
@@ -48,12 +50,13 @@ public class ProductFileController {
     return ResponseEntity.ok(result);
   }
 
-  @PostMapping(value = "/product-files/verify", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @PostMapping(value = "/{initiativeId}/product-files/verify", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   public ResponseEntity<ProductFileResult> verifyProductFile(
     @RequestHeader("x-organization-id") @Pattern(regexp = UUID_V4_PATTERN) String organizationId,
     @RequestHeader("x-organization-name") String organizationName,
     @RequestHeader("x-user-id") @Pattern(regexp = UUID_V4_PATTERN) String userId,
     @RequestHeader("x-user-email") @Email String userEmail,
+    @RequestParam("initiativeId") String initiativeId,
     @RequestParam("category") String category,
     @RequestPart("csv") MultipartFile csv
   ) {
@@ -61,20 +64,22 @@ public class ProductFileController {
     return ResponseEntity.ok(result);
   }
 
-  @GetMapping("/product-files/{productFileId}/report")
+  @GetMapping("/{initiativeId}/product-files/{productFileId}/report")
   public ResponseEntity<byte[]> downloadProductFileReport(
     @RequestHeader("x-organization-id") @Pattern(regexp = UUID_V4_PATTERN) String organizationId,
+    @PathVariable("initiativeId") String initiativeId,
     @PathVariable @Pattern(regexp = OBJECT_ID_PATTERN) String productFileId
   ) {
-    FileReportDTO file = productFileService.downloadReport(productFileId, organizationId);
+    FileReportDTO file = productFileService.downloadReport(productFileId, organizationId, initiativeId);
     return ResponseEntity.ok()
       .header("Content-Disposition", "attachment; filename=" + file.getFilename())
       .contentType(MediaType.APPLICATION_JSON)
       .body(file.getData());
   }
 
-  @GetMapping("/product-files/batch-list")
+  @GetMapping("/{initiativeId}/product-files/batch-list")
   public ResponseEntity<List<ProductBatchDTO>> getFilteredProductFiles(
+    @PathVariable("initiativeId") String initiativeId,
     @RequestHeader("x-organization-id") @Pattern(regexp = UUID_V4_PATTERN) String organizationId,
     @RequestHeader(value = "x-organization-selected", required = false) @Pattern(regexp = UUID_V4_PATTERN) String organizationSelected,
     @RequestHeader("x-organization-role") @Pattern(regexp = ROLE_PATTERN) String role

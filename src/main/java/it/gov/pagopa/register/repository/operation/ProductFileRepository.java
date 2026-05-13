@@ -12,7 +12,7 @@ public interface ProductFileRepository extends MongoRepository<ProductFile, Stri
 
   Page<ProductFile> findByOrganizationIdAndUploadStatusNot(String organizationId, String uploadStatus, Pageable pageable);
 
-  Optional<ProductFile> findByIdAndOrganizationId(String id, String organizationId);
+  Optional<ProductFile> findByIdAndOrganizationIdAndInitiativeId(String id, String organizationId, String initiativeId);
 
   boolean existsByOrganizationIdAndUploadStatusIn(String organizationId, List<String> uploadStatuses);
 
