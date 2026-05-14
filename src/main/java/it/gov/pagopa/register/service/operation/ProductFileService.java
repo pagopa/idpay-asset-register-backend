@@ -111,7 +111,7 @@ public class ProductFileService {
         case FORMAL_ERROR -> Optional.of(REPORT_FORMAL_ERROR);
         default -> Optional.empty();
       };
-    } catch (IllegalArgumentException | NullPointerException e) {
+    } catch (IllegalArgumentException | NullPointerException _) {
       return Optional.empty();
     }
   }
