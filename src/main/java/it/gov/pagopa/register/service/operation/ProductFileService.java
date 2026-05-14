@@ -32,6 +32,7 @@ import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import static it.gov.pagopa.register.constants.AssetRegisterConstants.*;
@@ -93,21 +94,26 @@ public class ProductFileService {
   }
 
   private String resolveReportPath(ProductFile productFile) {
-    String id = productFile.getId();
-    String status = productFile.getUploadStatus();
-    String initiativeId = productFile.getInitiativeId();
+    String pathPrefix = resolvePathPrefix(productFile.getUploadStatus())
+      .orElseThrow(() -> {
+        log.error("[DOWNLOAD_REPORT] - Report not available for file: {} with status: {}",
+          productFile.getFileName(), productFile.getUploadStatus());
+        return new ReportNotFoundException("Report not available for file: " + productFile.getFileName());
+      });
 
-    String pathPrefix;
-    if (UploadCsvStatus.PARTIAL.name().equals(status)) {
-      pathPrefix = REPORT_PARTIAL_ERROR;
-    } else if (UploadCsvStatus.FORMAL_ERROR.name().equals(status)) {
-      pathPrefix = REPORT_FORMAL_ERROR;
-    } else {
-      log.error("[DOWNLOAD_REPORT] - Report not available for file: {} with status: {}", productFile.getFileName(), status);
-      throw new ReportNotFoundException("Report not available for file: " + productFile.getFileName());
+    return pathPrefix + productFile.getInitiativeId() + "/" + productFile.getId() + CSV;
+  }
+
+  private Optional<String> resolvePathPrefix(String uploadStatus) {
+    try {
+      return switch (UploadCsvStatus.valueOf(uploadStatus)) {
+        case PARTIAL -> Optional.of(REPORT_PARTIAL_ERROR);
+        case FORMAL_ERROR -> Optional.of(REPORT_FORMAL_ERROR);
+        default -> Optional.empty();
+      };
+    } catch (IllegalArgumentException | NullPointerException e) {
+      return Optional.empty();
     }
-
-    return pathPrefix + initiativeId + "/" + id + CSV;
   }
 
   public ProductFileResult uploadFile(MultipartFile file, String category, String organizationId,
