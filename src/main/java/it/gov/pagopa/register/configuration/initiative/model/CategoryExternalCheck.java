@@ -1,16 +1,20 @@
 package it.gov.pagopa.register.configuration.initiative.model;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.util.Map;
 
+@NoArgsConstructor
+@AllArgsConstructor
 @Data
 public class CategoryExternalCheck {
 
   /**
    * es. "EPREL"
    */
-  private String name;
+  private String key;
 
   /**
    * Parametri specifici per la categoria

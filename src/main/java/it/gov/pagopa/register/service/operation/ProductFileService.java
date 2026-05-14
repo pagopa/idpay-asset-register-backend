@@ -139,18 +139,21 @@ public class ProductFileService {
   public ProductFileResult validateFile(MultipartFile file, String category, String initiativeId, String organizationId,
                                         String userId, String userEmail, String organizationName) {
 
-    if (productFileRepository.existsByInitiativeIdByOrganizationIdAndUploadStatusIn(initiativeId, organizationId, BLOCKING_STATUSES)) {
+    //TODO verifica su producers_initiative
+
+    if (productFileRepository.existsByInitiativeIdAndOrganizationIdAndUploadStatusIn(initiativeId, organizationId, BLOCKING_STATUSES)) {
       log.warn("[PROCESS_FILE] - Existing file in UPLOADED or IN_PROCESS state for org: {} and initiative: {}", organizationId, initiativeId);
       return ProductFileResult.ko(AssetRegisterConstants.UploadKeyConstant.UPLOAD_ALREADY_IN_PROGRESS);
     }
 
     try {
-      String originalFileName = file.getOriginalFilename();
-      log.info("[PROCESS_FILE] - Processing file: {} for organizationId: {}", originalFileName, organizationId);
 
-      ValidationResultDTO validation = productFileValidator.validateFile(file, category, initiativeId);
+      ValidationResultDTO validation = productFileValidator.validateFile(file, category, initiativeId, organizationId);
+
+      String originalFileName = file.getOriginalFilename();
+
       if (validation.isKo()) {
-        log.warn(VALIDATION_FAILED_LOG, originalFileName);
+        log.warn(VALIDATION_FAILED_LOG, file.getOriginalFilename());
         return ProductFileResult.ko(validation.getErrorKey());
       }
 

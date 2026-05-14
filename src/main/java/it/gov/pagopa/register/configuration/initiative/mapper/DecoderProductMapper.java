@@ -2,7 +2,6 @@ package it.gov.pagopa.register.configuration.initiative.mapper;
 
 import it.gov.pagopa.register.configuration.initiative.model.CategoryConfig;
 import it.gov.pagopa.register.enums.ProductStatus;
-import it.gov.pagopa.register.mapper.operation.ProductMapper;
 import it.gov.pagopa.register.model.operation.Product;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
@@ -21,8 +20,8 @@ import static it.gov.pagopa.register.mapper.operation.ProductMapper.limitName;
 import static it.gov.pagopa.register.mapper.operation.ProductMapper.normalizeCsvCode;
 import static it.gov.pagopa.register.utils.CsvUtils.DELIMITER;
 
-@Component("COOKINGHOBS")
-public class CookingHobsProductMapper implements ProductMapperStrategy {
+@Component("DECODER_STANDARD")
+public class DecoderProductMapper implements ProductMapperStrategy {
 
   @Override
   public String extractBusinessKey(CSVRecord record, CategoryConfig config) {

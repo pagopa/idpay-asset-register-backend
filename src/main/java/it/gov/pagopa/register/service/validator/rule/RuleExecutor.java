@@ -18,9 +18,4 @@ public interface RuleExecutor {
     RuleContext context
   );
 
-  String errorMessage(
-    ValidationRule rule,
-    RuleContext context
-  );
-
 }

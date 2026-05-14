@@ -43,11 +43,4 @@ public class MinEnergyClassRuleExecutor implements RuleExecutor {
     return actualIndex <= requiredIndex;
   }
 
-  @Override
-  public String errorMessage(
-      ValidationRule rule,
-      RuleContext context
-  ) {
-    return "Classe energetica non conforme ai requisiti dell'iniziativa";
-  }
 }

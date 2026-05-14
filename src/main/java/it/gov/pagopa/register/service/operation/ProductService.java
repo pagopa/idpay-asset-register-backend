@@ -113,7 +113,7 @@ public class ProductService {
 
     // Recupero prodotti richiesti
     List<Product> requestedProducts =
-      productRepository.findByIdsAndInitiativeId(updateStatusDto.getGtinCodes(),updateStatusDto.getInitiativeId());
+      productRepository.findByGtinCodeInAndInitiativeId(updateStatusDto.getGtinCodes(),updateStatusDto.getInitiativeId());
 
     if (requestedProducts.size() != updateStatusDto.getGtinCodes().size()) {
       log.warn("[UPDATE_PRODUCT_STATUSES] - Some products not found or not accessible");
@@ -276,7 +276,6 @@ public class ProductService {
     for (EmailProductDTO dto : emailToProducts) {
       try {
         notificationService.sendEmailUpdateStatus(
-          initiativeName,
           dto.getProductNames(),
           formalMotivation,
           newStatus.name(),

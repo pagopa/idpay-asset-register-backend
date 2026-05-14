@@ -30,13 +30,5 @@ public class EqualsExternalRuleExecutor implements RuleExecutor {
         .equalsIgnoreCase(rule.getValue());
   }
 
-  @Override
-  public String errorMessage(
-      ValidationRule rule,
-      RuleContext context
-  ) {
-    return "Validazione esterna fallita sul campo '"
-        + rule.getField()
-        + "'";
-  }
+
 }

@@ -1,9 +1,13 @@
 package it.gov.pagopa.register.configuration.initiative.model;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.util.List;
 
+@NoArgsConstructor
+@AllArgsConstructor
 @Data
 public class CsvTemplate {
 
@@ -14,7 +18,7 @@ public class CsvTemplate {
    * - obbligatorietà
    * L’ordine della lista è l’ordine atteso nel CSV.
    */
-  private List<CsvHeader> headers;
+  private List<String> headers;
 
   /**
    * Regole di validazione

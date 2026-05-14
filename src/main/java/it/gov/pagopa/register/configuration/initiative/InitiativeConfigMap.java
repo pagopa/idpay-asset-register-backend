@@ -1,6 +1,7 @@
 package it.gov.pagopa.register.configuration.initiative;
 
 import it.gov.pagopa.register.configuration.initiative.model.InitiativeConfig;
+import it.gov.pagopa.register.repository.initiative.InitiativeRepository;
 import org.springframework.stereotype.Component;
 import java.util.List;
 import java.util.Map;
@@ -12,15 +13,14 @@ public class InitiativeConfigMap {
 
   private final Map<String, InitiativeConfig> configsByInitiativeId;
 
-  public InitiativeConfigMap(List<InitiativeConfig> initiativeConfigs) {
+  public InitiativeConfigMap(InitiativeRepository repository) {
     this.configsByInitiativeId =
-      initiativeConfigs.stream()
+      repository.findAll().stream()
         .collect(Collectors.toUnmodifiableMap(
           InitiativeConfig::getInitiativeId,
           Function.identity()
         ));
   }
-
 
   public InitiativeConfig get(String initiativeId) {
     return configsByInitiativeId.get(initiativeId);

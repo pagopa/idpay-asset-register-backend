@@ -1,21 +1,33 @@
 package it.gov.pagopa.register.configuration.initiative.model;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
+import java.util.ArrayList;
 import java.util.List;
 
+@NoArgsConstructor
+@AllArgsConstructor
 @Data
+@Builder
 public class ValidationRule {
 
   /**
-   * Tipo di regola
+   * Chiave della regola
    * (EQUALS, MIN_ENERGY_CLASS, PRODUCT_GROUP_MATCH_CATEGORY, ecc.)
    */
-  private String type;
+  private String key;
 
   /**
-   * Campo della risposta esterna a cui applicare la regola
-   * es. status, energyClass, productGroup
+   * Chiave del messaggio d'errore
+   */
+  private String errorKey;
+
+  /**
+   * Campo della risposta esterna a cui applicare la regola o nome header csv
+   * es. status, energyClass, productGroup, Modello, Marca
    */
   private String field;
 
@@ -35,5 +47,8 @@ public class ValidationRule {
    * Ordine di confronto per regole ordinali
    * es. classi energetiche
    */
-  private List<String> order;
+
+  @Builder.Default
+  private List<String> order = new ArrayList<>();
+
 }

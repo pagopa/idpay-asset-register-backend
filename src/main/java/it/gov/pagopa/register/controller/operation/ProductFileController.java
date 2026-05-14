@@ -22,7 +22,7 @@ import static it.gov.pagopa.register.constants.ValidationPatterns.*;
 
 @Validated
 @RestController
-@RequestMapping("/idpay/register")
+@RequestMapping("/idpay/register/initiatives/{initiativeId}")
 @RequiredArgsConstructor
 public class ProductFileController {
 
@@ -30,6 +30,7 @@ public class ProductFileController {
 
   @GetMapping("/product-files")
   public ResponseEntity<ProductFileResponseDTO> getProductFileList(
+
     @RequestHeader("x-organization-id") @Pattern(regexp = UUID_V4_PATTERN) String organizationId,
     @PageableDefault(size = 20, sort = "dateUpload", direction = Sort.Direction.DESC) Pageable pageable) {
     return ResponseEntity.ok().body(productFileService.getFilesByPage(organizationId, pageable));
@@ -42,8 +43,8 @@ public class ProductFileController {
     @RequestHeader("x-user-id") @Pattern(regexp = UUID_V4_PATTERN) String userId,
     @RequestHeader("x-user-email") @Email String userEmail,
     @RequestParam("category") String category,
-    @RequestParam("initiativeId") String initiativeId,
-    @RequestPart("csv") MultipartFile csv
+    @RequestPart("csv") MultipartFile csv,
+    @PathVariable @Pattern(regexp = OBJECT_ID_PATTERN) String initiativeId
   ) {
     ProductFileResult result = productFileService.uploadFile(csv, category, initiativeId, organizationId, userId, userEmail, organizationName);
     return ResponseEntity.ok(result);
@@ -56,8 +57,8 @@ public class ProductFileController {
     @RequestHeader("x-user-id") @Pattern(regexp = UUID_V4_PATTERN) String userId,
     @RequestHeader("x-user-email") @Email String userEmail,
     @RequestParam("category") String category,
-    @RequestParam("initiativeId") String initiativeId,
-    @RequestPart("csv") MultipartFile csv
+    @RequestPart("csv") MultipartFile csv,
+    @PathVariable @Pattern(regexp = OBJECT_ID_PATTERN) String initiativeId
   ) {
     ProductFileResult result = productFileService.validateFile(csv, category, initiativeId, organizationId, userId, userEmail, organizationName);
     return ResponseEntity.ok(result);

@@ -23,22 +23,12 @@ public class MaxLengthRuleExecutor implements RuleExecutor {
     String value = ctx.getValue(rule.getField());
 
     if (value == null) {
-      return true;
+      return false;
     }
 
     int maxLength = Integer.parseInt(rule.getValue());
     return value.length() <= maxLength;
   }
 
-  @Override
-  public String errorMessage(
-      ValidationRule rule,
-      RuleContext ctx
-  ) {
-    return "Errore di validazione '"
-        + rule.getField()
-        + "': la lunghezza supera il limite massimo consentito ("
-        + rule.getValue()
-        + " caratteri)";
-  }
+
 }

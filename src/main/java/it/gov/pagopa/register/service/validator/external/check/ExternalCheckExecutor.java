@@ -65,11 +65,11 @@ public class ExternalCheckExecutor {
       for (ValidationRule rule : rules) {
 
         RuleExecutor ruleExecutor =
-            ruleDispatcher.resolve(rule.getType());
+            ruleDispatcher.resolve(rule.getKey());
 
         if (ruleExecutor == null) {
           return ExternalCheckResult.ko(
-              "Regola di validazione non supportata: " + rule.getType()
+            rule.getErrorKey()
           );
         }
 
@@ -80,7 +80,7 @@ public class ExternalCheckExecutor {
 
         if (!valid) {
           return ExternalCheckResult.ko(
-              "Validazione esterna fallita: " + rule.getType()
+              rule.getErrorKey()
           );
         }
       }

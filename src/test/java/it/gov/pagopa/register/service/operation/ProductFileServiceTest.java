@@ -174,8 +174,8 @@ class ProductFileServiceTest {
   void whenInvalidFileType_thenReturnKoResult() throws IOException {
     MultipartFile file = createMockFile_InvalidFileType();
     ValidationResultDTO validationResultDTO = new ValidationResultDTO("KO","TEST");
-    when(productFileValidator.validateFile(any(),anyString())).thenReturn(validationResultDTO);
-    ProductFileResult res = productFileService.uploadFile(file, "cat","org","user","email","orgName");
+    when(productFileValidator.validateFile(any(),anyString(),any(),any())).thenReturn(validationResultDTO);
+    ProductFileResult res = productFileService.uploadFile(file, "cat","ini","org","user","email","orgName");
     assertEquals("KO", res.getStatus());
     assertEquals("TEST", res.getErrorKey());
   }
@@ -201,7 +201,7 @@ class ProductFileServiceTest {
 
       when(fileStorageClient.upload(any(), any(), any())).thenReturn(null);
 
-      when(productFileValidator.validateFile(any(), any()))
+      when(productFileValidator.validateFile(any(), any(),any(),any()))
         .thenReturn(new ValidationResultDTO("OK", null,List.of(mock(CSVRecord.class)),List.of("Codice GTIN/EAN", "Codice Prodotto", "Categoria", "Paese di Produzione", "Marca", "Modello")));
 
       CSVRecord invalidRecordLocal = mock(CSVRecord.class);
@@ -215,7 +215,7 @@ class ProductFileServiceTest {
       ProductFile savedProductFile = ProductFile.builder().id("123").build();
       when(productFileRepository.save(any())).thenReturn(savedProductFile);
 
-      ProductFileResult result = productFileService.uploadFile(file, "COOKINGHOBS", "org1", "user1","email","orgName");
+      ProductFileResult result = productFileService.uploadFile(file, "COOKINGHOBS", "ini1","org1", "user1","email","orgName");
 
       assertEquals("KO", result.getStatus());
       assertEquals(AssetRegisterConstants.UploadKeyConstant.REPORT_FORMAL_FILE_ERROR_KEY, result.getErrorKey());
@@ -267,10 +267,10 @@ class ProductFileServiceTest {
       mocked.when(() -> CsvUtils.readCsvRecords(file))
         .thenReturn(List.of(rec));
 
-      when(productFileValidator.validateFile(file, "cat"))
+      when(productFileValidator.validateFile(file, "cat","ini","org"))
         .thenReturn(ValidationResultDTO.ok(List.of(rec), List.of("C1")));
 
-      when(productFileValidator.validateRecords(List.of(rec), List.of("C1"), "cat"))
+      when(productFileValidator.validateRecords(List.of(rec), "c1", "cat"))
         .thenReturn(ValidationResultDTO.ok());
 
       when(productFileRepository.save(any())).thenReturn(ProductFile.builder().id("42").build());
@@ -282,7 +282,7 @@ class ProductFileServiceTest {
 
       when(fileStorageClient.upload(any(), any(), any())).thenReturn(null);
 
-      ProductFileResult res = productFileService.uploadFile(file, "cat", "org", "user","email","orgName");
+      ProductFileResult res = productFileService.uploadFile(file, "cat", "ini","org", "user","email","orgName");
 
       assertEquals("OK", res.getStatus());
       assertNull(res.getErrorKey());
@@ -313,10 +313,10 @@ class ProductFileServiceTest {
     MultipartFile file = new MockMultipartFile("file", "test.csv", "text/csv", "dummy".getBytes());
 
     // Simula presenza di un file già in stato IN_PROCESS o UPLOADED
-    when(productFileRepository.existsByOrganizationIdAndUploadStatusIn(eq("org"), anyList()))
+    when(productFileRepository.existsByInitiativeIdAndOrganizationIdAndUploadStatusIn(any(),eq("org"), anyList()))
       .thenReturn(true);
 
-    ProductFileResult result = productFileService.uploadFile(file, "cat", "org", "user", "email","orgName");
+    ProductFileResult result = productFileService.uploadFile(file, "cat", "ini","org", "user", "email","orgName");
 
     assertEquals("KO", result.getStatus());
     assertEquals(AssetRegisterConstants.UploadKeyConstant.UPLOAD_ALREADY_IN_PROGRESS, result.getErrorKey());

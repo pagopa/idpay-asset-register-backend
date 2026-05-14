@@ -1,7 +1,11 @@
 package it.gov.pagopa.register.configuration.initiative.model;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
+@NoArgsConstructor
+@AllArgsConstructor
 @Data
 public class CsvHeader {
 
@@ -10,8 +14,4 @@ public class CsvHeader {
    */
   private String name;
 
-  /**
-   * Indica se il campo è obbligatorio
-   */
-  private boolean required;
 }

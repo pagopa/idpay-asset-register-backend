@@ -5,6 +5,8 @@ import it.gov.pagopa.register.service.validator.rule.RuleContext;
 import it.gov.pagopa.register.service.validator.rule.RuleExecutor;
 import org.springframework.stereotype.Component;
 
+import static it.gov.pagopa.register.constants.AssetRegisterConstants.CATEGORIES_TO_IT_S;
+
 @Component
 public class EqualsCategoryRuleExecutor implements RuleExecutor {
 
@@ -21,26 +23,13 @@ public class EqualsCategoryRuleExecutor implements RuleExecutor {
     CsvRuleContext ctx = (CsvRuleContext) context;
 
     String csvCategory = ctx.getValue(rule.getField());
-    String userCategory = ctx.getCategory();
+    String userCategory = CATEGORIES_TO_IT_S.get(ctx.getCategory());
 
     if (csvCategory == null) {
       return false;
     }
 
-    return csvCategory.equalsIgnoreCase(userCategory);
+    return csvCategory.equals(userCategory);
   }
 
-  @Override
-  public String errorMessage(
-      ValidationRule rule,
-      RuleContext context
-  ) {
-    CsvRuleContext ctx = (CsvRuleContext) context;
-
-    return "Errore di validazione: la categoria indicata nel CSV ('"
-        + ctx.getValue(rule.getField())
-        + "') non corrisponde alla categoria selezionata ('"
-        + ctx.getCategory()
-        + "')";
-  }
 }

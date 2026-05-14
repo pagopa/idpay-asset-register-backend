@@ -1,6 +1,7 @@
 package it.gov.pagopa.register.service.consumer;
 
 import com.azure.storage.blob.models.BlobStorageException;
+import it.gov.pagopa.register.configuration.initiative.InitiativeConfigMap;
 import it.gov.pagopa.register.connector.notification.NotificationServiceImpl;
 import it.gov.pagopa.register.connector.storage.FileStorageClient;
 import it.gov.pagopa.register.dto.operation.StorageEventDTO;
@@ -13,8 +14,8 @@ import it.gov.pagopa.register.model.operation.Product;
 import it.gov.pagopa.register.model.operation.ProductFile;
 import it.gov.pagopa.register.repository.operation.ProductFileRepository;
 import it.gov.pagopa.register.repository.operation.ProductRepository;
-import it.gov.pagopa.register.service.validator.CookinghobsValidatorService;
-import it.gov.pagopa.register.service.validator.EprelProductValidatorService;
+import it.gov.pagopa.register.service.validator.external.check.ExternalCheckService;
+import it.gov.pagopa.register.service.validator.nocheck.NoExternalCheckService;
 import it.gov.pagopa.register.utils.CsvUtils;
 import org.apache.commons.csv.CSVRecord;
 import org.junit.jupiter.api.BeforeEach;
@@ -51,10 +52,6 @@ class ProductFileConsumerServiceTest {
   @Mock
   private ProductFileRepository productFileRepository;
   @Mock
-  private EprelProductValidatorService eprelProductValidator;
-  @Mock
-  private CookinghobsValidatorService cookinghobsValidatorService;
-  @Mock
   private ObjectMapper objectMapper;
   @Mock
   private NotificationServiceImpl notificationService;
@@ -62,7 +59,12 @@ class ProductFileConsumerServiceTest {
   private ProductFileProducer productFileProducer;
   @Mock
   private ConsumerControlService consumerControlService;
-
+  @Mock
+  private InitiativeConfigMap initiativeConfigMap;
+  @Mock
+  private ExternalCheckService externalCheckService;
+  @Mock
+  private NoExternalCheckService noExternalCheckService;
   private static final String ORG_ID = "ORG123";
   private static final String PRODUCT_FILE_ID = "file123";
 
@@ -78,11 +80,12 @@ class ProductFileConsumerServiceTest {
       fileStorageClient,
       objectMapper,
       productFileRepository,
-      eprelProductValidator,
-      cookinghobsValidatorService,
+      noExternalCheckService,
+      externalCheckService,
       notificationService,
       productFileProducer,
-      consumerControlService, initiativeConfigMap);
+      consumerControlService,
+      initiativeConfigMap);
   }
 
 
@@ -107,8 +110,6 @@ class ProductFileConsumerServiceTest {
     List<CSVRecord> invalidRecords = new ArrayList<>();
     Map<CSVRecord, String> errorMessages = new HashMap<>();
 
-    when(cookinghobsValidatorService.validateRecords(any(), any(), any(), any(), any()))
-      .thenReturn(new ProductValidationResult(validRecords, invalidRecords, errorMessages));
 
     try (MockedStatic<CsvUtils> utils = mockStatic(CsvUtils.class)) {
       CSVRecord csvRecord = mock(CSVRecord.class);
@@ -140,8 +141,6 @@ class ProductFileConsumerServiceTest {
     List<CSVRecord> invalidRecords = new ArrayList<>();
     Map<CSVRecord, String> errorMessages = new HashMap<>();
 
-    when(eprelProductValidator.validateRecords(any(), any(), any(), any(), any(), any(),any()))
-      .thenReturn(new ProductValidationResult(validRecords, invalidRecords, errorMessages));
 
     try (MockedStatic<CsvUtils> utils = mockStatic(CsvUtils.class)) {
       CSVRecord csvRecord = mock(CSVRecord.class);
@@ -165,8 +164,7 @@ class ProductFileConsumerServiceTest {
     when(fileStorageClient.download(anyString())).thenReturn(stream);
     when(productFileRepository.findById(anyString()))
       .thenReturn(Optional.of(new ProductFile()));
-    when(eprelProductValidator.validateRecords(any(), any(), any(), any(), any(), any(),any()))
-      .thenThrow(new EprelException("Erorr"));
+
     try (MockedStatic<CsvUtils> utils = mockStatic(CsvUtils.class)) {
       CSVRecord csvRecord = mock(CSVRecord.class);
       utils.when(() -> CsvUtils.readHeader(any(ByteArrayOutputStream.class)))
@@ -193,8 +191,7 @@ class ProductFileConsumerServiceTest {
     when(fileStorageClient.download(anyString())).thenReturn(stream);
     when(productFileRepository.findById(anyString()))
       .thenReturn(Optional.of(new ProductFile()));
-    when(eprelProductValidator.validateRecords(any(), any(), any(), any(), any(), any(),any()))
-      .thenThrow(new EprelException("Erorr"));
+
     when(objectMapper.writeValueAsString(any())).thenThrow(new JacksonException("Error during serialization") {});
     try (MockedStatic<CsvUtils> utils = mockStatic(CsvUtils.class)) {
       CSVRecord csvRecord = mock(CSVRecord.class);
@@ -230,8 +227,6 @@ class ProductFileConsumerServiceTest {
     List<CSVRecord> invalidRecords = List.of(record1, record2);
     Map<CSVRecord, String> errorMessages = new HashMap<>();
 
-    when(eprelProductValidator.validateRecords(any(), any(), any(), any(), any(), any(),any()))
-      .thenReturn(new ProductValidationResult(validRecords, invalidRecords, errorMessages));
 
     try (MockedStatic<CsvUtils> utils = mockStatic(CsvUtils.class)) {
       CSVRecord csvRecord = mock(CSVRecord.class);
@@ -341,7 +336,7 @@ class ProductFileConsumerServiceTest {
       utils.when(() -> CsvUtils.readHeader(any(ByteArrayOutputStream.class)))
         .thenThrow(new IOException("CSV read error"));
 
-      assertDoesNotThrow(() -> service.processCsvFromStorage(csvContent, PRODUCT_FILE_ID, "OTHER", ORG_ID, "ORG_NAME"));
+      assertDoesNotThrow(() -> service.processCsvFromStorage(csvContent, PRODUCT_FILE_ID, "OTHER", ORG_ID, "ORG_NAME","INI_ID"));
     }
   }
 

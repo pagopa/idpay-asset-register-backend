@@ -31,15 +31,4 @@ public class ProductGroupRuleExecutor implements RuleExecutor {
     return productGroup.startsWith(category);
   }
 
-  @Override
-  public String errorMessage(
-      ValidationRule rule,
-      RuleContext context
-  ) {
-    ExternalRuleContext ctx = (ExternalRuleContext) context;
-
-    return "Product group EPREL non coerente con la categoria selezionata ("
-        + ctx.getCategory()
-        + ")";
-  }
 }

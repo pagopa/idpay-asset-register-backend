@@ -53,7 +53,7 @@ public class NoExternalCheckService {
       String businessKey = mapper.extractBusinessKey(csvRecord, categoryConfig);
 
       Optional<Product> existing =
-        productRepository.findByIdAndInitiativeId(businessKey, initiativeId);
+        productRepository.findByGtinCodeAndInitiativeId(businessKey, initiativeId);
 
       // DB check
       if (!dbCheck(orgId, csvRecord, existing, invalidRecords, errorMessages, allowedReloadStatuses)) {

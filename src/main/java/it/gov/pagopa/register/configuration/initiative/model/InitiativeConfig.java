@@ -1,14 +1,24 @@
 package it.gov.pagopa.register.configuration.initiative.model;
 
 import it.gov.pagopa.register.enums.ProductStatus;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.List;
 import java.util.Map;
 
+//TODO apply @NotNull and others to verify initiative config at start up
+
+@NoArgsConstructor
+@AllArgsConstructor
 @Data
+@Document("initiatives_config")
 public class InitiativeConfig {
 
+  @Id
   private String initiativeId;
   private String initiativeName;
   /**
@@ -29,7 +39,7 @@ public class InitiativeConfig {
   /**
    * Macchina a stati del prodotto per ruolo
    */
-  private Map<String, Map<ProductStatus, List<ProductStatus>>> stateTransitions;
+  private Map<String, Map<String, List<ProductStatus>>> stateTransitions;
 
   private List<String> allowedReloadStatuses;
   public boolean isTransitionAllowed(
@@ -42,7 +52,7 @@ public class InitiativeConfig {
       return false;
     }
 
-    Map<ProductStatus, List<ProductStatus>> roleTransitions =
+    Map<String, List<ProductStatus>> roleTransitions =
       stateTransitions.get(role);
 
     if (roleTransitions == null) {

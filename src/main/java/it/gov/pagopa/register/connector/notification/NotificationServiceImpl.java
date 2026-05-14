@@ -25,9 +25,8 @@ public class NotificationServiceImpl implements NotificationService {
   }
 
   @Override
-  public void sendEmailOk(String initiativeName, String productFileId, String senderEmail) {
+  public void sendEmailOk(String productFileId, String senderEmail) {
     EmailMessageDTO email = buildUploadEmailMessageDTO(
-      initiativeName,
       productFileId,
       emailProps.getTemplate().get(OK),
       senderEmail,
@@ -37,9 +36,8 @@ public class NotificationServiceImpl implements NotificationService {
   }
 
   @Override
-  public void sendEmailPartial(String initiativeName, String productFileId, String recipientEmail) {
+  public void sendEmailPartial(String productFileId, String recipientEmail) {
     EmailMessageDTO email = buildUploadEmailMessageDTO(
-      initiativeName,
       productFileId,
       emailProps.getTemplate().get(PARTIAL),
       recipientEmail,
@@ -49,9 +47,8 @@ public class NotificationServiceImpl implements NotificationService {
   }
 
   @Override
-  public void sendEmailUpdateStatus(String initiativeName,List<String> products, String formalMotivation, String status, String recipientEmail) {
+  public void sendEmailUpdateStatus(List<String> products, String formalMotivation, String status, String recipientEmail) {
     EmailMessageDTO email = buildUpdateEmailMessageDTO(
-      initiativeName,
       status,
       products,
       formalMotivation,
@@ -62,7 +59,7 @@ public class NotificationServiceImpl implements NotificationService {
     notificationRestClient.sendEmail(email);
   }
 
-  private EmailMessageDTO buildUpdateEmailMessageDTO(String initiativeName, String status, List<String> products, String formalMotivation, String template, String recipientEmail, String subject) {
+  private EmailMessageDTO buildUpdateEmailMessageDTO(String status, List<String> products, String formalMotivation, String template, String recipientEmail, String subject) {
     Map<String, String> templateValues = new HashMap<>();
 
     List<String> placeholders = Optional.ofNullable(emailProps.getPlaceHolder().get(status.toLowerCase()))
@@ -80,7 +77,6 @@ public class NotificationServiceImpl implements NotificationService {
           templateValues.put(placeholder, htmlList);
         }
         case "formalMotivation" -> templateValues.put("formalMotivation", formalMotivation);
-        case "initiativeName" -> templateValues.put("initiativeName", initiativeName);
         default ->
           log.warn("Placeholder not exists: {}", placeholder);
 
@@ -98,9 +94,8 @@ public class NotificationServiceImpl implements NotificationService {
   }
 
 
-  private EmailMessageDTO buildUploadEmailMessageDTO(String initiativeName, String productFileId, String template, String recipientEmail, String subject) {
+  private EmailMessageDTO buildUploadEmailMessageDTO(String productFileId, String template, String recipientEmail, String subject) {
     Map<String, String> templateValues = new HashMap<>();
-    templateValues.put("initiativeName", initiativeName);
     templateValues.put("productFileName", productFileId);
     return EmailMessageDTO.builder()
       .templateName(template)

@@ -51,7 +51,7 @@ public class ExternalCheckService {
 
       String businessKey = mapper.extractBusinessKey(csvRecord, categoryConfig);
       Optional<Product> existing =
-        productRepository.findByIdAndInitiativeId(businessKey, initiativeId);
+        productRepository.findByGtinCodeAndInitiativeId(businessKey, initiativeId);
 
       if (!dbCheck(
         orgId, csvRecord, existing, invalidRecords, errorMessages, allowedReloadStatuses)) {
@@ -80,7 +80,7 @@ public class ExternalCheckService {
 
           ExternalCheckTemplate template =
             initiativeConfig.getExternalCheckTemplates()
-              .get(check.getName());
+              .get(check.getKey());
 
           ExternalCheckResult checkResult =
             externalCheckExecutor.execute(

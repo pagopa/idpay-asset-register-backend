@@ -12,23 +12,13 @@ public class RegexRuleExecutor implements RuleExecutor {
     RuleContext context
   ) {
     CsvRuleContext ctx = (CsvRuleContext) context;
+    // CSV value
     String value = ctx.getValue(rule.getField());
 
     if (value == null) {
-      return true;
+      return false;
     }
-
     return value.matches(rule.getValue());
-  }
-
-  @Override
-  public String errorMessage(
-    ValidationRule rule,
-    RuleContext context
-  ) {
-    return "Errore di validazione sul campo '"
-      + rule.getField()
-      + "': formato non valido";
   }
 
   @Override

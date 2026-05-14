@@ -36,7 +36,7 @@ class ProductFileValidatorServiceTest {
   @BeforeEach
   void setUp() {
     validationConfig = Mockito.mock(ProductFileValidationConfig.class);
-    productFileValidator = new ProductFileValidatorService(validationConfig);
+    productFileValidator = new ProductFileValidatorService(validationConfig, null,null);
     when(validationConfig.getMaxSize()).thenReturn(22);
     when(validationConfig.getMaxRows()).thenReturn(100);
   }
@@ -49,7 +49,7 @@ class ProductFileValidatorServiceTest {
       "text/csv",
       "test content".getBytes());
     String category = "Test";
-    ValidationResultDTO result = productFileValidator.validateFile(file,category);
+    ValidationResultDTO result = productFileValidator.validateFile(file,category,"initiative","organization");
     assertNotNull(result);
     assertEquals(AssetRegisterConstants.UploadKeyConstant.EXTENSION_FILE_ERROR_KEY, result.getErrorKey());
   }
@@ -62,7 +62,7 @@ class ProductFileValidatorServiceTest {
       "text/csv",
       "".getBytes());
     String category = "Test";
-    ValidationResultDTO result = productFileValidator.validateFile(file,category);
+    ValidationResultDTO result = productFileValidator.validateFile(file,category,"initiative","organization");
     assertNotNull(result);
     assertEquals(AssetRegisterConstants.UploadKeyConstant.EMPTY_FILE_ERROR_KEY, result.getErrorKey());
   }
@@ -74,7 +74,7 @@ class ProductFileValidatorServiceTest {
       "text/csv",
       "Codice GTIN/EAN\\n1234567".getBytes());
     String category = "Test";
-    ValidationResultDTO result = productFileValidator.validateFile(file,category);
+    ValidationResultDTO result = productFileValidator.validateFile(file,category,"initiative","organization");
     assertNotNull(result);
     assertEquals(AssetRegisterConstants.UploadKeyConstant.MAX_SIZE_FILE_ERROR_KEY, result.getErrorKey());
   }
@@ -89,7 +89,7 @@ class ProductFileValidatorServiceTest {
     );
     String category = "UnknownCategory";
 
-    ValidationResultDTO result = productFileValidator.validateFile(file, category);
+    ValidationResultDTO result = productFileValidator.validateFile(file,category,"initiative","organization");
     System.out.println(result.getErrorKey());
     assertNotNull(result);
     assertEquals(AssetRegisterConstants.UploadKeyConstant.UNKNOWN_CATEGORY_ERROR_KEY, result.getErrorKey());
@@ -111,11 +111,10 @@ class ProductFileValidatorServiceTest {
     Map<String, LinkedHashMap<String, ColumnValidationRule>> schemas = new HashMap<>();
     schemas.put(category.toLowerCase(), mockSchema);
 
-    when(validationConfig.getSchemas()).thenReturn(schemas);
     when(validationConfig.getMaxRows()).thenReturn(100);
 
     // Act
-    ValidationResultDTO result = productFileValidator.validateFile(file, category);
+    ValidationResultDTO result = productFileValidator.validateFile(file,category,"initiative","organization");
 
     // Assert
     System.out.println(result.getErrorKey());
@@ -139,11 +138,11 @@ class ProductFileValidatorServiceTest {
     Map<String, LinkedHashMap<String, ColumnValidationRule>> schemas = new HashMap<>();
     schemas.put(category.toLowerCase(), mockSchema);
 
-    when(validationConfig.getSchemas()).thenReturn(schemas);
+
     when(validationConfig.getMaxRows()).thenReturn(1000);
 
 
-    ValidationResultDTO result = productFileValidator.validateFile(file, category);
+    ValidationResultDTO result = productFileValidator.validateFile(file,category,"initiative","organization");
 
     assertNotNull(result);
     assertEquals(AssetRegisterConstants.UploadKeyConstant.EMPTY_FILE_ERROR_KEY, result.getErrorKey());
@@ -168,10 +167,10 @@ class ProductFileValidatorServiceTest {
     Map<String, LinkedHashMap<String, ColumnValidationRule>> schemas = new HashMap<>();
     schemas.put(category.toLowerCase(), mockSchema);
 
-    when(validationConfig.getSchemas()).thenReturn(schemas);
+
     when(validationConfig.getMaxRows()).thenReturn(0);
 
-    ValidationResultDTO result = productFileValidator.validateFile(file, category);
+    ValidationResultDTO result = productFileValidator.validateFile(file,category,"initiative","organization");
 
     System.out.println(result.getErrorKey());
     assertNotNull(result);
@@ -187,7 +186,7 @@ class ProductFileValidatorServiceTest {
     String category = "COOKINGHOBS";
 
 
-    ValidationResultDTO result = productFileValidator.validateFile(file, category);
+    ValidationResultDTO result = productFileValidator.validateFile(file,category,"initiative","organization");
 
     assertNotNull(result);
     assertEquals(AssetRegisterConstants.UploadKeyConstant.EXTENSION_FILE_ERROR_KEY, result.getErrorKey());
@@ -209,11 +208,11 @@ class ProductFileValidatorServiceTest {
     Map<String, LinkedHashMap<String, ColumnValidationRule>> schemas = new HashMap<>();
     schemas.put(category.toLowerCase(), mockSchema);
 
-    when(validationConfig.getSchemas()).thenReturn(schemas);
+
     when(validationConfig.getMaxRows()).thenReturn(100);
 
 
-    ValidationResultDTO result = productFileValidator.validateFile(file, category);
+    ValidationResultDTO result = productFileValidator.validateFile(file,category,"initiative","organization");
 
     assertNotNull(result);
     assertEquals("OK", result.getStatus());
@@ -231,7 +230,7 @@ class ProductFileValidatorServiceTest {
 
     Map<String, LinkedHashMap<String, ColumnValidationRule>> schemas = new HashMap<>();
     schemas.put(category.toLowerCase(), mockSchema);
-    when(validationConfig.getSchemas()).thenReturn(schemas);
+
 
     List<String> headers = List.of("Codice GTIN/EAN");
 
@@ -240,7 +239,7 @@ class ProductFileValidatorServiceTest {
 
     List<CSVRecord> records = List.of(csvRecord);
 
-    ValidationResultDTO result = productFileValidator.validateRecords(records, headers, category);
+    ValidationResultDTO result = productFileValidator.validateRecords(records, category, "INI");
 
     assertNotNull(result);
     assertFalse(result.getInvalidRecords().isEmpty());
@@ -251,13 +250,12 @@ class ProductFileValidatorServiceTest {
   @Test
   void validateRecords_NoRulesFoundException() {
     String category = "UNKNOWN";
-    when(validationConfig.getSchemas()).thenReturn(Collections.emptyMap());
 
     List<CSVRecord> records = List.of();
     List<String> headers = List.of();
 
     IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
-      productFileValidator.validateRecords(records, headers, category)
+      productFileValidator.validateRecords(records, String.valueOf(headers), category)
     );
 
     assertEquals("No validation rules found for category: " + category, exception.getMessage());

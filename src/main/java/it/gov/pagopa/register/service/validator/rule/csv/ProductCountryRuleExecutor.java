@@ -32,15 +32,6 @@ public class ProductCountryRuleExecutor implements RuleExecutor {
     return ISO_COUNTRIES.contains(value);
   }
 
-  @Override
-  public String errorMessage(
-      ValidationRule rule,
-      RuleContext context
-  ) {
-    return "Errore di validazione sul campo '"
-        + rule.getField()
-        + "': codice paese non valido (ISO 3166-1 alpha-2)";
-  }
 }
 
 
