@@ -77,22 +77,20 @@ public class EprelProductMapper implements ProductMapperStrategy {
     MappingContext mappingContext
   ) {
 
-    EprelProduct eprelData =
-      mappingContext.getExternalData("EPREL", EprelProduct.class);
 
     String normalizedCategory =
       category != null ? category.trim().replaceAll("\\s+", "") : null;
 
-    String capacity = mapCapacity(normalizedCategory, eprelData);
+    String capacity = mapCapacity(normalizedCategory, mappingContext);
 
     String codeProduct = normalizeCsvCode(csvRecord.get(CODE_PRODUCT));
     String gtinCode = normalizeCsvCode(csvRecord.get(CODE_GTIN_EAN));
 
     String productName =
-      limitName(mapName(null, eprelData, normalizedCategory, capacity));
+      limitName(mapName(null, mappingContext, normalizedCategory, capacity));
 
     String fullProductName =
-      limitName(mapName(gtinCode, eprelData, normalizedCategory, capacity));
+      limitName(mapName(gtinCode, mappingContext, normalizedCategory, capacity));
 
     return Product.builder()
       .productFileId(productFileId)
@@ -106,11 +104,11 @@ public class EprelProductMapper implements ProductMapperStrategy {
       .eprelCode(csvRecord.get(CODE_EPREL))
       .category(normalizedCategory)
 
-      .productGroup(eprelData.getProductGroup())
+      .productGroup(mappingContext.getExternalData().get("productGroup").toString())
       .countryOfProduction(csvRecord.get(COUNTRY_OF_PRODUCTION))
-      .brand(eprelData.getSupplierOrTrademark())
-      .model(eprelData.getModelIdentifier())
-      .energyClass(mapEnergyClass(eprelData.getEnergyClass()))
+      .brand(mappingContext.getExternalData().get("supplierOrTrademark").toString())
+      .model(mappingContext.getExternalData().get("modelIdentifier").toString())
+      .energyClass(mapEnergyClass(mappingContext.getExternalData().get("energyClass").toString()))
       .capacity(capacity)
 
       .productName(productName)
@@ -122,37 +120,40 @@ public class EprelProductMapper implements ProductMapperStrategy {
       .build();
   }
 
-  private String mapCapacity(String category, EprelProduct eprelData) {
+  private String mapCapacity(String category, MappingContext eprelData) {
     if (eprelData == null) return "N\\A";
 
     return switch (category) {
       case WASHINGMACHINES, TUMBLEDRYERS ->
-        eprelData.getRatedCapacity() != null
-          ? eprelData.getRatedCapacity() + " kg"
+        eprelData.getExternalData().get("ratedCapacity") != null
+          ? eprelData.getExternalData().get("ratedCapacity").toString() + " kg"
           : "N\\A";
 
       case WASHERDRIERS ->
-        eprelData.getRatedCapacityWash() != null
-          ? eprelData.getRatedCapacityWash() + " kg"
+        eprelData.getExternalData().get("ratedCapacityWash") != null
+          ? eprelData.getExternalData().get("ratedCapacityWash").toString() + " kg"
           : "N\\A";
 
       case OVENS -> {
-        if (eprelData.getCavities() != null && !eprelData.getCavities().isEmpty()) {
-          yield eprelData.getCavities().stream()
-            .map(c -> c.getVolume() != null ? c.getVolume() + " l" : "N\\A")
+        Object cavitiesObj = eprelData.getExternalData().get("cavities");
+
+        if (cavitiesObj instanceof List<?> cavities && !cavities.isEmpty()) {
+          yield cavities.stream()
+            .map(c -> (EprelProduct.Cavity) c)
+            .map(c -> c.getVolume() != null ? c.getVolume() + " l" : "N/A")
             .collect(Collectors.joining(" / "));
         }
         yield "N\\A";
       }
 
       case DISHWASHERS ->
-        eprelData.getRatedCapacity() != null
-          ? eprelData.getRatedCapacity() + " c"
+        eprelData.getExternalData().get("ratedCapacity") != null
+          ? eprelData.getExternalData().get("ratedCapacity") + " c"
           : "N\\A";
 
       case REFRIGERATINGAPPL ->
-        eprelData.getTotalVolume() != null
-          ? eprelData.getTotalVolume() + " l"
+        eprelData.getExternalData().get("totalVolume") != null
+          ? eprelData.getExternalData().get("totalVolume") + " l"
           : "N\\A";
 
       default -> "N\\A";
@@ -161,7 +162,7 @@ public class EprelProductMapper implements ProductMapperStrategy {
 
   private String mapName(
     String gtinOrNull,
-    EprelProduct eprel,
+    MappingContext eprel,
     String category,
     String capacity
   ) {
@@ -174,9 +175,9 @@ public class EprelProductMapper implements ProductMapperStrategy {
 
     sb.append(type)
       .append(" ")
-      .append(eprel.getSupplierOrTrademark())
+      .append(eprel.getExternalData().get("SupplierOrTrademark").toString())
       .append(" ")
-      .append(eprel.getModelIdentifier());
+      .append(eprel.getExternalData().get("ModelIdentifier").toString());
 
     if (!"N\\A".equals(capacity)) {
       sb.append(" ").append(capacity);
@@ -185,23 +186,34 @@ public class EprelProductMapper implements ProductMapperStrategy {
     return sb.toString();
   }
 
-  private String resolveProductType(EprelProduct eprel, String category) {
-    if (REFRIGERATINGAPPL.equals(category)) {
-      boolean isRefrigerator =
-        eprel.getCompartments().stream().anyMatch(c -> {
-          if (REFRIGERATORS_CATEGORY.contains(c.getCompartmentType())) {
-            return true;
-          }
-          if (VARIABLE_TEMP.equals(c.getCompartmentType())) {
-            return c.getSubCompartments() != null &&
-              c.getSubCompartments().stream()
-                .map(EprelProduct.SubCompartment::getCompartmentType)
-                .anyMatch(REFRIGERATORS_CATEGORY::contains);
-          }
-          return false;
-        });
+  private String resolveProductType(MappingContext eprel, String category) {
 
-      return isRefrigerator ? REFRIGERATOR_IT : FREEZER_IT;
+    if (REFRIGERATINGAPPL.equals(category)) {
+
+      Object compartmentsObj = eprel.getExternalData().get("compartments");
+
+      if (compartmentsObj instanceof List<?> compartments && !compartments.isEmpty()) {
+
+        boolean isRefrigerator = compartments.stream()
+          .map(c -> (EprelProduct.RefrigeratorCompartment) c)
+          .anyMatch(c -> {
+            if (REFRIGERATORS_CATEGORY.contains(c.getCompartmentType())) {
+              return true;
+            }
+
+            if (VARIABLE_TEMP.equals(c.getCompartmentType())) {
+              return c.getSubCompartments() != null &&
+                c.getSubCompartments().stream()
+                  .map(EprelProduct.SubCompartment::getCompartmentType)
+                  .anyMatch(REFRIGERATORS_CATEGORY::contains);
+            }
+
+            return false;
+          });
+
+        return isRefrigerator ? REFRIGERATOR_IT : FREEZER_IT;
+      }
+      return FREEZER_IT;
     }
 
     return CATEGORIES_TO_IT_S.get(category);

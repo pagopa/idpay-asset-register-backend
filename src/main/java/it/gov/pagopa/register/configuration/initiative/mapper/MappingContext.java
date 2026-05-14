@@ -1,7 +1,10 @@
 package it.gov.pagopa.register.configuration.initiative.mapper;
 
+import lombok.Data;
+
 import java.util.Map;
 
+@Data
 public class MappingContext {
 
   private final Map<String, Object> externalData;
@@ -10,7 +13,5 @@ public class MappingContext {
     this.externalData = externalData;
   }
 
-  public <T> T getExternalData(String key, Class<T> clazz) {
-    return clazz.cast(externalData.get(key));
-  }
+
 }
