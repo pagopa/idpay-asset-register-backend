@@ -56,6 +56,9 @@ public class ProductSpecificRepositoryImpl implements ProductSpecificRepository 
     if (inputCriteria.getOrganizationId() != null) {
       criteria.and(Product.Fields.organizationId).is(inputCriteria.getOrganizationId());
     }
+    if (inputCriteria.getInitiativeId() != null) {
+      criteria.and(Product.Fields.initiativeId).is(inputCriteria.getInitiativeId());
+    }
     if (inputCriteria.getCategory() != null) {
       criteria.and(Product.Fields.category).is(inputCriteria.getCategory());
     }

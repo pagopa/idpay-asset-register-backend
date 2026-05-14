@@ -39,6 +39,7 @@ public class ProductService {
   @SuppressWarnings("java:S107")
   public ProductListDTO fetchProductsByFilters(
     String organizationId,
+    String initiativeId,
     String category,
     String productFileId,
     String eprelCode,
@@ -51,12 +52,13 @@ public class ProductService {
     Pageable pageable,
     String role
   ) {
-    log.info("[GET_PRODUCTS] - Fetching products for organizationId: {}, category: {}, productFileId: {}, eprelCode: {}, gtinCode: {}, productName: {}, brand: {}, model: {}, status: {}, sort: {}",
-      organizationId, category, productFileId, eprelCode, gtinCode, productName, brand, model, status, pageable.getSort());
+    log.info("[GET_PRODUCTS] - Fetching products for organizationId: {}, initiativeId: {}, category: {}, productFileId: {}, eprelCode: {}, gtinCode: {}, productName: {}, brand: {}, model: {}, status: {}, sort: {}",
+      organizationId, initiativeId, category, productFileId, eprelCode, gtinCode, productName, brand, model, status, pageable.getSort());
 
     final Criteria criteria = productRepository.getCriteria(
       ProductCriteriaDTO.builder()
         .organizationId(organizationId)
+        .initiativeId(initiativeId)
         .category(category)
         .productFileId(productFileId)
         .eprelCode(eprelCode)

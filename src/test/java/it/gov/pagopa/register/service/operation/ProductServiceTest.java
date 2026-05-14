@@ -65,7 +65,7 @@ class ProductServiceTest {
     when(productRepository.getCount(any(Criteria.class))).thenReturn(2L);
 
     ProductListDTO dto = productService.fetchProductsByFilters(
-      ORG_ID, null, null, null, null, null, null, null, null, ProductStatus.UPLOADED.name(),
+      ORG_ID, null, null, null, null, null, null, null, null, null, ProductStatus.UPLOADED.name(),
       pageable, UserRole.INVITALIA.getRole()
     );
 
@@ -92,7 +92,7 @@ class ProductServiceTest {
     when(productRepository.getCount(any())).thenReturn(0L);
 
     ProductListDTO dto = productService.fetchProductsByFilters(
-      ORG_ID, null, null, null, null, null, null, null, null, null, pageable, null
+      ORG_ID, null, null, null, null, null, null, null, null, null, null, pageable, null
     );
 
     assertEquals(0, dto.getContent().size());
@@ -108,7 +108,7 @@ class ProductServiceTest {
     when(productRepository.findByFilter(any(), any())).thenThrow(new RuntimeException("DB error"));
 
     RuntimeException ex = assertThrows(RuntimeException.class, () ->
-      productService.fetchProductsByFilters(ORG_ID, null, null, null, null, null, null, null, null, null, pageable, null)
+      productService.fetchProductsByFilters(ORG_ID, null, null, null, null, null, null, null, null, null, null, pageable, null)
     );
     assertEquals("DB error", ex.getMessage());
   }
