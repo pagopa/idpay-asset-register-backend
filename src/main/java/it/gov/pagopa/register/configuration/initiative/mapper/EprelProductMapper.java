@@ -175,9 +175,9 @@ public class EprelProductMapper implements ProductMapperStrategy {
 
     sb.append(type)
       .append(" ")
-      .append(eprel.getExternalData().get("SupplierOrTrademark").toString())
+      .append(eprel.getExternalData().get("supplierOrTrademark").toString())
       .append(" ")
-      .append(eprel.getExternalData().get("ModelIdentifier").toString());
+      .append(eprel.getExternalData().get("modelIdentifier").toString());
 
     if (!"N\\A".equals(capacity)) {
       sb.append(" ").append(capacity);

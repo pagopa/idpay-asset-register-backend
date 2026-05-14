@@ -246,14 +246,14 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
       } else {
         validationResult = externalCheckService.validateRecords(records, category, orgId,initiativeId, fileId, headers, organizationName,initiativeConfig,categoryConfig,allowedReloadStatuses);
       }
-      processResult(initiativeConfig.getInitiativeName(), validationResult.getValidRecords().values().stream().toList(), validationResult.getInvalidRecords(), validationResult.getErrorMessages(), initiativeId, fileId, headers, category);
+      processResult(validationResult.getValidRecords().values().stream().toList(), validationResult.getInvalidRecords(), validationResult.getErrorMessages(), initiativeId, fileId, headers, category);
     } catch (IOException e) {
       log.error("[UPLOAD_PRODUCT_FILE] - Error while reading CSV", e);
       setProductFileStatus(fileId, String.valueOf(PARTIAL), 0);
     }
   }
 
-  private void processResult(String initiativeName, List<Product> validProduct, List<CSVRecord> errors, Map<CSVRecord, String> messages, String initiativeId, String productFileId, List<String> headers, String category) {
+  private void processResult(List<Product> validProduct, List<CSVRecord> errors, Map<CSVRecord, String> messages, String initiativeId, String productFileId, List<String> headers, String category) {
     if (!validProduct.isEmpty()) {
       List<Product> savedProduct = productRepository.saveAll(validProduct);
       log.info("[PRODUCT_UPLOAD] - Saved {} valid products for file {}", savedProduct.size(), productFileId);
