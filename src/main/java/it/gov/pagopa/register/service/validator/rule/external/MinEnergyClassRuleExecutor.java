@@ -22,7 +22,7 @@ public class MinEnergyClassRuleExecutor implements RuleExecutor {
   ) {
     ExternalRuleContext ctx = (ExternalRuleContext) context;
 
-    Object actualObj = ctx.getExternalData().get(rule.getField());
+    Object actualObj = ctx.getExternalData().get("energyClass");
     if (actualObj == null) {
       return false;
     }

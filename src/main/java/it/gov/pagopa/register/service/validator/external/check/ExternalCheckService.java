@@ -10,6 +10,7 @@ import it.gov.pagopa.register.dto.utils.ProductValidationResult;
 import it.gov.pagopa.register.model.operation.Product;
 import it.gov.pagopa.register.repository.operation.ProductRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.csv.CSVRecord;
 import org.springframework.stereotype.Component;
 
@@ -20,6 +21,7 @@ import static it.gov.pagopa.register.utils.ValidationUtils.dbCheck;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class ExternalCheckService {
 
   private final ProductRepository productRepository;
@@ -39,7 +41,7 @@ public class ExternalCheckService {
       List<String> allowedReloadStatuses
   ) {
 
-    ProductMapperStrategy mapper = mapperByCategory.get(category);
+    ProductMapperStrategy mapper = mapperByCategory.get(initiativeConfig.getCategories().get(category).getProductMapper());
 
     Map<String, Product> validProducts = new LinkedHashMap<>();
     List<CSVRecord> invalidRecords = new ArrayList<>();
