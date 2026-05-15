@@ -28,7 +28,7 @@ public class ProductFileController {
 
   private final ProductFileService productFileService;
 
-  @GetMapping("/product-files")
+  @GetMapping("/product-files") // TODO
   public ResponseEntity<ProductFileResponseDTO> getProductFileList(
     @RequestHeader("x-organization-id") @Pattern(regexp = UUID_V4_PATTERN) String organizationId,
     @PathVariable("initiativeId") String initiativeId,
@@ -77,7 +77,7 @@ public class ProductFileController {
       .body(file.getData());
   }
 
-  @GetMapping("/product-files/batch-list")
+  @GetMapping("/product-files/batch-list")// TODO
   public ResponseEntity<List<ProductBatchDTO>> getFilteredProductFiles(
     @PathVariable("initiativeId") String initiativeId,
     @RequestHeader("x-organization-id") @Pattern(regexp = UUID_V4_PATTERN) String organizationId,
