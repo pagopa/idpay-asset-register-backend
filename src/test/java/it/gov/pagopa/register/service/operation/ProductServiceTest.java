@@ -1,5 +1,7 @@
 package it.gov.pagopa.register.service.operation;
 
+import it.gov.pagopa.register.configuration.initiative.InitiativeConfigMap;
+import it.gov.pagopa.register.configuration.initiative.model.InitiativeConfig;
 import it.gov.pagopa.register.connector.notification.NotificationService;
 import it.gov.pagopa.register.dto.operation.*;
 import it.gov.pagopa.register.enums.ProductStatus;
@@ -17,7 +19,9 @@ import org.springframework.data.mongodb.core.query.Criteria;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static it.gov.pagopa.register.constants.AssetRegisterConstants.*;
 import static it.gov.pagopa.register.constants.AssetRegisterConstants.UpdateKeyConstant.*;
@@ -32,6 +36,9 @@ class ProductServiceTest {
 
   @Mock
   private NotificationService notificationService;
+
+  @Mock
+  private InitiativeConfigMap initiativeConfigMap;
 
   @InjectMocks
   private ProductService productService;
@@ -120,13 +127,14 @@ class ProductServiceTest {
     ProductUpdateStatusRequestDTO req = req(List.of("g1", "g2"),
       ProductStatus.UPLOADED, ProductStatus.APPROVED, "why", "FORMAL");
 
-    when(productRepository.findByIds(req.getGtinCodes()))
+    when(initiativeConfigMap.get("initiId")).thenReturn(initiativeConfig());
+    when(productRepository.findByGtinCodeInAndInitiativeId(req.getGtinCodes(), "initiId"))
       .thenReturn(List.of(Product.builder().gtinCode("g1").status(ProductStatus.UPLOADED.name()).build())); // manca g2
 
     UpdateResultDTO res = productService.updateProductStatusesWithNotification("initiId",req, UserRole.INVITALIA.getRole(), USERNAME);
     assertEquals("KO", res.getStatus());
     assertEquals(PRODUCT_NOT_FOUND_ERROR_KEY, res.getErrorKey());
-    verify(productRepository).findByIds(req.getGtinCodes());
+    verify(productRepository).findByGtinCodeInAndInitiativeId(req.getGtinCodes(), "initiId");
     verifyNoMoreInteractions(productRepository, notificationService);
   }
 
@@ -138,12 +146,13 @@ class ProductServiceTest {
     Product a = Product.builder().gtinCode("g1").status(ProductStatus.UPLOADED.name()).build();
     Product b = Product.builder().gtinCode("g2").status(ProductStatus.SUPERVISED.name()).build();
 
-    when(productRepository.findByIds(req.getGtinCodes())).thenReturn(List.of(a, b));
+    when(initiativeConfigMap.get("initiId")).thenReturn(initiativeConfig());
+    when(productRepository.findByGtinCodeInAndInitiativeId(req.getGtinCodes(), "initiId")).thenReturn(List.of(a, b));
 
     UpdateResultDTO res = productService.updateProductStatusesWithNotification("initiId",req, UserRole.INVITALIA.getRole(), USERNAME);
     assertEquals("KO", res.getStatus());
     assertEquals(MIXED_STATUS_ERROR_KEY, res.getErrorKey());
-    verify(productRepository).findByIds(req.getGtinCodes());
+    verify(productRepository).findByGtinCodeInAndInitiativeId(req.getGtinCodes(), "initiId");
     verifyNoMoreInteractions(productRepository, notificationService);
   }
 
@@ -155,12 +164,13 @@ class ProductServiceTest {
     Product a = Product.builder().gtinCode("g1").status(ProductStatus.SUPERVISED.name()).build();
     Product b = Product.builder().gtinCode("g2").status(ProductStatus.SUPERVISED.name()).build();
 
-    when(productRepository.findByIds(req.getGtinCodes())).thenReturn(List.of(a, b));
+    when(initiativeConfigMap.get("initiId")).thenReturn(initiativeConfig());
+    when(productRepository.findByGtinCodeInAndInitiativeId(req.getGtinCodes(), "initiId")).thenReturn(List.of(a, b));
 
     UpdateResultDTO res = productService.updateProductStatusesWithNotification("initiId",req, UserRole.INVITALIA.getRole(), USERNAME);
     assertEquals("KO", res.getStatus());
     assertEquals(INVALID_CURRENT_STATUS_ERROR_KEY, res.getErrorKey());
-    verify(productRepository).findByIds(req.getGtinCodes());
+    verify(productRepository).findByGtinCodeInAndInitiativeId(req.getGtinCodes(), "initiId");
     verifyNoMoreInteractions(productRepository, notificationService);
   }
 
@@ -172,14 +182,17 @@ class ProductServiceTest {
     Product a = Product.builder().gtinCode("g1").status(ProductStatus.UPLOADED.name()).build();
     Product b = Product.builder().gtinCode("g2").status(ProductStatus.UPLOADED.name()).build();
 
-    when(productRepository.findByIds(req.getGtinCodes())).thenReturn(List.of(a, b));
-    when(productRepository.getAllowedInitialStates(ProductStatus.APPROVED, UserRole.INVITALIA.getRole()))
-      .thenReturn(List.of(ProductStatus.SUPERVISED.name())); // non contiene UPLOADED
+    when(initiativeConfigMap.get("initiId")).thenReturn(initiativeConfig(
+      UserRole.INVITALIA.getRole(),
+      ProductStatus.APPROVED,
+      List.of(ProductStatus.SUPERVISED)
+    ));
+    when(productRepository.findByGtinCodeInAndInitiativeId(req.getGtinCodes(), "initiId")).thenReturn(List.of(a, b));
 
     UpdateResultDTO res = productService.updateProductStatusesWithNotification("initiId",req, UserRole.INVITALIA.getRole(), USERNAME);
     assertEquals("KO", res.getStatus());
     assertEquals(TRANSITION_NOT_ALLOWED_ERROR_KEY, res.getErrorKey());
-    verify(productRepository).getAllowedInitialStates(ProductStatus.APPROVED, UserRole.INVITALIA.getRole());
+    verify(productRepository, never()).saveAll(anyList());
   }
 
   // ---------------- updateProductStatusesWithNotification: OK (no email) ----------------
@@ -194,9 +207,8 @@ class ProductServiceTest {
     Product p2 = Product.builder().gtinCode("p2").status(ProductStatus.UPLOADED.name())
       .statusChangeChronology(new ArrayList<>()).build();
 
-    when(productRepository.findByIds(req.getGtinCodes())).thenReturn(List.of(p1, p2));
-    when(productRepository.getAllowedInitialStates(ProductStatus.APPROVED, UserRole.INVITALIA.getRole()))
-      .thenReturn(List.of(ProductStatus.UPLOADED.name()));
+    when(initiativeConfigMap.get("initiId")).thenReturn(initiativeConfig());
+    when(productRepository.findByGtinCodeInAndInitiativeId(req.getGtinCodes(), "initiId")).thenReturn(List.of(p1, p2));
     when(productRepository.saveAll(anyList())).thenAnswer(inv -> inv.getArgument(0));
 
     UpdateResultDTO res = productService.updateProductStatusesWithNotification("initiId",req, UserRole.INVITALIA.getRole(), USERNAME);
@@ -233,9 +245,8 @@ class ProductServiceTest {
     Product a = Product.builder().gtinCode("g1").status(ProductStatus.UPLOADED.name()).build();
     Product b = Product.builder().gtinCode("g2").status(ProductStatus.UPLOADED.name()).build();
 
-    when(productRepository.findByIds(req.getGtinCodes())).thenReturn(List.of(a, b));
-    when(productRepository.getAllowedInitialStates(ProductStatus.REJECTED, UserRole.INVITALIA.getRole()))
-      .thenReturn(List.of(ProductStatus.UPLOADED.name()));
+    when(initiativeConfigMap.get("initiId")).thenReturn(initiativeConfig());
+    when(productRepository.findByGtinCodeInAndInitiativeId(req.getGtinCodes(), "initiId")).thenReturn(List.of(a, b));
     when(productRepository.saveAll(anyList())).thenAnswer(inv -> inv.getArgument(0));
     when(productRepository.getProductNamesGroupedByEmail(List.of("g1", "g2"))).thenReturn(List.of(
       EmailProductDTO.builder().id("a@mail.it").productNames(List.of("n1", "n2")).build(),
@@ -263,9 +274,8 @@ class ProductServiceTest {
     Product a = Product.builder().gtinCode("g1").status(ProductStatus.UPLOADED.name()).build();
     Product b = Product.builder().gtinCode("g2").status(ProductStatus.UPLOADED.name()).build();
 
-    when(productRepository.findByIds(req.getGtinCodes())).thenReturn(List.of(a, b));
-    when(productRepository.getAllowedInitialStates(ProductStatus.REJECTED, UserRole.INVITALIA.getRole()))
-      .thenReturn(List.of(ProductStatus.UPLOADED.name()));
+    when(initiativeConfigMap.get("initiId")).thenReturn(initiativeConfig());
+    when(productRepository.findByGtinCodeInAndInitiativeId(req.getGtinCodes(), "initiId")).thenReturn(List.of(a, b));
     when(productRepository.saveAll(anyList())).thenAnswer(inv -> inv.getArgument(0));
     when(productRepository.getProductNamesGroupedByEmail(List.of("g1", "g2"))).thenReturn(List.of(
       EmailProductDTO.builder().id("ok@mail.it").productNames(List.of("nOK")).build(),
@@ -294,9 +304,8 @@ class ProductServiceTest {
     Product p = Product.builder().gtinCode("x1").status(ProductStatus.UPLOADED.name())
       .statusChangeChronology(new ArrayList<>()).build();
 
-    when(productRepository.findByIds(req.getGtinCodes())).thenReturn(List.of(p));
-    when(productRepository.getAllowedInitialStates(ProductStatus.SUPERVISED, UserRole.OPERATORE.getRole()))
-      .thenReturn(List.of(ProductStatus.UPLOADED.name()));
+    when(initiativeConfigMap.get("initiId")).thenReturn(initiativeConfig());
+    when(productRepository.findByGtinCodeInAndInitiativeId(req.getGtinCodes(), "initiId")).thenReturn(List.of(p));
     when(productRepository.saveAll(anyList())).thenAnswer(inv -> inv.getArgument(0));
 
     UpdateResultDTO res = productService.updateProductStatusesWithNotification("initiId",req, UserRole.OPERATORE.getRole(), USERNAME);
@@ -330,5 +339,36 @@ class ProductServiceTest {
     dto.setMotivation(motivation);
     dto.setFormalMotivation(formalMotivation);
     return dto;
+  }
+
+  private InitiativeConfig initiativeConfig() {
+    InitiativeConfig config = new InitiativeConfig();
+    config.setInitiativeName("Initiative");
+    config.setStateTransitions(Map.of(
+      UserRole.INVITALIA.getRole(), transitions(
+        ProductStatus.APPROVED, List.of(ProductStatus.UPLOADED),
+        ProductStatus.REJECTED, List.of(ProductStatus.UPLOADED)
+      ),
+      UserRole.OPERATORE.getRole(), transitions(
+        ProductStatus.SUPERVISED, List.of(ProductStatus.UPLOADED)
+      )
+    ));
+    return config;
+  }
+
+  private InitiativeConfig initiativeConfig(String role, ProductStatus targetStatus, List<ProductStatus> allowedCurrentStatuses) {
+    InitiativeConfig config = new InitiativeConfig();
+    config.setInitiativeName("Initiative");
+    config.setStateTransitions(Map.of(role, transitions(targetStatus, allowedCurrentStatuses)));
+    return config;
+  }
+
+  @SuppressWarnings({"rawtypes", "unchecked"})
+  private Map<String, List<ProductStatus>> transitions(Object... entries) {
+    Map transitions = new HashMap();
+    for (int i = 0; i < entries.length; i += 2) {
+      transitions.put(entries[i], entries[i + 1]);
+    }
+    return transitions;
   }
 }

@@ -40,10 +40,11 @@ class ProductFileControllerTest {
   private ObjectMapper objectMapper;
 
   private static final  String TEST_ID_UPLOAD = "687f8a176a5c92458819922a";
+  private static final String INITIATIVE_ID = "687f8a176a5c92458819922b";
 
   @Test
   void testDownloadListUpload_Success() throws Exception {
-    String initiativeId = "TEST_INITIATIVE";
+    String initiativeId = INITIATIVE_ID;
     ProductFileDTO fileDTO = new ProductFileDTO();
     fileDTO.setFileName("test-file.txt");
 
@@ -64,14 +65,14 @@ class ProductFileControllerTest {
 
   @Test
   void testDownloadListUpload_MissingHeader() throws Exception {
-    mockMvc.perform(get("/idpay/register/initiatives/{initiativeId}/product-files", "TEST_INIT")
+    mockMvc.perform(get("/idpay/register/initiatives/{initiativeId}/product-files", INITIATIVE_ID)
         .contentType(MediaType.APPLICATION_JSON))
       .andExpect(status().isBadRequest());
   }
 
   @Test
   void downloadCsv_successfulResponse() throws Exception {
-    String initiativeId = "TEST_INITIATIVE_ID";
+    String initiativeId = INITIATIVE_ID;
     FileReportDTO fileReportDTO = FileReportDTO.builder()
       .data("fake csv content".getBytes())
       .filename("test.csv")
@@ -90,7 +91,7 @@ class ProductFileControllerTest {
 
   @Test
   void downloadCsv_notFound() throws Exception {
-    String initiativeId = "TEST_INITIATIVE_ID";
+    String initiativeId = INITIATIVE_ID;
     String validOrgId = "83843864-f3c0-4def-badb-7f197471b72e";
 
     Mockito.when(productFileService.downloadReport(TEST_ID_UPLOAD, validOrgId, initiativeId))
@@ -108,9 +109,9 @@ class ProductFileControllerTest {
     Mockito.when(productFileService.uploadFile(any(),any(), any(), any(), any(), any(), any()))
       .thenReturn(ProductFileResult.ko("EXTENSION_FILE_ERROR"));
 
-    mockMvc.perform(multipart("/idpay/register/initiatives/{initiativeId}/product-files", "TEST_INIT")
+    mockMvc.perform(multipart("/idpay/register/initiatives/{initiativeId}/product-files", INITIATIVE_ID)
         .file(wrongFile)
-        .param("initiativeId", "TEST_INIT")
+        .param("initiativeId", INITIATIVE_ID)
         .param("category", "eprel")
         .header("x-organization-id", "83843864-f3c0-4def-badb-7f197471b72e")
         .header("x-user-id", "83843864-f3c0-4def-badb-7f197471b72e")
@@ -126,9 +127,9 @@ class ProductFileControllerTest {
     Mockito.when(productFileService.uploadFile(any(),any(), any(), any(), any(), any(), any()))
       .thenReturn(ProductFileResult.ko("HEADER_FILE_ERROR"));
 
-    mockMvc.perform(multipart("/idpay/register/initiatives/{initiativeId}/product-files", "TEST_INIT")
+    mockMvc.perform(multipart("/idpay/register/initiatives/{initiativeId}/product-files", INITIATIVE_ID)
         .file(file)
-        .param("initiativeId", "TEST_INIT")
+        .param("initiativeId", INITIATIVE_ID)
         .param("category", "eprel")
         .header("x-organization-id", "83843864-f3c0-4def-badb-7f197471b72e")
         .header("x-user-id", "83843864-f3c0-4def-badb-7f197471b72e")
@@ -144,9 +145,9 @@ class ProductFileControllerTest {
     Mockito.when(productFileService.uploadFile(any(),any(), any(), any(), any(), any(), any()))
       .thenReturn(ProductFileResult.ko("MAX_ROW_FILE_ERROR"));
 
-    mockMvc.perform(multipart("/idpay/register/initiatives/{initiativeId}/product-files", "TEST_INIT")
+    mockMvc.perform(multipart("/idpay/register/initiatives/{initiativeId}/product-files", INITIATIVE_ID)
         .file(file)
-        .param("initiativeId", "TEST_INIT")
+        .param("initiativeId", INITIATIVE_ID)
         .param("category", "eprel")
         .header("x-organization-id", "83843864-f3c0-4def-badb-7f197471b72e")
         .header("x-user-id", "83843864-f3c0-4def-badb-7f197471b72e")
@@ -163,9 +164,9 @@ class ProductFileControllerTest {
     Mockito.when(productFileService.uploadFile(any(),any(), any(), any(), any(), any(), any()))
       .thenReturn(ProductFileResult.ok());
 
-    mockMvc.perform(multipart("/idpay/register/initiatives/{initiativeId}/product-files", "TEST_INIT")
+    mockMvc.perform(multipart("/idpay/register/initiatives/{initiativeId}/product-files", INITIATIVE_ID)
         .file(file)
-        .param("initiativeId", "TEST_INIT")
+        .param("initiativeId", INITIATIVE_ID)
         .param("category", "eprel")
         .header("x-organization-id", "83843864-f3c0-4def-badb-7f197471b72e")
         .header("x-user-id", "83843864-f3c0-4def-badb-7f197471b72e")
@@ -177,7 +178,7 @@ class ProductFileControllerTest {
 
   @Test
   void shouldReturn200AndListWhenOrganizationIdIsValid() throws Exception {
-    String initiativeId = "TEST_INIT";
+    String initiativeId = INITIATIVE_ID;
     Mockito.when(productFileService.retrieveDistinctProductFileIdsBasedOnRole(any(), any(), any(), any()))
       .thenReturn(List.of(new ProductBatchDTO("file123", "test.csv")));
 
@@ -191,7 +192,7 @@ class ProductFileControllerTest {
 
   @Test
   void shouldReturn200WithEmptyListWhenNoFilesFound() throws Exception {
-    String initiativeId = "TEST_INIT";
+    String initiativeId = INITIATIVE_ID;
     Mockito.when(productFileService.retrieveDistinctProductFileIdsBasedOnRole(any(), any(), any(), any()))
       .thenReturn(List.of());
 
@@ -210,9 +211,9 @@ class ProductFileControllerTest {
     Mockito.when(productFileService.validateFile(any(),any(), any(), any(), any(), any(), any()))
       .thenReturn(ProductFileResult.ok());
 
-    mockMvc.perform(multipart("/idpay/register/initiatives/{initiativeId}/product-files/verify", "TEST_INIT")
+    mockMvc.perform(multipart("/idpay/register/initiatives/{initiativeId}/product-files/verify", INITIATIVE_ID)
         .file(file)
-        .param("initiativeId", "TEST_INIT")
+        .param("initiativeId", INITIATIVE_ID)
         .param("category", "eprel")
         .header("x-organization-id", "83843864-f3c0-4def-badb-7f197471b72e")
         .header("x-user-id", "83843864-f3c0-4def-badb-7f197471b72e")
@@ -228,9 +229,9 @@ class ProductFileControllerTest {
     Mockito.when(productFileService.validateFile(any(),any(), any(), any(), any(), any(), any()))
       .thenReturn(ProductFileResult.ko("INVALID_HEADER"));
 
-    mockMvc.perform(multipart("/idpay/register/initiatives/{initiativeId}/product-files/verify", "TEST_INIT")
+    mockMvc.perform(multipart("/idpay/register/initiatives/{initiativeId}/product-files/verify", INITIATIVE_ID)
         .file(file)
-        .param("initiativeId", "TEST_INIT")
+        .param("initiativeId", INITIATIVE_ID)
         .param("category", "eprel")
         .header("x-organization-id", "83843864-f3c0-4def-badb-7f197471b72e")
         .header("x-user-id", "83843864-f3c0-4def-badb-7f197471b72e")
