@@ -82,7 +82,7 @@ public class ExternalCheckExecutor {
 
         if (!valid) {
           return ExternalCheckResult.ko(
-            ERROR_MAP.get(rule.getErrorKey().replace("{}", category))
+            ERROR_MAP.get(rule.getErrorKey()).replace("{}", category)
           );
         }
       }
