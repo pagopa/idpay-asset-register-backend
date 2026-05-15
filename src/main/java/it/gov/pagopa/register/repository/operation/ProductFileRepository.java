@@ -10,9 +10,9 @@ import java.util.Optional;
 
 public interface ProductFileRepository extends MongoRepository<ProductFile, String> {
 
-  Page<ProductFile> findByOrganizationIdAndUploadStatusNot(String organizationId, String uploadStatus, Pageable pageable);
+  Page<ProductFile> findByOrganizationIdAndInitiativeIdAndUploadStatusNot(String organizationId, String initiativeId, String uploadStatus, Pageable pageable);
 
-  Optional<ProductFile> findByIdAndOrganizationId(String id, String organizationId);
+  Optional<ProductFile> findByIdAndOrganizationIdAndInitiativeId(String id, String organizationId, String initiativeId);
 
   boolean existsByInitiativeIdAndOrganizationIdAndUploadStatusIn(String initiativeId, String organizationId, List<String> uploadStatuses);
 

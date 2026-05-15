@@ -32,8 +32,9 @@ public class ProductFileController {
   public ResponseEntity<ProductFileResponseDTO> getProductFileList(
 
     @RequestHeader("x-organization-id") @Pattern(regexp = UUID_V4_PATTERN) String organizationId,
+    @PathVariable("initiativeId") String initiativeId,
     @PageableDefault(size = 20, sort = "dateUpload", direction = Sort.Direction.DESC) Pageable pageable) {
-    return ResponseEntity.ok().body(productFileService.getFilesByPage(organizationId, pageable));
+    return ResponseEntity.ok().body(productFileService.getFilesByPage(organizationId, initiativeId, pageable));
   }
 
   @PostMapping(value = "/product-files", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -42,6 +43,7 @@ public class ProductFileController {
     @RequestHeader("x-organization-name") String organizationName,
     @RequestHeader("x-user-id") @Pattern(regexp = UUID_V4_PATTERN) String userId,
     @RequestHeader("x-user-email") @Email String userEmail,
+    @PathVariable("initiativeId") String initiativeId,
     @RequestParam("category") String category,
     @RequestPart("csv") MultipartFile csv,
     @PathVariable @Pattern(regexp = OBJECT_ID_PATTERN) String initiativeId
@@ -56,6 +58,7 @@ public class ProductFileController {
     @RequestHeader("x-organization-name") String organizationName,
     @RequestHeader("x-user-id") @Pattern(regexp = UUID_V4_PATTERN) String userId,
     @RequestHeader("x-user-email") @Email String userEmail,
+    @PathVariable("initiativeId") String initiativeId,
     @RequestParam("category") String category,
     @RequestPart("csv") MultipartFile csv,
     @PathVariable @Pattern(regexp = OBJECT_ID_PATTERN) String initiativeId
@@ -67,9 +70,10 @@ public class ProductFileController {
   @GetMapping("/product-files/{productFileId}/report")
   public ResponseEntity<byte[]> downloadProductFileReport(
     @RequestHeader("x-organization-id") @Pattern(regexp = UUID_V4_PATTERN) String organizationId,
+    @PathVariable("initiativeId") String initiativeId,
     @PathVariable @Pattern(regexp = OBJECT_ID_PATTERN) String productFileId
   ) {
-    FileReportDTO file = productFileService.downloadReport(productFileId, organizationId);
+    FileReportDTO file = productFileService.downloadReport(productFileId, organizationId, initiativeId);
     return ResponseEntity.ok()
       .header("Content-Disposition", "attachment; filename=" + file.getFilename())
       .contentType(MediaType.APPLICATION_JSON)
@@ -78,12 +82,16 @@ public class ProductFileController {
 
   @GetMapping("/product-files/batch-list")
   public ResponseEntity<List<ProductBatchDTO>> getFilteredProductFiles(
+    @PathVariable("initiativeId") String initiativeId,
     @RequestHeader("x-organization-id") @Pattern(regexp = UUID_V4_PATTERN) String organizationId,
     @RequestHeader(value = "x-organization-selected", required = false) @Pattern(regexp = UUID_V4_PATTERN) String organizationSelected,
     @RequestHeader("x-organization-role") @Pattern(regexp = ROLE_PATTERN) String role
   ) {
     List<ProductBatchDTO> products = productFileService.retrieveDistinctProductFileIdsBasedOnRole(
-      organizationId, organizationSelected, role
+      organizationId,
+      initiativeId,
+      organizationSelected,
+      role
     );
     return ResponseEntity.ok(products);
   }

@@ -124,7 +124,7 @@ class ProductFileSpecificRepositoryTest {
     when(mongoTemplate.aggregate(any(Aggregation.class), eq("product"), eq(Product.class)))
       .thenReturn(aggregationResults);
 
-    List<Product> result = productSpecificRepository.retrieveDistinctProductFileIdsBasedOnRole(orgId, null, UserRole.OPERATORE.getRole());
+    List<Product> result = productSpecificRepository.retrieveDistinctProductFileIdsBasedOnRole(orgId, null, null, UserRole.OPERATORE.getRole());
 
     assertEquals(1, result.size());
     assertEquals("file123", result.getFirst().getProductFileId());

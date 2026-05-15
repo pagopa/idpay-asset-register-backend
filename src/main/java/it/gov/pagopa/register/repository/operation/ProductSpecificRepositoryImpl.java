@@ -56,6 +56,9 @@ public class ProductSpecificRepositoryImpl implements ProductSpecificRepository 
     if (inputCriteria.getOrganizationId() != null) {
       criteria.and(Product.Fields.organizationId).is(inputCriteria.getOrganizationId());
     }
+    if (inputCriteria.getInitiativeId() != null) {
+      criteria.and(Product.Fields.initiativeId).is(inputCriteria.getInitiativeId());
+    }
     if (inputCriteria.getCategory() != null) {
       criteria.and(Product.Fields.category).is(inputCriteria.getCategory());
     }
@@ -94,13 +97,13 @@ public class ProductSpecificRepositoryImpl implements ProductSpecificRepository 
   }
 
   @Override
-  public List<Product> retrieveDistinctProductFileIdsBasedOnRole(String organizationId, String organizationSelected, String role) {
-    Criteria criteria = buildRoleBasedCriteria(organizationId, organizationSelected, role);
+  public List<Product> retrieveDistinctProductFileIdsBasedOnRole(String organizationId, String initiativeId, String organizationSelected, String role) {
+    Criteria criteria = buildRoleBasedCriteria(organizationId, initiativeId, organizationSelected, role);
 
     List<AggregationOperation> operations = new ArrayList<>();
-    if (criteria != null) {
-      operations.add(Aggregation.match(criteria));
-    }
+
+    operations.add(Aggregation.match(criteria));
+
 
     operations.add(Aggregation.group(FIELD_PRODUCT_FILE_ID, FIELD_CATEGORY));
     operations.add(Aggregation.project()
@@ -248,13 +251,20 @@ public class ProductSpecificRepositoryImpl implements ProductSpecificRepository 
       .orElse(Sort.Direction.ASC);
   }
 
-  private Criteria buildRoleBasedCriteria(String organizationId, String organizationSelected, String role) {
-    if (UserRole.OPERATORE.getRole().equalsIgnoreCase(role)) {
-      return Criteria.where(FIELD_ORGANIZATION_ID).is(organizationId);
-    } else if (organizationSelected != null) {
-      return Criteria.where(FIELD_ORGANIZATION_ID).is(organizationSelected);
+  private Criteria buildRoleBasedCriteria(String organizationId, String initiativeId, String organizationSelected, String role) {
+    Criteria criteria = new Criteria();
+
+    if (initiativeId != null) {
+      criteria.and(Product.Fields.initiativeId).is(initiativeId);
     }
-    return null;
+
+    if (UserRole.OPERATORE.getRole().equalsIgnoreCase(role)) {
+      criteria.and(FIELD_ORGANIZATION_ID).is(organizationId);
+    } else if (organizationSelected != null) {
+      criteria.and(FIELD_ORGANIZATION_ID).is(organizationSelected);
+    }
+
+    return criteria;
   }
 
   public List<String> getAllowedInitialStates(ProductStatus targetStatus, String role) {

@@ -27,11 +27,12 @@ public class ProductController {
 
   private final ProductService productService;
 
-  @GetMapping("/products")
+  @GetMapping("/initiatives/{initiativeId}/products")
   public ResponseEntity<ProductListDTO> getProductList(
     @RequestHeader(value = "x-organization-role", required = false, defaultValue = "operatore") @Pattern(regexp = ROLE_PATTERN) String role,
     @PathVariable @Pattern(regexp = OBJECT_ID_PATTERN) String initiativeId,
     @RequestParam(required = false) @Pattern(regexp = UUID_V4_PATTERN) String organizationId,
+    @PathVariable("initiativeId") String initiativeId,
     @RequestParam(required = false) @Pattern(regexp = ANY_TEXT) String productName,
     @RequestParam(required = false) @Pattern(regexp = ANY_TEXT) String fullProductName,
     @RequestParam(required = false) @Pattern(regexp = OBJECT_ID_PATTERN) String productFileId,
@@ -48,6 +49,7 @@ public class ProductController {
 
     ProductListDTO result = productService.fetchProductsByFilters(
       organizationId,
+      initiativeId,
       categoryName,
       productFileId,
       eprelCode,

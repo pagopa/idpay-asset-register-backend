@@ -27,6 +27,12 @@ public class InitiativeSummaryDTO {
   @JsonProperty("status")
   private String status;
 
+  @JsonProperty("serviceId")
+  private String serviceId;
+
+  @JsonProperty("organizationName")
+  private String organizationName;
+
   @JsonProperty("creationDate")
   private LocalDateTime creationDate;
 

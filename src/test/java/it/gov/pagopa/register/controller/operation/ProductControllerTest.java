@@ -50,6 +50,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
     //Test con esito positivo
     @Test
     void testGetProducts_Success() throws Exception {
+      String initiativeId = "TEST_INITIATIVE_ID";
       ProductDTO productDTO = new ProductDTO();
       productDTO.setOrganizationId("83843864-f3c0-4def-badb-7f197471b72e");
 
@@ -73,10 +74,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
           , any()
           , any()
           , any()
+          , any()
         ))
         .thenReturn(mockResponse);
-      mockMvc.perform(get("/idpay/register/products")
+      mockMvc.perform(get("/idpay/register/initiatives/{initiativeId}/products", initiativeId)
           .queryParam("organizationId", "83843864-f3c0-4def-badb-7f197471b72e")
+
           .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.content").isArray())
@@ -91,7 +94,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
     //Test in caso di eccezione
     @Test
     void testGetProducts_ServiceThrowsException() throws Exception {
+      String initiativeId = "TEST_INITIATIVE_ID";
       when(productService.fetchProductsByFilters(eq("83843864-f3c0-4def-badb-7f197471b72e")
+          , any()
           , any()
           , any()
           , any()
@@ -106,7 +111,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         ))
         .thenThrow(new RuntimeException("Service error"));
 
-      mockMvc.perform(get("/idpay/register/products")
+      mockMvc.perform(get("/idpay/register/initiatives/{initiativeId}/products", initiativeId)
           .queryParam("organizationId", "83843864-f3c0-4def-badb-7f197471b72e")
           .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isInternalServerError());
