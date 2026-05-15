@@ -303,7 +303,7 @@ class ProductFileServiceTest {
       when(productFileValidator.validateFile(file, "cat","ini","org"))
         .thenReturn(ValidationResultDTO.ok(List.of(rec), List.of("C1")));
 
-      when(productFileValidator.validateRecords(List.of(rec), "c1", "cat"))
+      when(productFileValidator.validateRecords(List.of(rec), "cat", "ini"))
         .thenReturn(ValidationResultDTO.ok());
 
       when(productFileRepository.save(any())).thenReturn(ProductFile.builder().id("42").build());
