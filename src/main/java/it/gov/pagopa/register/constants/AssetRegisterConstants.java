@@ -172,7 +172,7 @@ public class AssetRegisterConstants {
     Map.entry("ERROR_TRADEMARK", "Il marchio associato al prodotto non risulta nell'elenco della Banca dati europea dei prodotti per l'etichettatura energetica - EPREL"),
     Map.entry("ERROR_BLOCKED", "Il prodotto risulta bloccato nell'elenco della Banca dati europea dei prodotti per l'etichettatura energetica - EPREL"),
     Map.entry("ERROR_STATUS", "Il prodotto non è presente o caricato nell'elenco della Banca dati europea dei prodotti per l'etichettatura energetica - EPREL"),
-    Map.entry("ERROR_PRODUCT_GROU", "La categoria presente sulla Banca dati europea dei prodotti per l'etichettatura energetica - EPREL non è coerente con quella del file CSV"),
+    Map.entry("ERROR_PRODUCT_GROUP", "La categoria presente sulla Banca dati europea dei prodotti per l'etichettatura energetica - EPREL non è coerente con quella del file CSV"),
     Map.entry("ERROR_ENERGY_CLASS", "La classe energetica non è conforme con quella prevista nel DM del 03/09/2025"),
     Map.entry("DUPLICATE_GTIN_EAN", "Il codice GTIN indicato nel file CSV è un duplicato"),
     Map.entry("DIFFERENT_ORGANIZATIONID", "Il prodotto indicato è associato ad un altro produttore"),
