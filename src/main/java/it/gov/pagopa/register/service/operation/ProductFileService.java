@@ -50,11 +50,11 @@ public class ProductFileService {
   private final FileStorageClient fileStorageClient;
   private final ProductFileValidatorService productFileValidator;
 
-  public ProductFileResponseDTO getFilesByPage(String organizationId, Pageable pageable) {
-    log.info("[GET_FILES_BY_PAGE] - Fetching files for organizationId: {}", organizationId);
+  public ProductFileResponseDTO getFilesByPage(String organizationId, String initiativeId, Pageable pageable) {
+    log.info("[GET_FILES_BY_PAGE] - Fetching files for organizationId: {}, initiativeId: {}", organizationId, initiativeId);
 
-    Page<ProductFile> filesPage = productFileRepository.findByOrganizationIdAndUploadStatusNot(
-      organizationId, UploadCsvStatus.FORMAL_ERROR.name(), pageable);
+    Page<ProductFile> filesPage = productFileRepository.findByOrganizationIdAndInitiativeIdAndUploadStatusNot(
+      organizationId, initiativeId, UploadCsvStatus.FORMAL_ERROR.name(), pageable);
 
     Page<ProductFileDTO> filesPageDTO = filesPage.map(ProductFileMapper::toDTO);
 
@@ -227,10 +227,11 @@ public class ProductFileService {
       .build());
   }
 
-  public List<ProductBatchDTO> retrieveDistinctProductFileIdsBasedOnRole(String organizationId, String organizationSelected, String role) {
-    log.info("[GET_PRODUCT_FILES] - Fetching product files for organizationId: {}", organizationId);
+  public List<ProductBatchDTO> retrieveDistinctProductFileIdsBasedOnRole(String organizationId, String initiativeId, String organizationSelected, String role) {
+
+    log.info("[GET_PRODUCT_FILES] - Fetching product files for organizationId: {}, initiativeId: {}", organizationId, initiativeId);
      List<Product> productFiles = productRepository
-      .retrieveDistinctProductFileIdsBasedOnRole(organizationId, organizationSelected, role);
+      .retrieveDistinctProductFileIdsBasedOnRole(organizationId, initiativeId, organizationSelected, role);
 
     log.info("[GET_PRODUCT_FILES] - Fetched {} product files for organizationId: {}", productFiles.size(), organizationId);
     return productFiles.stream()

@@ -64,10 +64,10 @@ class ProductFileServiceTest {
     ProductFile pf2 = ProductFile.builder().id("2").fileName("f2.csv").uploadStatus("OK").category("WASHINGMACHINES").build();
     List<ProductFile> list = List.of(pf1, pf2);
     Page<ProductFile> pg = new PageImpl<>(list, page, list.size());
-    when(productFileRepository.findByOrganizationIdAndUploadStatusNot(org, UploadCsvStatus.FORMAL_ERROR.name(), page))
+    when(productFileRepository.findByOrganizationIdAndInitiativeIdAndUploadStatusNot(org, null, UploadCsvStatus.FORMAL_ERROR.name(), page))
       .thenReturn(pg);
 
-    ProductFileResponseDTO resp = productFileService.getFilesByPage(org, page);
+    ProductFileResponseDTO resp = productFileService.getFilesByPage(org,null, page);
     assertEquals(2, resp.getContent().size());
     assertEquals("f1.csv", resp.getContent().get(0).getFileName());
     assertEquals("f2.csv", resp.getContent().get(1).getFileName());
@@ -75,7 +75,7 @@ class ProductFileServiceTest {
     assertEquals(2, resp.getPageSize());
     assertEquals(2, resp.getTotalElements());
     assertEquals(1, resp.getTotalPages());
-    verify(productFileRepository).findByOrganizationIdAndUploadStatusNot(org, UploadCsvStatus.FORMAL_ERROR.name(), page);
+    verify(productFileRepository).findByOrganizationIdAndInitiativeIdAndUploadStatusNot(org, null, UploadCsvStatus.FORMAL_ERROR.name(), page);
   }
 
   @Test
@@ -83,10 +83,10 @@ class ProductFileServiceTest {
     String org = "org";
     Pageable page = PageRequest.of(0,2);
     Page<ProductFile> pg = new PageImpl<>(List.of(), page, 0);
-    when(productFileRepository.findByOrganizationIdAndUploadStatusNot(org, UploadCsvStatus.FORMAL_ERROR.name(), page))
+    when(productFileRepository.findByOrganizationIdAndInitiativeIdAndUploadStatusNot(org, null, UploadCsvStatus.FORMAL_ERROR.name(), page))
       .thenReturn(pg);
 
-    ProductFileResponseDTO resp = productFileService.getFilesByPage(org, page);
+    ProductFileResponseDTO resp = productFileService.getFilesByPage(org, null, page);
     assertTrue(resp.getContent().isEmpty());
     assertEquals(0, resp.getTotalElements());
     assertEquals(0, resp.getTotalPages());
@@ -95,10 +95,10 @@ class ProductFileServiceTest {
   @Test
   void testGetFilesByPage_RepoThrows() {
     Pageable page = PageRequest.of(0,1);
-    when(productFileRepository.findByOrganizationIdAndUploadStatusNot(any(), any(), eq(page)))
+    when(productFileRepository.findByOrganizationIdAndInitiativeIdAndUploadStatusNot(any(), any(), any(), eq(page)))
       .thenThrow(new RuntimeException("DB"));
     RuntimeException ex = assertThrows(RuntimeException.class,
-      () -> productFileService.getFilesByPage("org", page));
+      () -> productFileService.getFilesByPage("org",null, page));
     assertEquals("DB", ex.getMessage());
   }
 
@@ -331,10 +331,10 @@ class ProductFileServiceTest {
       .category("DISHWASHERS")
       .build();
 
-    when(productRepository.retrieveDistinctProductFileIdsBasedOnRole("org123",null,"operatore"))
+    when(productRepository.retrieveDistinctProductFileIdsBasedOnRole("org123", null,null,"operatore"))
       .thenReturn(List.of(file));
 
-    List<ProductBatchDTO> result = productFileService.retrieveDistinctProductFileIdsBasedOnRole("org123",null,"operatore");
+    List<ProductBatchDTO> result = productFileService.retrieveDistinctProductFileIdsBasedOnRole("org123", null,null,"operatore");
 
     assertEquals(1, result.size());
     assertEquals("file123", result.getFirst().getProductFileId());

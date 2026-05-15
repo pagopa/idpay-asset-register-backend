@@ -28,12 +28,12 @@ public class ProductFileController {
 
   private final ProductFileService productFileService;
 
-  @GetMapping("/product-files") // TODO
+  @GetMapping("/product-files")
   public ResponseEntity<ProductFileResponseDTO> getProductFileList(
     @RequestHeader("x-organization-id") @Pattern(regexp = UUID_V4_PATTERN) String organizationId,
     @PathVariable("initiativeId") String initiativeId,
     @PageableDefault(size = 20, sort = "dateUpload", direction = Sort.Direction.DESC) Pageable pageable) {
-    return ResponseEntity.ok().body(productFileService.getFilesByPage(organizationId, pageable));
+    return ResponseEntity.ok().body(productFileService.getFilesByPage(organizationId, initiativeId, pageable));
   }
 
   @PostMapping(value = "/product-files", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -77,7 +77,7 @@ public class ProductFileController {
       .body(file.getData());
   }
 
-  @GetMapping("/product-files/batch-list")// TODO
+  @GetMapping("/product-files/batch-list")
   public ResponseEntity<List<ProductBatchDTO>> getFilteredProductFiles(
     @PathVariable("initiativeId") String initiativeId,
     @RequestHeader("x-organization-id") @Pattern(regexp = UUID_V4_PATTERN) String organizationId,
@@ -85,7 +85,10 @@ public class ProductFileController {
     @RequestHeader("x-organization-role") @Pattern(regexp = ROLE_PATTERN) String role
   ) {
     List<ProductBatchDTO> products = productFileService.retrieveDistinctProductFileIdsBasedOnRole(
-      organizationId, organizationSelected, role
+      organizationId,
+      initiativeId,
+      organizationSelected,
+      role
     );
     return ResponseEntity.ok(products);
   }

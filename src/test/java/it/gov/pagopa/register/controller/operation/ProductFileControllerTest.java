@@ -51,7 +51,7 @@ class ProductFileControllerTest {
       .content(Collections.singletonList(fileDTO))
       .build();
 
-    Mockito.when(productFileService.getFilesByPage(eq("83843864-f3c0-4def-badb-7f197471b72e"), any(Pageable.class)))
+    Mockito.when(productFileService.getFilesByPage(eq("83843864-f3c0-4def-badb-7f197471b72e"), any(), any(Pageable.class)))
       .thenReturn(mockResponse);
 
     mockMvc.perform(get("/idpay/register/initiatives/{initiativeId}/product-files", initiativeId)
@@ -178,7 +178,7 @@ class ProductFileControllerTest {
   @Test
   void shouldReturn200AndListWhenOrganizationIdIsValid() throws Exception {
     String initiativeId = "TEST_INIT";
-    Mockito.when(productFileService.retrieveDistinctProductFileIdsBasedOnRole(any(), any(), any()))
+    Mockito.when(productFileService.retrieveDistinctProductFileIdsBasedOnRole(any(), any(), any(), any()))
       .thenReturn(List.of(new ProductBatchDTO("file123", "test.csv")));
 
     mockMvc.perform(get("/idpay/register/initiatives/{initiativeId}/product-files/batch-list", initiativeId)
@@ -192,7 +192,7 @@ class ProductFileControllerTest {
   @Test
   void shouldReturn200WithEmptyListWhenNoFilesFound() throws Exception {
     String initiativeId = "TEST_INIT";
-    Mockito.when(productFileService.retrieveDistinctProductFileIdsBasedOnRole(any(), any(), any()))
+    Mockito.when(productFileService.retrieveDistinctProductFileIdsBasedOnRole(any(), any(), any(), any()))
       .thenReturn(List.of());
 
     mockMvc.perform(get("/idpay/register/initiatives/{initiativeId}/product-files/batch-list", initiativeId)
