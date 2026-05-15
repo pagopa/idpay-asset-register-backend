@@ -27,7 +27,7 @@ public class ProductController {
 
   private final ProductService productService;
 
-  @GetMapping("/initiatives/{initiativeId}/products")
+  @GetMapping("/products")
   public ResponseEntity<ProductListDTO> getProductList(
     @RequestHeader(value = "x-organization-role", required = false, defaultValue = "operatore") @Pattern(regexp = ROLE_PATTERN) String role,
     @PathVariable("initiativeId")  @Pattern(regexp = OBJECT_ID_PATTERN) String initiativeId,
