@@ -123,7 +123,7 @@ class ProductServiceTest {
     when(productRepository.findByIds(req.getGtinCodes()))
       .thenReturn(List.of(Product.builder().gtinCode("g1").status(ProductStatus.UPLOADED.name()).build())); // manca g2
 
-    UpdateResultDTO res = productService.updateProductStatusesWithNotification(req, UserRole.INVITALIA.getRole(), USERNAME);
+    UpdateResultDTO res = productService.updateProductStatusesWithNotification("initiId",req, UserRole.INVITALIA.getRole(), USERNAME);
     assertEquals("KO", res.getStatus());
     assertEquals(PRODUCT_NOT_FOUND_ERROR_KEY, res.getErrorKey());
     verify(productRepository).findByIds(req.getGtinCodes());
@@ -140,7 +140,7 @@ class ProductServiceTest {
 
     when(productRepository.findByIds(req.getGtinCodes())).thenReturn(List.of(a, b));
 
-    UpdateResultDTO res = productService.updateProductStatusesWithNotification(req, UserRole.INVITALIA.getRole(), USERNAME);
+    UpdateResultDTO res = productService.updateProductStatusesWithNotification("initiId",req, UserRole.INVITALIA.getRole(), USERNAME);
     assertEquals("KO", res.getStatus());
     assertEquals(MIXED_STATUS_ERROR_KEY, res.getErrorKey());
     verify(productRepository).findByIds(req.getGtinCodes());
@@ -157,7 +157,7 @@ class ProductServiceTest {
 
     when(productRepository.findByIds(req.getGtinCodes())).thenReturn(List.of(a, b));
 
-    UpdateResultDTO res = productService.updateProductStatusesWithNotification(req, UserRole.INVITALIA.getRole(), USERNAME);
+    UpdateResultDTO res = productService.updateProductStatusesWithNotification("initiId",req, UserRole.INVITALIA.getRole(), USERNAME);
     assertEquals("KO", res.getStatus());
     assertEquals(INVALID_CURRENT_STATUS_ERROR_KEY, res.getErrorKey());
     verify(productRepository).findByIds(req.getGtinCodes());
@@ -176,7 +176,7 @@ class ProductServiceTest {
     when(productRepository.getAllowedInitialStates(ProductStatus.APPROVED, UserRole.INVITALIA.getRole()))
       .thenReturn(List.of(ProductStatus.SUPERVISED.name())); // non contiene UPLOADED
 
-    UpdateResultDTO res = productService.updateProductStatusesWithNotification(req, UserRole.INVITALIA.getRole(), USERNAME);
+    UpdateResultDTO res = productService.updateProductStatusesWithNotification("initiId",req, UserRole.INVITALIA.getRole(), USERNAME);
     assertEquals("KO", res.getStatus());
     assertEquals(TRANSITION_NOT_ALLOWED_ERROR_KEY, res.getErrorKey());
     verify(productRepository).getAllowedInitialStates(ProductStatus.APPROVED, UserRole.INVITALIA.getRole());
@@ -199,7 +199,7 @@ class ProductServiceTest {
       .thenReturn(List.of(ProductStatus.UPLOADED.name()));
     when(productRepository.saveAll(anyList())).thenAnswer(inv -> inv.getArgument(0));
 
-    UpdateResultDTO res = productService.updateProductStatusesWithNotification(req, UserRole.INVITALIA.getRole(), USERNAME);
+    UpdateResultDTO res = productService.updateProductStatusesWithNotification("initiId",req, UserRole.INVITALIA.getRole(), USERNAME);
     assertEquals("OK", res.getStatus());
 
     // <-- usando CAPTOR, niente Iterable.get()
@@ -244,7 +244,7 @@ class ProductServiceTest {
 
     doNothing().when(notificationService).sendEmailUpdateStatus(anyList(), anyString(), anyString(), anyString());
 
-    UpdateResultDTO res = productService.updateProductStatusesWithNotification(req, UserRole.INVITALIA.getRole(), USERNAME);
+    UpdateResultDTO res = productService.updateProductStatusesWithNotification("initiId",req, UserRole.INVITALIA.getRole(), USERNAME);
     assertEquals("OK", res.getStatus());
 
     verify(productRepository).getProductNamesGroupedByEmail(List.of("g1", "g2"));
@@ -278,7 +278,7 @@ class ProductServiceTest {
       .when(notificationService)
       .sendEmailUpdateStatus(List.of("nKO"), "FORMAL_MAIL", ProductStatus.REJECTED.name(), "ko@mail.it");
 
-    UpdateResultDTO res = productService.updateProductStatusesWithNotification(req, UserRole.INVITALIA.getRole(), USERNAME);
+    UpdateResultDTO res = productService.updateProductStatusesWithNotification("initiId",req, UserRole.INVITALIA.getRole(), USERNAME);
     assertEquals("KO", res.getStatus());
     assertEquals(EMAIL_ERROR_KEY, res.getErrorKey());
     verify(notificationService, times(2)).sendEmailUpdateStatus(anyList(), anyString(), anyString(), anyString());
@@ -299,7 +299,7 @@ class ProductServiceTest {
       .thenReturn(List.of(ProductStatus.UPLOADED.name()));
     when(productRepository.saveAll(anyList())).thenAnswer(inv -> inv.getArgument(0));
 
-    UpdateResultDTO res = productService.updateProductStatusesWithNotification(req, UserRole.OPERATORE.getRole(), USERNAME);
+    UpdateResultDTO res = productService.updateProductStatusesWithNotification("initiId",req, UserRole.OPERATORE.getRole(), USERNAME);
     assertEquals("OK", res.getStatus());
 
     // uso CAPTOR per evitare Iterable

@@ -23,9 +23,6 @@ public class ProductUpdateStatusRequestDTO {
   private ProductStatus targetStatus;
 
   @NotBlank()
-  private String initiativeId;
-
-  @NotBlank()
   private String motivation;
 
   @NotBlank()

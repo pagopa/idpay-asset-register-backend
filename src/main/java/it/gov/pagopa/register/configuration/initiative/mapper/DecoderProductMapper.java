@@ -20,7 +20,7 @@ import static it.gov.pagopa.register.mapper.operation.ProductMapper.limitName;
 import static it.gov.pagopa.register.mapper.operation.ProductMapper.normalizeCsvCode;
 import static it.gov.pagopa.register.utils.CsvUtils.DELIMITER;
 
-@Component("DECODER_STANDARD")
+@Component("DECODER")
 public class DecoderProductMapper implements ProductMapperStrategy {
 
   @Override
@@ -57,7 +57,6 @@ public class DecoderProductMapper implements ProductMapperStrategy {
       .initiativeId(initiativeId)
       .gtinCode(gtinCode)
       .category(category)
-      .countryOfProduction(csvRecord.get(COUNTRY_OF_PRODUCTION))
       .brand(csvRecord.get(BRAND))
       .model(csvRecord.get(MODEL))
       .capacity("N\\A")
@@ -83,7 +82,6 @@ public class DecoderProductMapper implements ProductMapperStrategy {
         product.getGtinCode(),
         product.getProductCode(),
         product.getCategory(),
-        product.getCountryOfProduction(),
         product.getModel(),
         product.getBrand()
       );

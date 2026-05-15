@@ -133,6 +133,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
       String requestBody = objectMapper.writeValueAsString(requestDTO);
 
       when(productService.updateProductStatusesWithNotification(
+        "initID",
         requestDTO,
         UserRole.INVITALIA_ADMIN.getRole(),
         USERNAME

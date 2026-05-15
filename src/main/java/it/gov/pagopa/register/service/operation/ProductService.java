@@ -88,6 +88,7 @@ public class ProductService {
   }
 
   public UpdateResultDTO updateProductStatusesWithNotification(
+    String initiativeId,
     ProductUpdateStatusRequestDTO updateStatusDto,
     String role,
     String username
@@ -95,7 +96,7 @@ public class ProductService {
 
     log.info(
       "[UPDATE_PRODUCT_STATUSES] - Starting update - initiativeId: {}, targetStatus: {}, motivation: {}, formalMotivation: {}",
-      updateStatusDto.getInitiativeId(),
+      initiativeId,
       updateStatusDto.getTargetStatus(),
       updateStatusDto.getMotivation(),
       updateStatusDto.getFormalMotivation()
@@ -103,19 +104,19 @@ public class ProductService {
 
     // Recupero configurazione iniziativa
     InitiativeConfig initiativeConfig =
-      initiativeConfigMap.get(updateStatusDto.getInitiativeId());
+      initiativeConfigMap.get(initiativeId);
 
     if (initiativeConfig == null) {
       log.warn(
         "[UPDATE_PRODUCT_STATUSES] - Initiative not found: {}",
-        updateStatusDto.getInitiativeId()
+        initiativeId
       );
       return UpdateResultDTO.ko(INITIATIVE_NOT_FOUND_ERROR_KEY);
     }
 
     // Recupero prodotti richiesti
     List<Product> requestedProducts =
-      productRepository.findByGtinCodeInAndInitiativeId(updateStatusDto.getGtinCodes(),updateStatusDto.getInitiativeId());
+      productRepository.findByGtinCodeInAndInitiativeId(updateStatusDto.getGtinCodes(),initiativeId);
 
     if (requestedProducts.size() != updateStatusDto.getGtinCodes().size()) {
       log.warn("[UPDATE_PRODUCT_STATUSES] - Some products not found or not accessible");

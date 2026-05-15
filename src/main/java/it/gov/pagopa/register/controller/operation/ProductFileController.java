@@ -43,10 +43,9 @@ public class ProductFileController {
     @RequestHeader("x-organization-name") String organizationName,
     @RequestHeader("x-user-id") @Pattern(regexp = UUID_V4_PATTERN) String userId,
     @RequestHeader("x-user-email") @Email String userEmail,
-    @PathVariable("initiativeId") String initiativeId,
     @RequestParam("category") String category,
     @RequestPart("csv") MultipartFile csv,
-    @PathVariable @Pattern(regexp = OBJECT_ID_PATTERN) String initiativeId
+    @PathVariable("initiativeId") @Pattern(regexp = OBJECT_ID_PATTERN) String initiativeId
   ) {
     ProductFileResult result = productFileService.uploadFile(csv, category, initiativeId, organizationId, userId, userEmail, organizationName);
     return ResponseEntity.ok(result);
@@ -58,10 +57,9 @@ public class ProductFileController {
     @RequestHeader("x-organization-name") String organizationName,
     @RequestHeader("x-user-id") @Pattern(regexp = UUID_V4_PATTERN) String userId,
     @RequestHeader("x-user-email") @Email String userEmail,
-    @PathVariable("initiativeId") String initiativeId,
     @RequestParam("category") String category,
     @RequestPart("csv") MultipartFile csv,
-    @PathVariable @Pattern(regexp = OBJECT_ID_PATTERN) String initiativeId
+    @PathVariable("initiativeId") @Pattern(regexp = OBJECT_ID_PATTERN) String initiativeId
   ) {
     ProductFileResult result = productFileService.validateFile(csv, category, initiativeId, organizationId, userId, userEmail, organizationName);
     return ResponseEntity.ok(result);

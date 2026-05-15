@@ -35,7 +35,7 @@ public class NoExternalCheckService {
     List<String> allowedReloadStatuses
   ) {
 
-    ProductMapperStrategy mapper = mapperByCategory.get(category);
+    ProductMapperStrategy mapper = mapperByCategory.get(categoryConfig.getProductMapper());
 
     if (mapper == null) {
       throw new IllegalStateException(

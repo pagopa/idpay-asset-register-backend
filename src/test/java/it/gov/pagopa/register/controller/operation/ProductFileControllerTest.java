@@ -105,7 +105,7 @@ class ProductFileControllerTest {
   void uploadProductFile_withInvalidExtension_KoStatus() throws Exception {
     MockMultipartFile wrongFile = new MockMultipartFile("csv", "file.txt", "text/plain", "data".getBytes());
 
-    Mockito.when(productFileService.uploadFile(any(), any(), any(), any(), any(), any()))
+    Mockito.when(productFileService.uploadFile(any(),any(), any(), any(), any(), any(), any()))
       .thenReturn(ProductFileResult.ko("EXTENSION_FILE_ERROR"));
 
     mockMvc.perform(multipart("/idpay/register/initiatives/{initiativeId}/product-files", "TEST_INIT")
@@ -123,7 +123,7 @@ class ProductFileControllerTest {
   @Test
   void uploadProductFile_withInvalidHeader_KoStatus() throws Exception {
     MockMultipartFile file = new MockMultipartFile("csv", "p.csv", "text/csv", "wrong,header".getBytes());
-    Mockito.when(productFileService.uploadFile(any(), any(), any(), any(), any(), any()))
+    Mockito.when(productFileService.uploadFile(any(),any(), any(), any(), any(), any(), any()))
       .thenReturn(ProductFileResult.ko("HEADER_FILE_ERROR"));
 
     mockMvc.perform(multipart("/idpay/register/initiatives/{initiativeId}/product-files", "TEST_INIT")
@@ -141,7 +141,7 @@ class ProductFileControllerTest {
   @Test
   void uploadProductFile_withTooManyRecords_KoStatus() throws Exception {
     MockMultipartFile file = new MockMultipartFile("csv", "big.csv", "text/csv", "id,name\n1,P".getBytes());
-    Mockito.when(productFileService.uploadFile(any(), any(), any(), any(), any(), any()))
+    Mockito.when(productFileService.uploadFile(any(),any(), any(), any(), any(), any(), any()))
       .thenReturn(ProductFileResult.ko("MAX_ROW_FILE_ERROR"));
 
     mockMvc.perform(multipart("/idpay/register/initiatives/{initiativeId}/product-files", "TEST_INIT")
@@ -160,7 +160,7 @@ class ProductFileControllerTest {
   void uploadProductFile_withValidCsv_shouldReturnSuccess() throws Exception {
     MockMultipartFile file = new MockMultipartFile("csv", "valid.csv", "text/csv", "content".getBytes());
 
-    Mockito.when(productFileService.uploadFile(any(), any(), any(), any(), any(), any()))
+    Mockito.when(productFileService.uploadFile(any(),any(), any(), any(), any(), any(), any()))
       .thenReturn(ProductFileResult.ok());
 
     mockMvc.perform(multipart("/idpay/register/initiatives/{initiativeId}/product-files", "TEST_INIT")
@@ -207,7 +207,7 @@ class ProductFileControllerTest {
   void verifyProductFile_shouldReturnSuccess() throws Exception {
     MockMultipartFile file = new MockMultipartFile("csv", "verify.csv", "text/csv", "content".getBytes());
 
-    Mockito.when(productFileService.validateFile(any(), any(), any(), any(), any(), any()))
+    Mockito.when(productFileService.validateFile(any(),any(), any(), any(), any(), any(), any()))
       .thenReturn(ProductFileResult.ok());
 
     mockMvc.perform(multipart("/idpay/register/initiatives/{initiativeId}/product-files/verify", "TEST_INIT")
@@ -225,7 +225,7 @@ class ProductFileControllerTest {
   @Test
   void verifyProductFile_shouldReturnKoStatus_whenValidationFails() throws Exception {
     MockMultipartFile file = new MockMultipartFile("csv", "verify.csv", "text/csv", "bad,header".getBytes());
-    Mockito.when(productFileService.validateFile(any(), any(), any(), any(), any(), any()))
+    Mockito.when(productFileService.validateFile(any(),any(), any(), any(), any(), any(), any()))
       .thenReturn(ProductFileResult.ko("INVALID_HEADER"));
 
     mockMvc.perform(multipart("/idpay/register/initiatives/{initiativeId}/product-files/verify", "TEST_INIT")
