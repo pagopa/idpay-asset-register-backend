@@ -43,10 +43,12 @@ public class DecoderProductMapper implements ProductMapperStrategy {
     String codeProduct = normalizeCsvCode(csvRecord.get(CODE_PRODUCT));
     String gtinCode = normalizeCsvCode(csvRecord.get(CODE_GTIN_EAN));
 
-    String productName = CATEGORIES_TO_IT_S.get(COOKINGHOBS) + " " + csvRecord.get(BRAND) + " " + csvRecord.get(MODEL);
+    String productName = CATEGORIES_TO_IT_S.get(category) + " " + csvRecord.get(BRAND) + " " + csvRecord.get(MODEL);
     String fullProductName = gtinCode + " - " + productName;
 
     return Product.builder()
+      .id(gtinCode+"_"+initiativeId)
+      .gtinCode(gtinCode)
       .productFileId(productFileId)
       .organizationId(orgId)
       .registrationDate(LocalDateTime.now(ZoneOffset.UTC))
@@ -54,7 +56,7 @@ public class DecoderProductMapper implements ProductMapperStrategy {
       .productCode(codeProduct)
       .initiativeId(initiativeId)
       .gtinCode(gtinCode)
-      .category(COOKINGHOBS)
+      .category(category)
       .countryOfProduction(csvRecord.get(COUNTRY_OF_PRODUCTION))
       .brand(csvRecord.get(BRAND))
       .model(csvRecord.get(MODEL))

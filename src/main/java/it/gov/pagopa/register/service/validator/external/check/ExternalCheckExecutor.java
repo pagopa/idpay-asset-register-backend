@@ -15,6 +15,8 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 import java.util.Map;
 
+import static it.gov.pagopa.register.constants.AssetRegisterConstants.ERROR_MAP;
+
 @Component
 @RequiredArgsConstructor
 @Slf4j
@@ -51,11 +53,11 @@ public class ExternalCheckExecutor {
           template.getType(),
           ex
       );
-      return ExternalCheckResult.ko("Errore durante la chiamata al sistema esterno");
+      return ExternalCheckResult.ko("Errore durante la chiamata " + template.getType());
     }
 
     if (externalData == null || externalData.isEmpty()) {
-      return ExternalCheckResult.ko("Il sistema esterno non ha restituito dati validi");
+      return ExternalCheckResult.ko(template.getType() + " non ha restituito dati validi");
     }
 
     // Applica le regole dichiarative
@@ -69,7 +71,7 @@ public class ExternalCheckExecutor {
 
         if (ruleExecutor == null) {
           return ExternalCheckResult.ko(
-            rule.getErrorKey()
+            "Errore nella configurazione per il recupero dei dati"
           );
         }
 
@@ -80,7 +82,7 @@ public class ExternalCheckExecutor {
 
         if (!valid) {
           return ExternalCheckResult.ko(
-              rule.getErrorKey()
+            ERROR_MAP.get(rule.getErrorKey().replace("{}", category))
           );
         }
       }

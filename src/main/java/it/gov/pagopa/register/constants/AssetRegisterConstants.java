@@ -166,7 +166,7 @@ public class AssetRegisterConstants {
   public static final String DUPLICATE_GTIN_EAN = "Il codice GTIN indicato nel file CSV è un duplicato";
   public static final String DIFFERENT_ORGANIZATIONID = "Il prodotto indicato è associato ad un altro produttore";
   public static final String STATUS_NOT_VALID = "Il prodotto è sottoposto alle verifiche previste dal DM del 03/09/2025 e pertanto non è possibile variare le informazioni ad esso collegate";
-  Map<String, String> errorMap = Map.ofEntries(
+  public static final Map<String, String> ERROR_MAP = Map.ofEntries(
     // Eprel Error
     Map.entry("ERROR_ORG", "Il produttore non risulta nell'elenco della Banca dati europea dei prodotti per l'etichettatura energetica; è necessario completare le informazioni sul portale EPREL"),
     Map.entry("ERROR_TRADEMARK", "Il marchio associato al prodotto non risulta nell'elenco della Banca dati europea dei prodotti per l'etichettatura energetica - EPREL"),

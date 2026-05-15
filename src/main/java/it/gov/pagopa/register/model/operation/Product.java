@@ -21,6 +21,7 @@ import java.util.ArrayList;
 public class Product {
 
   @Id
+  private String id;
   private String gtinCode;
   private String productFileId;
   private String organizationId;

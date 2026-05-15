@@ -20,7 +20,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.util.*;
 
-import static it.gov.pagopa.register.constants.AssetRegisterConstants.CSV;
+import static it.gov.pagopa.register.constants.AssetRegisterConstants.*;
 import static it.gov.pagopa.register.constants.AssetRegisterConstants.UploadKeyConstant.*;
 
 @Component
@@ -106,8 +106,7 @@ public class ProductFileValidatorService {
 
     List<String> actualHeaders =
       CsvUtils.readHeaders(file);
-    log.info("EX : {}",expectedHeaders);
-    log.info("AC : {}",actualHeaders);
+
     if (!actualHeaders.equals(expectedHeaders)) {
       log.warn("[VALIDATE_FILE] - Header mismatch: {}", filename);
       return ValidationResultDTO.ko(HEADER_FILE_ERROR_KEY);
@@ -202,7 +201,7 @@ public class ProductFileValidatorService {
 
         if (!valid) {
           errors.add(
-              rule.getErrorKey().replace("{}", category)
+            ERROR_MAP.get(rule.getErrorKey()).replace("{}", CATEGORIES_TO_IT_S.get(category))
           );
         }
       }

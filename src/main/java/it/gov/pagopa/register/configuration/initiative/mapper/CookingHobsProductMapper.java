@@ -48,6 +48,8 @@ public class CookingHobsProductMapper implements ProductMapperStrategy {
     String fullProductName = gtinCode + " - " + productName;
 
     return Product.builder()
+      .id(gtinCode+"_"+initiativeId)
+      .gtinCode(gtinCode)
       .productFileId(productFileId)
       .organizationId(orgId)
       .registrationDate(LocalDateTime.now(ZoneOffset.UTC))

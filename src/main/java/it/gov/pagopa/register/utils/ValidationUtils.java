@@ -23,7 +23,7 @@ public class ValidationUtils {
         addError(csvRecord, DIFFERENT_ORGANIZATIONID, invalidRecords, errorMessages);
         dbCheck = false;
       }
-      else if (!allowedReloadStatuses.contains(optProduct.get().getGtinCode())) {
+      else if (!allowedReloadStatuses.contains(optProduct.get().getStatus())) {
         addError(csvRecord, STATUS_NOT_VALID, invalidRecords, errorMessages);
         dbCheck = false;
       }

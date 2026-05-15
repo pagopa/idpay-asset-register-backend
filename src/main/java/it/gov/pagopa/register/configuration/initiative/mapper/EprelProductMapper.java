@@ -93,6 +93,8 @@ public class EprelProductMapper implements ProductMapperStrategy {
       limitName(mapName(gtinCode, mappingContext, normalizedCategory, capacity));
 
     return Product.builder()
+      .id(gtinCode+"_"+initiativeId)
+      .gtinCode(gtinCode)
       .productFileId(productFileId)
       .organizationId(orgId)
       .initiativeId(initiativeId)

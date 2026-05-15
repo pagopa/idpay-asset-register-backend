@@ -70,7 +70,6 @@ public class ExternalCheckService {
         invalidRecords.add(duplicateRow);
         // TODO generic error key
         errorMessages.put(duplicateRow, DUPLICATE_GTIN_EAN);
-
         isValidRecord = false;
       }
 
