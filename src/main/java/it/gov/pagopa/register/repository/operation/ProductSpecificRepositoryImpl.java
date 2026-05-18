@@ -241,8 +241,9 @@ public class ProductSpecificRepositoryImpl implements ProductSpecificRepository 
           ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(FIELD_CATEGORY).equalToValue(TUMBLEDRYERS)).then(TUMBLEDRYERS_IT_P),
           ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(FIELD_CATEGORY).equalToValue(REFRIGERATINGAPPL)).then(REFRIGERATINGAPPL_IT_P),
           ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(FIELD_CATEGORY).equalToValue(COOKINGHOBS)).then(COOKINGHOBS_IT_P)
-        )
-      ).build();
+        ).defaultTo(null)
+      )
+      .build();
   }
 
   private Sort.Direction getSortDirection(Pageable pageable, String property) {
