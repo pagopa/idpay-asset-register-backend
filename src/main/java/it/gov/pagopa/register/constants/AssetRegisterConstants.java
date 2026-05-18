@@ -72,6 +72,12 @@ public class AssetRegisterConstants {
   public static final String TERRESTRIAL_AND_SATELLITE_IT_S = "Terrestre e Satellitare";
   public static final String TERRESTRIAL_SATELLITE_AND_VIA_CABLE_IT_S = "Terrestre, Satellitare e via Cavo";
 
+  public static final String SATELLITE_IT_P =  "Satellitari";
+  public static final String TERRESTRIAL_IT_P = "Terrestri";
+  public static final String TERRESTRIAL_VIA_CABLE_IT_P = "Terrestri via Cavo";
+  public static final String TERRESTRIAL_AND_SATELLITE_IT_P = "Terrestri e Satellitari";
+  public static final String TERRESTRIAL_SATELLITE_AND_VIA_CABLE_IT_P = "Terrestri, Satellitari e via Cavo";
+
   public static final Map<String, String> CATEGORIES_TO_IT_S = Map.ofEntries(
     /* BE */
     Map.entry(WASHINGMACHINES, WASHINGMACHINES_IT_S),
@@ -91,15 +97,22 @@ public class AssetRegisterConstants {
     Map.entry(TERRESTRIAL_SATELLITE_AND_VIA_CABLE, TERRESTRIAL_SATELLITE_AND_VIA_CABLE_IT_S)
   );
 
-  public static final Map<String, String> CATEGORIES_TO_IT_P = Map.of(
-    WASHINGMACHINES, WASHINGMACHINES_IT_P,
-    WASHERDRIERS, WASHERDRIERS_IT_P,
-    OVENS, OVENS_IT_P,
-    RANGEHOODS, RANGEHOODS_IT_P,
-    DISHWASHERS, DISHWASHERS_IT_P,
-    TUMBLEDRYERS, TUMBLEDRYERS_IT_P,
-    REFRIGERATINGAPPL, REFRIGERATINGAPPL_IT_P,
-    COOKINGHOBS, COOKINGHOBS_IT_P
+  public static final Map<String, String> CATEGORIES_TO_IT_P = Map.ofEntries(
+    /* BE */
+    Map.entry(WASHINGMACHINES, WASHINGMACHINES_IT_P),
+    Map.entry(WASHERDRIERS, WASHERDRIERS_IT_P),
+    Map.entry(OVENS, OVENS_IT_P),
+    Map.entry(RANGEHOODS, RANGEHOODS_IT_P),
+    Map.entry(DISHWASHERS, DISHWASHERS_IT_P),
+    Map.entry(TUMBLEDRYERS, TUMBLEDRYERS_IT_P),
+    Map.entry(REFRIGERATINGAPPL, REFRIGERATINGAPPL_IT_P),
+    Map.entry(COOKINGHOBS, COOKINGHOBS_IT_P),
+    /* BD */
+    Map.entry(SATELLITE, SATELLITE_IT_P),
+    Map.entry(TERRESTRIAL, TERRESTRIAL_IT_P),
+    Map.entry(TERRESTRIAL_VIA_CABLE, TERRESTRIAL_VIA_CABLE_IT_P),
+    Map.entry(TERRESTRIAL_AND_SATELLITE, TERRESTRIAL_AND_SATELLITE_IT_P),
+    Map.entry(TERRESTRIAL_SATELLITE_AND_VIA_CABLE, TERRESTRIAL_SATELLITE_AND_VIA_CABLE_IT_P)
   );
 
   // Eprel Value
