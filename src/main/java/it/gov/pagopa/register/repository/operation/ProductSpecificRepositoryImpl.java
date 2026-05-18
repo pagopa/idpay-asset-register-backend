@@ -233,15 +233,63 @@ public class ProductSpecificRepositoryImpl implements ProductSpecificRepository 
       .addField(RUNTIME_FIELD_CATEGORY_IT)
       .withValue(
         ConditionalOperators.switchCases(
-          ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(FIELD_CATEGORY).equalToValue(WASHINGMACHINES)).then(WASHINGMACHINES_IT_P),
-          ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(FIELD_CATEGORY).equalToValue(WASHERDRIERS)).then(WASHERDRIERS_IT_P),
-          ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(FIELD_CATEGORY).equalToValue(OVENS)).then(OVENS_IT_P),
-          ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(FIELD_CATEGORY).equalToValue(RANGEHOODS)).then(RANGEHOODS_IT_P),
-          ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(FIELD_CATEGORY).equalToValue(DISHWASHERS)).then(DISHWASHERS_IT_P),
-          ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(FIELD_CATEGORY).equalToValue(TUMBLEDRYERS)).then(TUMBLEDRYERS_IT_P),
-          ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(FIELD_CATEGORY).equalToValue(REFRIGERATINGAPPL)).then(REFRIGERATINGAPPL_IT_P),
-          ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(FIELD_CATEGORY).equalToValue(COOKINGHOBS)).then(COOKINGHOBS_IT_P)
-        ).defaultTo(null)
+
+            // BE
+            ConditionalOperators.Switch.CaseOperator.when(
+              ComparisonOperators.valueOf(FIELD_CATEGORY).equalToValue(WASHINGMACHINES)
+            ).then(WASHINGMACHINES_IT_P),
+
+            ConditionalOperators.Switch.CaseOperator.when(
+              ComparisonOperators.valueOf(FIELD_CATEGORY).equalToValue(WASHERDRIERS)
+            ).then(WASHERDRIERS_IT_P),
+
+            ConditionalOperators.Switch.CaseOperator.when(
+              ComparisonOperators.valueOf(FIELD_CATEGORY).equalToValue(OVENS)
+            ).then(OVENS_IT_P),
+
+            ConditionalOperators.Switch.CaseOperator.when(
+              ComparisonOperators.valueOf(FIELD_CATEGORY).equalToValue(RANGEHOODS)
+            ).then(RANGEHOODS_IT_P),
+
+            ConditionalOperators.Switch.CaseOperator.when(
+              ComparisonOperators.valueOf(FIELD_CATEGORY).equalToValue(DISHWASHERS)
+            ).then(DISHWASHERS_IT_P),
+
+            ConditionalOperators.Switch.CaseOperator.when(
+              ComparisonOperators.valueOf(FIELD_CATEGORY).equalToValue(TUMBLEDRYERS)
+            ).then(TUMBLEDRYERS_IT_P),
+
+            ConditionalOperators.Switch.CaseOperator.when(
+              ComparisonOperators.valueOf(FIELD_CATEGORY).equalToValue(REFRIGERATINGAPPL)
+            ).then(REFRIGERATINGAPPL_IT_P),
+
+            ConditionalOperators.Switch.CaseOperator.when(
+              ComparisonOperators.valueOf(FIELD_CATEGORY).equalToValue(COOKINGHOBS)
+            ).then(COOKINGHOBS_IT_P),
+
+            // BE
+            ConditionalOperators.Switch.CaseOperator.when(
+              ComparisonOperators.valueOf(FIELD_CATEGORY).equalToValue(SATELLITE)
+            ).then(SATELLITE_IT_P),
+
+            ConditionalOperators.Switch.CaseOperator.when(
+              ComparisonOperators.valueOf(FIELD_CATEGORY).equalToValue(TERRESTRIAL)
+            ).then(TERRESTRIAL_IT_P),
+
+            ConditionalOperators.Switch.CaseOperator.when(
+              ComparisonOperators.valueOf(FIELD_CATEGORY).equalToValue(TERRESTRIAL_VIA_CABLE)
+            ).then(TERRESTRIAL_VIA_CABLE_IT_P),
+
+            ConditionalOperators.Switch.CaseOperator.when(
+              ComparisonOperators.valueOf(FIELD_CATEGORY).equalToValue(TERRESTRIAL_AND_SATELLITE)
+            ).then(TERRESTRIAL_AND_SATELLITE_IT_P),
+
+            ConditionalOperators.Switch.CaseOperator.when(
+              ComparisonOperators.valueOf(FIELD_CATEGORY).equalToValue(TERRESTRIAL_SATELLITE_AND_VIA_CABLE)
+            ).then(TERRESTRIAL_SATELLITE_AND_VIA_CABLE_IT_P)
+
+          )
+          .defaultTo("$" + FIELD_CATEGORY)
       )
       .build();
   }
