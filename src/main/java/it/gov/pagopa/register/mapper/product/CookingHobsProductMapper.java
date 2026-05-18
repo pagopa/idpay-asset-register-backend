@@ -95,7 +95,7 @@ public class CookingHobsProductMapper implements ProductMapperStrategy {
         .setTrim(true)
         .build();
       List<CSVRecord> records = format.parse(new StringReader(out.toString())).getRecords();
-      return records.isEmpty() ? null : records.getFirst();
+      return records.getFirst();
     } catch (Exception e) {
       return null;
     }
