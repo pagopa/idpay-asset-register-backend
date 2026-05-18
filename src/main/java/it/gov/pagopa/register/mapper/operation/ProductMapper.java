@@ -38,6 +38,7 @@ public class ProductMapper {
     List<StatusChangeEvent> chronology = getStatusChangeEvents(entity, role);
 
     return ProductDTO.builder()
+      .initiativeId(entity.getInitiativeId())
       .organizationId(entity.getOrganizationId())
       .registrationDate(entity.getRegistrationDate().toString())
       .status(role.equals(UserRole.OPERATORE.getRole()) &&
