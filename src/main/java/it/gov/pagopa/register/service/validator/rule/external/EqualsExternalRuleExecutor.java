@@ -1,6 +1,6 @@
 package it.gov.pagopa.register.service.validator.rule.external;
 
-import it.gov.pagopa.register.configuration.initiative.model.ValidationRule;
+import it.gov.pagopa.register.model.initiative.ValidationRule;
 import it.gov.pagopa.register.service.validator.rule.RuleContext;
 import it.gov.pagopa.register.service.validator.rule.RuleExecutor;
 import org.springframework.stereotype.Component;

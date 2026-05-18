@@ -1,6 +1,6 @@
 package it.gov.pagopa.register.service.validator.rule;
 
-import it.gov.pagopa.register.configuration.initiative.model.ValidationRule;
+import it.gov.pagopa.register.model.initiative.ValidationRule;
 
 public interface RuleExecutor {
 

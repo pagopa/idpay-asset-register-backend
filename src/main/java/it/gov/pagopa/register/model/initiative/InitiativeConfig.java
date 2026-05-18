@@ -1,4 +1,4 @@
-package it.gov.pagopa.register.configuration.initiative.model;
+package it.gov.pagopa.register.model.initiative;
 
 import it.gov.pagopa.register.enums.ProductStatus;
 import lombok.AllArgsConstructor;

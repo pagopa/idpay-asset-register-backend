@@ -1,7 +1,7 @@
 package it.gov.pagopa.register.service.validator.nocheck;
 
-import it.gov.pagopa.register.configuration.initiative.model.CategoryConfig;
-import it.gov.pagopa.register.configuration.initiative.mapper.ProductMapperStrategy;
+import it.gov.pagopa.register.model.initiative.CategoryConfig;
+import it.gov.pagopa.register.mapper.product.ProductMapperStrategy;
 import it.gov.pagopa.register.dto.utils.ProductValidationResult;
 import it.gov.pagopa.register.model.operation.Product;
 import it.gov.pagopa.register.repository.operation.ProductRepository;

@@ -1,6 +1,6 @@
 package it.gov.pagopa.register.service.validator.external.system;
 
-import it.gov.pagopa.register.configuration.initiative.model.ExternalCheckTemplate;
+import it.gov.pagopa.register.model.initiative.ExternalCheckTemplate;
 import org.apache.commons.csv.CSVRecord;
 
 import java.util.Map;

@@ -1,9 +1,9 @@
-package it.gov.pagopa.register.configuration.initiative;
+package it.gov.pagopa.register.configuration;
 
-import it.gov.pagopa.register.configuration.initiative.model.InitiativeConfig;
+import it.gov.pagopa.register.model.initiative.InitiativeConfig;
 import it.gov.pagopa.register.repository.initiative.InitiativeRepository;
 import org.springframework.stereotype.Component;
-import java.util.List;
+
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;

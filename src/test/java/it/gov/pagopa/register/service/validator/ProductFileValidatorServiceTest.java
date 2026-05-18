@@ -1,11 +1,11 @@
 package it.gov.pagopa.register.service.validator;
 
 import it.gov.pagopa.register.configuration.ProductFileValidationConfig;
-import it.gov.pagopa.register.configuration.initiative.InitiativeConfigMap;
-import it.gov.pagopa.register.configuration.initiative.model.CategoryConfig;
-import it.gov.pagopa.register.configuration.initiative.model.CsvTemplate;
-import it.gov.pagopa.register.configuration.initiative.model.InitiativeConfig;
-import it.gov.pagopa.register.configuration.initiative.model.ValidationRule;
+import it.gov.pagopa.register.configuration.InitiativeConfigMap;
+import it.gov.pagopa.register.model.initiative.CategoryConfig;
+import it.gov.pagopa.register.model.initiative.CsvTemplate;
+import it.gov.pagopa.register.model.initiative.InitiativeConfig;
+import it.gov.pagopa.register.model.initiative.ValidationRule;
 import it.gov.pagopa.register.dto.operation.ValidationResultDTO;
 import it.gov.pagopa.register.service.validator.rule.RuleDispatcher;
 import it.gov.pagopa.register.service.validator.rule.RuleExecutor;

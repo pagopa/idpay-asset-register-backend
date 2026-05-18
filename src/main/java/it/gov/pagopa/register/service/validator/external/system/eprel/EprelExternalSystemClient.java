@@ -1,6 +1,6 @@
 package it.gov.pagopa.register.service.validator.external.system.eprel;
 
-import it.gov.pagopa.register.configuration.initiative.model.ExternalCheckTemplate;
+import it.gov.pagopa.register.model.initiative.ExternalCheckTemplate;
 import it.gov.pagopa.register.connector.eprel.EprelConnector;
 import it.gov.pagopa.register.dto.utils.EprelProduct;
 import it.gov.pagopa.register.service.validator.external.system.ExternalSystemClient;

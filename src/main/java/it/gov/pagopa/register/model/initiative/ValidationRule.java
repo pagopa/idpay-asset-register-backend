@@ -1,4 +1,4 @@
-package it.gov.pagopa.register.configuration.initiative.model;
+package it.gov.pagopa.register.model.initiative;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

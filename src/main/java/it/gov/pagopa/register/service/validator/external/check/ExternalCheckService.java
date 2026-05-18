@@ -1,11 +1,11 @@
 package it.gov.pagopa.register.service.validator.external.check;
 
-import it.gov.pagopa.register.configuration.initiative.mapper.MappingContext;
-import it.gov.pagopa.register.configuration.initiative.mapper.ProductMapperStrategy;
-import it.gov.pagopa.register.configuration.initiative.model.CategoryConfig;
-import it.gov.pagopa.register.configuration.initiative.model.CategoryExternalCheck;
-import it.gov.pagopa.register.configuration.initiative.model.ExternalCheckTemplate;
-import it.gov.pagopa.register.configuration.initiative.model.InitiativeConfig;
+import it.gov.pagopa.register.mapper.product.MappingContext;
+import it.gov.pagopa.register.mapper.product.ProductMapperStrategy;
+import it.gov.pagopa.register.model.initiative.CategoryConfig;
+import it.gov.pagopa.register.model.initiative.CategoryExternalCheck;
+import it.gov.pagopa.register.model.initiative.ExternalCheckTemplate;
+import it.gov.pagopa.register.model.initiative.InitiativeConfig;
 import it.gov.pagopa.register.dto.utils.ProductValidationResult;
 import it.gov.pagopa.register.model.operation.Product;
 import it.gov.pagopa.register.repository.operation.ProductRepository;

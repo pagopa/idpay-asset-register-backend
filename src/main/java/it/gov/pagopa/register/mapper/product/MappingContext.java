@@ -1,4 +1,4 @@
-package it.gov.pagopa.register.configuration.initiative.mapper;
+package it.gov.pagopa.register.mapper.product;
 
 import lombok.Data;
 

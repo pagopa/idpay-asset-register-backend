@@ -1,6 +1,6 @@
-package it.gov.pagopa.register.configuration.initiative.mapper;
+package it.gov.pagopa.register.mapper.product;
 
-import it.gov.pagopa.register.configuration.initiative.model.CategoryConfig;
+import it.gov.pagopa.register.model.initiative.CategoryConfig;
 import it.gov.pagopa.register.model.operation.Product;
 import org.apache.commons.csv.CSVRecord;
 

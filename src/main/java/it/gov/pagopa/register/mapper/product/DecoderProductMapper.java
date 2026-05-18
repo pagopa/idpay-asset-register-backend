@@ -1,8 +1,7 @@
-package it.gov.pagopa.register.configuration.initiative.mapper;
+package it.gov.pagopa.register.mapper.product;
 
-import it.gov.pagopa.register.configuration.initiative.model.CategoryConfig;
+import it.gov.pagopa.register.model.initiative.CategoryConfig;
 import it.gov.pagopa.register.enums.ProductStatus;
-import it.gov.pagopa.register.mapper.operation.ProductMapper;
 import it.gov.pagopa.register.model.operation.Product;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
@@ -21,8 +20,8 @@ import static it.gov.pagopa.register.mapper.operation.ProductMapper.limitName;
 import static it.gov.pagopa.register.mapper.operation.ProductMapper.normalizeCsvCode;
 import static it.gov.pagopa.register.utils.CsvUtils.DELIMITER;
 
-@Component("COOKINGHOBS")
-public class CookingHobsProductMapper implements ProductMapperStrategy {
+@Component("DECODER")
+public class DecoderProductMapper implements ProductMapperStrategy {
 
   @Override
   public String extractBusinessKey(CSVRecord record, CategoryConfig config) {
@@ -44,7 +43,7 @@ public class CookingHobsProductMapper implements ProductMapperStrategy {
     String codeProduct = normalizeCsvCode(csvRecord.get(CODE_PRODUCT));
     String gtinCode = normalizeCsvCode(csvRecord.get(CODE_GTIN_EAN));
 
-    String productName = CATEGORIES_TO_IT_S.get(COOKINGHOBS) + " " + csvRecord.get(BRAND) + " " + csvRecord.get(MODEL);
+    String productName = CATEGORIES_TO_IT_S.get(category) + " " + csvRecord.get(BRAND) + " " + csvRecord.get(MODEL);
     String fullProductName = gtinCode + " - " + productName;
 
     return Product.builder()
@@ -57,8 +56,7 @@ public class CookingHobsProductMapper implements ProductMapperStrategy {
       .productCode(codeProduct)
       .initiativeId(initiativeId)
       .gtinCode(gtinCode)
-      .category(COOKINGHOBS)
-      .countryOfProduction(csvRecord.get(COUNTRY_OF_PRODUCTION))
+      .category(category)
       .brand(csvRecord.get(BRAND))
       .model(csvRecord.get(MODEL))
       .capacity("N\\A")
@@ -84,7 +82,6 @@ public class CookingHobsProductMapper implements ProductMapperStrategy {
         product.getGtinCode(),
         product.getProductCode(),
         product.getCategory(),
-        product.getCountryOfProduction(),
         product.getModel(),
         product.getBrand()
       );

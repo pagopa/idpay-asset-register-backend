@@ -1,7 +1,7 @@
 package it.gov.pagopa.register.service.operation;
 
-import it.gov.pagopa.register.configuration.initiative.InitiativeConfigMap;
-import it.gov.pagopa.register.configuration.initiative.model.InitiativeConfig;
+import it.gov.pagopa.register.configuration.InitiativeConfigMap;
+import it.gov.pagopa.register.model.initiative.InitiativeConfig;
 import it.gov.pagopa.register.connector.notification.NotificationService;
 import it.gov.pagopa.register.dto.operation.*;
 import it.gov.pagopa.register.enums.ProductStatus;
