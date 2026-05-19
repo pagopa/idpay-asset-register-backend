@@ -26,6 +26,11 @@ import static it.gov.pagopa.register.utils.EprelUtils.mapEnergyClass;
 @Component("EPREL")
 public class EprelProductMapper implements ProductMapperStrategy {
 
+  private static final String RATED_CAPACITY = "ratedCapacity";
+  private static final String RATED_CAPACITY_WASH = "ratedCapacityWash";
+  private static final String CAVITIES = "cavities";
+  private static final String TOTAL_VOLUME = "totalVolume";
+
   @Override
   public String extractBusinessKey(
     CSVRecord csvRecord,
@@ -61,7 +66,7 @@ public class EprelProductMapper implements ProductMapperStrategy {
         .build();
       List<CSVRecord> records = format.parse(new StringReader(out.toString())).getRecords();
       return records.getFirst();
-    } catch (Exception e) {
+    } catch (Exception _) {
       return null;
     }
   }
@@ -127,17 +132,17 @@ public class EprelProductMapper implements ProductMapperStrategy {
 
     return switch (category) {
       case WASHINGMACHINES, TUMBLEDRYERS ->
-        eprelData.getExternalData().get("ratedCapacity") != null
-          ? eprelData.getExternalData().get("ratedCapacity").toString() + " kg"
+        eprelData.getExternalData().get(RATED_CAPACITY) != null
+          ? eprelData.getExternalData().get(RATED_CAPACITY).toString() + " kg"
           : "N\\A";
 
       case WASHERDRIERS ->
-        eprelData.getExternalData().get("ratedCapacityWash") != null
-          ? eprelData.getExternalData().get("ratedCapacityWash").toString() + " kg"
+        eprelData.getExternalData().get(RATED_CAPACITY_WASH) != null
+          ? eprelData.getExternalData().get(RATED_CAPACITY_WASH).toString() + " kg"
           : "N\\A";
 
       case OVENS -> {
-        Object cavitiesObj = eprelData.getExternalData().get("cavities");
+        Object cavitiesObj = eprelData.getExternalData().get(CAVITIES);
 
         if (cavitiesObj instanceof List<?> cavities && !cavities.isEmpty()) {
           yield cavities.stream()
@@ -149,13 +154,13 @@ public class EprelProductMapper implements ProductMapperStrategy {
       }
 
       case DISHWASHERS ->
-        eprelData.getExternalData().get("ratedCapacity") != null
-          ? eprelData.getExternalData().get("ratedCapacity") + " c"
+        eprelData.getExternalData().get(RATED_CAPACITY) != null
+          ? eprelData.getExternalData().get(RATED_CAPACITY) + " c"
           : "N\\A";
 
       case REFRIGERATINGAPPL ->
-        eprelData.getExternalData().get("totalVolume") != null
-          ? eprelData.getExternalData().get("totalVolume") + " l"
+        eprelData.getExternalData().get(TOTAL_VOLUME) != null
+          ? eprelData.getExternalData().get(TOTAL_VOLUME) + " l"
           : "N\\A";
 
       default -> "N\\A";
@@ -191,34 +196,46 @@ public class EprelProductMapper implements ProductMapperStrategy {
   private String resolveProductType(MappingContext eprel, String category) {
 
     if (REFRIGERATINGAPPL.equals(category)) {
-
-      Object compartmentsObj = eprel.getExternalData().get("compartments");
-
-      if (compartmentsObj instanceof List<?> compartments && !compartments.isEmpty()) {
-
-        boolean isRefrigerator = compartments.stream()
-          .map(c -> (EprelProduct.RefrigeratorCompartment) c)
-          .anyMatch(c -> {
-            if (REFRIGERATORS_CATEGORY.contains(c.getCompartmentType())) {
-              return true;
-            }
-
-            if (VARIABLE_TEMP.equals(c.getCompartmentType())) {
-              return c.getSubCompartments() != null &&
-                c.getSubCompartments().stream()
-                  .map(EprelProduct.SubCompartment::getCompartmentType)
-                  .anyMatch(REFRIGERATORS_CATEGORY::contains);
-            }
-
-            return false;
-          });
-
-        return isRefrigerator ? REFRIGERATOR_IT : FREEZER_IT;
-      }
-      return FREEZER_IT;
+      return resolveRefrigeratingProductType(eprel);
     }
 
     return CATEGORIES_TO_IT_S.get(category);
+  }
+
+  private String resolveRefrigeratingProductType(MappingContext eprel) {
+    Object compartmentsObj = eprel.getExternalData().get("compartments");
+
+    if (compartmentsObj instanceof List<?> compartments && !compartments.isEmpty()) {
+      boolean isRefrigerator = compartments.stream()
+        .map(c -> (EprelProduct.RefrigeratorCompartment) c)
+        .anyMatch(this::isRefrigerator);
+
+      return isRefrigerator ? REFRIGERATOR_IT : FREEZER_IT;
+    }
+
+    return FREEZER_IT;
+  }
+
+  private boolean isRefrigerator(EprelProduct.RefrigeratorCompartment compartment) {
+    if (REFRIGERATORS_CATEGORY.contains(compartment.getCompartmentType())) {
+      return true;
+    }
+
+    if (VARIABLE_TEMP.equals(compartment.getCompartmentType())) {
+      return hasRefrigeratorSubCompartment(compartment);
+    }
+
+    return false;
+  }
+
+  private boolean hasRefrigeratorSubCompartment(EprelProduct.RefrigeratorCompartment compartment) {
+    if (compartment.getSubCompartments() == null) {
+      return false;
+    }
+
+    return compartment.getSubCompartments().stream()
+      .map(EprelProduct.SubCompartment::getCompartmentType)
+      .anyMatch(REFRIGERATORS_CATEGORY::contains);
   }
 
 
