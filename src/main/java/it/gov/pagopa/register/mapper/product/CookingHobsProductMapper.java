@@ -24,8 +24,8 @@ import static it.gov.pagopa.register.utils.CsvUtils.DELIMITER;
 public class CookingHobsProductMapper implements ProductMapperStrategy {
 
   @Override
-  public String extractBusinessKey(CSVRecord record, CategoryConfig config) {
-    return record.get(config.getInputIdentifierField());
+  public String extractBusinessKey(CSVRecord csvRecord, CategoryConfig config) {
+    return csvRecord.get(config.getInputIdentifierField());
   }
 
 
@@ -96,7 +96,7 @@ public class CookingHobsProductMapper implements ProductMapperStrategy {
         .build();
       List<CSVRecord> records = format.parse(new StringReader(out.toString())).getRecords();
       return records.getFirst();
-    } catch (Exception e) {
+    } catch (Exception _) {
       return null;
     }
   }
