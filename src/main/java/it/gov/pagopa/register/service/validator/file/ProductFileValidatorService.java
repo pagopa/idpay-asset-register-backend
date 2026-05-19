@@ -1,4 +1,4 @@
-package it.gov.pagopa.register.service.validator;
+package it.gov.pagopa.register.service.validator.file;
 
 import it.gov.pagopa.register.configuration.ProductFileValidationConfig;
 import it.gov.pagopa.register.configuration.InitiativeConfigMap;

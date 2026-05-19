@@ -1,4 +1,4 @@
-package it.gov.pagopa.register.service.validator.external.check;
+package it.gov.pagopa.register.service.validator.external.system.check;
 
 import it.gov.pagopa.register.model.initiative.ExternalCheckTemplate;
 import it.gov.pagopa.register.model.initiative.ValidationRule;

@@ -11,7 +11,7 @@ import it.gov.pagopa.register.model.operation.ProductFile;
 import it.gov.pagopa.register.repository.operation.ProducersInitiativeRepository;
 import it.gov.pagopa.register.repository.operation.ProductFileRepository;
 import it.gov.pagopa.register.repository.operation.ProductRepository;
-import it.gov.pagopa.register.service.validator.ProductFileValidatorService;
+import it.gov.pagopa.register.service.validator.file.ProductFileValidatorService;
 import it.gov.pagopa.register.utils.CsvUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

@@ -7,6 +7,7 @@ import it.gov.pagopa.register.model.initiative.CsvTemplate;
 import it.gov.pagopa.register.model.initiative.InitiativeConfig;
 import it.gov.pagopa.register.model.initiative.ValidationRule;
 import it.gov.pagopa.register.dto.operation.ValidationResultDTO;
+import it.gov.pagopa.register.service.validator.file.ProductFileValidatorService;
 import it.gov.pagopa.register.service.validator.rule.RuleDispatcher;
 import it.gov.pagopa.register.service.validator.rule.RuleExecutor;
 import org.apache.commons.csv.CSVRecord;
@@ -251,7 +252,6 @@ class ProductFileValidatorServiceTest {
     MockMultipartFile file = csv("test.csv", HEADER + "\n12345");
 
     InitiativeConfig config = new InitiativeConfig();
-    CategoryConfig categoryConfig = new CategoryConfig(null, HEADER, List.of(), "EPREL");
     config.setCategories(new HashMap<>());
     config.getCategories().put(CATEGORY, null);
 

@@ -16,8 +16,7 @@ import it.gov.pagopa.register.model.operation.Product;
 import it.gov.pagopa.register.model.operation.ProductFile;
 import it.gov.pagopa.register.repository.operation.ProductFileRepository;
 import it.gov.pagopa.register.repository.operation.ProductRepository;
-import it.gov.pagopa.register.service.validator.external.check.ExternalCheckService;
-import it.gov.pagopa.register.service.validator.nocheck.NoExternalCheckService;
+import it.gov.pagopa.register.service.validator.product.ValidationService;
 import it.gov.pagopa.register.utils.CsvUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.csv.CSVRecord;
@@ -52,8 +51,7 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
   private final ObjectReader objectReader;
   private final ProductFileRepository productFileRepository;
   private final FileStorageClient fileStorageClient;
-  private final NoExternalCheckService noExternalCheckService;
-  private final ExternalCheckService externalCheckService;
+  private final ValidationService validationService;
   private final NotificationServiceImpl notificationService;
   private final ProductFileProducer productFileProducer;
   private final ConsumerControlService consumerControlService;
@@ -64,9 +62,7 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
                                        FileStorageClient fileStorageClient,
                                        ObjectMapper objectMapper,
                                        ProductFileRepository productFileRepository,
-                                       NoExternalCheckService noExternalCheckService,
-                                       ExternalCheckService externalCheckService,
-                                       NotificationServiceImpl notificationService,
+                                       ValidationService validationService, NotificationServiceImpl notificationService,
                                        ProductFileProducer productFileProducer,
                                        ConsumerControlService consumerControlService,
                                        InitiativeConfigMap initiativeConfigMap){
@@ -75,8 +71,7 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
     this.fileStorageClient = fileStorageClient;
     this.objectReader = objectMapper.readerFor(new TypeReference<List<StorageEventDTO>>() {});
     this.productFileRepository = productFileRepository;
-    this.noExternalCheckService = noExternalCheckService;
-    this.externalCheckService = externalCheckService;
+    this.validationService = validationService;
     this.notificationService = notificationService;
     this.productFileProducer = productFileProducer;
     this.objectMapper = objectMapper;
@@ -110,7 +105,7 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
       if (isValidEvent(event)) {
         try {
           processEvent(event);
-        } catch (EprelException _) {
+        } catch (EprelException ex) {
           toRetry.add(event);
         }
       }
@@ -235,19 +230,40 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
 
     try {
       setProductFileStatus(fileId, String.valueOf(IN_PROCESS), 0);
+
       List<String> headers = CsvUtils.readHeader(byteArrayOutputStream);
       List<CSVRecord> records = CsvUtils.readCsvRecords(byteArrayOutputStream);
+
       log.info("[PRODUCT_UPLOAD] - Valid CSV headers: {}", headers);
+
       InitiativeConfig initiativeConfig = initiativeConfigMap.get(initiativeId);
       List<String> allowedReloadStatuses = initiativeConfig.getAllowedReloadStatuses();
       CategoryConfig categoryConfig = initiativeConfig.getCategories().get(category);
-      ProductValidationResult validationResult;
-      if (categoryConfig.getExternalChecks().isEmpty()) {
-        validationResult = noExternalCheckService.validateRecords(records,category, orgId, initiativeId, fileId,headers, organizationName,categoryConfig,allowedReloadStatuses);
-      } else {
-        validationResult = externalCheckService.validateRecords(records, category, orgId,initiativeId, fileId, headers, organizationName,initiativeConfig,categoryConfig,allowedReloadStatuses);
-      }
-      processResult(validationResult.getValidRecords().values().stream().toList(), validationResult.getInvalidRecords(), validationResult.getErrorMessages(), initiativeId, fileId, headers, category);
+
+      ProductValidationResult validationResult =
+        validationService.validateRecords(
+          records,
+          category,
+          orgId,
+          initiativeId,
+          fileId,
+          headers,
+          organizationName,
+          initiativeConfig,
+          categoryConfig,
+          allowedReloadStatuses
+        );
+
+      processResult(
+        validationResult.getValidRecords().values().stream().toList(),
+        validationResult.getInvalidRecords(),
+        validationResult.getErrorMessages(),
+        initiativeId,
+        fileId,
+        headers,
+        category
+      );
+
     } catch (IOException e) {
       log.error("[UPLOAD_PRODUCT_FILE] - Error while reading CSV", e);
       setProductFileStatus(fileId, String.valueOf(PARTIAL), 0);

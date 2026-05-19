@@ -4,6 +4,8 @@ import it.gov.pagopa.register.model.initiative.ExternalCheckTemplate;
 import it.gov.pagopa.register.model.initiative.ValidationRule;
 import it.gov.pagopa.register.service.validator.external.system.ExternalSystemClient;
 import it.gov.pagopa.register.service.validator.external.system.ExternalSystemClientDispatcher;
+import it.gov.pagopa.register.service.validator.external.system.check.ExternalCheckExecutor;
+import it.gov.pagopa.register.service.validator.external.system.check.ExternalCheckResult;
 import it.gov.pagopa.register.service.validator.rule.RuleDispatcher;
 import it.gov.pagopa.register.service.validator.rule.RuleExecutor;
 import org.apache.commons.csv.CSVRecord;
