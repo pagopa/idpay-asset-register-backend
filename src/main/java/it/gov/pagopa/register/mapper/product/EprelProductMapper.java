@@ -23,8 +23,9 @@ import static it.gov.pagopa.register.mapper.operation.ProductMapper.normalizeCsv
 import static it.gov.pagopa.register.utils.CsvUtils.DELIMITER;
 import static it.gov.pagopa.register.utils.EprelUtils.mapEnergyClass;
 
-@Component("EPREL")
+
 @SuppressWarnings({"java:S1700", "java:S117"})
+@Component("EPREL")
 public class EprelProductMapper implements ProductMapperStrategy {
 
   private static final String RATED_CAPACITY = "ratedCapacity";

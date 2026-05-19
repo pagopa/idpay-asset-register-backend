@@ -53,7 +53,7 @@ class ValidationServiceTest {
 
   @Test
   void shouldReturnValidRecord_whenNoExternalChecks() {
-    CSVRecord record = mock(CSVRecord.class);
+    CSVRecord csvRecord = mock(CSVRecord.class);
 
     CategoryConfig category = mock(CategoryConfig.class);
     when(category.getProductMapper()).thenReturn("TEST");
@@ -66,7 +66,7 @@ class ValidationServiceTest {
       .thenReturn(new Product());
 
     ProductValidationResult result = validationService.validateRecords(
-      List.of(record),
+      List.of(csvRecord),
       "cat",
       "org",
       "init",
@@ -83,7 +83,7 @@ class ValidationServiceTest {
 
   @Test
   void shouldMarkInvalid_whenDbCheckFails() {
-    CSVRecord record = mock(CSVRecord.class);
+    CSVRecord csvRecord = mock(CSVRecord.class);
 
     CategoryConfig category = mock(CategoryConfig.class);
     when(category.getProductMapper()).thenReturn("TEST");
@@ -97,7 +97,7 @@ class ValidationServiceTest {
       .thenReturn(Optional.of(existing));
 
     ProductValidationResult result = validationService.validateRecords(
-      List.of(record),
+      List.of(csvRecord),
       "cat",
       "ORG",
       "init",
@@ -135,7 +135,7 @@ class ValidationServiceTest {
 
   @Test
   void shouldNotDetectDuplicate_whenSingleRecord() {
-    CSVRecord record = mock(CSVRecord.class);
+    CSVRecord csvRecord = mock(CSVRecord.class);
 
     CategoryConfig category = mock(CategoryConfig.class);
     when(category.getProductMapper()).thenReturn("TEST");
@@ -148,7 +148,7 @@ class ValidationServiceTest {
       .thenReturn(new Product());
 
     ProductValidationResult result = validationService.validateRecords(
-      List.of(record),
+      List.of(csvRecord),
       "cat",
       "org",
       "init",
@@ -247,7 +247,7 @@ class ValidationServiceTest {
 
   @Test
   void shouldInvalidateRecord_whenExternalCheckFailsInValidationFlow() {
-    CSVRecord record = mock(CSVRecord.class);
+    CSVRecord csvRecord = mock(CSVRecord.class);
 
     CategoryExternalCheck check = mock(CategoryExternalCheck.class);
     when(check.getKey()).thenReturn("CHECK");
@@ -276,7 +276,7 @@ class ValidationServiceTest {
       .thenReturn(ExternalCheckResult.ko("ERR"));
 
     ProductValidationResult result = validationService.validateRecords(
-      List.of(record),
+      List.of(csvRecord),
       "cat",
       "org",
       "init",

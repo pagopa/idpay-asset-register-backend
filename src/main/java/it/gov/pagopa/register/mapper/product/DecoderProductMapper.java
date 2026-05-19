@@ -20,8 +20,9 @@ import static it.gov.pagopa.register.mapper.operation.ProductMapper.limitName;
 import static it.gov.pagopa.register.mapper.operation.ProductMapper.normalizeCsvCode;
 import static it.gov.pagopa.register.utils.CsvUtils.DELIMITER;
 
-@Component("DECODER")
+
 @SuppressWarnings({"java:S1700", "java:S117"})
+@Component("DECODER")
 public class DecoderProductMapper implements ProductMapperStrategy {
 
   @Override
