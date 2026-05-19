@@ -9,4 +9,6 @@ public interface ProducersInitiativeRepository
   extends MongoRepository<ProducersInitiative, String> {
 
   List<ProducersInitiative> findByProducerIdOrderByInitiativeNameAsc(String producerId);
+
+  boolean existsByProducerIdAndInitiativeIdAndEnabledTrue(String producerId, String initiativeId);
 }

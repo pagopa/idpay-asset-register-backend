@@ -17,7 +17,7 @@ public interface ProductSpecificRepository {
 
   Long getCount(Criteria criteria);
 
-  List<Product> retrieveDistinctProductFileIdsBasedOnRole(String organizationId, String organizationSelected, String role);
+  List<Product> retrieveDistinctProductFileIdsBasedOnRole(String organizationId, String initiativeId, String organizationSelected, String role);
 
   List<Product> findUpdatableProducts(List<String> productIds, ProductStatus currentStatus, ProductStatus targetStatus, String role);
 

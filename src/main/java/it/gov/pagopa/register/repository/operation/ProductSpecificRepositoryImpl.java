@@ -56,6 +56,9 @@ public class ProductSpecificRepositoryImpl implements ProductSpecificRepository 
     if (inputCriteria.getOrganizationId() != null) {
       criteria.and(Product.Fields.organizationId).is(inputCriteria.getOrganizationId());
     }
+    if (inputCriteria.getInitiativeId() != null) {
+      criteria.and(Product.Fields.initiativeId).is(inputCriteria.getInitiativeId());
+    }
     if (inputCriteria.getCategory() != null) {
       criteria.and(Product.Fields.category).is(inputCriteria.getCategory());
     }
@@ -94,13 +97,13 @@ public class ProductSpecificRepositoryImpl implements ProductSpecificRepository 
   }
 
   @Override
-  public List<Product> retrieveDistinctProductFileIdsBasedOnRole(String organizationId, String organizationSelected, String role) {
-    Criteria criteria = buildRoleBasedCriteria(organizationId, organizationSelected, role);
+  public List<Product> retrieveDistinctProductFileIdsBasedOnRole(String organizationId, String initiativeId, String organizationSelected, String role) {
+    Criteria criteria = buildRoleBasedCriteria(organizationId, initiativeId, organizationSelected, role);
 
     List<AggregationOperation> operations = new ArrayList<>();
-    if (criteria != null) {
-      operations.add(Aggregation.match(criteria));
-    }
+
+    operations.add(Aggregation.match(criteria));
+
 
     operations.add(Aggregation.group(FIELD_PRODUCT_FILE_ID, FIELD_CATEGORY));
     operations.add(Aggregation.project()
@@ -230,16 +233,65 @@ public class ProductSpecificRepositoryImpl implements ProductSpecificRepository 
       .addField(RUNTIME_FIELD_CATEGORY_IT)
       .withValue(
         ConditionalOperators.switchCases(
-          ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(FIELD_CATEGORY).equalToValue(WASHINGMACHINES)).then(WASHINGMACHINES_IT_P),
-          ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(FIELD_CATEGORY).equalToValue(WASHERDRIERS)).then(WASHERDRIERS_IT_P),
-          ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(FIELD_CATEGORY).equalToValue(OVENS)).then(OVENS_IT_P),
-          ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(FIELD_CATEGORY).equalToValue(RANGEHOODS)).then(RANGEHOODS_IT_P),
-          ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(FIELD_CATEGORY).equalToValue(DISHWASHERS)).then(DISHWASHERS_IT_P),
-          ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(FIELD_CATEGORY).equalToValue(TUMBLEDRYERS)).then(TUMBLEDRYERS_IT_P),
-          ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(FIELD_CATEGORY).equalToValue(REFRIGERATINGAPPL)).then(REFRIGERATINGAPPL_IT_P),
-          ConditionalOperators.Switch.CaseOperator.when(ComparisonOperators.valueOf(FIELD_CATEGORY).equalToValue(COOKINGHOBS)).then(COOKINGHOBS_IT_P)
-        )
-      ).build();
+
+            // BE
+            ConditionalOperators.Switch.CaseOperator.when(
+              ComparisonOperators.valueOf(FIELD_CATEGORY).equalToValue(WASHINGMACHINES)
+            ).then(WASHINGMACHINES_IT_P),
+
+            ConditionalOperators.Switch.CaseOperator.when(
+              ComparisonOperators.valueOf(FIELD_CATEGORY).equalToValue(WASHERDRIERS)
+            ).then(WASHERDRIERS_IT_P),
+
+            ConditionalOperators.Switch.CaseOperator.when(
+              ComparisonOperators.valueOf(FIELD_CATEGORY).equalToValue(OVENS)
+            ).then(OVENS_IT_P),
+
+            ConditionalOperators.Switch.CaseOperator.when(
+              ComparisonOperators.valueOf(FIELD_CATEGORY).equalToValue(RANGEHOODS)
+            ).then(RANGEHOODS_IT_P),
+
+            ConditionalOperators.Switch.CaseOperator.when(
+              ComparisonOperators.valueOf(FIELD_CATEGORY).equalToValue(DISHWASHERS)
+            ).then(DISHWASHERS_IT_P),
+
+            ConditionalOperators.Switch.CaseOperator.when(
+              ComparisonOperators.valueOf(FIELD_CATEGORY).equalToValue(TUMBLEDRYERS)
+            ).then(TUMBLEDRYERS_IT_P),
+
+            ConditionalOperators.Switch.CaseOperator.when(
+              ComparisonOperators.valueOf(FIELD_CATEGORY).equalToValue(REFRIGERATINGAPPL)
+            ).then(REFRIGERATINGAPPL_IT_P),
+
+            ConditionalOperators.Switch.CaseOperator.when(
+              ComparisonOperators.valueOf(FIELD_CATEGORY).equalToValue(COOKINGHOBS)
+            ).then(COOKINGHOBS_IT_P),
+
+            // BE
+            ConditionalOperators.Switch.CaseOperator.when(
+              ComparisonOperators.valueOf(FIELD_CATEGORY).equalToValue(SATELLITE)
+            ).then(SATELLITE_IT_P),
+
+            ConditionalOperators.Switch.CaseOperator.when(
+              ComparisonOperators.valueOf(FIELD_CATEGORY).equalToValue(TERRESTRIAL)
+            ).then(TERRESTRIAL_IT_P),
+
+            ConditionalOperators.Switch.CaseOperator.when(
+              ComparisonOperators.valueOf(FIELD_CATEGORY).equalToValue(TERRESTRIAL_VIA_CABLE)
+            ).then(TERRESTRIAL_VIA_CABLE_IT_P),
+
+            ConditionalOperators.Switch.CaseOperator.when(
+              ComparisonOperators.valueOf(FIELD_CATEGORY).equalToValue(TERRESTRIAL_AND_SATELLITE)
+            ).then(TERRESTRIAL_AND_SATELLITE_IT_P),
+
+            ConditionalOperators.Switch.CaseOperator.when(
+              ComparisonOperators.valueOf(FIELD_CATEGORY).equalToValue(TERRESTRIAL_SATELLITE_AND_VIA_CABLE)
+            ).then(TERRESTRIAL_SATELLITE_AND_VIA_CABLE_IT_P)
+
+          )
+          .defaultTo("$" + FIELD_CATEGORY)
+      )
+      .build();
   }
 
   private Sort.Direction getSortDirection(Pageable pageable, String property) {
@@ -248,13 +300,20 @@ public class ProductSpecificRepositoryImpl implements ProductSpecificRepository 
       .orElse(Sort.Direction.ASC);
   }
 
-  private Criteria buildRoleBasedCriteria(String organizationId, String organizationSelected, String role) {
-    if (UserRole.OPERATORE.getRole().equalsIgnoreCase(role)) {
-      return Criteria.where(FIELD_ORGANIZATION_ID).is(organizationId);
-    } else if (organizationSelected != null) {
-      return Criteria.where(FIELD_ORGANIZATION_ID).is(organizationSelected);
+  private Criteria buildRoleBasedCriteria(String organizationId, String initiativeId, String organizationSelected, String role) {
+    Criteria criteria = new Criteria();
+
+    if (initiativeId != null) {
+      criteria.and(Product.Fields.initiativeId).is(initiativeId);
     }
-    return null;
+
+    if (UserRole.OPERATORE.getRole().equalsIgnoreCase(role)) {
+      criteria.and(FIELD_ORGANIZATION_ID).is(organizationId);
+    } else if (organizationSelected != null) {
+      criteria.and(FIELD_ORGANIZATION_ID).is(organizationSelected);
+    }
+
+    return criteria;
   }
 
   public List<String> getAllowedInitialStates(ProductStatus targetStatus, String role) {

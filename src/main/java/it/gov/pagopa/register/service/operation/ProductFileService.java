@@ -8,9 +8,10 @@ import it.gov.pagopa.register.exception.operation.ReportNotFoundException;
 import it.gov.pagopa.register.mapper.operation.ProductFileMapper;
 import it.gov.pagopa.register.model.operation.Product;
 import it.gov.pagopa.register.model.operation.ProductFile;
+import it.gov.pagopa.register.repository.operation.ProducersInitiativeRepository;
 import it.gov.pagopa.register.repository.operation.ProductFileRepository;
 import it.gov.pagopa.register.repository.operation.ProductRepository;
-import it.gov.pagopa.register.service.validator.ProductFileValidatorService;
+import it.gov.pagopa.register.service.validator.file.ProductFileValidatorService;
 import it.gov.pagopa.register.utils.CsvUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,6 +33,7 @@ import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import static it.gov.pagopa.register.constants.AssetRegisterConstants.*;
@@ -48,12 +50,13 @@ public class ProductFileService {
   private final ProductRepository productRepository;
   private final FileStorageClient fileStorageClient;
   private final ProductFileValidatorService productFileValidator;
+  private final ProducersInitiativeRepository producersInitiativeRepository;
 
-  public ProductFileResponseDTO getFilesByPage(String organizationId, Pageable pageable) {
-    log.info("[GET_FILES_BY_PAGE] - Fetching files for organizationId: {}", organizationId);
+  public ProductFileResponseDTO getFilesByPage(String organizationId, String initiativeId, Pageable pageable) {
+    log.info("[GET_FILES_BY_PAGE] - Fetching files for organizationId: {}, initiativeId: {}", organizationId, initiativeId);
 
-    Page<ProductFile> filesPage = productFileRepository.findByOrganizationIdAndUploadStatusNot(
-      organizationId, UploadCsvStatus.FORMAL_ERROR.name(), pageable);
+    Page<ProductFile> filesPage = productFileRepository.findByOrganizationIdAndInitiativeIdAndUploadStatusNot(
+      organizationId, initiativeId, UploadCsvStatus.FORMAL_ERROR.name(), pageable);
 
     Page<ProductFileDTO> filesPageDTO = filesPage.map(ProductFileMapper::toDTO);
 
@@ -68,13 +71,13 @@ public class ProductFileService {
       .build();
   }
 
-  public FileReportDTO downloadReport(String id, String organizationId) {
-    log.info("[DOWNLOAD_REPORT] - Downloading report for id: {} and organizationId: {}", id, organizationId);
+  public FileReportDTO downloadReport(String id, String organizationId, String initiativeId) {
+    log.info("[DOWNLOAD_REPORT] - Downloading report for id: {}, organizationId: {}, initiativeId: {}", id, organizationId, initiativeId);
 
-    ProductFile productFile = productFileRepository.findByIdAndOrganizationId(id, organizationId)
+    ProductFile productFile = productFileRepository.findByIdAndOrganizationIdAndInitiativeId(id, organizationId, initiativeId)
       .orElseThrow(() -> {
-        log.error("[DOWNLOAD_REPORT] - Report not found with id: {}", id);
-        return new ReportNotFoundException("Report not found with id: " + id);
+        log.error("[DOWNLOAD_REPORT] - Report not found for id: {} and initiative: {}", id, initiativeId);
+        return new ReportNotFoundException("Report not found");
       });
 
     String filePath = resolveReportPath(productFile);
@@ -82,11 +85,9 @@ public class ProductFileService {
     ByteArrayOutputStream result = fileStorageClient.download(filePath);
 
     if (result == null) {
-      log.error("[DOWNLOAD_REPORT] - Report not found on Azure for path: {}", filePath);
-      throw new ReportNotFoundException("Report not found on Azure for path: " + filePath);
+      log.error("[DOWNLOAD_REPORT] - File missing on Azure for path: {}", filePath);
+      throw new ReportNotFoundException("File not found on storage");
     }
-
-    log.info("[DOWNLOAD_REPORT] - Report downloaded successfully for file: {}", productFile.getFileName());
 
     return FileReportDTO.builder()
       .data(result.toByteArray())
@@ -95,36 +96,43 @@ public class ProductFileService {
   }
 
   private String resolveReportPath(ProductFile productFile) {
-    String id = productFile.getId();
-    String status = productFile.getUploadStatus();
+    String pathPrefix = resolvePathPrefix(productFile.getUploadStatus())
+      .orElseThrow(() -> {
+        log.error("[DOWNLOAD_REPORT] - Report not available for file: {} with status: {}",
+          productFile.getFileName(), productFile.getUploadStatus());
+        return new ReportNotFoundException("Report not available for file: " + productFile.getFileName());
+      });
 
-    if (UploadCsvStatus.PARTIAL.name().equals(status)) {
-      return REPORT_PARTIAL_ERROR + id + CSV;
-    }
-
-    if (UploadCsvStatus.FORMAL_ERROR.name().equals(status)) {
-      return REPORT_FORMAL_ERROR + id + CSV;
-    }
-
-    log.error("[DOWNLOAD_REPORT] - Report not available for file: {}", productFile.getFileName());
-    throw new ReportNotFoundException("Report not available for file: " + productFile.getFileName());
+    return pathPrefix + productFile.getInitiativeId() + "/" + productFile.getId() + CSV;
   }
 
-  public ProductFileResult uploadFile(MultipartFile file, String category, String organizationId,
+  private Optional<String> resolvePathPrefix(String uploadStatus) {
+    try {
+      return switch (UploadCsvStatus.valueOf(uploadStatus)) {
+        case PARTIAL -> Optional.of(REPORT_PARTIAL_ERROR);
+        case FORMAL_ERROR -> Optional.of(REPORT_FORMAL_ERROR);
+        default -> Optional.empty();
+      };
+    } catch (IllegalArgumentException | NullPointerException _) {
+      return Optional.empty();
+    }
+  }
+
+  public ProductFileResult uploadFile(MultipartFile file, String category,  String initiativeId, String organizationId,
                                       String userId, String userEmail, String organizationName) {
     try {
-      ProductFileResult result = validateFile(file, category, organizationId, userId, userEmail, organizationName);
+      ProductFileResult result = validateFile(file, category, initiativeId, organizationId, userId, userEmail, organizationName);
 
       if (result.isKo()) {
         return result;
       }
 
       ProductFile productFile = saveProductFile(
-        category, organizationId, userId, userEmail,
+        category, organizationId, initiativeId, userId, userEmail,
         file.getOriginalFilename(), result.getRecords(), organizationName
       );
 
-      String path = String.format("CSV/%s/%s/%s/%s.csv", organizationId, organizationName, category, productFile.getId());
+      String path = String.format("CSV/%s/%s/%s/%s/%s.csv", initiativeId, organizationId, organizationName, category, productFile.getId());
       fileStorageClient.upload(file.getInputStream(), path, file.getContentType());
 
       log.info(FILE_PROCESSED_LOG, file.getOriginalFilename());
@@ -136,30 +144,37 @@ public class ProductFileService {
     }
   }
 
-  public ProductFileResult validateFile(MultipartFile file, String category, String organizationId,
+  public ProductFileResult validateFile(MultipartFile file, String category, String initiativeId, String organizationId,
                                         String userId, String userEmail, String organizationName) {
-    if (productFileRepository.existsByOrganizationIdAndUploadStatusIn(organizationId, BLOCKING_STATUSES)) {
-      log.warn("[PROCESS_FILE] - Existing file in UPLOADED or IN_PROCESS state for org: {}", organizationId);
+
+    if (!producersInitiativeRepository.existsByProducerIdAndInitiativeIdAndEnabledTrue(organizationId, initiativeId)) {
+      log.warn("[PROCESS_FILE] - Organization {} is not enabled for initiative: {}", organizationId, initiativeId);
+      return ProductFileResult.ko(AssetRegisterConstants.UploadKeyConstant.NOT_ENABLED_ERRORE_KEY);
+    }
+
+    if (productFileRepository.existsByInitiativeIdAndOrganizationIdAndUploadStatusIn(initiativeId, organizationId, BLOCKING_STATUSES)) {
+      log.warn("[PROCESS_FILE] - Existing file in UPLOADED or IN_PROCESS state for org: {} and initiative: {}", organizationId, initiativeId);
       return ProductFileResult.ko(AssetRegisterConstants.UploadKeyConstant.UPLOAD_ALREADY_IN_PROGRESS);
     }
 
     try {
-      String originalFileName = file.getOriginalFilename();
-      log.info("[PROCESS_FILE] - Processing file: {} for organizationId: {}", originalFileName, organizationId);
 
-      ValidationResultDTO validation = productFileValidator.validateFile(file, category);
+      ValidationResultDTO validation = productFileValidator.validateFile(file, category, initiativeId, organizationId);
+
+      String originalFileName = file.getOriginalFilename();
+
       if (validation.isKo()) {
-        log.warn(VALIDATION_FAILED_LOG, originalFileName);
+        log.warn(VALIDATION_FAILED_LOG, file.getOriginalFilename());
         return ProductFileResult.ko(validation.getErrorKey());
       }
 
       ValidationResultDTO recordValidation = productFileValidator.validateRecords(
-        validation.getRecords(), validation.getHeaders(), category);
+        validation.getRecords(), category, initiativeId);
 
       if (recordValidation.isKo()) {
         log.warn(VALIDATION_FAILED_LOG, originalFileName);
 
-        ProductFile productFile = saveProductFile(category, organizationId, userId, userEmail,
+        ProductFile productFile = saveProductFile(category, organizationId, initiativeId, userId, userEmail,
           originalFileName, validation.getRecords(), organizationName);
 
         uploadFormalErrorFile(file, recordValidation, validation.getHeaders(), productFile);
@@ -188,7 +203,7 @@ public class ProductFileService {
       tempFilePath
     );
 
-    String destination = REPORT_FORMAL_ERROR + productFile.getId() + CSV;
+    String destination = REPORT_FORMAL_ERROR + productFile.getInitiativeId() + "/" + productFile.getId() + CSV;
     fileStorageClient.upload(Files.newInputStream(tempFilePath), destination, file.getContentType());
 
     Files.deleteIfExists(tempFilePath);
@@ -204,7 +219,8 @@ public class ProductFileService {
     return Files.createTempFile("errors-", ".csv");
   }
 
-  private ProductFile saveProductFile(String category, String organizationId, String userId, String userEmail,
+  @SuppressWarnings("java:S107")
+  private ProductFile saveProductFile(String category, String organizationId, String initiativeId, String userId, String userEmail,
                                       String originalFileName, List<CSVRecord> records, String organizationName) {
 
     return productFileRepository.save(ProductFile.builder()
@@ -218,13 +234,15 @@ public class ProductFileService {
       .dateUpload(LocalDateTime.now())
       .userEmail(userEmail)
       .organizationName(organizationName)
+      .initiativeId(initiativeId)
       .build());
   }
 
-  public List<ProductBatchDTO> retrieveDistinctProductFileIdsBasedOnRole(String organizationId, String organizationSelected, String role) {
-    log.info("[GET_PRODUCT_FILES] - Fetching product files for organizationId: {}", organizationId);
+  public List<ProductBatchDTO> retrieveDistinctProductFileIdsBasedOnRole(String organizationId, String initiativeId, String organizationSelected, String role) {
+
+    log.info("[GET_PRODUCT_FILES] - Fetching product files for organizationId: {}, initiativeId: {}", organizationId, initiativeId);
      List<Product> productFiles = productRepository
-      .retrieveDistinctProductFileIdsBasedOnRole(organizationId, organizationSelected, role);
+      .retrieveDistinctProductFileIdsBasedOnRole(organizationId, initiativeId, organizationSelected, role);
 
     log.info("[GET_PRODUCT_FILES] - Fetched {} product files for organizationId: {}", productFiles.size(), organizationId);
     return productFiles.stream()

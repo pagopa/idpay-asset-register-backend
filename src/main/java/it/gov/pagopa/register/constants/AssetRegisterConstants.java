@@ -1,30 +1,27 @@
 package it.gov.pagopa.register.constants;
 
-import it.gov.pagopa.register.dto.utils.ColumnValidationRule;
-import it.gov.pagopa.register.dto.utils.EprelValidationRule;
 import it.gov.pagopa.register.enums.UploadCsvStatus;
 
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.regex.Pattern;
-
-import static it.gov.pagopa.register.utils.EprelUtils.isEnergyClassValid;
 
 public class AssetRegisterConstants {
 
-    //private constructor to avoid instantiation
-  private AssetRegisterConstants(){
+  //private constructor to avoid instantiation
+  private AssetRegisterConstants() {
   }
 
   public static final String REPORT_PARTIAL_ERROR = "Report/Partial/";
   public static final String REPORT_FORMAL_ERROR = "Report/Formal/";
+
   public static final String CSV = ".csv";
 
-  // Regex
-  public static final String CODE_GTIN_EAN_REGEX = "^[a-zA-Z0-9]{1,14}$";
-  public static final String BRAND_REGEX = "^.{1,100}$";
-  public static final String MODEL_REGEX = "^.{1,100}$";
-  public static final String CODE_PRODUCT_REGEX = "^[a-zA-Z0-9 ]{0,100}$";
-  public static final String CODE_EPREL_REGEX = "^\\d+$";
+  public static final List<String> BLOCKING_STATUSES = List.of(
+    UploadCsvStatus.IN_PROCESS.name(),
+    UploadCsvStatus.UPLOADED.name()
+  );
 
   // CSV HEADER
   public static final String CODE_EPREL = "Codice EPREL";
@@ -36,6 +33,8 @@ public class AssetRegisterConstants {
   public static final String MODEL = "Modello";
 
   // Category
+
+  // Bonus Elettrodomestici
   public static final String WASHINGMACHINES = "WASHINGMACHINES";
   public static final String WASHERDRIERS = "WASHERDRIERS";
   public static final String OVENS = "OVENS";
@@ -60,38 +59,60 @@ public class AssetRegisterConstants {
   public static final String TUMBLEDRYERS_IT_S = "Asciugatrice";
   public static final String REFRIGERATINGAPPL_IT_S = "Apparecchio di refrigerazione";
   public static final String COOKINGHOBS_IT_S = "Piano cottura";
-  public static final Set<String> CATEGORIES = Set.of(
-    WASHINGMACHINES,
-    WASHERDRIERS,
-    OVENS,
-    RANGEHOODS,
-    DISHWASHERS,
-    TUMBLEDRYERS,
-    REFRIGERATINGAPPL,
-    COOKINGHOBS
+
+  // Bonus Decoder
+  public static final String SATELLITE =  "SATELLITE";
+  public static final String TERRESTRIAL = "TERRESTRIAL";
+  public static final String TERRESTRIAL_VIA_CABLE = "TERRESTRIAL_VIA_CABLE";
+  public static final String TERRESTRIAL_AND_SATELLITE = "TERRESTRIAL_AND_SATELLITE";
+  public static final String TERRESTRIAL_SATELLITE_AND_VIA_CABLE = "TERRESTRIAL_SATELLITE_AND_VIA_CABLE";
+  public static final String SATELLITE_IT_S =  "Satellitare";
+  public static final String TERRESTRIAL_IT_S = "Terrestre";
+  public static final String TERRESTRIAL_VIA_CABLE_IT_S = "Terrestre via Cavo";
+  public static final String TERRESTRIAL_AND_SATELLITE_IT_S = "Terrestre e Satellitare";
+  public static final String TERRESTRIAL_SATELLITE_AND_VIA_CABLE_IT_S = "Terrestre, Satellitare e via Cavo";
+
+  public static final String SATELLITE_IT_P =  "Satellitari";
+  public static final String TERRESTRIAL_IT_P = "Terrestri";
+  public static final String TERRESTRIAL_VIA_CABLE_IT_P = "Terrestri via Cavo";
+  public static final String TERRESTRIAL_AND_SATELLITE_IT_P = "Terrestri e Satellitari";
+  public static final String TERRESTRIAL_SATELLITE_AND_VIA_CABLE_IT_P = "Terrestri, Satellitari e via Cavo";
+
+  public static final Map<String, String> CATEGORIES_TO_IT_S = Map.ofEntries(
+    /* BE */
+    Map.entry(WASHINGMACHINES, WASHINGMACHINES_IT_S),
+    Map.entry(WASHERDRIERS, WASHERDRIERS_IT_S),
+    Map.entry(OVENS, OVENS_IT_S),
+    Map.entry(RANGEHOODS, RANGEHOODS_IT_S),
+    Map.entry(DISHWASHERS, DISHWASHERS_IT_S),
+    Map.entry(TUMBLEDRYERS, TUMBLEDRYERS_IT_S),
+    Map.entry(REFRIGERATINGAPPL, REFRIGERATINGAPPL_IT_S),
+    Map.entry(COOKINGHOBS, COOKINGHOBS_IT_S),
+
+    /* BD */
+    Map.entry(SATELLITE, SATELLITE_IT_S),
+    Map.entry(TERRESTRIAL, TERRESTRIAL_IT_S),
+    Map.entry(TERRESTRIAL_VIA_CABLE, TERRESTRIAL_VIA_CABLE_IT_S),
+    Map.entry(TERRESTRIAL_AND_SATELLITE, TERRESTRIAL_AND_SATELLITE_IT_S),
+    Map.entry(TERRESTRIAL_SATELLITE_AND_VIA_CABLE, TERRESTRIAL_SATELLITE_AND_VIA_CABLE_IT_S)
   );
 
-
-  public static final Map<String, String> CATEGORIES_TO_IT_S = Map.of(
-    WASHINGMACHINES, WASHINGMACHINES_IT_S,
-    WASHERDRIERS, WASHERDRIERS_IT_S,
-    OVENS, OVENS_IT_S,
-    RANGEHOODS, RANGEHOODS_IT_S,
-    DISHWASHERS, DISHWASHERS_IT_S,
-    TUMBLEDRYERS, TUMBLEDRYERS_IT_S,
-    REFRIGERATINGAPPL, REFRIGERATINGAPPL_IT_S,
-    COOKINGHOBS, COOKINGHOBS_IT_S
-  );
-
-  public static final Map<String, String> CATEGORIES_TO_IT_P = Map.of(
-    WASHINGMACHINES, WASHINGMACHINES_IT_P,
-    WASHERDRIERS, WASHERDRIERS_IT_P,
-    OVENS, OVENS_IT_P,
-    RANGEHOODS, RANGEHOODS_IT_P,
-    DISHWASHERS, DISHWASHERS_IT_P,
-    TUMBLEDRYERS, TUMBLEDRYERS_IT_P,
-    REFRIGERATINGAPPL, REFRIGERATINGAPPL_IT_P,
-    COOKINGHOBS, COOKINGHOBS_IT_P
+  public static final Map<String, String> CATEGORIES_TO_IT_P = Map.ofEntries(
+    /* BE */
+    Map.entry(WASHINGMACHINES, WASHINGMACHINES_IT_P),
+    Map.entry(WASHERDRIERS, WASHERDRIERS_IT_P),
+    Map.entry(OVENS, OVENS_IT_P),
+    Map.entry(RANGEHOODS, RANGEHOODS_IT_P),
+    Map.entry(DISHWASHERS, DISHWASHERS_IT_P),
+    Map.entry(TUMBLEDRYERS, TUMBLEDRYERS_IT_P),
+    Map.entry(REFRIGERATINGAPPL, REFRIGERATINGAPPL_IT_P),
+    Map.entry(COOKINGHOBS, COOKINGHOBS_IT_P),
+    /* BD */
+    Map.entry(SATELLITE, SATELLITE_IT_P),
+    Map.entry(TERRESTRIAL, TERRESTRIAL_IT_P),
+    Map.entry(TERRESTRIAL_VIA_CABLE, TERRESTRIAL_VIA_CABLE_IT_P),
+    Map.entry(TERRESTRIAL_AND_SATELLITE, TERRESTRIAL_AND_SATELLITE_IT_P),
+    Map.entry(TERRESTRIAL_SATELLITE_AND_VIA_CABLE, TERRESTRIAL_SATELLITE_AND_VIA_CABLE_IT_P)
   );
 
   // Eprel Value
@@ -126,7 +147,9 @@ public class AssetRegisterConstants {
   // Eprel Errors
 
   public static final class UploadKeyConstant {
-    private UploadKeyConstant(){}
+    private UploadKeyConstant() {
+    }
+
     public static final String EXTENSION_FILE_ERROR_KEY = "product.invalid.file.extension";
     public static final String MAX_ROW_FILE_ERROR_KEY = "product.invalid.file.maxrow";
     public static final String MAX_SIZE_FILE_ERROR_KEY = "product.invalid.file.maxsize";
@@ -134,42 +157,18 @@ public class AssetRegisterConstants {
     public static final String REPORT_FORMAL_FILE_ERROR_KEY = "product.invalid.file.report";
     public static final String UNKNOWN_CATEGORY_ERROR_KEY = "product.invalid.file.category";
     public static final String EMPTY_FILE_ERROR_KEY = "product.invalid.file.empty";
+    public static final String INITIATIVE_CONFIG_ERROR = "product.invalid.file.initiative_config";
     public static final String UPLOAD_ALREADY_IN_PROGRESS = "product.invalid.file.already_in_progress";
+    public static final String NOT_ENABLED_ERRORE_KEY = "product.invalid.file.permission";
   }
 
   public static final class UpdateKeyConstant {
-    private UpdateKeyConstant(){}
+    private UpdateKeyConstant() {
+    }
+
     public static final String EMAIL_ERROR_KEY = "product.invalid.update.email";
 
   }
-
-  public static final class CsvValidationRules {
-    private CsvValidationRules() {}
-    public static final ColumnValidationRule GTIN_EAN_RULE =
-      new ColumnValidationRule((v, z) -> v != null && v.matches(CODE_GTIN_EAN_REGEX), ERROR_GTIN_EAN);
-
-    public static final ColumnValidationRule CODE_PRODUCT_RULE =
-      new ColumnValidationRule((v, z) -> v != null && v.matches(CODE_PRODUCT_REGEX), ERROR_CODE_PRODUCT);
-
-    public static final ColumnValidationRule CATEGOY_COOKINGHOBS_RULE =
-      new ColumnValidationRule(String::equals, ERROR_CATEGORY_PRODUCTS);
-
-    public static final ColumnValidationRule CATEGOY_PRODUCTS_RULE =
-      new ColumnValidationRule(String::equals, ERROR_CATEGORY_PRODUCTS);
-
-    public static final ColumnValidationRule COUNTRY_OF_PRODUCTION_RULE =
-      new ColumnValidationRule((v, z) -> Arrays.asList(Locale.getISOCountries()).contains(v), ERROR_COUNTRY_OF_PRODUCTION);
-
-    public static final ColumnValidationRule BRAND_RULE =
-      new ColumnValidationRule((v, z) -> v != null && v.matches(BRAND_REGEX), ERROR_BRAND);
-
-    public static final ColumnValidationRule MODEL_RULE =
-      new ColumnValidationRule((v, z) -> v != null && v.matches(MODEL_REGEX), ERROR_MODEL);
-
-    public static final ColumnValidationRule CODE_EPREL_RULE =
-      new ColumnValidationRule((v, z) -> v != null && v.matches(CODE_EPREL_REGEX), ERROR_CODE_EPREL);
-  }
-
 
   //Eprel Messages Error
   public static final String ERROR_ORG = "Il produttore non risulta nell'elenco della Banca dati europea dei prodotti per l'etichettatura energetica; è necessario completare le informazioni sul portale EPREL";
@@ -181,30 +180,56 @@ public class AssetRegisterConstants {
   public static final String DUPLICATE_GTIN_EAN = "Il codice GTIN indicato nel file CSV è un duplicato";
   public static final String DIFFERENT_ORGANIZATIONID = "Il prodotto indicato è associato ad un altro produttore";
   public static final String STATUS_NOT_VALID = "Il prodotto è sottoposto alle verifiche previste dal DM del 03/09/2025 e pertanto non è possibile variare le informazioni ad esso collegate";
-  public static final class EprelValidationRules {
+  public static final Map<String, String> ERROR_MAP = Map.ofEntries(
+    // Eprel Error
+    Map.entry("ERROR_ORG", "Il produttore non risulta nell'elenco della Banca dati europea dei prodotti per l'etichettatura energetica; è necessario completare le informazioni sul portale EPREL"),
+    Map.entry("ERROR_TRADEMARK", "Il marchio associato al prodotto non risulta nell'elenco della Banca dati europea dei prodotti per l'etichettatura energetica - EPREL"),
+    Map.entry("ERROR_BLOCKED", "Il prodotto risulta bloccato nell'elenco della Banca dati europea dei prodotti per l'etichettatura energetica - EPREL"),
+    Map.entry("ERROR_STATUS", "Il prodotto non è presente o caricato nell'elenco della Banca dati europea dei prodotti per l'etichettatura energetica - EPREL"),
+    Map.entry("ERROR_PRODUCT_GROUP", "La categoria presente sulla Banca dati europea dei prodotti per l'etichettatura energetica - EPREL non è coerente con quella del file CSV"),
+    Map.entry("ERROR_ENERGY_CLASS", "La classe energetica non è conforme con quella prevista nel DM del 03/09/2025"),
+    Map.entry("DUPLICATE_GTIN_EAN", "Il codice GTIN indicato nel file CSV è un duplicato"),
+    Map.entry("DIFFERENT_ORGANIZATIONID", "Il prodotto indicato è associato ad un altro produttore"),
+    Map.entry("STATUS_NOT_VALID", "Il prodotto è sottoposto alle verifiche previste dal DM del 03/09/2025 e pertanto non è possibile variare le informazioni ad esso collegate"),
 
-    private EprelValidationRules() {}
+    // Csv Errors
+    Map.entry("ERROR_GTIN_EAN", "Il Codice GTIN/EAN è obbligatorio e deve essere univoco ed alfanumerico e lungo al massimo 14 caratteri"),
+    Map.entry("ERROR_BRAND", "Il campo Marca è obbligatorio e deve contenere una stringa lunga al massimo 100 caratteri"),
+    Map.entry("ERROR_MODEL", "Il campo Modello è obbligatorio e deve contenere una stringa lunga al massimo 100 caratteri"),
+    Map.entry("ERROR_CODE_PRODUCT", "Il Codice prodotto non deve contenere caratteri speciali o lettere accentate e deve essere lungo al massimo 100 caratteri"),
+    Map.entry("ERROR_COUNTRY_OF_PRODUCTION", "Paese di Produzione non è un ISO 3166 valido o non è in maiuscolo"),
+    Map.entry("ERROR_CATEGORY_PRODUCTS", "Il campo Categoria è obbligatorio e deve essere \"{}\""),
+    Map.entry("ERROR_CODE_EPREL", "Il Codice EPREL è obbligatorio e deve essere un valore numerico")
+  );
 
-    public static final EprelValidationRule ORG_VERIFICATION_STATUS_RULE =
-        new EprelValidationRule((v, z) -> v != null && v.equalsIgnoreCase("VERIFIED"), ERROR_ORG);
 
-    public static final EprelValidationRule TRADE_MARKER_VERIFICATION_STATUS_RULE =
-      new EprelValidationRule((v, z) -> v != null &&  v.equalsIgnoreCase("VERIFIED"), ERROR_TRADEMARK);
+    // REFRIGERATORS CATEGORY
+    public static final String PANTRY = "PANTRY";
+    public static final String WINE_STORAGE = "WINE_STORAGE";
+    public static final String CELLAR = "CELLAR";
+    public static final String FRESH_FOOD = "FRESH_FOOD";
+    public static final String CHILL = "CHILL";
+    public static final String VARIABLE_TEMP = "VARIABLE_TEMP";
 
-    public static final EprelValidationRule BLOCKED_RULE =
-      new EprelValidationRule((v, z) -> v != null && v.equalsIgnoreCase("FALSE"), ERROR_BLOCKED);
+    public static final Set<String> REFRIGERATORS_CATEGORY = Set.of(
+      PANTRY,
+      WINE_STORAGE,
+      CELLAR,
+      FRESH_FOOD,
+      CHILL
+    );
 
-    public static final EprelValidationRule STATUS_RULE =
-      new EprelValidationRule((v, z) -> v != null && v.equalsIgnoreCase("PUBLISHED"), ERROR_STATUS);
+    public static final String FREEZER_IT = "Congelatore";
+    public static final String REFRIGERATOR_IT = "Frigorifero";
 
-    public static final EprelValidationRule PRODUCT_GROUP_RULE =
-      new EprelValidationRule((v, z) -> v != null && v.toLowerCase().startsWith(z.toLowerCase()), ERROR_PRODUCT_GROU);
+    public static final Pattern SUBJECT_PATTERN = Pattern.compile(".*/blobs/CSV/([^/]+)/([^/]+)/([^/]+)/([^/]+)/([^/]+\\.csv)$");
 
-    public static final EprelValidationRule ENERGY_CLASS_RULE =
-      new EprelValidationRule((v, z) -> v != null && isEnergyClassValid(v,z), ERROR_ENERGY_CLASS);
-  }
-
-  public static final Pattern SUBJECT_PATTERN = Pattern.compile(".*/blobs/CSV/([^/]+)/([^/]+)/([^/]+)/([^/]+\\.csv)$");
+    //UPDATE STATUS MESSAGE ERROR
+    public static final String MIXED_STATUS_ERROR_KEY = "product.invalid.update.mixedStatus";
+    public static final String INVALID_CURRENT_STATUS_ERROR_KEY = "product.invalid.update.currentStatus";
+    public static final String PRODUCT_NOT_FOUND_ERROR_KEY = "product.invalid.update.notFound";
+    public static final String TRANSITION_NOT_ALLOWED_ERROR_KEY = "product.invalid.update.transitionNotAllowed";
+    public static final String INITIATIVE_NOT_FOUND_ERROR_KEY = "product.invalid.update.initiativeNotFound";
 
   public static final Map<String, String> ENERGY_CLASS_REQUIREMENTS = Map.of(
     WASHINGMACHINES, "A",
@@ -220,41 +245,6 @@ public class AssetRegisterConstants {
     "APPP", "APP", "AP", "A", "B", "C", "D", "E", "F", "G"
   );
 
-
-  public static final List<String> BLOCKING_STATUSES = List.of(
-    UploadCsvStatus.IN_PROCESS.name(),
-    UploadCsvStatus.UPLOADED.name()
-  );
-
-
   public static final String USERNAME = "USERNAME";
-
-// REFRIGERATORS CATEGORY
-  public static final String PANTRY = "PANTRY";
-  public static final String WINE_STORAGE = "WINE_STORAGE";
-  public static final String CELLAR = "CELLAR";
-  public static final String FRESH_FOOD = "FRESH_FOOD";
-  public static final String CHILL = "CHILL";
-
-  public static final String VARIABLE_TEMP = "VARIABLE_TEMP";
-
-  public static final Set<String> REFRIGERATORS_CATEGORY = Set.of(
-    PANTRY,
-    WINE_STORAGE,
-    CELLAR,
-    FRESH_FOOD,
-    CHILL
-  );
-
-  public static final String FREEZER_IT = "Congelatore";
-  public static final String REFRIGERATOR_IT = "Frigorifero";
-
-  //UPDATE STATUS MESSAGE ERROR
-  public static final String MIXED_STATUS_ERROR_KEY = "product.invalid.update.mixedStatus";
-  public static final String INVALID_CURRENT_STATUS_ERROR_KEY = "product.invalid.update.currentStatus";
-  public static final String PRODUCT_NOT_FOUND_ERROR_KEY = "product.invalid.update.notFound";
-  public static final String TRANSITION_NOT_ALLOWED_ERROR_KEY = "product.invalid.update.transitionNotAllowed";
-
-
 }
 

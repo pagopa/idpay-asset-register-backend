@@ -1,6 +1,5 @@
 package it.gov.pagopa.register.utils;
 
-import it.gov.pagopa.register.enums.ProductStatus;
 import it.gov.pagopa.register.model.operation.Product;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.csv.CSVRecord;
@@ -16,15 +15,15 @@ import static it.gov.pagopa.register.constants.AssetRegisterConstants.STATUS_NOT
 public class ValidationUtils {
 
   private ValidationUtils(){}
-  public static boolean dbCheck(String orgId, CSVRecord csvRecord, Optional<Product> optProduct, List<CSVRecord> invalidRecords, Map<CSVRecord, String> errorMessages) {
+  public static boolean dbCheck(String orgId, CSVRecord csvRecord, Optional<Product> optProduct, List<CSVRecord> invalidRecords, Map<CSVRecord, String> errorMessages, List<String> allowedReloadStatuses) {
     boolean isProductPresent = optProduct.isPresent();
     boolean dbCheck = true;
     if (isProductPresent) {
       if (!orgId.equals(optProduct.get().getOrganizationId())) {
         addError(csvRecord, DIFFERENT_ORGANIZATIONID, invalidRecords, errorMessages);
         dbCheck = false;
-      } else if (!ProductStatus.REJECTED.toString().equals(optProduct.get().getStatus()) &&
-        !ProductStatus.UPLOADED.toString().equals(optProduct.get().getStatus())) {
+      }
+      else if (!allowedReloadStatuses.contains(optProduct.get().getStatus())) {
         addError(csvRecord, STATUS_NOT_VALID, invalidRecords, errorMessages);
         dbCheck = false;
       }

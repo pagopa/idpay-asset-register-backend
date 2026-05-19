@@ -269,7 +269,7 @@ class ProductSpecificRepositoryTest {
     when(mongoTemplate.aggregate(any(Aggregation.class), eq("product"), eq(Product.class)))
       .thenReturn(aggregationResults);
 
-    List<Product> result = repository.retrieveDistinctProductFileIdsBasedOnRole("org1", null, "operatore");
+    List<Product> result = repository.retrieveDistinctProductFileIdsBasedOnRole("org1", null, null, "operatore");
 
     assertNotNull(result);
     assertEquals(1, result.size());
