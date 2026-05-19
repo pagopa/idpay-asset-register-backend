@@ -38,14 +38,14 @@ class EprelExternalSystemClientTest {
   @Test
   void shouldThrowExceptionWhenEprelCodeMissing() {
 
-    CSVRecord record = mock(CSVRecord.class);
+    CSVRecord csvRecord = mock(CSVRecord.class);
     ExternalCheckTemplate template = mock(ExternalCheckTemplate.class);
 
     when(template.getInputField()).thenReturn("eprelCode");
-    when(record.get("eprelCode")).thenReturn(""); // vuoto
+    when(csvRecord.get("eprelCode")).thenReturn(""); // vuoto
 
     assertThrows(IllegalArgumentException.class,
-      () -> client.fetch(record, template)
+      () -> client.fetch(csvRecord, template)
     );
   }
 
@@ -53,16 +53,16 @@ class EprelExternalSystemClientTest {
   @Test
   void shouldThrowExceptionWhenConnectorReturnsNull() {
 
-    CSVRecord record = mock(CSVRecord.class);
+    CSVRecord csvRecord = mock(CSVRecord.class);
     ExternalCheckTemplate template = mock(ExternalCheckTemplate.class);
 
     when(template.getInputField()).thenReturn("eprelCode");
-    when(record.get("eprelCode")).thenReturn("123");
+    when(csvRecord.get("eprelCode")).thenReturn("123");
 
     when(eprelConnector.callEprel("123")).thenReturn(null);
 
     assertThrows(IllegalStateException.class,
-      () -> client.fetch(record, template)
+      () -> client.fetch(csvRecord, template)
     );
   }
 
@@ -70,11 +70,11 @@ class EprelExternalSystemClientTest {
   @Test
   void shouldReturnMappedExternalData() {
 
-    CSVRecord record = mock(CSVRecord.class);
+    CSVRecord csvRecord = mock(CSVRecord.class);
     ExternalCheckTemplate template = mock(ExternalCheckTemplate.class);
 
     when(template.getInputField()).thenReturn("eprelCode");
-    when(record.get("eprelCode")).thenReturn("123");
+    when(csvRecord.get("eprelCode")).thenReturn("123");
 
     EprelProduct product = mock(EprelProduct.class);
 
@@ -94,7 +94,7 @@ class EprelExternalSystemClientTest {
 
     when(eprelConnector.callEprel("123")).thenReturn(product);
 
-    Map<String, Object> result = client.fetch(record, template);
+    Map<String, Object> result = client.fetch(csvRecord, template);
 
     assertEquals("ACTIVE", result.get("status"));
     assertEquals("A", result.get("energyClass"));
@@ -112,7 +112,7 @@ class EprelExternalSystemClientTest {
     List<?> cavities = (List<?>) result.get("cavities");
 
     assertEquals(1, cavities.size());
-    assertEquals(2, ((EprelProduct.Cavity) cavities.get(0)).getVolume());
+    assertEquals(2, ((EprelProduct.Cavity) cavities.getFirst()).getVolume());
 
   }
 
@@ -121,16 +121,16 @@ class EprelExternalSystemClientTest {
   @Test
   void shouldThrowExceptionWhenCsvFieldMissing() {
 
-    CSVRecord record = mock(CSVRecord.class);
+    CSVRecord csvRecord = mock(CSVRecord.class);
     ExternalCheckTemplate template = mock(ExternalCheckTemplate.class);
 
     when(template.getInputField()).thenReturn("missingField");
 
-    when(record.get("missingField"))
+    when(csvRecord.get("missingField"))
       .thenThrow(new IllegalArgumentException("Column not found"));
 
     assertThrows(IllegalArgumentException.class,
-      () -> client.fetch(record, template)
+      () -> client.fetch(csvRecord, template)
     );
   }
 }
