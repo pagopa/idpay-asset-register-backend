@@ -1,8 +1,8 @@
 package it.gov.pagopa.register.service.validator.nocheck;
 
-import it.gov.pagopa.register.model.initiative.CategoryConfig;
-import it.gov.pagopa.register.mapper.product.ProductMapperStrategy;
 import it.gov.pagopa.register.dto.utils.ProductValidationResult;
+import it.gov.pagopa.register.mapper.product.ProductMapperStrategy;
+import it.gov.pagopa.register.model.initiative.CategoryConfig;
 import it.gov.pagopa.register.model.operation.Product;
 import it.gov.pagopa.register.repository.operation.ProductRepository;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +23,7 @@ public class NoExternalCheckService {
   private final ProductRepository productRepository;
   private final Map<String, ProductMapperStrategy> mapperByCategory;
 
+  @SuppressWarnings("java:S107")
   public ProductValidationResult validateRecords(
     List<CSVRecord> records,
     String category,

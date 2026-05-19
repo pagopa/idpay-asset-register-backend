@@ -382,7 +382,7 @@ class ProductMapperStrategyTest {
   @Test
   void eprelMapToProductThrowsWhenCategoryIsNull() {
     CSVRecord csvRecord = eprelRecord();
-
+    MappingContext mappingContext = new MappingContext(baseEprelData(Map.of()));
     assertThrows(NullPointerException.class, () -> eprelProductMapper.mapToProduct(
       csvRecord,
       null,
@@ -390,8 +390,8 @@ class ProductMapperStrategyTest {
       INITIATIVE_ID,
       PRODUCT_FILE_ID,
       ORGANIZATION_NAME,
-      new MappingContext(baseEprelData(Map.of()))
-    ));
+      mappingContext)
+    );
   }
 
   @Test
