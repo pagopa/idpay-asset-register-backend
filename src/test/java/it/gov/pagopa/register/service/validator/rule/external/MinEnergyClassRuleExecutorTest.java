@@ -2,7 +2,6 @@ package it.gov.pagopa.register.service.validator.rule.external;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
 import it.gov.pagopa.register.model.initiative.ValidationRule;
@@ -12,6 +11,8 @@ import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -46,14 +47,23 @@ class MinEnergyClassRuleExecutorTest {
 
     assertFalse(result);
   }
-
-  @Test
-  void testEvaluate_False_ActualIndexNotFound() {
+  @ParameterizedTest
+  @CsvSource({
+    "INVALID_CLASS, A4, false",
+    "A4, INVALID_REQUIRED, false",
+    "A4, A2, true",
+    "B, A4, false"
+  })
+  void evaluate_shouldReturnExpectedResult(
+    String actualEnergyClass,
+    String requiredEnergyClass,
+    boolean expectedResult
+  ) {
     Map<String, Object> externalData = new HashMap<>();
-    externalData.put("energyClass", "INVALID_CLASS");
+    externalData.put("energyClass", actualEnergyClass);
 
     Map<String, Object> categoryParameters = new HashMap<>();
-    categoryParameters.put("minParam", "A4");
+    categoryParameters.put("minParam", requiredEnergyClass);
 
     List<String> order = List.of("A4", "A3", "A2", "A1", "B", "C");
 
@@ -64,66 +74,6 @@ class MinEnergyClassRuleExecutorTest {
 
     boolean result = executor.evaluate(validationRuleMock, externalRuleContextMock);
 
-    assertFalse(result);
-  }
-
-  @Test
-  void testEvaluate_False_RequiredIndexNotFound() {
-    Map<String, Object> externalData = new HashMap<>();
-    externalData.put("energyClass", "A4");
-
-    Map<String, Object> categoryParameters = new HashMap<>();
-    categoryParameters.put("minParam", "INVALID_REQUIRED");
-
-    List<String> order = List.of("A4", "A3", "A2", "A1", "B", "C");
-
-    when(externalRuleContextMock.getExternalData()).thenReturn(externalData);
-    when(externalRuleContextMock.getCategoryParameters()).thenReturn(categoryParameters);
-    when(validationRuleMock.getParam()).thenReturn("minParam");
-    when(validationRuleMock.getOrder()).thenReturn(order);
-
-    boolean result = executor.evaluate(validationRuleMock, externalRuleContextMock);
-
-    assertFalse(result);
-  }
-
-  @Test
-  void testEvaluate_True_ValidAndLowerOrEqualIndex() {
-    Map<String, Object> externalData = new HashMap<>();
-    externalData.put("energyClass", "A4");
-
-    Map<String, Object> categoryParameters = new HashMap<>();
-    categoryParameters.put("minParam", "A2");
-
-    List<String> order = List.of("A4", "A3", "A2", "A1", "B", "C");
-
-    when(externalRuleContextMock.getExternalData()).thenReturn(externalData);
-    when(externalRuleContextMock.getCategoryParameters()).thenReturn(categoryParameters);
-    when(validationRuleMock.getParam()).thenReturn("minParam");
-    when(validationRuleMock.getOrder()).thenReturn(order);
-
-    boolean result = executor.evaluate(validationRuleMock, externalRuleContextMock);
-
-    assertTrue(result);
-  }
-
-  @Test
-  void testEvaluate_False_HigherIndex() {
-    Map<String, Object> externalData = new HashMap<>();
-    externalData.put("energyClass", "B");
-
-    Map<String, Object> categoryParameters = new HashMap<>();
-    categoryParameters.put("minParam", "A4");
-
-    List<String> order = List.of("A4", "A3", "A2", "A1", "B", "C");
-
-    when(externalRuleContextMock.getExternalData()).thenReturn(externalData);
-    when(externalRuleContextMock.getCategoryParameters()).thenReturn(categoryParameters);
-    when(validationRuleMock.getParam()).thenReturn("minParam");
-    when(validationRuleMock.getOrder()).thenReturn(order);
-
-    boolean result = executor.evaluate(validationRuleMock, externalRuleContextMock);
-
-    assertFalse(result);
+    assertEquals(expectedResult, result);
   }
 }
