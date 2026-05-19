@@ -16,6 +16,7 @@ import org.apache.commons.csv.CSVRecord;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.function.Executable;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -118,20 +119,22 @@ class ValidationServiceTest {
     CategoryConfig category = mock(CategoryConfig.class);
     when(category.getProductMapper()).thenReturn("UNKNOWN");
 
-    assertThrows(IllegalStateException.class,
-      () -> validationService.validateRecords(
-        Collections.emptyList(),
-        "cat",
-        "org",
-        "init",
-        "file",
-        Collections.emptyList(),
-        "orgName",
-        mock(InitiativeConfig.class),
-        category,
-        Collections.emptyList()
-      )
+    final ValidationService service = validationService;
+
+    Executable executable = () -> service.validateRecords(
+      List.of(),
+      "cat",
+      "org",
+      "init",
+      "file",
+      List.of(),
+      "orgName",
+      mock(InitiativeConfig.class),
+      category,
+      List.of()
     );
+
+    assertThrows(IllegalStateException.class, executable);
   }
 
   @Test
