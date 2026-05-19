@@ -15,6 +15,7 @@ import static it.gov.pagopa.register.constants.AssetRegisterConstants.DUPLICATE_
 import static it.gov.pagopa.register.utils.ValidationUtils.dbCheck;
 
 @Slf4j
+@SuppressWarnings("java:S107")
 public abstract class AbstractValidationService {
 
   protected final ProductRepository productRepository;
@@ -72,7 +73,7 @@ public abstract class AbstractValidationService {
       // Duplicate check
       if (isValidRecord && handleDuplicate(
           businessKey, validProducts, mapper, headers, invalidRecords, errorMessages)) {
-        isValidRecord = false;
+          isValidRecord = false;
       }
 
       // External checks (hook)
@@ -80,7 +81,7 @@ public abstract class AbstractValidationService {
       if (isValidRecord) {
         externalData = performExternalChecks(csvRecord, externalContext);
 
-        if (externalData == null) {
+        if (externalData.isEmpty()) {
           invalidRecords.add(csvRecord);
           errorMessages.put(csvRecord, "EXTERNAL_CHECK_FAILED");
           isValidRecord = false;
@@ -139,7 +140,7 @@ public abstract class AbstractValidationService {
   }
 
   protected abstract Map<String, Object> performExternalChecks(
-      CSVRecord record,
+      CSVRecord csvRecord,
       ExternalContext context
   );
 }

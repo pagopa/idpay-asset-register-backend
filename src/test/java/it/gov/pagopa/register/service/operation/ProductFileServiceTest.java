@@ -187,9 +187,7 @@ class ProductFileServiceTest {
     Mockito.when(productFileRepository.findByIdAndOrganizationIdAndInitiativeId(id, orgId, initId))
       .thenReturn(Optional.empty());
 
-    ReportNotFoundException exception = assertThrows(ReportNotFoundException.class, () -> {
-      productFileService.downloadReport(id, orgId, initId);
-    });
+    ReportNotFoundException exception = assertThrows(ReportNotFoundException.class, () -> productFileService.downloadReport(id, orgId, initId));
 
     assertEquals("Report not found", exception.getMessage());
 
@@ -372,7 +370,7 @@ class ProductFileServiceTest {
   void whenOrganizationNotEnabled_thenReturnKoPermission() {
     MultipartFile file = createMockFile();
 
-    when(producersInitiativeRepository.existsByProducerIdAndInitiativeIdAndEnabledTrue(eq("org"), eq("ini")))
+    when(producersInitiativeRepository.existsByProducerIdAndInitiativeIdAndEnabledTrue("org", "ini"))
       .thenReturn(false);
 
     ProductFileResult result = productFileService.uploadFile(file, "cat", "ini", "org", "user", "email", "orgName");

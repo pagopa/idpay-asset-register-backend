@@ -56,7 +56,7 @@ class ValidationServiceTest {
   @Test
   void shouldCallValidateInternal_whenValidateRecordsIsInvoked() {
 
-    CSVRecord record = mock(CSVRecord.class);
+    CSVRecord csvRecord = mock(CSVRecord.class);
 
     CategoryConfig categoryConfig = mock(CategoryConfig.class);
     when(categoryConfig.getProductMapper()).thenReturn("TEST");
@@ -64,7 +64,7 @@ class ValidationServiceTest {
 
     InitiativeConfig initiativeConfig = mock(InitiativeConfig.class);
 
-    when(mapper.extractBusinessKey(record, categoryConfig)).thenReturn("KEY");
+    when(mapper.extractBusinessKey(csvRecord, categoryConfig)).thenReturn("KEY");
 
     when(productRepository.findByGtinCodeAndInitiativeId(any(), any()))
       .thenReturn(Optional.empty());
@@ -75,7 +75,7 @@ class ValidationServiceTest {
 
     // Act
     ProductValidationResult result = validationService.validateRecords(
-      List.of(record),
+      List.of(csvRecord),
       "cat",
       "org",
       "INIT",
@@ -95,7 +95,7 @@ class ValidationServiceTest {
   @Test
   void shouldReturnEmptyMap_whenNoExternalChecksConfigured() {
 
-    CSVRecord record = mock(CSVRecord.class);
+    CSVRecord csvRecord = mock(CSVRecord.class);
 
     CategoryConfig categoryConfig = mock(CategoryConfig.class);
     when(categoryConfig.getExternalChecks()).thenReturn(List.of());
@@ -108,7 +108,7 @@ class ValidationServiceTest {
     );
 
     Map<String, Object> result =
-        validationService.performExternalChecks(record, context);
+        validationService.performExternalChecks(csvRecord, context);
 
     assertTrue(result.isEmpty());
   }
@@ -117,7 +117,7 @@ class ValidationServiceTest {
   @Test
   void shouldAggregateExternalData_whenExternalChecksAreValid() {
 
-    CSVRecord record = mock(CSVRecord.class);
+    CSVRecord csvRecord = mock(CSVRecord.class);
 
     CategoryExternalCheck check = mock(CategoryExternalCheck.class);
     when(check.getKey()).thenReturn("CHECK");
@@ -147,7 +147,7 @@ class ValidationServiceTest {
     );
 
     Map<String, Object> output =
-        validationService.performExternalChecks(record, context);
+        validationService.performExternalChecks(csvRecord, context);
 
     assertEquals(1, output.size());
     assertEquals("v", output.get("k"));
@@ -156,7 +156,7 @@ class ValidationServiceTest {
   @Test
   void shouldReturnNull_whenExternalCheckFails() {
 
-    CSVRecord record = mock(CSVRecord.class);
+    CSVRecord csvRecord = mock(CSVRecord.class);
 
     CategoryExternalCheck check = mock(CategoryExternalCheck.class);
     when(check.getKey()).thenReturn("CHECK");
@@ -185,7 +185,7 @@ class ValidationServiceTest {
     );
 
     Map<String, Object> output =
-        validationService.performExternalChecks(record, context);
+        validationService.performExternalChecks(csvRecord, context);
 
     assertNull(output);
   }
@@ -197,23 +197,23 @@ class ValidationServiceTest {
 
     assertThrows(IllegalStateException.class, () ->
       validationService.validateRecords(
-        List.of(),
+        Collections.emptyList(),
         "cat",
         "org",
         "init",
         "file",
-        List.of(),
+        Collections.emptyList(),
         "orgName",
         mock(InitiativeConfig.class),
         categoryConfig,
-        List.of()
+        Collections.emptyList()
       )
     );
   }
 
   @Test
   void shouldSetInvalid_whenDbCheckFails() {
-    CSVRecord record = mock(CSVRecord.class);
+    CSVRecord csvRecord = mock(CSVRecord.class);
 
     CategoryConfig categoryConfig = mock(CategoryConfig.class);
     when(categoryConfig.getProductMapper()).thenReturn("TEST");
@@ -227,7 +227,7 @@ class ValidationServiceTest {
       .thenReturn(Optional.of(existing));
 
     ProductValidationResult result = validationService.validateRecords(
-      List.of(record),
+      List.of(csvRecord),
       "cat",
       "ORG", // diverso → dbCheck = false
       "init",
@@ -245,7 +245,7 @@ class ValidationServiceTest {
 
   @Test
   void shouldNotDetectDuplicate_whenSingleRecord() {
-    CSVRecord record = mock(CSVRecord.class);
+    CSVRecord csvRecord = mock(CSVRecord.class);
 
     CategoryConfig categoryConfig = mock(CategoryConfig.class);
     when(categoryConfig.getProductMapper()).thenReturn("TEST");
@@ -260,7 +260,7 @@ class ValidationServiceTest {
       .thenReturn(new Product());
 
     ProductValidationResult result = validationService.validateRecords(
-      List.of(record),
+      List.of(csvRecord),
       "cat",
       "org",
       "init",
@@ -277,7 +277,7 @@ class ValidationServiceTest {
 
   @Test
   void shouldInvalidate_whenExternalChecksReturnNull() {
-    CSVRecord record = mock(CSVRecord.class);
+    CSVRecord csvRecord = mock(CSVRecord.class);
 
     CategoryExternalCheck check = mock(CategoryExternalCheck.class);
     when(check.getKey()).thenReturn("CHECK");
@@ -296,7 +296,7 @@ class ValidationServiceTest {
       .thenReturn(result);
 
     ProductValidationResult res = validationService.validateRecords(
-      List.of(record),
+      List.of(csvRecord),
       "cat",
       "org",
       "init",

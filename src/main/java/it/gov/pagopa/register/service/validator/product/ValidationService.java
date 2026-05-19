@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 
 @Component
+@SuppressWarnings("java:S107")
 public class ValidationService extends AbstractValidationService {
 
   private final ExternalCheckExecutor externalCheckExecutor;
@@ -53,7 +54,7 @@ public class ValidationService extends AbstractValidationService {
           );
 
       if (!result.isValid()) {
-        return null;
+        return Collections.emptyMap();
       }
 
       externalData.putAll(result.getExternalData());

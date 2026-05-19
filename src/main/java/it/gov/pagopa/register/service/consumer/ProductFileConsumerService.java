@@ -105,7 +105,7 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
       if (isValidEvent(event)) {
         try {
           processEvent(event);
-        } catch (EprelException ex) {
+        } catch (EprelException _) {
           toRetry.add(event);
         }
       }

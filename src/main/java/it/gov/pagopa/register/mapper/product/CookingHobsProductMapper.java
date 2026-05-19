@@ -21,7 +21,7 @@ import static it.gov.pagopa.register.mapper.operation.ProductMapper.normalizeCsv
 import static it.gov.pagopa.register.utils.CsvUtils.DELIMITER;
 
 @Component("COOKINGHOBS")
-@SuppressWarnings("java:S117")
+@SuppressWarnings({"java:S1700", "java:S117"})
 public class CookingHobsProductMapper implements ProductMapperStrategy {
 
   @Override
