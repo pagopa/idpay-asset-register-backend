@@ -43,12 +43,12 @@ class NoExternalCheckServiceTest {
     NoExternalCheckService service =
       new NoExternalCheckService(productRepository, Collections.emptyMap());
 
-    CSVRecord record = mock(CSVRecord.class);
+    CSVRecord csvRecord = mock(CSVRecord.class);
 
     IllegalStateException exception = assertThrows(
       IllegalStateException.class,
       () -> service.validateRecords(
-        List.of(record),
+        List.of(csvRecord),
         CATEGORY,
         ORG_ID,
         INITIATIVE_ID,
@@ -129,7 +129,7 @@ class NoExternalCheckServiceTest {
 
   @Test
   void validateRecords_shouldCopyDbFields_whenRecordIsValidAndProductAlreadyExistsOnDb() {
-    CSVRecord record = mock(CSVRecord.class);
+    CSVRecord csvRecord = mock(CSVRecord.class);
 
     Product dbProduct = mock(Product.class);
     Product mappedProduct = mock(Product.class);
@@ -137,7 +137,7 @@ class NoExternalCheckServiceTest {
     NoExternalCheckService service = buildService();
 
     when(categoryConfig.getProductMapper()).thenReturn(PRODUCT_MAPPER);
-    when(mapper.extractBusinessKey(record, categoryConfig)).thenReturn("EAN_1");
+    when(mapper.extractBusinessKey(csvRecord, categoryConfig)).thenReturn("EAN_1");
 
     Optional<Product> existing = Optional.of(dbProduct);
 
@@ -148,7 +148,7 @@ class NoExternalCheckServiceTest {
     when(dbProduct.getStatusChangeChronology()).thenReturn(null);
 
     when(mapper.mapToProduct(
-      record,
+      csvRecord,
       CATEGORY,
       ORG_ID,
       INITIATIVE_ID,
@@ -160,7 +160,7 @@ class NoExternalCheckServiceTest {
     try (MockedStatic<ValidationUtils> validationUtils = mockStatic(ValidationUtils.class)) {
       validationUtils.when(() -> ValidationUtils.dbCheck(
         eq(ORG_ID),
-        eq(record),
+        eq(csvRecord),
         eq(existing),
         anyList(),
         anyMap(),
@@ -168,7 +168,7 @@ class NoExternalCheckServiceTest {
       )).thenReturn(true);
 
       ProductValidationResult result = service.validateRecords(
-        List.of(record),
+        List.of(csvRecord),
         CATEGORY,
         ORG_ID,
         INITIATIVE_ID,
@@ -189,12 +189,12 @@ class NoExternalCheckServiceTest {
 
   @Test
   void validateRecords_shouldReturnInvalidRecord_whenDbCheckFails() {
-    CSVRecord record = mock(CSVRecord.class);
+    CSVRecord csvRecord = mock(CSVRecord.class);
 
     NoExternalCheckService service = buildService();
 
     when(categoryConfig.getProductMapper()).thenReturn(PRODUCT_MAPPER);
-    when(mapper.extractBusinessKey(record, categoryConfig)).thenReturn("EAN_1");
+    when(mapper.extractBusinessKey(csvRecord, categoryConfig)).thenReturn("EAN_1");
 
     Optional<Product> existing = Optional.empty();
 
@@ -204,7 +204,7 @@ class NoExternalCheckServiceTest {
     try (MockedStatic<ValidationUtils> validationUtils = mockStatic(ValidationUtils.class)) {
       validationUtils.when(() -> ValidationUtils.dbCheck(
         eq(ORG_ID),
-        eq(record),
+        eq(csvRecord),
         eq(existing),
         anyList(),
         anyMap(),
@@ -213,14 +213,14 @@ class NoExternalCheckServiceTest {
         List<CSVRecord> invalidRecords = invocation.getArgument(3);
         Map<CSVRecord, String> errorMessages = invocation.getArgument(4);
 
-        invalidRecords.add(record);
-        errorMessages.put(record, "DB_ERROR");
+        invalidRecords.add(csvRecord);
+        errorMessages.put(csvRecord, "DB_ERROR");
 
         return false;
       });
 
       ProductValidationResult result = service.validateRecords(
-        List.of(record),
+        List.of(csvRecord),
         CATEGORY,
         ORG_ID,
         INITIATIVE_ID,
@@ -232,8 +232,8 @@ class NoExternalCheckServiceTest {
       );
 
       assertTrue(result.getValidRecords().isEmpty());
-      assertEquals(List.of(record), result.getInvalidRecords());
-      assertEquals("DB_ERROR", result.getErrorMessages().get(record));
+      assertEquals(List.of(csvRecord), result.getInvalidRecords());
+      assertEquals("DB_ERROR", result.getErrorMessages().get(csvRecord));
 
       verify(mapper, never()).mapToProduct(
         any(),

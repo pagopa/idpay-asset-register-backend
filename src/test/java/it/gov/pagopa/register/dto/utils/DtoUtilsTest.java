@@ -14,7 +14,7 @@ class DtoUtilsTest {
 
   @Test
   void columnValidationRule_delegatesToPredicate() {
-    ColumnValidationRule rule = new ColumnValidationRule((value, category) -> value.startsWith(category), "invalid");
+    ColumnValidationRule rule = new ColumnValidationRule(String::startsWith, "invalid");
 
     assertTrue(rule.isValid("COOKINGHOBS-1", "COOKINGHOBS"));
     assertFalse(rule.isValid("OTHER-1", "COOKINGHOBS"));
@@ -76,8 +76,8 @@ class DtoUtilsTest {
   void eventDetailsAndProductValidationResultExposeConstructorValues() {
     EventDetails eventDetails = new EventDetails("org", "category", "file", "organization", "initiative");
     Product product = Product.builder().gtinCode("gtin").build();
-    CSVRecord record = mock(CSVRecord.class);
-    ProductValidationResult result = new ProductValidationResult(Map.of("gtin", product), List.of(record), Map.of(record, "error"));
+    CSVRecord csvRecord = mock(CSVRecord.class);
+    ProductValidationResult result = new ProductValidationResult(Map.of("gtin", product), List.of(csvRecord), Map.of(csvRecord, "error"));
 
     assertEquals("org", eventDetails.getOrgId());
     assertEquals("category", eventDetails.getCategory());
@@ -85,7 +85,7 @@ class DtoUtilsTest {
     assertEquals("organization", eventDetails.getOrganizationName());
     assertEquals("initiative", eventDetails.getInitiativeId());
     assertEquals(product, result.getValidRecords().get("gtin"));
-    assertEquals(List.of(record), result.getInvalidRecords());
-    assertEquals("error", result.getErrorMessages().get(record));
+    assertEquals(List.of(csvRecord), result.getInvalidRecords());
+    assertEquals("error", result.getErrorMessages().get(csvRecord));
   }
 }

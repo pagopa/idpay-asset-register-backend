@@ -83,18 +83,18 @@ class ProductMapperStrategyTest {
       .brand("BrandX")
       .build();
 
-    CSVRecord record = cookingHobsProductMapper.mapToCsvRow(
+    CSVRecord csvRecord = cookingHobsProductMapper.mapToCsvRow(
       product,
       List.of("gtinCode", "productCode", "category", "countryOfProduction", "model", "brand")
     );
 
-    assertNotNull(record);
-    assertEquals("GTIN1", record.get(0));
-    assertEquals("PROD1", record.get(1));
-    assertEquals(COOKINGHOBS, record.get(2));
-    assertEquals("Italy", record.get(3));
-    assertEquals("ModelX", record.get(4));
-    assertEquals("BrandX", record.get(5));
+    assertNotNull(csvRecord);
+    assertEquals("GTIN1", csvRecord.get(0));
+    assertEquals("PROD1", csvRecord.get(1));
+    assertEquals(COOKINGHOBS, csvRecord.get(2));
+    assertEquals("Italy", csvRecord.get(3));
+    assertEquals("ModelX", csvRecord.get(4));
+    assertEquals("BrandX", csvRecord.get(5));
   }
 
   @Test
@@ -151,17 +151,17 @@ class ProductMapperStrategyTest {
       .brand("BrandY")
       .build();
 
-    CSVRecord record = decoderProductMapper.mapToCsvRow(
+    CSVRecord csvRecord = decoderProductMapper.mapToCsvRow(
       product,
       List.of("gtinCode", "productCode", "category", "model", "brand")
     );
 
-    assertNotNull(record);
-    assertEquals("GTIN2", record.get(0));
-    assertEquals("PROD2", record.get(1));
-    assertEquals(SATELLITE, record.get(2));
-    assertEquals("ModelY", record.get(3));
-    assertEquals("BrandY", record.get(4));
+    assertNotNull(csvRecord);
+    assertEquals("GTIN2", csvRecord.get(0));
+    assertEquals("PROD2", csvRecord.get(1));
+    assertEquals(SATELLITE, csvRecord.get(2));
+    assertEquals("ModelY", csvRecord.get(3));
+    assertEquals("BrandY", csvRecord.get(4));
   }
 
   @Test
@@ -419,17 +419,17 @@ class ProductMapperStrategyTest {
       .countryOfProduction("Italy")
       .build();
 
-    CSVRecord record = eprelProductMapper.mapToCsvRow(
+    CSVRecord csvRecord = eprelProductMapper.mapToCsvRow(
       product,
       List.of("eprelCode", "gtinCode", "productCode", "category", "countryOfProduction")
     );
 
-    assertNotNull(record);
-    assertEquals("EPREL321", record.get(0));
-    assertEquals("GTIN3", record.get(1));
-    assertEquals("PROD3", record.get(2));
-    assertEquals(WASHINGMACHINES, record.get(3));
-    assertEquals("Italy", record.get(4));
+    assertNotNull(csvRecord);
+    assertEquals("EPREL321", csvRecord.get(0));
+    assertEquals("GTIN3", csvRecord.get(1));
+    assertEquals("PROD3", csvRecord.get(2));
+    assertEquals(WASHINGMACHINES, csvRecord.get(3));
+    assertEquals("Italy", csvRecord.get(4));
   }
 
   @Test
