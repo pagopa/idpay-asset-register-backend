@@ -1,12 +1,9 @@
 package it.gov.pagopa.register.configuration;
 
-
-import it.gov.pagopa.register.connector.notification.NotificationServiceImpl;
 import it.gov.pagopa.register.model.initiative.InitiativeConfig;
 import it.gov.pagopa.register.repository.initiative.InitiativeRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 

@@ -1,6 +1,5 @@
 package it.gov.pagopa.register.service.validator.external.system;
 
-import it.gov.pagopa.register.service.validator.external.system.ExternalSystemClient;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
