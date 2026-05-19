@@ -70,7 +70,10 @@ public class NoExternalCheckService {
           mapper.mapToCsvRow(duplicate, headers);
 
         invalidRecords.add(duplicateRow);
-        // TODO generic error key
+
+        // NOTE: DUPLICATE_GTIN_EAN assumes GTIN/EAN as the unique key.
+        // This will not be valid if products without GTIN/EAN as identifier are introduce
+
         errorMessages.put(duplicateRow, DUPLICATE_GTIN_EAN);
 
         isValidRecord = false;
