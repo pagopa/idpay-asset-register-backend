@@ -19,7 +19,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -45,178 +44,49 @@ class ValidationServiceTest {
 
   @BeforeEach
   void setUp() {
-    Map<String, ProductMapperStrategy> mapperByCategory = Map.of("TEST", mapper);
-
     validationService = new ValidationService(
-        productRepository,
-        mapperByCategory,
-        externalCheckExecutor
+      productRepository,
+      Map.of("TEST", mapper),
+      externalCheckExecutor
     );
   }
+
   @Test
-  void shouldCallValidateInternal_whenValidateRecordsIsInvoked() {
+  void shouldReturnValidRecord_whenNoExternalChecks() {
+    CSVRecord record = mock(CSVRecord.class);
 
-    CSVRecord csvRecord = mock(CSVRecord.class);
+    CategoryConfig category = mock(CategoryConfig.class);
+    when(category.getProductMapper()).thenReturn("TEST");
+    when(category.getExternalChecks()).thenReturn(List.of());
 
-    CategoryConfig categoryConfig = mock(CategoryConfig.class);
-    when(categoryConfig.getProductMapper()).thenReturn("TEST");
-    when(categoryConfig.getExternalChecks()).thenReturn(Collections.emptyList());
-
-    InitiativeConfig initiativeConfig = mock(InitiativeConfig.class);
-
-    when(mapper.extractBusinessKey(csvRecord, categoryConfig)).thenReturn("KEY");
-
+    when(mapper.extractBusinessKey(any(), any())).thenReturn("KEY");
     when(productRepository.findByGtinCodeAndInitiativeId(any(), any()))
       .thenReturn(Optional.empty());
-
-    when(mapper.mapToProduct(
-      any(), any(), any(), any(), any(), any(), any()))
+    when(mapper.mapToProduct(any(), any(), any(), any(), any(), any(), any()))
       .thenReturn(new Product());
 
-    // Act
     ProductValidationResult result = validationService.validateRecords(
-      List.of(csvRecord),
+      List.of(record),
       "cat",
       "org",
-      "INIT",
+      "init",
       "file",
       List.of(),
       "orgName",
-      initiativeConfig,
-      categoryConfig,
-      List.of()
+      mock(InitiativeConfig.class),
+      category,
+      List.of("VALID")
     );
 
-
-    assertNotNull(result);
-  }
-
-
-  @Test
-  void shouldReturnEmptyMap_whenNoExternalChecksConfigured() {
-
-    CSVRecord csvRecord = mock(CSVRecord.class);
-
-    CategoryConfig categoryConfig = mock(CategoryConfig.class);
-    when(categoryConfig.getExternalChecks()).thenReturn(List.of());
-
-    ExternalContext context = new ExternalContext(
-        mock(InitiativeConfig.class),
-        categoryConfig,
-        externalCheckExecutor,
-        "TEST"
-    );
-
-    Map<String, Object> result =
-        validationService.performExternalChecks(csvRecord, context);
-
-    assertTrue(result.isEmpty());
-  }
-
-
-  @Test
-  void shouldAggregateExternalData_whenExternalChecksAreValid() {
-
-    CSVRecord csvRecord = mock(CSVRecord.class);
-
-    CategoryExternalCheck check = mock(CategoryExternalCheck.class);
-    when(check.getKey()).thenReturn("CHECK");
-    when(check.getParameters()).thenReturn(Map.of());
-
-    CategoryConfig categoryConfig = mock(CategoryConfig.class);
-    when(categoryConfig.getExternalChecks()).thenReturn(List.of(check));
-
-    ExternalCheckTemplate template = mock(ExternalCheckTemplate.class);
-
-    InitiativeConfig initiativeConfig = mock(InitiativeConfig.class);
-    when(initiativeConfig.getExternalCheckTemplates())
-        .thenReturn(Map.of("CHECK", template));
-
-    ExternalCheckResult result = mock(ExternalCheckResult.class);
-    when(result.isValid()).thenReturn(true);
-    when(result.getExternalData()).thenReturn(Map.of("k", "v"));
-
-    when(externalCheckExecutor.execute(any(), any(), any(), any()))
-        .thenReturn(result);
-
-    ExternalContext context = new ExternalContext(
-        initiativeConfig,
-        categoryConfig,
-        externalCheckExecutor,
-        "TEST"
-    );
-
-    Map<String, Object> output =
-        validationService.performExternalChecks(csvRecord, context);
-
-    assertEquals(1, output.size());
-    assertEquals("v", output.get("k"));
+    assertEquals(1, result.getValidRecords().size());
   }
 
   @Test
-  void shouldReturnNull_whenExternalCheckFails() {
+  void shouldMarkInvalid_whenDbCheckFails() {
+    CSVRecord record = mock(CSVRecord.class);
 
-    CSVRecord csvRecord = mock(CSVRecord.class);
-
-    CategoryExternalCheck check = mock(CategoryExternalCheck.class);
-    when(check.getKey()).thenReturn("CHECK");
-    when(check.getParameters()).thenReturn(Map.of());
-
-    CategoryConfig categoryConfig = mock(CategoryConfig.class);
-    when(categoryConfig.getExternalChecks()).thenReturn(List.of(check));
-
-    ExternalCheckTemplate template = mock(ExternalCheckTemplate.class);
-
-    InitiativeConfig initiativeConfig = mock(InitiativeConfig.class);
-    when(initiativeConfig.getExternalCheckTemplates())
-        .thenReturn(Map.of("CHECK", template));
-
-    ExternalCheckResult result = mock(ExternalCheckResult.class);
-    when(result.isValid()).thenReturn(false);
-
-    when(externalCheckExecutor.execute(any(), any(), any(), any()))
-        .thenReturn(result);
-
-    ExternalContext context = new ExternalContext(
-        initiativeConfig,
-        categoryConfig,
-        externalCheckExecutor,
-        "TEST"
-    );
-
-    Map<String, Object> output =
-        validationService.performExternalChecks(csvRecord, context);
-
-    assertNull(output);
-  }
-
-  @Test
-  void shouldThrowException_whenMapperIsNull() {
-    CategoryConfig categoryConfig = mock(CategoryConfig.class);
-    when(categoryConfig.getProductMapper()).thenReturn("UNKNOWN");
-
-    assertThrows(IllegalStateException.class, () ->
-      validationService.validateRecords(
-        Collections.emptyList(),
-        "cat",
-        "org",
-        "init",
-        "file",
-        Collections.emptyList(),
-        "orgName",
-        mock(InitiativeConfig.class),
-        categoryConfig,
-        Collections.emptyList()
-      )
-    );
-  }
-
-  @Test
-  void shouldSetInvalid_whenDbCheckFails() {
-    CSVRecord csvRecord = mock(CSVRecord.class);
-
-    CategoryConfig categoryConfig = mock(CategoryConfig.class);
-    when(categoryConfig.getProductMapper()).thenReturn("TEST");
+    CategoryConfig category = mock(CategoryConfig.class);
+    when(category.getProductMapper()).thenReturn("TEST");
 
     when(mapper.extractBusinessKey(any(), any())).thenReturn("KEY");
 
@@ -227,40 +97,58 @@ class ValidationServiceTest {
       .thenReturn(Optional.of(existing));
 
     ProductValidationResult result = validationService.validateRecords(
-      List.of(csvRecord),
+      List.of(record),
       "cat",
-      "ORG", // diverso → dbCheck = false
+      "ORG",
       "init",
       "file",
       List.of(),
       "orgName",
       mock(InitiativeConfig.class),
-      categoryConfig,
+      category,
       List.of("VALID")
     );
 
     assertEquals(1, result.getInvalidRecords().size());
   }
 
+  @Test
+  void shouldThrowException_whenMapperIsMissing() {
+    CategoryConfig category = mock(CategoryConfig.class);
+    when(category.getProductMapper()).thenReturn("UNKNOWN");
+
+    assertThrows(IllegalStateException.class,
+      () -> validationService.validateRecords(
+        List.of(),
+        "cat",
+        "org",
+        "init",
+        "file",
+        List.of(),
+        "orgName",
+        mock(InitiativeConfig.class),
+        category,
+        List.of()
+      )
+    );
+  }
 
   @Test
   void shouldNotDetectDuplicate_whenSingleRecord() {
-    CSVRecord csvRecord = mock(CSVRecord.class);
+    CSVRecord record = mock(CSVRecord.class);
 
-    CategoryConfig categoryConfig = mock(CategoryConfig.class);
-    when(categoryConfig.getProductMapper()).thenReturn("TEST");
-    when(categoryConfig.getExternalChecks()).thenReturn(List.of());
+    CategoryConfig category = mock(CategoryConfig.class);
+    when(category.getProductMapper()).thenReturn("TEST");
+    when(category.getExternalChecks()).thenReturn(List.of());
 
     when(mapper.extractBusinessKey(any(), any())).thenReturn("KEY");
-
     when(productRepository.findByGtinCodeAndInitiativeId(any(), any()))
       .thenReturn(Optional.empty());
-
     when(mapper.mapToProduct(any(), any(), any(), any(), any(), any(), any()))
       .thenReturn(new Product());
 
     ProductValidationResult result = validationService.validateRecords(
-      List.of(csvRecord),
+      List.of(record),
       "cat",
       "org",
       "init",
@@ -268,46 +156,139 @@ class ValidationServiceTest {
       List.of(),
       "orgName",
       mock(InitiativeConfig.class),
-      categoryConfig,
-      List.of()
+      category,
+      List.of("VALID")
     );
 
     assertEquals(1, result.getValidRecords().size());
   }
 
+
   @Test
-  void shouldInvalidate_whenExternalChecksReturnNull() {
-    CSVRecord csvRecord = mock(CSVRecord.class);
+  void shouldReturnOk_whenExternalChecksNotConfigured() {
+    CSVRecord csv = mock(CSVRecord.class);
+
+    CategoryConfig category = mock(CategoryConfig.class);
+    when(category.getExternalChecks()).thenReturn(List.of());
+
+    ExternalContext context = new ExternalContext(
+      mock(InitiativeConfig.class),
+      category,
+      externalCheckExecutor,
+      "TEST"
+    );
+
+    ExternalCheckResult result =
+      validationService.performExternalChecks(csv, context);
+
+    assertTrue(result.isValid());
+    assertTrue(result.getExternalData().isEmpty());
+  }
+
+  @Test
+  void shouldAggregateExternalData_whenExternalChecksPass() {
+    CSVRecord csv = mock(CSVRecord.class);
 
     CategoryExternalCheck check = mock(CategoryExternalCheck.class);
     when(check.getKey()).thenReturn("CHECK");
+    when(check.getParameters()).thenReturn(Map.of());
 
-    CategoryConfig categoryConfig = mock(CategoryConfig.class);
-    when(categoryConfig.getProductMapper()).thenReturn("TEST");
-    when(categoryConfig.getExternalChecks()).thenReturn(List.of(check));
+    CategoryConfig category = mock(CategoryConfig.class);
+    when(category.getExternalChecks()).thenReturn(List.of(check));
+
+    ExternalCheckTemplate template = mock(ExternalCheckTemplate.class);
+
+    InitiativeConfig initiative = mock(InitiativeConfig.class);
+    when(initiative.getExternalCheckTemplates())
+      .thenReturn(Map.of("CHECK", template));
 
     when(externalCheckExecutor.execute(any(), any(), any(), any()))
-      .thenReturn(mock(ExternalCheckResult.class));
+      .thenReturn(ExternalCheckResult.ok(Map.of("k", "v")));
 
-    ExternalCheckResult result = mock(ExternalCheckResult.class);
-    when(result.isValid()).thenReturn(false);
+    ExternalContext context =
+      new ExternalContext(initiative, category, externalCheckExecutor, "TEST");
+
+    ExternalCheckResult result =
+      validationService.performExternalChecks(csv, context);
+
+    assertTrue(result.isValid());
+    assertEquals("v", result.getExternalData().get("k"));
+  }
+
+  @Test
+  void shouldReturnKo_whenExternalCheckFails() {
+    CSVRecord csv = mock(CSVRecord.class);
+
+    CategoryExternalCheck check = mock(CategoryExternalCheck.class);
+    when(check.getKey()).thenReturn("CHECK");
+    when(check.getParameters()).thenReturn(Map.of());
+
+    CategoryConfig category = mock(CategoryConfig.class);
+    when(category.getExternalChecks()).thenReturn(List.of(check));
+
+    ExternalCheckTemplate template = mock(ExternalCheckTemplate.class);
+
+    InitiativeConfig initiative = mock(InitiativeConfig.class);
+    when(initiative.getExternalCheckTemplates())
+      .thenReturn(Map.of("CHECK", template));
 
     when(externalCheckExecutor.execute(any(), any(), any(), any()))
-      .thenReturn(result);
+      .thenReturn(ExternalCheckResult.ko("ERROR"));
 
-    ProductValidationResult res = validationService.validateRecords(
-      List.of(csvRecord),
+    ExternalContext context =
+      new ExternalContext(initiative, category, externalCheckExecutor, "TEST");
+
+    ExternalCheckResult result =
+      validationService.performExternalChecks(csv, context);
+
+    assertFalse(result.isValid());
+    assertEquals("ERROR", result.getErrorMessage());
+  }
+
+  @Test
+  void shouldInvalidateRecord_whenExternalCheckFailsInValidationFlow() {
+    CSVRecord record = mock(CSVRecord.class);
+
+    CategoryExternalCheck check = mock(CategoryExternalCheck.class);
+    when(check.getKey()).thenReturn("CHECK");
+    when(check.getParameters()).thenReturn(Map.of());
+
+    CategoryConfig category = mock(CategoryConfig.class);
+    when(category.getProductMapper()).thenReturn("TEST");
+    when(category.getExternalChecks()).thenReturn(List.of(check));
+
+    when(mapper.extractBusinessKey(any(), any())).thenReturn("KEY");
+
+    Product existing = new Product();
+    existing.setOrganizationId("org");
+    existing.setStatus("VALID");
+
+    when(productRepository.findByGtinCodeAndInitiativeId(any(), any()))
+      .thenReturn(Optional.of(existing));
+
+    ExternalCheckTemplate template = mock(ExternalCheckTemplate.class);
+
+    InitiativeConfig initiative = mock(InitiativeConfig.class);
+    when(initiative.getExternalCheckTemplates())
+      .thenReturn(Map.of("CHECK", template));
+
+    when(externalCheckExecutor.execute(any(), any(), any(), any()))
+      .thenReturn(ExternalCheckResult.ko("ERR"));
+
+    ProductValidationResult result = validationService.validateRecords(
+      List.of(record),
       "cat",
       "org",
       "init",
       "file",
       List.of(),
       "orgName",
-      mock(InitiativeConfig.class),
-      categoryConfig,
-      List.of()
+      initiative,
+      category,
+      List.of("VALID")
     );
 
-    assertEquals(1, res.getInvalidRecords().size());
+    assertEquals(1, result.getInvalidRecords().size());
+    assertFalse(result.getErrorMessages().isEmpty());
   }
 }

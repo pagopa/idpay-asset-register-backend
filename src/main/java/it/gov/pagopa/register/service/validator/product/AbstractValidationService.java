@@ -6,6 +6,7 @@ import it.gov.pagopa.register.mapper.product.ProductMapperStrategy;
 import it.gov.pagopa.register.model.initiative.CategoryConfig;
 import it.gov.pagopa.register.model.operation.Product;
 import it.gov.pagopa.register.repository.operation.ProductRepository;
+import it.gov.pagopa.register.service.validator.external.system.check.ExternalCheckResult;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.csv.CSVRecord;
 
@@ -77,16 +78,17 @@ public abstract class AbstractValidationService {
       }
 
       // External checks (hook)
-      Map<String, Object> externalData = Collections.emptyMap();
-      if (isValidRecord) {
-        externalData = performExternalChecks(csvRecord, externalContext);
 
-        if (externalData.isEmpty()) {
-          invalidRecords.add(csvRecord);
-          errorMessages.put(csvRecord, "EXTERNAL_CHECK_FAILED");
-          isValidRecord = false;
-        }
+      ExternalCheckResult externalResult = performExternalChecks(csvRecord, externalContext);
+
+      if (!externalResult.isValid()) {
+        invalidRecords.add(csvRecord);
+        errorMessages.put(csvRecord, externalResult.getErrorMessage());
+        isValidRecord = false;
       }
+
+      Map<String, Object> externalData = externalResult.getExternalData();
+
 
       if (isValidRecord) {
 
@@ -139,8 +141,10 @@ public abstract class AbstractValidationService {
     return true;
   }
 
-  protected abstract Map<String, Object> performExternalChecks(
-      CSVRecord csvRecord,
-      ExternalContext context
+
+  protected abstract ExternalCheckResult performExternalChecks(
+    CSVRecord csvRecord,
+    ExternalContext context
   );
+
 }

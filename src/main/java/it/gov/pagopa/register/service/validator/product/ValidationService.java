@@ -28,12 +28,12 @@ public class ValidationService extends AbstractValidationService {
   }
 
   @Override
-  public Map<String, Object> performExternalChecks(
+  public ExternalCheckResult performExternalChecks(
     CSVRecord csvRecord,
     ExternalContext context) {
 
     if (context == null || context.getCategoryConfig().getExternalChecks().isEmpty()) {
-      return Collections.emptyMap();
+      return ExternalCheckResult.ok(Collections.emptyMap());
     }
 
     Map<String, Object> externalData = new HashMap<>();
@@ -54,13 +54,13 @@ public class ValidationService extends AbstractValidationService {
           );
 
       if (!result.isValid()) {
-        return Collections.emptyMap();
+        return result;
       }
 
       externalData.putAll(result.getExternalData());
     }
 
-    return externalData;
+    return ExternalCheckResult.ok(externalData);
   }
 
   public ProductValidationResult validateRecords(
