@@ -24,7 +24,7 @@ import static it.gov.pagopa.register.utils.CsvUtils.DELIMITER;
 import static it.gov.pagopa.register.utils.EprelUtils.mapEnergyClass;
 
 
-@SuppressWarnings({"java:S1700", "java:S117"})
+@SuppressWarnings({"java:S6830", "java:S117"})
 @Component("EPREL")
 public class EprelProductMapper implements ProductMapperStrategy {
 

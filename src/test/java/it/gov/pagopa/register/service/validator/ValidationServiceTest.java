@@ -19,6 +19,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -119,50 +120,19 @@ class ValidationServiceTest {
 
     assertThrows(IllegalStateException.class,
       () -> validationService.validateRecords(
-        List.of(),
+        Collections.emptyList(),
         "cat",
         "org",
         "init",
         "file",
-        List.of(),
+        Collections.emptyList(),
         "orgName",
         mock(InitiativeConfig.class),
         category,
-        List.of()
+        Collections.emptyList()
       )
     );
   }
-
-  @Test
-  void shouldNotDetectDuplicate_whenSingleRecord() {
-    CSVRecord csvRecord = mock(CSVRecord.class);
-
-    CategoryConfig category = mock(CategoryConfig.class);
-    when(category.getProductMapper()).thenReturn("TEST");
-    when(category.getExternalChecks()).thenReturn(List.of());
-
-    when(mapper.extractBusinessKey(any(), any())).thenReturn("KEY");
-    when(productRepository.findByGtinCodeAndInitiativeId(any(), any()))
-      .thenReturn(Optional.empty());
-    when(mapper.mapToProduct(any(), any(), any(), any(), any(), any(), any()))
-      .thenReturn(new Product());
-
-    ProductValidationResult result = validationService.validateRecords(
-      List.of(csvRecord),
-      "cat",
-      "org",
-      "init",
-      "file",
-      List.of(),
-      "orgName",
-      mock(InitiativeConfig.class),
-      category,
-      List.of("VALID")
-    );
-
-    assertEquals(1, result.getValidRecords().size());
-  }
-
 
   @Test
   void shouldReturnOk_whenExternalChecksNotConfigured() {

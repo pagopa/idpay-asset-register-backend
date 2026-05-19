@@ -21,7 +21,7 @@ import static it.gov.pagopa.register.mapper.operation.ProductMapper.normalizeCsv
 import static it.gov.pagopa.register.utils.CsvUtils.DELIMITER;
 
 
-@SuppressWarnings({"java:S1700", "java:S117"})
+@SuppressWarnings({"java:S6830", "java:S117"})
 @Component("DECODER")
 public class DecoderProductMapper implements ProductMapperStrategy {
 
