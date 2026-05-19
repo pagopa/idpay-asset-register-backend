@@ -61,15 +61,17 @@ class ExternalSystemClientDispatcherTest {
 
   @Test
   void shouldThrowExceptionWhenDuplicateTypes() {
-
     ExternalSystemClient client1 = mock(ExternalSystemClient.class);
     ExternalSystemClient client2 = mock(ExternalSystemClient.class);
 
     when(client1.supports()).thenReturn("EPREL");
-    when(client2.supports()).thenReturn("EPREL"); // duplicate
+    when(client2.supports()).thenReturn("EPREL");
 
-    assertThrows(IllegalStateException.class, () ->
-      new ExternalSystemClientDispatcher(List.of(client1, client2))
+    List<ExternalSystemClient> clients = List.of(client1, client2);
+
+    assertThrows(
+      IllegalStateException.class,
+      () -> new ExternalSystemClientDispatcher(clients)
     );
   }
 
