@@ -21,6 +21,7 @@ import it.gov.pagopa.register.service.validator.nocheck.NoExternalCheckService;
 import it.gov.pagopa.register.utils.CsvUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.csv.CSVRecord;
+import org.jspecify.annotations.NonNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.messaging.Message;
 import org.springframework.stereotype.Service;
@@ -90,17 +91,17 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
   }
 
   @Override
-  protected void onDeserializationError(Message<String> message, Throwable e) {
+  protected void onDeserializationError(Message<@NonNull String> message, Throwable e) {
     log.error("[PRODUCT_UPLOAD] - Deserialization error: {}", e.getMessage(), e);
   }
 
   @Override
-  protected void onError(Message<String> message, Throwable e) {
+  protected void onError(Message<@NonNull String> message, Throwable e) {
     log.error("[PRODUCT_UPLOAD] - Unexpected error: {}", e.getMessage(), e);
   }
 
   @Override
-  public void execute(List<StorageEventDTO> events, Message<String> message) {
+  public void execute(List<StorageEventDTO> events, Message<@NonNull String> message) {
     log.info("[PRODUCT_UPLOAD] - Executing with {} events", events.size());
 
     List<StorageEventDTO> toRetry = new ArrayList<>();
@@ -109,7 +110,7 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
       if (isValidEvent(event)) {
         try {
           processEvent(event);
-        } catch (EprelException ex) {
+        } catch (EprelException _) {
           toRetry.add(event);
         }
       }
@@ -124,8 +125,8 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
   private void retryLater(List<StorageEventDTO> events) {
     try {
       String json = objectMapper.writeValueAsString(events);
-      Boolean sent = productFileProducer.scheduleMessage(json);
-      if(Boolean.FALSE.equals(sent)){
+      boolean sent = productFileProducer.scheduleMessage(json);
+      if(!sent){
         unlockFile(events);
       }
     } catch (JacksonException e) {

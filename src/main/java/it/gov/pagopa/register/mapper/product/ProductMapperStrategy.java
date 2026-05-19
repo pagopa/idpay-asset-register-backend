@@ -13,7 +13,7 @@ public interface ProductMapperStrategy {
    */
 
   String extractBusinessKey(
-    CSVRecord record,
+    CSVRecord csvRecord,
     CategoryConfig categoryConfig
   );
 
