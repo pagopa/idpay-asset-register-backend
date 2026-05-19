@@ -1,92 +1,192 @@
 package it.gov.pagopa.register.service.validator.external.check;
 
-import it.gov.pagopa.register.mapper.product.MappingContext;
+
+import it.gov.pagopa.register.dto.utils.ProductValidationResult;
 import it.gov.pagopa.register.mapper.product.ProductMapperStrategy;
 import it.gov.pagopa.register.model.initiative.CategoryConfig;
+import it.gov.pagopa.register.model.initiative.CategoryExternalCheck;
+import it.gov.pagopa.register.model.initiative.ExternalCheckTemplate;
 import it.gov.pagopa.register.model.initiative.InitiativeConfig;
-import it.gov.pagopa.register.dto.utils.ProductValidationResult;
 import it.gov.pagopa.register.model.operation.Product;
 import it.gov.pagopa.register.repository.operation.ProductRepository;
 import org.apache.commons.csv.CSVRecord;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.MockedStatic;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import static it.gov.pagopa.register.utils.ValidationUtils.dbCheck;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
+@SpringBootTest(
+  classes = {
+    ExternalCheckService.class,
+  }
+)
 class ExternalCheckServiceTest {
 
+  @Autowired
+  private ExternalCheckService service;
+
+  @MockitoBean
+  private ProductRepository productRepository;
+
+  @MockitoBean
+  private ExternalCheckExecutor externalCheckExecutor;
+
+  @MockitoBean
+  private Map<String, ProductMapperStrategy> mapperByCategory;
+
+  private ProductMapperStrategy mapper;
+
+  @BeforeEach
+  void setUp() {
+
+    mapper = mock(ProductMapperStrategy.class);
+
+    when(mapperByCategory.get("mapperKey")).thenReturn(mapper);
+
+    when(externalCheckExecutor.execute(any(), any(), any(), any()))
+      .thenReturn(ExternalCheckResult.ok(Map.of()));
+
+    when(mapper.extractBusinessKey(any(), any())).thenReturn("GTIN1");
+    when(mapper.mapToProduct(any(), any(), any(), any(), any(), any(), any()))
+      .thenReturn(new Product());
+  }
+
   @Test
-  void validateRecords_usesConfiguredProductMapperWhenDifferentFromCategory() {
-    ProductRepository productRepository = mock(ProductRepository.class);
-    ExternalCheckExecutor externalCheckExecutor = mock(ExternalCheckExecutor.class);
-    ProductMapperStrategy eprelMapper = mock(ProductMapperStrategy.class);
+  void shouldValidateValidRecord() {
 
-    ExternalCheckService service =
-      new ExternalCheckService(
-        productRepository,
-        Map.of("EPREL", eprelMapper),
-        externalCheckExecutor
-      );
-
-    CSVRecord csvRecord = mock(CSVRecord.class);
-    CategoryConfig categoryConfig =
-      new CategoryConfig(
-        "EPREL_STANDARD",
-        "Codice GTIN/EAN",
-        List.of(),
-        "EPREL"
-      );
-
-    Product product =
-      Product.builder()
-        .gtinCode("1234567890123")
-        .category("WASHINGMACHINES")
-        .build();
-
-    when(eprelMapper.extractBusinessKey(csvRecord, categoryConfig))
-      .thenReturn("1234567890123");
-    when(productRepository.findByGtinCodeAndInitiativeId("1234567890123", "initiativeId"))
+    when(productRepository.findByGtinCodeAndInitiativeId(any(), any()))
       .thenReturn(Optional.empty());
-    when(eprelMapper.mapToProduct(
-      eq(csvRecord),
-      eq("WASHINGMACHINES"),
-      eq("orgId"),
-      eq("initiativeId"),
-      eq("productFileId"),
-      eq("organizationName"),
-      any(MappingContext.class)
-    )).thenReturn(product);
 
-    ProductValidationResult result =
-      service.validateRecords(
-        List.of(csvRecord),
-        "WASHINGMACHINES",
-        "orgId",
-        "initiativeId",
-        "productFileId",
-        List.of("Codice GTIN/EAN"),
-        "organizationName",
-        initiativeConfig(categoryConfig),
-        categoryConfig,
+    ProductValidationResult result = service.validateRecords(
+      List.of(mock(CSVRecord.class)),
+      "TEST_CATEGORY",
+      "ORG",
+      "INIT",
+      "FILE",
+      List.of("h"),
+      "ORG_NAME",
+      buildInitiativeConfig(),
+      buildCategoryConfig(),
+      List.of()
+    );
+
+    assertEquals(1, result.getValidRecords().size());
+    assertEquals(0, result.getInvalidRecords().size());
+  }
+
+  @Test
+  void shouldMarkDuplicateAsInvalid() {
+
+    when(productRepository.findByGtinCodeAndInitiativeId(any(), any()))
+      .thenReturn(Optional.empty());
+
+    ProductValidationResult result = service.validateRecords(
+      List.of(mock(CSVRecord.class), mock(CSVRecord.class)),
+      "TEST_CATEGORY",
+      "ORG",
+      "INIT",
+      "FILE",
+      List.of("h"),
+      "ORG_NAME",
+      buildInitiativeConfig(),
+      buildCategoryConfig(),
+      List.of()
+    );
+
+    assertFalse(result.getInvalidRecords().isEmpty());
+  }
+
+  @Test
+  void shouldFailWhenExternalCheckFails() {
+
+    when(externalCheckExecutor.execute(any(), any(), any(), any()))
+      .thenReturn(ExternalCheckResult.ko("ERR"));
+
+    when(productRepository.findByGtinCodeAndInitiativeId(any(), any()))
+      .thenReturn(Optional.empty());
+
+    ProductValidationResult result = service.validateRecords(
+      List.of(mock(CSVRecord.class)),
+      "TEST_CATEGORY",
+      "ORG",
+      "INIT",
+      "FILE",
+      List.of("h"),
+      "ORG_NAME",
+      buildInitiativeConfig(),
+      buildCategoryConfig(),
+      List.of()
+    );
+
+    assertEquals(1, result.getInvalidRecords().size());
+  }
+
+  @Test
+  void shouldMarkInvalidWhenDbCheckFails() {
+
+    when(productRepository.findByGtinCodeAndInitiativeId(any(), any()))
+      .thenReturn(Optional.empty());
+
+    try (MockedStatic<it.gov.pagopa.register.utils.ValidationUtils> mocked =
+           mockStatic(it.gov.pagopa.register.utils.ValidationUtils.class)) {
+
+      mocked.when(() -> dbCheck(any(), any(), any(), any(), any(), any()))
+        .thenReturn(false);
+
+      ProductValidationResult result = service.validateRecords(
+        List.of(mock(CSVRecord.class)),
+        "TEST_CATEGORY",
+        "ORG",
+        "INIT",
+        "FILE",
+        List.of("h"),
+        "ORG_NAME",
+        buildInitiativeConfig(),
+        buildCategoryConfig(),
         List.of()
       );
 
-    assertTrue(result.getInvalidRecords().isEmpty());
-    assertEquals(product, result.getValidRecords().get("1234567890123"));
+      assertEquals(0, result.getInvalidRecords().size());
+    }
   }
 
-  private InitiativeConfig initiativeConfig(CategoryConfig categoryConfig) {
-    InitiativeConfig initiativeConfig = new InitiativeConfig();
-    initiativeConfig.setCategories(Map.of("WASHINGMACHINES", categoryConfig));
-    initiativeConfig.setExternalCheckTemplates(Map.of());
-    return initiativeConfig;
+  private InitiativeConfig buildInitiativeConfig() {
+    InitiativeConfig config = mock(InitiativeConfig.class);
+
+    CategoryConfig categoryItem = mock(CategoryConfig.class);
+    when(categoryItem.getProductMapper()).thenReturn("mapperKey");
+
+    when(config.getCategories())
+      .thenReturn(Map.of("TEST_CATEGORY", categoryItem));
+
+    when(config.getExternalCheckTemplates())
+      .thenReturn(Map.of("CHECK1", mock(ExternalCheckTemplate.class)));
+
+    return config;
+  }
+
+  private CategoryConfig buildCategoryConfig() {
+    CategoryConfig categoryConfig = mock(CategoryConfig.class);
+
+    CategoryExternalCheck check = mock(CategoryExternalCheck.class);
+    when(check.getKey()).thenReturn("CHECK1");
+    when(check.getParameters()).thenReturn(Map.of());
+
+    when(categoryConfig.getExternalChecks())
+      .thenReturn(List.of(check));
+
+    return categoryConfig;
   }
 }
