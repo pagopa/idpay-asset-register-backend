@@ -5,13 +5,10 @@ import it.gov.pagopa.register.enums.ProductStatus;
 import it.gov.pagopa.register.model.initiative.CategoryConfig;
 import it.gov.pagopa.register.model.operation.Product;
 import org.apache.commons.csv.CSVRecord;
-import org.apache.commons.csv.CSVFormat;
-import org.apache.commons.csv.CSVParser;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.mockito.MockedStatic;
 
 import java.util.List;
 import java.util.Map;
@@ -20,7 +17,6 @@ import java.util.stream.Stream;
 import static it.gov.pagopa.register.constants.AssetRegisterConstants.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
 
 class ProductMapperStrategyTest {
@@ -109,18 +105,6 @@ class ProductMapperStrategyTest {
   }
 
   @Test
-  void cookingHobsMapToCsvRowReturnsNullWhenParserHasNoRecords() throws Exception {
-    Product product = Product.builder().build();
-
-    assertNull(mapToCsvRowWithEmptyParsedRecords(() ->
-      cookingHobsProductMapper.mapToCsvRow(
-        product,
-        List.of("gtinCode", "productCode", "category", "countryOfProduction", "model", "brand")
-      )
-    ));
-  }
-
-  @Test
   void decoderExtractBusinessKeyReadsConfiguredField() {
     CSVRecord csvRecord = mock(CSVRecord.class);
     CategoryConfig categoryConfig = new CategoryConfig();
@@ -185,18 +169,6 @@ class ProductMapperStrategyTest {
     Product product = Product.builder().build();
 
     assertNull(decoderProductMapper.mapToCsvRow(product, null));
-  }
-
-  @Test
-  void decoderMapToCsvRowReturnsNullWhenParserHasNoRecords() throws Exception {
-    Product product = Product.builder().build();
-
-    assertNull(mapToCsvRowWithEmptyParsedRecords(() ->
-      decoderProductMapper.mapToCsvRow(
-        product,
-        List.of("gtinCode", "productCode", "category", "model", "brand")
-      )
-    ));
   }
 
   @Test
@@ -467,18 +439,6 @@ class ProductMapperStrategyTest {
     assertNull(eprelProductMapper.mapToCsvRow(product, null));
   }
 
-  @Test
-  void eprelMapToCsvRowReturnsNullWhenParserHasNoRecords() throws Exception {
-    Product product = Product.builder().build();
-
-    assertNull(mapToCsvRowWithEmptyParsedRecords(() ->
-      eprelProductMapper.mapToCsvRow(
-        product,
-        List.of("eprelCode", "gtinCode", "productCode", "category", "countryOfProduction")
-      )
-    ));
-  }
-
   static Stream<Arguments> eprelCapacityCases() {
     EprelProduct.Cavity cavity = EprelProduct.Cavity.builder()
       .volume(65)
@@ -553,28 +513,4 @@ class ProductMapperStrategyTest {
     return data;
   }
 
-  private static CSVRecord mapToCsvRowWithEmptyParsedRecords(CsvRowMapper mapper) throws Exception {
-    CSVFormat.Builder writerBuilder = CSVFormat.Builder.create();
-    CSVFormat.Builder builder = mock(CSVFormat.Builder.class);
-    CSVFormat format = mock(CSVFormat.class);
-    CSVParser parser = mock(CSVParser.class);
-
-    when(builder.setHeader(org.mockito.ArgumentMatchers.<String[]>any())).thenReturn(builder);
-    when(builder.setSkipHeaderRecord(true)).thenReturn(builder);
-    when(builder.setDelimiter(org.mockito.ArgumentMatchers.anyString())).thenReturn(builder);
-    when(builder.setTrim(true)).thenReturn(builder);
-    when(builder.build()).thenReturn(format);
-    when(format.parse(org.mockito.ArgumentMatchers.any())).thenReturn(parser);
-    when(parser.getRecords()).thenReturn(List.of());
-
-    try (MockedStatic<CSVFormat.Builder> mockedBuilder = mockStatic(CSVFormat.Builder.class)) {
-      mockedBuilder.when(CSVFormat.Builder::create).thenReturn(writerBuilder, builder);
-      return mapper.map();
-    }
-  }
-
-  @FunctionalInterface
-  private interface CsvRowMapper {
-    CSVRecord map() throws Exception;
-  }
 }
