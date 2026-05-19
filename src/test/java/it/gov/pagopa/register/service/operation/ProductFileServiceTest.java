@@ -7,6 +7,7 @@ import it.gov.pagopa.register.dto.operation.*;
 import it.gov.pagopa.register.exception.operation.ReportNotFoundException;
 import it.gov.pagopa.register.model.operation.Product;
 import it.gov.pagopa.register.model.operation.ProductFile;
+import it.gov.pagopa.register.repository.operation.ProducersInitiativeRepository;
 import it.gov.pagopa.register.repository.operation.ProductFileRepository;
 import it.gov.pagopa.register.repository.operation.ProductRepository;
 import it.gov.pagopa.register.service.validator.ProductFileValidatorService;
@@ -47,13 +48,15 @@ class ProductFileServiceTest {
   FileStorageClient fileStorageClient;
   @Mock
   ProductFileValidatorService productFileValidator;
+  @Mock
+  ProducersInitiativeRepository producersInitiativeRepository;
 
   private ProductFileService productFileService;
 
   @BeforeEach
   void setUp() {
     MockitoAnnotations.openMocks(this);
-    productFileService = new ProductFileService(productFileRepository, productRepository, fileStorageClient, productFileValidator);
+    productFileService = new ProductFileService(productFileRepository, productRepository, fileStorageClient, productFileValidator, producersInitiativeRepository);
   }
 
   @Test
@@ -207,8 +210,13 @@ class ProductFileServiceTest {
   void whenInvalidFileType_thenReturnKoResult() throws IOException {
     MultipartFile file = createMockFile_InvalidFileType();
     ValidationResultDTO validationResultDTO = new ValidationResultDTO("KO","TEST");
+
+    when(producersInitiativeRepository.existsByProducerIdAndInitiativeIdAndEnabledTrue(anyString(), anyString())).thenReturn(true);
+
     when(productFileValidator.validateFile(any(),anyString(),any(),any())).thenReturn(validationResultDTO);
+
     ProductFileResult res = productFileService.uploadFile(file, "cat","ini","org","user","email","orgName");
+
     assertEquals("KO", res.getStatus());
     assertEquals("TEST", res.getErrorKey());
   }
@@ -232,6 +240,8 @@ class ProductFileServiceTest {
       mockedFiles.when(() -> Files.newInputStream(any()))
         .thenReturn(new ByteArrayInputStream("dummy".getBytes()));
 
+      when(producersInitiativeRepository.existsByProducerIdAndInitiativeIdAndEnabledTrue(anyString(), anyString())).thenReturn(true);
+
       when(fileStorageClient.upload(any(), any(), any())).thenReturn(null);
 
       when(productFileValidator.validateFile(any(), any(),any(),any()))
@@ -254,37 +264,37 @@ class ProductFileServiceTest {
       assertEquals(AssetRegisterConstants.UploadKeyConstant.REPORT_FORMAL_FILE_ERROR_KEY, result.getErrorKey());
       assertEquals("123", result.getProductFileId());
     } catch (IOException e) {
-        throw new RuntimeException(e);
+      throw new RuntimeException(e);
     }
   }
 
   @Test
-  void whenInvalidGtin_thenReturnFormalError()  {
+  void whenInvalidGtin_thenReturnFormalError() {
     testFormalError("Il Codice GTIN/EAN è obbligatorio e deve essere univoco ed alfanumerico e lungo al massimo 14 caratteri");
   }
 
   @Test
-  void whenInvalidProductCode_thenReturnFormalError()  {
+  void whenInvalidProductCode_thenReturnFormalError() {
     testFormalError("Il Codice prodotto non deve contenere caratteri speciali o lettere accentate e deve essere lungo al massimo 100 caratteri");
   }
 
   @Test
-  void whenInvalidCategory_thenReturnFormalError()  {
+  void whenInvalidCategory_thenReturnFormalError() {
     testFormalError("Il campo Categoria è obbligatorio");
   }
 
   @Test
-  void whenInvalidCountry_thenReturnFormalError()  {
+  void whenInvalidCountry_thenReturnFormalError() {
     testFormalError("Il Paese di Produzione è obbligatorio e deve essere composto da esattamente 2 caratteri");
   }
 
   @Test
-  void whenInvalidBrand_thenReturnFormalError()  {
+  void whenInvalidBrand_thenReturnFormalError() {
     testFormalError("Il campo Marca è obbligatorio e deve contenere una stringa lunga al massimo 100 caratteri");
   }
 
   @Test
-  void whenInvalidModel_thenReturnFormalError()  {
+  void whenInvalidModel_thenReturnFormalError() {
     testFormalError("Il campo Modello è obbligatorio e deve contenere una stringa lunga al massimo 100 caratteri");
   }
 
@@ -300,10 +310,12 @@ class ProductFileServiceTest {
       mocked.when(() -> CsvUtils.readCsvRecords(file))
         .thenReturn(List.of(rec));
 
-      when(productFileValidator.validateFile(file, "cat","ini","org"))
+      when(producersInitiativeRepository.existsByProducerIdAndInitiativeIdAndEnabledTrue(anyString(), anyString())).thenReturn(true);
+
+      when(productFileValidator.validateFile(any(), anyString(), anyString(), anyString()))
         .thenReturn(ValidationResultDTO.ok(List.of(rec), List.of("C1")));
 
-      when(productFileValidator.validateRecords(List.of(rec), "cat", "ini"))
+      when(productFileValidator.validateRecords(anyList(), anyString(), anyString()))
         .thenReturn(ValidationResultDTO.ok());
 
       when(productFileRepository.save(any())).thenReturn(ProductFile.builder().id("42").build());
@@ -345,7 +357,8 @@ class ProductFileServiceTest {
   void whenFileAlreadyInProgressOrUploaded_thenReturnKoAlreadyInProgress() {
     MultipartFile file = new MockMultipartFile("file", "test.csv", "text/csv", "dummy".getBytes());
 
-    // Simula presenza di un file già in stato IN_PROCESS o UPLOADED
+    when(producersInitiativeRepository.existsByProducerIdAndInitiativeIdAndEnabledTrue(anyString(), anyString())).thenReturn(true);
+
     when(productFileRepository.existsByInitiativeIdAndOrganizationIdAndUploadStatusIn(any(),eq("org"), anyList()))
       .thenReturn(true);
 
@@ -353,6 +366,36 @@ class ProductFileServiceTest {
 
     assertEquals("KO", result.getStatus());
     assertEquals(AssetRegisterConstants.UploadKeyConstant.UPLOAD_ALREADY_IN_PROGRESS, result.getErrorKey());
+  }
+
+  @Test
+  void whenOrganizationNotEnabled_thenReturnKoPermission() {
+    MultipartFile file = createMockFile();
+
+    when(producersInitiativeRepository.existsByProducerIdAndInitiativeIdAndEnabledTrue(eq("org"), eq("ini")))
+      .thenReturn(false);
+
+    ProductFileResult result = productFileService.uploadFile(file, "cat", "ini", "org", "user", "email", "orgName");
+
+    assertEquals("KO", result.getStatus());
+    assertEquals(AssetRegisterConstants.UploadKeyConstant.NOT_ENABLED_ERRORE_KEY, result.getErrorKey());
+  }
+
+  @Test
+  void whenGenericExceptionThrown_thenReturnKoGenericError() throws IOException {
+    MultipartFile file = mock(MultipartFile.class);
+    when(file.getOriginalFilename()).thenReturn("test.csv");
+
+    when(producersInitiativeRepository.existsByProducerIdAndInitiativeIdAndEnabledTrue(anyString(), anyString()))
+      .thenReturn(true);
+
+    when(productFileValidator.validateFile(any(), anyString(), anyString(), anyString()))
+      .thenThrow(new RuntimeException("Simulated unexpected error"));
+
+    ProductFileResult result = productFileService.uploadFile(file, "cat", "ini", "org", "user", "email", "orgName");
+
+    assertEquals("KO", result.getStatus());
+    assertEquals("GENERIC_ERROR", result.getErrorKey());
   }
 
 

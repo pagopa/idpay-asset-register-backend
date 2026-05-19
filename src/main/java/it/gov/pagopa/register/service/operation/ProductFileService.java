@@ -8,6 +8,7 @@ import it.gov.pagopa.register.exception.operation.ReportNotFoundException;
 import it.gov.pagopa.register.mapper.operation.ProductFileMapper;
 import it.gov.pagopa.register.model.operation.Product;
 import it.gov.pagopa.register.model.operation.ProductFile;
+import it.gov.pagopa.register.repository.operation.ProducersInitiativeRepository;
 import it.gov.pagopa.register.repository.operation.ProductFileRepository;
 import it.gov.pagopa.register.repository.operation.ProductRepository;
 import it.gov.pagopa.register.service.validator.ProductFileValidatorService;
@@ -49,6 +50,7 @@ public class ProductFileService {
   private final ProductRepository productRepository;
   private final FileStorageClient fileStorageClient;
   private final ProductFileValidatorService productFileValidator;
+  private final ProducersInitiativeRepository producersInitiativeRepository;
 
   public ProductFileResponseDTO getFilesByPage(String organizationId, String initiativeId, Pageable pageable) {
     log.info("[GET_FILES_BY_PAGE] - Fetching files for organizationId: {}, initiativeId: {}", organizationId, initiativeId);
@@ -145,7 +147,10 @@ public class ProductFileService {
   public ProductFileResult validateFile(MultipartFile file, String category, String initiativeId, String organizationId,
                                         String userId, String userEmail, String organizationName) {
 
-    //TODO verifica su producers_initiative
+    if (!producersInitiativeRepository.existsByProducerIdAndInitiativeIdAndEnabledTrue(organizationId, initiativeId)) {
+      log.warn("[PROCESS_FILE] - Organization {} is not enabled for initiative: {}", organizationId, initiativeId);
+      return ProductFileResult.ko(AssetRegisterConstants.UploadKeyConstant.NOT_ENABLED_ERRORE_KEY);
+    }
 
     if (productFileRepository.existsByInitiativeIdAndOrganizationIdAndUploadStatusIn(initiativeId, organizationId, BLOCKING_STATUSES)) {
       log.warn("[PROCESS_FILE] - Existing file in UPLOADED or IN_PROCESS state for org: {} and initiative: {}", organizationId, initiativeId);
@@ -214,6 +219,7 @@ public class ProductFileService {
     return Files.createTempFile("errors-", ".csv");
   }
 
+  @SuppressWarnings("java:S107")
   private ProductFile saveProductFile(String category, String organizationId, String initiativeId, String userId, String userEmail,
                                       String originalFileName, List<CSVRecord> records, String organizationName) {
 

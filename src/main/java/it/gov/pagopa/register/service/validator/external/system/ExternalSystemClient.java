@@ -16,7 +16,7 @@ public interface ExternalSystemClient {
    * Recupera i dati dal sistema esterno
    */
   Map<String, Object> fetch(
-    CSVRecord record,
+    CSVRecord csvRecord,
     ExternalCheckTemplate template
   );
 }

@@ -159,6 +159,7 @@ public class AssetRegisterConstants {
     public static final String EMPTY_FILE_ERROR_KEY = "product.invalid.file.empty";
     public static final String INITIATIVE_CONFIG_ERROR = "product.invalid.file.initiative_config";
     public static final String UPLOAD_ALREADY_IN_PROGRESS = "product.invalid.file.already_in_progress";
+    public static final String NOT_ENABLED_ERRORE_KEY = "product.invalid.file.permission";
   }
 
   public static final class UpdateKeyConstant {

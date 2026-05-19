@@ -17,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -188,5 +189,51 @@ class ExternalCheckServiceTest {
       .thenReturn(List.of(check));
 
     return categoryConfig;
+  }
+
+  @Test
+  void shouldCopyDatabaseFieldsWhenProductExistsInDb() {
+    Product dbProduct = new Product();
+    dbProduct.setFormalMotivation("MOCK_MOTIVATION");
+
+    it.gov.pagopa.register.model.operation.StatusChangeEvent mockEvent =
+      mock(it.gov.pagopa.register.model.operation.StatusChangeEvent.class);
+
+    ArrayList<it.gov.pagopa.register.model.operation.StatusChangeEvent> history = new ArrayList<>();
+    history.add(mockEvent);
+    dbProduct.setStatusChangeChronology(history);
+
+    when(productRepository.findByGtinCodeAndInitiativeId("GTIN1", "INIT"))
+      .thenReturn(Optional.of(dbProduct));
+
+    Product mappedProduct = new Product();
+    when(mapper.mapToProduct(any(), any(), any(), any(), any(), any(), any()))
+      .thenReturn(mappedProduct);
+
+    try (MockedStatic<it.gov.pagopa.register.utils.ValidationUtils> mocked =
+           mockStatic(it.gov.pagopa.register.utils.ValidationUtils.class)) {
+
+      mocked.when(() -> dbCheck(any(), any(), any(), any(), any(), any()))
+        .thenReturn(true);
+
+      ProductValidationResult result = service.validateRecords(
+        List.of(mock(CSVRecord.class)),
+        "TEST_CATEGORY",
+        "ORG",
+        "INIT",
+        "FILE",
+        List.of("h"),
+        "ORG_NAME",
+        buildInitiativeConfig(),
+        buildCategoryConfig(),
+        List.of()
+      );
+
+      assertEquals(1, result.getValidRecords().size());
+      Product finalProduct = result.getValidRecords().get("GTIN1");
+
+      assertEquals("MOCK_MOTIVATION", finalProduct.getFormalMotivation());
+      assertEquals(1, finalProduct.getStatusChangeChronology().size());
+    }
   }
 }

@@ -28,17 +28,18 @@ public class ExternalCheckService {
   private final Map<String, ProductMapperStrategy> mapperByCategory;
   private final ExternalCheckExecutor externalCheckExecutor;
 
+  @SuppressWarnings("java:S107")
   public ProductValidationResult validateRecords(
-      List<CSVRecord> records,
-      String category,
-      String orgId,
-      String initiativeId,
-      String productFileId,
-      List<String> headers,
-      String organizationName,
-      InitiativeConfig initiativeConfig,
-      CategoryConfig categoryConfig,
-      List<String> allowedReloadStatuses
+    List<CSVRecord> records,
+    String category,
+    String orgId,
+    String initiativeId,
+    String productFileId,
+    List<String> headers,
+    String organizationName,
+    InitiativeConfig initiativeConfig,
+    CategoryConfig categoryConfig,
+    List<String> allowedReloadStatuses
   ) {
 
     ProductMapperStrategy mapper = mapperByCategory.get(initiativeConfig.getCategories().get(category).getProductMapper());
@@ -48,85 +49,74 @@ public class ExternalCheckService {
     Map<CSVRecord, String> errorMessages = new HashMap<>();
 
     for (CSVRecord csvRecord : records) {
-
-      boolean isValidRecord = true;
-
-      String businessKey = mapper.extractBusinessKey(csvRecord, categoryConfig);
-      Optional<Product> existing =
-        productRepository.findByGtinCodeAndInitiativeId(businessKey, initiativeId);
-
-      if (!dbCheck(
-        orgId, csvRecord, existing, invalidRecords, errorMessages, allowedReloadStatuses)) {
-        isValidRecord = false;
-      }
-
-      if (isValidRecord && validProducts.containsKey(businessKey)) {
-
-        Product duplicate = validProducts.remove(businessKey);
-
-        CSVRecord duplicateRow =
-          mapper.mapToCsvRow(duplicate, headers);
-
-        invalidRecords.add(duplicateRow);
-
-        // NOTE: DUPLICATE_GTIN_EAN assumes GTIN/EAN as the unique key.
-        // This will not be valid if products without GTIN/EAN as identifier are introduce
-
-        errorMessages.put(duplicateRow, DUPLICATE_GTIN_EAN);
-        isValidRecord = false;
-      }
-
-      Map<String, Object> externalData = new HashMap<>();
-
-      if (isValidRecord) {
-
-        for (CategoryExternalCheck check : categoryConfig.getExternalChecks()) {
-
-          ExternalCheckTemplate template =
-            initiativeConfig.getExternalCheckTemplates()
-              .get(check.getKey());
-
-          ExternalCheckResult checkResult =
-            externalCheckExecutor.execute(
-              csvRecord,
-              template,
-              check.getParameters(),
-              category
-            );
-
-          if (!checkResult.isValid()) {
-            invalidRecords.add(csvRecord);
-            errorMessages.put(csvRecord, checkResult.getErrorMessage());
-            isValidRecord = false;
-          }
-          externalData.putAll(checkResult.getExternalData());
-        }
-      }
-      if (isValidRecord) {
-
-        MappingContext mappingContext =
-          new MappingContext(externalData);
-
-        Product product =
-          mapper.mapToProduct(
-            csvRecord,
-            category,
-            orgId,
-            initiativeId,
-            productFileId,
-            organizationName,
-            mappingContext
-          );
-
-        existing.ifPresent(db -> {
-          product.setFormalMotivation(db.getFormalMotivation());
-          product.setStatusChangeChronology(db.getStatusChangeChronology());
-        });
-
-        validProducts.put(businessKey, product);
-      }
+      validateSingleRecord(
+        csvRecord, category, orgId, initiativeId, productFileId, headers,
+        organizationName, initiativeConfig, categoryConfig, allowedReloadStatuses,
+        mapper, validProducts, invalidRecords, errorMessages
+      );
     }
 
     return new ProductValidationResult(validProducts, invalidRecords, errorMessages);
+  }
+
+  @SuppressWarnings("java:S107")
+  private void validateSingleRecord(
+    CSVRecord csvRecord, String category, String orgId, String initiativeId, String productFileId,
+    List<String> headers, String organizationName, InitiativeConfig initiativeConfig, CategoryConfig categoryConfig,
+    List<String> allowedReloadStatuses, ProductMapperStrategy mapper, Map<String, Product> validProducts,
+    List<CSVRecord> invalidRecords, Map<CSVRecord, String> errorMessages
+  ) {
+
+    boolean isValidRecord = true;
+
+    String businessKey = mapper.extractBusinessKey(csvRecord, categoryConfig);
+    Optional<Product> existing = productRepository.findByGtinCodeAndInitiativeId(businessKey, initiativeId);
+
+    if (!dbCheck(orgId, csvRecord, existing, invalidRecords, errorMessages, allowedReloadStatuses)) {
+      isValidRecord = false;
+    }
+
+    if (isValidRecord && validProducts.containsKey(businessKey)) {
+      Product duplicate = validProducts.remove(businessKey);
+      CSVRecord duplicateRow = mapper.mapToCsvRow(duplicate, headers);
+      invalidRecords.add(duplicateRow);
+
+      errorMessages.put(duplicateRow, DUPLICATE_GTIN_EAN);
+      isValidRecord = false;
+    }
+
+    Map<String, Object> externalData = new HashMap<>();
+
+    if (isValidRecord) {
+      for (CategoryExternalCheck check : categoryConfig.getExternalChecks()) {
+        ExternalCheckTemplate template = initiativeConfig.getExternalCheckTemplates().get(check.getKey());
+
+        ExternalCheckResult checkResult = externalCheckExecutor.execute(
+          csvRecord, template, check.getParameters(), category
+        );
+
+        if (!checkResult.isValid()) {
+          invalidRecords.add(csvRecord);
+          errorMessages.put(csvRecord, checkResult.getErrorMessage());
+          isValidRecord = false;
+        }
+        externalData.putAll(checkResult.getExternalData());
+      }
+    }
+
+    if (isValidRecord) {
+      MappingContext mappingContext = new MappingContext(externalData);
+
+      Product product = mapper.mapToProduct(
+        csvRecord, category, orgId, initiativeId, productFileId, organizationName, mappingContext
+      );
+
+      existing.ifPresent(db -> {
+        product.setFormalMotivation(db.getFormalMotivation());
+        product.setStatusChangeChronology(db.getStatusChangeChronology());
+      });
+
+      validProducts.put(businessKey, product);
+    }
   }
 }

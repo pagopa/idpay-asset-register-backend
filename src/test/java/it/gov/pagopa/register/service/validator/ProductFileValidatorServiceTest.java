@@ -18,6 +18,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockMultipartFile;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -167,6 +168,148 @@ class ProductFileValidatorServiceTest {
 
     assertEquals("OK", result.getStatus());
     assertNull(result.getInvalidRecords());
+  }
+
+  @Test
+  void validateFile_BlankFileNameError() throws IOException {
+    MockMultipartFile file = new MockMultipartFile("file", "", "text/csv", "test content".getBytes());
+
+    ValidationResultDTO result = productFileValidator.validateFile(file, CATEGORY, INITIATIVE_ID, "organization");
+
+    assertEquals("KO", result.getStatus());
+    assertEquals(EMPTY_FILE_ERROR_KEY, result.getErrorKey());
+  }
+
+  @Test
+  void validateFile_CsvTemplateNotFoundError() throws IOException {
+    MockMultipartFile file = csv("test.csv", HEADER + "\n12345");
+
+    InitiativeConfig config = new InitiativeConfig();
+    CategoryConfig categoryConfig = new CategoryConfig("MISSING_TEMPLATE", HEADER, List.of(), "EPREL");
+    config.setCategories(Map.of(CATEGORY, categoryConfig));
+    config.setCsvTemplates(Map.of());
+
+    when(initiativeConfigMap.get(INITIATIVE_ID)).thenReturn(config);
+
+    ValidationResultDTO result = productFileValidator.validateFile(file, CATEGORY, INITIATIVE_ID, "organization");
+
+    assertEquals("KO", result.getStatus());
+    assertEquals(INITIATIVE_CONFIG_ERROR, result.getErrorKey());
+  }
+
+  @Test
+  void validateFile_CsvTemplateHeadersEmptyError() throws IOException {
+    MockMultipartFile file = csv("test.csv", HEADER + "\n12345");
+
+    InitiativeConfig config = new InitiativeConfig();
+    CategoryConfig categoryConfig = new CategoryConfig("TEMPLATE", HEADER, List.of(), "EPREL");
+    config.setCategories(Map.of(CATEGORY, categoryConfig));
+    config.setCsvTemplates(Map.of("TEMPLATE", new CsvTemplate(null, List.of())));
+
+    when(initiativeConfigMap.get(INITIATIVE_ID)).thenReturn(config);
+
+    ValidationResultDTO result = productFileValidator.validateFile(file, CATEGORY, INITIATIVE_ID, "organization");
+
+    assertEquals("KO", result.getStatus());
+    assertEquals(INITIATIVE_CONFIG_ERROR, result.getErrorKey());
+  }
+
+  @Test
+  void validateFile_CsvTemplateRulesEmptyError() throws IOException {
+    MockMultipartFile file = csv("test.csv", HEADER + "\n12345");
+
+    InitiativeConfig config = new InitiativeConfig();
+    CategoryConfig categoryConfig = new CategoryConfig("TEMPLATE", HEADER, List.of(), "EPREL");
+    config.setCategories(Map.of(CATEGORY, categoryConfig));
+    config.setCsvTemplates(Map.of("TEMPLATE", new CsvTemplate(List.of(HEADER), null)));
+
+    when(initiativeConfigMap.get(INITIATIVE_ID)).thenReturn(config);
+
+    ValidationResultDTO result = productFileValidator.validateFile(file, CATEGORY, INITIATIVE_ID, "organization");
+
+    assertEquals("KO", result.getStatus());
+    assertEquals(MAX_ROW_FILE_ERROR_KEY, result.getErrorKey());
+  }
+
+  @Test
+  void validateFile_InitiativeCategoriesEmptyError() throws IOException {
+    MockMultipartFile file = csv("test.csv", HEADER + "\n12345");
+
+    InitiativeConfig config = new InitiativeConfig();
+    config.setCategories(Map.of());
+
+    when(initiativeConfigMap.get(INITIATIVE_ID)).thenReturn(config);
+
+    ValidationResultDTO result = productFileValidator.validateFile(file, CATEGORY, INITIATIVE_ID, "organization");
+
+    assertEquals("KO", result.getStatus());
+    assertEquals(INITIATIVE_CONFIG_ERROR, result.getErrorKey());
+  }
+
+  @Test
+  void validateFile_CategoryConfigOrTemplateReferenceNullError() throws IOException {
+    MockMultipartFile file = csv("test.csv", HEADER + "\n12345");
+
+    InitiativeConfig config = new InitiativeConfig();
+    CategoryConfig categoryConfig = new CategoryConfig(null, HEADER, List.of(), "EPREL");
+    config.setCategories(new HashMap<>());
+    config.getCategories().put(CATEGORY, null);
+
+    when(initiativeConfigMap.get(INITIATIVE_ID)).thenReturn(config);
+
+    ValidationResultDTO result = productFileValidator.validateFile(file, CATEGORY, INITIATIVE_ID, "organization");
+
+    assertEquals("KO", result.getStatus());
+    assertEquals(INITIATIVE_CONFIG_ERROR, result.getErrorKey());
+  }
+
+  @Test
+  void validateFile_CsvTemplateRulesIsEmpty() throws IOException {
+    MockMultipartFile file = csv("test.csv", HEADER + "\n12345");
+    InitiativeConfig config = new InitiativeConfig();
+    CategoryConfig categoryConfig = new CategoryConfig("TEMPLATE", HEADER, List.of(), "EPREL");
+    config.setCategories(Map.of(CATEGORY, categoryConfig));
+    config.setCsvTemplates(Map.of("TEMPLATE", new CsvTemplate(List.of(HEADER), List.of())));
+    when(initiativeConfigMap.get(INITIATIVE_ID)).thenReturn(config);
+    ValidationResultDTO result = productFileValidator.validateFile(file, CATEGORY, INITIATIVE_ID, "organization");
+    assertEquals("KO", result.getStatus());
+    assertEquals(MAX_ROW_FILE_ERROR_KEY, result.getErrorKey());
+  }
+
+  @Test
+  void validateFile_InitiativeCategoriesIsNull() throws IOException {
+    MockMultipartFile file = csv("test.csv", HEADER + "\n12345");
+    InitiativeConfig config = new InitiativeConfig();
+    config.setCategories(null);
+    when(initiativeConfigMap.get(INITIATIVE_ID)).thenReturn(config);
+    ValidationResultDTO result = productFileValidator.validateFile(file, CATEGORY, INITIATIVE_ID, "organization");
+    assertEquals("KO", result.getStatus());
+    assertEquals(INITIATIVE_CONFIG_ERROR, result.getErrorKey());
+  }
+
+  @Test
+  void validateFile_CategoryConfigCsvTemplateIsNull() throws IOException {
+    MockMultipartFile file = csv("test.csv", HEADER + "\n12345");
+    InitiativeConfig config = new InitiativeConfig();
+    CategoryConfig categoryConfig = new CategoryConfig(null, HEADER, List.of(), "EPREL");
+    config.setCategories(Map.of(CATEGORY, categoryConfig));
+    when(initiativeConfigMap.get(INITIATIVE_ID)).thenReturn(config);
+    ValidationResultDTO result = productFileValidator.validateFile(file, CATEGORY, INITIATIVE_ID, "organization");
+    assertEquals("KO", result.getStatus());
+    assertEquals(INITIATIVE_CONFIG_ERROR, result.getErrorKey());
+  }
+
+  @Test
+  void validateFile_CsvTemplateHeadersIsEmpty() throws IOException {
+    MockMultipartFile file = csv("test.csv", HEADER + "\n12345");
+    InitiativeConfig config = new InitiativeConfig();
+    CategoryConfig categoryConfig = new CategoryConfig("TEMPLATE", HEADER, List.of(), "EPREL");
+    config.setCategories(Map.of(CATEGORY, categoryConfig));
+    config.setCsvTemplates(Map.of("TEMPLATE", new CsvTemplate(List.of(), List.of())));
+    when(initiativeConfigMap.get(INITIATIVE_ID)).thenReturn(config);
+    ValidationResultDTO result = productFileValidator.validateFile(file, CATEGORY, INITIATIVE_ID, "organization");
+    assertEquals("KO", result.getStatus());
+    assertEquals(INITIATIVE_CONFIG_ERROR, result.getErrorKey());
   }
 
   private MockMultipartFile csv(String filename, String content) {

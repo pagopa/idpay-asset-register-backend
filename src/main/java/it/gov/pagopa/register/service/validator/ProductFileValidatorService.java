@@ -14,6 +14,7 @@ import it.gov.pagopa.register.utils.CsvUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.csv.CSVRecord;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -42,9 +43,12 @@ public class ProductFileValidatorService {
   ) throws IOException {
 
     String filename = Objects.requireNonNull(file.getOriginalFilename());
-    log.info("[VALIDATE_FILE] - Validating file: {} for category: {} , initiative: {} and organization: {}", filename, category,initiativeId,organizationId);
+    log.info("[VALIDATE_FILE] - Validating file: {} for category: {} , initiative: {} and organization: {}", filename, category, initiativeId, organizationId);
 
-    // TODO Check empty file name?
+    if (StringUtils.isBlank(filename)) {
+      log.error("[VALIDATE_FILE] - File name is empty or invalid: {}", filename);
+      return ValidationResultDTO.ko(EMPTY_FILE_ERROR_KEY);
+    }
 
     if (!filename.endsWith(CSV)) {
       log.error("[VALIDATE_FILE] - Invalid file extension: {}", filename);
@@ -58,54 +62,31 @@ public class ProductFileValidatorService {
     }
 
     if (fileSize > validationConfig.getMaxSize()) {
-      log.error("[VALIDATE_FILE] - File size exceeds limit: {}", filename);
+      log.error("[VALIDATE_FILE_] - File size exceeds limit: {}", filename);
       return ValidationResultDTO.ko(MAX_SIZE_FILE_ERROR_KEY);
     }
 
-
     InitiativeConfig initiativeConfig = initiativeConfigMap.get(initiativeId);
-    if (initiativeConfig == null ) {
-      log.error("[VALIDATE_FILE] - Unknown initiative: {}", initiativeId);
-      return ValidationResultDTO.ko(INITIATIVE_CONFIG_ERROR);
-    }
-
-    if (initiativeConfig.getCategories() == null ||
-        initiativeConfig.getCategories().isEmpty())  {
-      log.error("[VALIDATE_FILE] - CSV template category section not valid ");
-      return ValidationResultDTO.ko(INITIATIVE_CONFIG_ERROR);
-    }
-
-    if (!initiativeConfig.getCategories().containsKey(category)) {
-      log.error("[VALIDATE_FILE] - Unknown category: {}", category);
-      return ValidationResultDTO.ko(UNKNOWN_CATEGORY_ERROR_KEY);
+    ValidationResultDTO configCheck = checkInitiativeAndCategoryConfig(initiativeConfig, category);
+    if (configCheck != null) {
+      return configCheck;
     }
 
     CategoryConfig categoryConfig = initiativeConfig.getCategories().get(category);
-    if (categoryConfig == null ||
-        categoryConfig.getCsvTemplate() == null) {
-      log.error("[VALIDATE_FILE] - No CSV template for category: {}", category);
-      return ValidationResultDTO.ko(INITIATIVE_CONFIG_ERROR);
-    }
-
-    CsvTemplate csvTemplate =
-      initiativeConfig.getCsvTemplates().get(categoryConfig.getCsvTemplate());
+    CsvTemplate csvTemplate = initiativeConfig.getCsvTemplates().get(categoryConfig.getCsvTemplate());
 
     if (csvTemplate == null) {
       log.error("[VALIDATE_FILE] - CSV template not found for category: {}", category);
       return ValidationResultDTO.ko(INITIATIVE_CONFIG_ERROR);
     }
 
-    if (csvTemplate.getHeaders() == null ||
-        csvTemplate.getHeaders().isEmpty() ) {
+    if (csvTemplate.getHeaders() == null || csvTemplate.getHeaders().isEmpty()) {
       log.error("[VALIDATE_FILE] - CSV template headers section not valid for category: {}", category);
       return ValidationResultDTO.ko(INITIATIVE_CONFIG_ERROR);
     }
 
-    List<String> expectedHeaders =
-      csvTemplate.getHeaders();
-
-    List<String> actualHeaders =
-      CsvUtils.readHeaders(file);
+    List<String> expectedHeaders = csvTemplate.getHeaders();
+    List<String> actualHeaders = CsvUtils.readHeaders(file);
 
     if (!actualHeaders.equals(expectedHeaders)) {
       log.warn("[VALIDATE_FILE] - Header mismatch: {}", filename);
@@ -123,14 +104,38 @@ public class ProductFileValidatorService {
       return ValidationResultDTO.ko(MAX_ROW_FILE_ERROR_KEY);
     }
 
-    if (csvTemplate.getRules() == null ||
-        csvTemplate.getRules().isEmpty()) {
+    if (csvTemplate.getRules() == null || csvTemplate.getRules().isEmpty()) {
       log.error("[VALIDATE_FILE] - CSV template rules section not valid for category: {}", category);
       return ValidationResultDTO.ko(MAX_ROW_FILE_ERROR_KEY);
     }
 
     log.info("[VALIDATE_FILE] - File validation successful: {}", filename);
     return ValidationResultDTO.ok(records, actualHeaders);
+  }
+
+  private ValidationResultDTO checkInitiativeAndCategoryConfig(InitiativeConfig initiativeConfig, String category) {
+    if (initiativeConfig == null) {
+      log.error("[VALIDATE_FILE] - Unknown initiative");
+      return ValidationResultDTO.ko(INITIATIVE_CONFIG_ERROR);
+    }
+
+    if (initiativeConfig.getCategories() == null || initiativeConfig.getCategories().isEmpty()) {
+      log.error("[VALIDATE_FILE] - CSV template category section not valid ");
+      return ValidationResultDTO.ko(INITIATIVE_CONFIG_ERROR);
+    }
+
+    if (!initiativeConfig.getCategories().containsKey(category)) {
+      log.error("[VALIDATE_FILE] - Unknown category: {}", category);
+      return ValidationResultDTO.ko(UNKNOWN_CATEGORY_ERROR_KEY);
+    }
+
+    CategoryConfig categoryConfig = initiativeConfig.getCategories().get(category);
+    if (categoryConfig == null || categoryConfig.getCsvTemplate() == null) {
+      log.error("[VALIDATE_FILE] - No CSV template for category: {}", category);
+      return ValidationResultDTO.ko(INITIATIVE_CONFIG_ERROR);
+    }
+
+    return null;
   }
 
   public ValidationResultDTO validateRecords(
