@@ -11,13 +11,13 @@ public class CustomMongoHealthIndicator extends AbstractHealthIndicator {
     private final MongoTemplate mongoTemplate;
 
     public CustomMongoHealthIndicator(MongoTemplate mongoTemplate) {
-      super("MongoDB health check failed");
       Assert.notNull(mongoTemplate, "MongoTemplate must not be null");
+      super("MongoDB health check failed");
       this.mongoTemplate = mongoTemplate;
     }
 
     @Override
-    protected void doHealthCheck(Health.Builder builder) throws Exception {
+    protected void doHealthCheck(Health.Builder builder) {
         Document result = this.mongoTemplate.executeCommand("{ isMaster: 1 }");
         builder.up().withDetail("maxWireVersion", result.getInteger("maxWireVersion"));
     }
