@@ -1,8 +1,6 @@
 package it.gov.pagopa.register.repository.operation;
 
-import it.gov.pagopa.register.model.operation.ProducersInitiative;
 import it.gov.pagopa.register.model.operation.Product;
-import it.gov.pagopa.register.model.operation.ProductFile;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
 

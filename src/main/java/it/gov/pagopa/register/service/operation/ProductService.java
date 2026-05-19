@@ -219,7 +219,6 @@ public class ProductService {
 
       int failedEmails =
         notifyStatusUpdates(
-          initiativeConfig.getInitiativeName(),
           updatedProducts,
           updateStatusDto.getTargetStatus(),
           updateStatusDto.getFormalMotivation()
@@ -237,39 +236,7 @@ public class ProductService {
     return UpdateResultDTO.ok();
   }
 
-  private void updateStatuses(List<Product> products,
-                              String role,
-                              String username,
-                              ProductUpdateStatusRequestDTO updateStatusDto) {
-
-    products.forEach(product -> {
-      log.debug("[UPDATE_PRODUCT_STATUSES] - Updating product {} status from {} to {}",
-        product.getGtinCode(), product.getStatus(), updateStatusDto.getTargetStatus().name());
-
-      product.setStatus(updateStatusDto.getTargetStatus().name());
-
-      log.debug("[UPDATE_PRODUCT_STATUSES] - RequestDTO formalMotivation {}", updateStatusDto.getFormalMotivation());
-      if(StringUtils.isNotBlank(updateStatusDto.getFormalMotivation())){
-        product.setFormalMotivation(updateStatusDto.getFormalMotivation());
-        log.debug("[UPDATE_PRODUCT_STATUSES] - Updated formalMotivation {}", product.getFormalMotivation());
-      }
-
-      if (product.getStatusChangeChronology() == null) {
-        product.setStatusChangeChronology(new ArrayList<>());
-      }
-
-      product.getStatusChangeChronology().add(StatusChangeEvent.builder()
-        .username(username)
-        .role(role.equals(UserRole.INVITALIA.getRole()) ? "L1" : "L2")
-        .updateDate(LocalDateTime.now())
-        .currentStatus(updateStatusDto.getCurrentStatus())
-        .targetStatus(updateStatusDto.getTargetStatus())
-        .motivation(updateStatusDto.getMotivation())
-        .build());
-    });
-  }
-
-  private int notifyStatusUpdates(String initiativeName, List<Product> products, ProductStatus newStatus, String formalMotivation) {
+  private int notifyStatusUpdates(List<Product> products, ProductStatus newStatus, String formalMotivation) {
     List<EmailProductDTO> emailToProducts = productRepository.getProductNamesGroupedByEmail(
       products.stream().map(Product::getGtinCode).toList()
     );
