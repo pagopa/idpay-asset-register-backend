@@ -19,11 +19,11 @@ class ValidationUtilsTest {
 
   @Test
   void dbCheck_returnsTrueWhenProductDoesNotExist() {
-    CSVRecord record = mock(CSVRecord.class);
+    CSVRecord csvRecord = mock(CSVRecord.class);
     List<CSVRecord> invalidRecords = new ArrayList<>();
     Map<CSVRecord, String> errorMessages = new HashMap<>();
 
-    boolean result = ValidationUtils.dbCheck("org", record, Optional.empty(), invalidRecords, errorMessages, List.of());
+    boolean result = ValidationUtils.dbCheck("org", csvRecord, Optional.empty(), invalidRecords, errorMessages, List.of());
 
     assertTrue(result);
     assertTrue(invalidRecords.isEmpty());
@@ -32,40 +32,40 @@ class ValidationUtilsTest {
 
   @Test
   void dbCheck_rejectsProductsFromDifferentOrganization() {
-    CSVRecord record = mock(CSVRecord.class);
+    CSVRecord csvRecord = mock(CSVRecord.class);
     Product product = Product.builder().organizationId("other").status("LOADED").build();
     List<CSVRecord> invalidRecords = new ArrayList<>();
     Map<CSVRecord, String> errorMessages = new HashMap<>();
 
-    boolean result = ValidationUtils.dbCheck("org", record, Optional.of(product), invalidRecords, errorMessages, List.of("LOADED"));
+    boolean result = ValidationUtils.dbCheck("org", csvRecord, Optional.of(product), invalidRecords, errorMessages, List.of("LOADED"));
 
     assertFalse(result);
-    assertEquals(List.of(record), invalidRecords);
-    assertEquals(DIFFERENT_ORGANIZATIONID, errorMessages.get(record));
+    assertEquals(List.of(csvRecord), invalidRecords);
+    assertEquals(DIFFERENT_ORGANIZATIONID, errorMessages.get(csvRecord));
   }
 
   @Test
   void dbCheck_rejectsProductsWithStatusNotAllowedForReload() {
-    CSVRecord record = mock(CSVRecord.class);
+    CSVRecord csvRecord = mock(CSVRecord.class);
     Product product = Product.builder().organizationId("org").status("APPROVED").build();
     List<CSVRecord> invalidRecords = new ArrayList<>();
     Map<CSVRecord, String> errorMessages = new HashMap<>();
 
-    boolean result = ValidationUtils.dbCheck("org", record, Optional.of(product), invalidRecords, errorMessages, List.of("LOADED"));
+    boolean result = ValidationUtils.dbCheck("org", csvRecord, Optional.of(product), invalidRecords, errorMessages, List.of("LOADED"));
 
     assertFalse(result);
-    assertEquals(STATUS_NOT_VALID, errorMessages.get(record));
+    assertEquals(STATUS_NOT_VALID, errorMessages.get(csvRecord));
   }
 
   @Test
   void addError_appendsRecordAndMessage() {
-    CSVRecord record = mock(CSVRecord.class);
+    CSVRecord csvRecord = mock(CSVRecord.class);
     List<CSVRecord> invalidRecords = new ArrayList<>();
     Map<CSVRecord, String> errorMessages = new HashMap<>();
 
-    ValidationUtils.addError(record, "message", invalidRecords, errorMessages);
+    ValidationUtils.addError(csvRecord, "message", invalidRecords, errorMessages);
 
-    assertEquals(List.of(record), invalidRecords);
-    assertEquals("message", errorMessages.get(record));
+    assertEquals(List.of(csvRecord), invalidRecords);
+    assertEquals("message", errorMessages.get(csvRecord));
   }
 }
