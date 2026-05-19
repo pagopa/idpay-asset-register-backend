@@ -44,11 +44,12 @@ class NoExternalCheckServiceTest {
       new NoExternalCheckService(productRepository, Collections.emptyMap());
 
     CSVRecord csvRecord = mock(CSVRecord.class);
+    List<CSVRecord> records = List.of(csvRecord);
 
     IllegalStateException exception = assertThrows(
       IllegalStateException.class,
       () -> service.validateRecords(
-        List.of(csvRecord),
+        records,
         CATEGORY,
         ORG_ID,
         INITIATIVE_ID,
@@ -65,7 +66,6 @@ class NoExternalCheckServiceTest {
       exception.getMessage()
     );
   }
-
   @Test
   void validateRecords_shouldReturnValidProduct_whenRecordIsValidAndProductDoesNotExistOnDb() {
     CSVRecord record = mock(CSVRecord.class);
