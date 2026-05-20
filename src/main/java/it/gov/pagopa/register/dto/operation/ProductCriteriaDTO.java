@@ -7,6 +7,7 @@ import lombok.Data;
 @Builder
 public class ProductCriteriaDTO {
   private String organizationId;
+  private String initiativeId;
   private String category;
   private String productFileId;
   private String eprelCode;

@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.Message;
+import org.jspecify.annotations.NonNull;
 import reactor.util.context.Context;
 import tools.jackson.databind.ObjectReader;
 
@@ -27,7 +28,7 @@ public abstract class BaseKafkaConsumer<T> {
         this.applicationName = applicationName;
     }
 
-    public void execute(Message<String> message) {
+    public void execute(Message<@NonNull String> message) {
         Map<String, Object> ctx=new HashMap<>();
         ctx.put(CONTEXT_KEY_START_TIME, System.currentTimeMillis());
         ctx.put(CONTEXT_KEY_MSG_ID, message.getPayload());
@@ -44,12 +45,12 @@ public abstract class BaseKafkaConsumer<T> {
         }
 
         acknowledgeMessage(message);
-        doFinally(message,ctx);
+        doFinally(ctx);
     }
 
-    protected abstract void onError(Message<String> message, Throwable e);
+    protected abstract void onError(Message<@NonNull String> message, Throwable e);
 
-    private boolean isRetryFromOtherApps(Message<String> message) {
+    private boolean isRetryFromOtherApps(Message<@NonNull String> message) {
         byte[] retryingApplicationName = message.getHeaders().get(KafkaConstants.ERROR_MSG_HEADER_APPLICATION_NAME, byte[].class);
         if(retryingApplicationName != null && !new String(retryingApplicationName, StandardCharsets.UTF_8).equals(this.applicationName)){
             log.info("[{}] Discarding message due to other application retry ({}): {}", getFlowName(), new String(retryingApplicationName, StandardCharsets.UTF_8), message.getPayload());
@@ -58,7 +59,7 @@ public abstract class BaseKafkaConsumer<T> {
         return false;
     }
 
-    private void acknowledgeMessage(Message<String> message) {
+    private void acknowledgeMessage(Message<@NonNull String> message) {
         Acknowledgment ack = message.getHeaders().get(KafkaHeaders.ACKNOWLEDGMENT, Acknowledgment.class);
         if (ack != null) {
             ack.acknowledge();
@@ -76,18 +77,18 @@ public abstract class BaseKafkaConsumer<T> {
     /**
      * The action to take if the deserialization will throw an error
      */
-    protected abstract void onDeserializationError(Message<String> message, Throwable e);
+    protected abstract void onDeserializationError(Message<@NonNull String> message, Throwable e);
 
-    protected T deserializeMessage(Message<String> message) {
+    protected T deserializeMessage(Message<@NonNull String> message) {
         return CommonUtilities.deserializeMessage(message, getObjectReader(), e -> onDeserializationError(message, e));
     }
 
     /** The function invoked in order to process the current message */
-    protected abstract void execute(T payload, Message<String> message);
+    protected abstract void execute(T payload, Message<@NonNull String> message);
 
     /** to perform some operation at the end of business logic execution, thus before to wait for commit. As default, it will perform an INFO logging with performance time */
     @SuppressWarnings("sonar:S1172") // suppressing unused parameters
-    protected void doFinally(Message<String> message, Map<String, Object> ctx) {
+    protected void doFinally(Map<String, Object> ctx) {
         Long startTime = (Long)ctx.get(CONTEXT_KEY_START_TIME);
         String msgId = (String)ctx.get(CONTEXT_KEY_MSG_ID);
         if(startTime != null){

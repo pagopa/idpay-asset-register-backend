@@ -36,7 +36,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
   @WebMvcTest(value={ProductController.class}, excludeAutoConfiguration =  { UserDetailsServiceAutoConfiguration.class , SecurityAutoConfiguration.class})
   @AutoConfigureMockMvc(addFilters = false)
-  class ProductControllerTest {
+class ProductControllerTest {
+    private static final String INITIATIVE_ID = "687f8a176a5c92458819922a";
 
     @Autowired
     private MockMvc mockMvc;
@@ -50,6 +51,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
     //Test con esito positivo
     @Test
     void testGetProducts_Success() throws Exception {
+      String initiativeId = INITIATIVE_ID;
       ProductDTO productDTO = new ProductDTO();
       productDTO.setOrganizationId("83843864-f3c0-4def-badb-7f197471b72e");
 
@@ -73,10 +75,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
           , any()
           , any()
           , any()
+          , any()
         ))
         .thenReturn(mockResponse);
-      mockMvc.perform(get("/idpay/register/products")
+      mockMvc.perform(get("/idpay/register/initiatives/{initiativeId}/products", initiativeId)
           .queryParam("organizationId", "83843864-f3c0-4def-badb-7f197471b72e")
+
           .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.content").isArray())
@@ -91,7 +95,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
     //Test in caso di eccezione
     @Test
     void testGetProducts_ServiceThrowsException() throws Exception {
+      String initiativeId = INITIATIVE_ID;
       when(productService.fetchProductsByFilters(eq("83843864-f3c0-4def-badb-7f197471b72e")
+          , any()
           , any()
           , any()
           , any()
@@ -106,7 +112,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         ))
         .thenThrow(new RuntimeException("Service error"));
 
-      mockMvc.perform(get("/idpay/register/products")
+      mockMvc.perform(get("/idpay/register/initiatives/{initiativeId}/products", initiativeId)
           .queryParam("organizationId", "83843864-f3c0-4def-badb-7f197471b72e")
           .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isInternalServerError());
@@ -128,14 +134,15 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
       String requestBody = objectMapper.writeValueAsString(requestDTO);
 
       when(productService.updateProductStatusesWithNotification(
-        requestDTO,
-        UserRole.INVITALIA_ADMIN.getRole(),
-        USERNAME
+        eq(INITIATIVE_ID),
+        any(ProductUpdateStatusRequestDTO.class),
+        eq(UserRole.INVITALIA_ADMIN.getRole()),
+        eq(USERNAME)
       )).thenReturn(mockResponse);
 
       mockMvc.perform(
           org.springframework.test.web.servlet.request.MockMvcRequestBuilders
-            .post("/idpay/register/products/update-status")
+            .post("/idpay/register/initiatives/{initiativeId}/products/update-status", INITIATIVE_ID)
             .header("x-organization-role", UserRole.INVITALIA_ADMIN.getRole())
             .header("x-user-name", USERNAME)
             .contentType(MediaType.APPLICATION_JSON)
@@ -155,7 +162,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
       String requestBody = objectMapper.writeValueAsString(requestDTO);
 
       mockMvc.perform(MockMvcRequestBuilders
-          .post("/idpay/register/products/update-status")
+          .post("/idpay/register/initiatives/{initiativeId}/products/update-status", INITIATIVE_ID)
           .contentType(MediaType.APPLICATION_JSON)
           .content(requestBody))
         .andExpect(status().isBadRequest());

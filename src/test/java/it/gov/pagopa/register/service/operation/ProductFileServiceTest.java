@@ -7,9 +7,10 @@ import it.gov.pagopa.register.dto.operation.*;
 import it.gov.pagopa.register.exception.operation.ReportNotFoundException;
 import it.gov.pagopa.register.model.operation.Product;
 import it.gov.pagopa.register.model.operation.ProductFile;
+import it.gov.pagopa.register.repository.operation.ProducersInitiativeRepository;
 import it.gov.pagopa.register.repository.operation.ProductFileRepository;
 import it.gov.pagopa.register.repository.operation.ProductRepository;
-import it.gov.pagopa.register.service.validator.ProductFileValidatorService;
+import it.gov.pagopa.register.service.validator.file.ProductFileValidatorService;
 import it.gov.pagopa.register.utils.CsvUtils;
 import org.apache.commons.csv.CSVRecord;
 import org.junit.jupiter.api.BeforeEach;
@@ -17,6 +18,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
@@ -46,13 +48,15 @@ class ProductFileServiceTest {
   FileStorageClient fileStorageClient;
   @Mock
   ProductFileValidatorService productFileValidator;
+  @Mock
+  ProducersInitiativeRepository producersInitiativeRepository;
 
   private ProductFileService productFileService;
 
   @BeforeEach
   void setUp() {
     MockitoAnnotations.openMocks(this);
-    productFileService = new ProductFileService(productFileRepository, productRepository, fileStorageClient, productFileValidator);
+    productFileService = new ProductFileService(productFileRepository, productRepository, fileStorageClient, productFileValidator, producersInitiativeRepository);
   }
 
   @Test
@@ -63,10 +67,10 @@ class ProductFileServiceTest {
     ProductFile pf2 = ProductFile.builder().id("2").fileName("f2.csv").uploadStatus("OK").category("WASHINGMACHINES").build();
     List<ProductFile> list = List.of(pf1, pf2);
     Page<ProductFile> pg = new PageImpl<>(list, page, list.size());
-    when(productFileRepository.findByOrganizationIdAndUploadStatusNot(org, UploadCsvStatus.FORMAL_ERROR.name(), page))
+    when(productFileRepository.findByOrganizationIdAndInitiativeIdAndUploadStatusNot(org, null, UploadCsvStatus.FORMAL_ERROR.name(), page))
       .thenReturn(pg);
 
-    ProductFileResponseDTO resp = productFileService.getFilesByPage(org, page);
+    ProductFileResponseDTO resp = productFileService.getFilesByPage(org,null, page);
     assertEquals(2, resp.getContent().size());
     assertEquals("f1.csv", resp.getContent().get(0).getFileName());
     assertEquals("f2.csv", resp.getContent().get(1).getFileName());
@@ -74,7 +78,7 @@ class ProductFileServiceTest {
     assertEquals(2, resp.getPageSize());
     assertEquals(2, resp.getTotalElements());
     assertEquals(1, resp.getTotalPages());
-    verify(productFileRepository).findByOrganizationIdAndUploadStatusNot(org, UploadCsvStatus.FORMAL_ERROR.name(), page);
+    verify(productFileRepository).findByOrganizationIdAndInitiativeIdAndUploadStatusNot(org, null, UploadCsvStatus.FORMAL_ERROR.name(), page);
   }
 
   @Test
@@ -82,10 +86,10 @@ class ProductFileServiceTest {
     String org = "org";
     Pageable page = PageRequest.of(0,2);
     Page<ProductFile> pg = new PageImpl<>(List.of(), page, 0);
-    when(productFileRepository.findByOrganizationIdAndUploadStatusNot(org, UploadCsvStatus.FORMAL_ERROR.name(), page))
+    when(productFileRepository.findByOrganizationIdAndInitiativeIdAndUploadStatusNot(org, null, UploadCsvStatus.FORMAL_ERROR.name(), page))
       .thenReturn(pg);
 
-    ProductFileResponseDTO resp = productFileService.getFilesByPage(org, page);
+    ProductFileResponseDTO resp = productFileService.getFilesByPage(org, null, page);
     assertTrue(resp.getContent().isEmpty());
     assertEquals(0, resp.getTotalElements());
     assertEquals(0, resp.getTotalPages());
@@ -94,10 +98,10 @@ class ProductFileServiceTest {
   @Test
   void testGetFilesByPage_RepoThrows() {
     Pageable page = PageRequest.of(0,1);
-    when(productFileRepository.findByOrganizationIdAndUploadStatusNot(any(), any(), eq(page)))
+    when(productFileRepository.findByOrganizationIdAndInitiativeIdAndUploadStatusNot(any(), any(), any(), eq(page)))
       .thenThrow(new RuntimeException("DB"));
     RuntimeException ex = assertThrows(RuntimeException.class,
-      () -> productFileService.getFilesByPage("org", page));
+      () -> productFileService.getFilesByPage("org",null, page));
     assertEquals("DB", ex.getMessage());
   }
 
@@ -106,11 +110,13 @@ class ProductFileServiceTest {
   void downloadReport_partialLoad() throws IOException {
     String productFileId = "1";
     String organizationId = "org1";
+    String initiativeId = "TEST_INIT";
     String fileName = "eprel_report.csv";
 
     ProductFile productFile = ProductFile.builder()
       .id(productFileId)
       .organizationId(organizationId)
+      .initiativeId(initiativeId)
       .uploadStatus("PARTIAL")
       .fileName(fileName)
       .build();
@@ -118,48 +124,76 @@ class ProductFileServiceTest {
     ByteArrayOutputStream mockedOutput = new ByteArrayOutputStream();
     mockedOutput.write("dummy report content".getBytes());
 
-    when(productFileRepository.findByIdAndOrganizationId(productFileId, organizationId))
+    when(productFileRepository.findByIdAndOrganizationIdAndInitiativeId(productFileId, organizationId, initiativeId))
       .thenReturn(Optional.of(productFile));
 
-    when(fileStorageClient.download("Report/Partial/1.csv"))
-      .thenReturn(mockedOutput);
+    String expectedPath = "Report/Partial/TEST_INIT/1.csv";
+    when(fileStorageClient.download(expectedPath)).thenReturn(mockedOutput);
 
-    FileReportDTO reportDTO = productFileService.downloadReport(productFileId, organizationId);
+    FileReportDTO reportDTO = productFileService.downloadReport(productFileId, organizationId, initiativeId);
 
-    // Assert
     assertNotNull(reportDTO);
     assertArrayEquals("dummy report content".getBytes(), reportDTO.getData());
     assertEquals("eprel_report_errors.csv", reportDTO.getFilename());
 
-    verify(productFileRepository).findByIdAndOrganizationId(productFileId, organizationId);
-    verify(fileStorageClient).download("Report/Partial/1.csv");
-  }
-
-  @Test
-  void downloadReport_notFoundId() {
-    when(productFileRepository.findByIdAndOrganizationId(any(), any())).thenReturn(Optional.empty());
-    ReportNotFoundException ex = assertThrows(ReportNotFoundException.class,
-      () -> productFileService.downloadReport("1","o"));
-    assertTrue(ex.getMessage().contains("Report not found with id: 1"));
+    verify(productFileRepository).findByIdAndOrganizationIdAndInitiativeId(productFileId, organizationId, initiativeId);
   }
 
   @Test
   void downloadReport_unsupportedStatus() {
-    ProductFile pf = new ProductFile(); pf.setId("1"); pf.setOrganizationId("o"); pf.setUploadStatus("UNKNOWN"); pf.setFileName("f");
-    when(productFileRepository.findByIdAndOrganizationId("1","o")).thenReturn(Optional.of(pf));
+    ProductFile pf = ProductFile.builder()
+      .id("1")
+      .organizationId("o")
+      .initiativeId("i")
+      .uploadStatus("UNKNOWN")
+      .fileName("f.csv")
+      .build();
+
+    when(productFileRepository.findByIdAndOrganizationIdAndInitiativeId("1", "o", "i"))
+      .thenReturn(Optional.of(pf));
+
     ReportNotFoundException ex = assertThrows(ReportNotFoundException.class,
-      () -> productFileService.downloadReport("1","o"));
-    assertTrue(ex.getMessage().contains("Report not available for file: f"));
+      () -> productFileService.downloadReport("1", "o", "i"));
+
+    assertTrue(ex.getMessage().contains("Report not available for file: f.csv"));
   }
 
   @Test
   void downloadReport_azureNull() {
-    ProductFile pf = new ProductFile(); pf.setId("1"); pf.setOrganizationId("o"); pf.setUploadStatus("FORMAL_ERROR");
-    when(productFileRepository.findByIdAndOrganizationId("1","o")).thenReturn(Optional.of(pf));
-    when(fileStorageClient.download("Report/Formal/1.csv")).thenReturn(null);
+    ProductFile pf = ProductFile.builder()
+      .id("1")
+      .organizationId("o")
+      .initiativeId("i")
+      .uploadStatus("FORMAL_ERROR")
+      .build();
+
+    when(productFileRepository.findByIdAndOrganizationIdAndInitiativeId("1", "o", "i"))
+      .thenReturn(Optional.of(pf));
+
+    when(fileStorageClient.download("Report/Formal/i/1.csv")).thenReturn(null);
+
     ReportNotFoundException ex = assertThrows(ReportNotFoundException.class,
-      () -> productFileService.downloadReport("1","o"));
-    assertTrue(ex.getMessage().contains("Report not found on Azure"));
+      () -> productFileService.downloadReport("1", "o", "i"));
+
+    assertEquals("File not found on storage", ex.getMessage());
+  }
+
+  @Test
+  void downloadReport_notFound_ShouldLogAndThrowException() {
+    String id = "687f8a176a5c92458819922a";
+    String orgId = "83843864-f3c0-4def-badb-7f197471b72e";
+    String initId = "TEST_INIT";
+
+    Mockito.when(productFileRepository.findByIdAndOrganizationIdAndInitiativeId(id, orgId, initId))
+      .thenReturn(Optional.empty());
+
+    ReportNotFoundException exception = assertThrows(ReportNotFoundException.class, () -> productFileService.downloadReport(id, orgId, initId));
+
+    assertEquals("Report not found", exception.getMessage());
+
+    verify(productFileRepository).findByIdAndOrganizationIdAndInitiativeId(id, orgId, initId);
+
+    verifyNoInteractions(fileStorageClient);
   }
 
   private MultipartFile createMockFile() {
@@ -174,8 +208,13 @@ class ProductFileServiceTest {
   void whenInvalidFileType_thenReturnKoResult() throws IOException {
     MultipartFile file = createMockFile_InvalidFileType();
     ValidationResultDTO validationResultDTO = new ValidationResultDTO("KO","TEST");
-    when(productFileValidator.validateFile(any(),anyString())).thenReturn(validationResultDTO);
-    ProductFileResult res = productFileService.uploadFile(file, "cat","org","user","email","orgName");
+
+    when(producersInitiativeRepository.existsByProducerIdAndInitiativeIdAndEnabledTrue(anyString(), anyString())).thenReturn(true);
+
+    when(productFileValidator.validateFile(any(),anyString(),any(),any())).thenReturn(validationResultDTO);
+
+    ProductFileResult res = productFileService.uploadFile(file, "cat","ini","org","user","email","orgName");
+
     assertEquals("KO", res.getStatus());
     assertEquals("TEST", res.getErrorKey());
   }
@@ -199,9 +238,11 @@ class ProductFileServiceTest {
       mockedFiles.when(() -> Files.newInputStream(any()))
         .thenReturn(new ByteArrayInputStream("dummy".getBytes()));
 
+      when(producersInitiativeRepository.existsByProducerIdAndInitiativeIdAndEnabledTrue(anyString(), anyString())).thenReturn(true);
+
       when(fileStorageClient.upload(any(), any(), any())).thenReturn(null);
 
-      when(productFileValidator.validateFile(any(), any()))
+      when(productFileValidator.validateFile(any(), any(),any(),any()))
         .thenReturn(new ValidationResultDTO("OK", null,List.of(mock(CSVRecord.class)),List.of("Codice GTIN/EAN", "Codice Prodotto", "Categoria", "Paese di Produzione", "Marca", "Modello")));
 
       CSVRecord invalidRecordLocal = mock(CSVRecord.class);
@@ -215,43 +256,43 @@ class ProductFileServiceTest {
       ProductFile savedProductFile = ProductFile.builder().id("123").build();
       when(productFileRepository.save(any())).thenReturn(savedProductFile);
 
-      ProductFileResult result = productFileService.uploadFile(file, "COOKINGHOBS", "org1", "user1","email","orgName");
+      ProductFileResult result = productFileService.uploadFile(file, "COOKINGHOBS", "ini1","org1", "user1","email","orgName");
 
       assertEquals("KO", result.getStatus());
       assertEquals(AssetRegisterConstants.UploadKeyConstant.REPORT_FORMAL_FILE_ERROR_KEY, result.getErrorKey());
       assertEquals("123", result.getProductFileId());
     } catch (IOException e) {
-        throw new RuntimeException(e);
+      throw new RuntimeException(e);
     }
   }
 
   @Test
-  void whenInvalidGtin_thenReturnFormalError()  {
+  void whenInvalidGtin_thenReturnFormalError() {
     testFormalError("Il Codice GTIN/EAN è obbligatorio e deve essere univoco ed alfanumerico e lungo al massimo 14 caratteri");
   }
 
   @Test
-  void whenInvalidProductCode_thenReturnFormalError()  {
+  void whenInvalidProductCode_thenReturnFormalError() {
     testFormalError("Il Codice prodotto non deve contenere caratteri speciali o lettere accentate e deve essere lungo al massimo 100 caratteri");
   }
 
   @Test
-  void whenInvalidCategory_thenReturnFormalError()  {
+  void whenInvalidCategory_thenReturnFormalError() {
     testFormalError("Il campo Categoria è obbligatorio");
   }
 
   @Test
-  void whenInvalidCountry_thenReturnFormalError()  {
+  void whenInvalidCountry_thenReturnFormalError() {
     testFormalError("Il Paese di Produzione è obbligatorio e deve essere composto da esattamente 2 caratteri");
   }
 
   @Test
-  void whenInvalidBrand_thenReturnFormalError()  {
+  void whenInvalidBrand_thenReturnFormalError() {
     testFormalError("Il campo Marca è obbligatorio e deve contenere una stringa lunga al massimo 100 caratteri");
   }
 
   @Test
-  void whenInvalidModel_thenReturnFormalError()  {
+  void whenInvalidModel_thenReturnFormalError() {
     testFormalError("Il campo Modello è obbligatorio e deve contenere una stringa lunga al massimo 100 caratteri");
   }
 
@@ -267,10 +308,12 @@ class ProductFileServiceTest {
       mocked.when(() -> CsvUtils.readCsvRecords(file))
         .thenReturn(List.of(rec));
 
-      when(productFileValidator.validateFile(file, "cat"))
+      when(producersInitiativeRepository.existsByProducerIdAndInitiativeIdAndEnabledTrue(anyString(), anyString())).thenReturn(true);
+
+      when(productFileValidator.validateFile(any(), anyString(), anyString(), anyString()))
         .thenReturn(ValidationResultDTO.ok(List.of(rec), List.of("C1")));
 
-      when(productFileValidator.validateRecords(List.of(rec), List.of("C1"), "cat"))
+      when(productFileValidator.validateRecords(anyList(), anyString(), anyString()))
         .thenReturn(ValidationResultDTO.ok());
 
       when(productFileRepository.save(any())).thenReturn(ProductFile.builder().id("42").build());
@@ -282,7 +325,7 @@ class ProductFileServiceTest {
 
       when(fileStorageClient.upload(any(), any(), any())).thenReturn(null);
 
-      ProductFileResult res = productFileService.uploadFile(file, "cat", "org", "user","email","orgName");
+      ProductFileResult res = productFileService.uploadFile(file, "cat", "ini","org", "user","email","orgName");
 
       assertEquals("OK", res.getStatus());
       assertNull(res.getErrorKey());
@@ -298,10 +341,10 @@ class ProductFileServiceTest {
       .category("DISHWASHERS")
       .build();
 
-    when(productRepository.retrieveDistinctProductFileIdsBasedOnRole("org123",null,"operatore"))
+    when(productRepository.retrieveDistinctProductFileIdsBasedOnRole("org123", null,null,"operatore"))
       .thenReturn(List.of(file));
 
-    List<ProductBatchDTO> result = productFileService.retrieveDistinctProductFileIdsBasedOnRole("org123",null,"operatore");
+    List<ProductBatchDTO> result = productFileService.retrieveDistinctProductFileIdsBasedOnRole("org123", null,null,"operatore");
 
     assertEquals(1, result.size());
     assertEquals("file123", result.getFirst().getProductFileId());
@@ -312,14 +355,45 @@ class ProductFileServiceTest {
   void whenFileAlreadyInProgressOrUploaded_thenReturnKoAlreadyInProgress() {
     MultipartFile file = new MockMultipartFile("file", "test.csv", "text/csv", "dummy".getBytes());
 
-    // Simula presenza di un file già in stato IN_PROCESS o UPLOADED
-    when(productFileRepository.existsByOrganizationIdAndUploadStatusIn(eq("org"), anyList()))
+    when(producersInitiativeRepository.existsByProducerIdAndInitiativeIdAndEnabledTrue(anyString(), anyString())).thenReturn(true);
+
+    when(productFileRepository.existsByInitiativeIdAndOrganizationIdAndUploadStatusIn(any(),eq("org"), anyList()))
       .thenReturn(true);
 
-    ProductFileResult result = productFileService.uploadFile(file, "cat", "org", "user", "email","orgName");
+    ProductFileResult result = productFileService.uploadFile(file, "cat", "ini","org", "user", "email","orgName");
 
     assertEquals("KO", result.getStatus());
     assertEquals(AssetRegisterConstants.UploadKeyConstant.UPLOAD_ALREADY_IN_PROGRESS, result.getErrorKey());
+  }
+
+  @Test
+  void whenOrganizationNotEnabled_thenReturnKoPermission() {
+    MultipartFile file = createMockFile();
+
+    when(producersInitiativeRepository.existsByProducerIdAndInitiativeIdAndEnabledTrue("org", "ini"))
+      .thenReturn(false);
+
+    ProductFileResult result = productFileService.uploadFile(file, "cat", "ini", "org", "user", "email", "orgName");
+
+    assertEquals("KO", result.getStatus());
+    assertEquals(AssetRegisterConstants.UploadKeyConstant.NOT_ENABLED_ERRORE_KEY, result.getErrorKey());
+  }
+
+  @Test
+  void whenGenericExceptionThrown_thenReturnKoGenericError() throws IOException {
+    MultipartFile file = mock(MultipartFile.class);
+    when(file.getOriginalFilename()).thenReturn("test.csv");
+
+    when(producersInitiativeRepository.existsByProducerIdAndInitiativeIdAndEnabledTrue(anyString(), anyString()))
+      .thenReturn(true);
+
+    when(productFileValidator.validateFile(any(), anyString(), anyString(), anyString()))
+      .thenThrow(new RuntimeException("Simulated unexpected error"));
+
+    ProductFileResult result = productFileService.uploadFile(file, "cat", "ini", "org", "user", "email", "orgName");
+
+    assertEquals("KO", result.getStatus());
+    assertEquals("GENERIC_ERROR", result.getErrorKey());
   }
 
 

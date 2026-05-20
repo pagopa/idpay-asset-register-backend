@@ -16,6 +16,7 @@ import java.time.LocalDateTime;
 public class ProductFile {
   @Id
   private String id;
+  private String initiativeId;
   private String category;
   private String userId;
   private String organizationId;

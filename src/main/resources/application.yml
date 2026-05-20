@@ -163,11 +163,11 @@ app:
         supervisioned: Prodotti Contrassegnati
         approved: Prodotti Ripristinati
       place-holder:
-        ok: productFileName
-        partial: productFileName
-        rejected: excludedList, formalMotivation
-        supervisioned: suspendedList, formalMotivation
-        approved: ripristinedList
+        ok: productFileName, initiativeName
+        partial: productFileName, initiativeName
+        rejected: excludedList, formalMotivation, initiativeName
+        supervisioned: suspendedList, formalMotivation, initiativeName
+        approved: ripristinedList, initiativeName
     eprel:
       service:
         get-product : ${EPREL_BASE_URL:https://eprel.ec.europa.eu/api/product/{REGISTRATION_NUMBER}}

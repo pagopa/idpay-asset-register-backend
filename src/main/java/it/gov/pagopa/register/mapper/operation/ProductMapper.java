@@ -38,6 +38,7 @@ public class ProductMapper {
     List<StatusChangeEvent> chronology = getStatusChangeEvents(entity, role);
 
     return ProductDTO.builder()
+      .initiativeId(entity.getInitiativeId())
       .organizationId(entity.getOrganizationId())
       .registrationDate(entity.getRegistrationDate().toString())
       .status(role.equals(UserRole.OPERATORE.getRole()) &&
@@ -210,49 +211,14 @@ public class ProductMapper {
     }
   }
 
-  private static String resolveProductType(EprelProduct eprel, String category) {
-    if (REFRIGERATINGAPPL.equals(category)) {
-      boolean isRefrigerator = eprel.getCompartments().stream()
-        .anyMatch(c -> {
-          if (REFRIGERATORS_CATEGORY.contains(c.getCompartmentType()))
-            return true;
-          if (VARIABLE_TEMP.equals(c.getCompartmentType())) {
-            return c.getSubCompartments() != null &&
-              c.getSubCompartments().stream()
-                .map(EprelProduct.SubCompartment::getCompartmentType)
-                .anyMatch(REFRIGERATORS_CATEGORY::contains);
-          }
-          return false;
-        });
-      return isRefrigerator ? REFRIGERATOR_IT : FREEZER_IT;
-    } else {
-      return CATEGORIES_TO_IT_S.get(category);
-    }
-  }
-
-  public static String mapName(String gtinOrNull, EprelProduct eprel, String category, String capacity) {
-    String type = resolveProductType(eprel, category);
-    StringBuilder sb = new StringBuilder();
-    if (gtinOrNull != null && !gtinOrNull.isBlank()) {
-      sb.append(gtinOrNull).append(" - ");
-    }
-    sb.append(type).append(" ")
-      .append(eprel.getSupplierOrTrademark()).append(" ")
-      .append(eprel.getModelIdentifier());
-    if (!"N\\A".equals(capacity)) {
-      sb.append(" ").append(capacity);
-    }
-    return sb.toString();
-  }
-
-  private static String normalizeCsvCode(String value) {
+  public static String normalizeCsvCode(String value) {
     if (value == null) {
       return null;
     }
     return value.trim().replaceAll("\\s+", "");
   }
 
-  private static String limitName(String value) {
+  public static String limitName(String value) {
     if (value == null) {
       return null;
     }
@@ -317,4 +283,50 @@ public class ProductMapper {
 
     return v;
   }
-}  
+  private static String resolveProductType(EprelProduct eprel, String category) {
+    if (REFRIGERATINGAPPL.equals(category)) {
+      boolean isRefrigerator =
+        eprel.getCompartments().stream().anyMatch(c -> {
+          if (REFRIGERATORS_CATEGORY.contains(c.getCompartmentType())) {
+            return true;
+          }
+          if (VARIABLE_TEMP.equals(c.getCompartmentType())) {
+            return c.getSubCompartments() != null &&
+              c.getSubCompartments().stream()
+                .map(EprelProduct.SubCompartment::getCompartmentType)
+                .anyMatch(REFRIGERATORS_CATEGORY::contains);
+          }
+          return false;
+        });
+
+      return isRefrigerator ? REFRIGERATOR_IT : FREEZER_IT;
+    }
+
+    return CATEGORIES_TO_IT_S.get(category);
+  }
+  public static String mapName(
+    String gtinOrNull,
+    EprelProduct eprel,
+    String category,
+    String capacity
+  ) {
+    String type = resolveProductType(eprel, category);
+
+    StringBuilder sb = new StringBuilder();
+    if (gtinOrNull != null && !gtinOrNull.isBlank()) {
+      sb.append(gtinOrNull).append(" - ");
+    }
+
+    sb.append(type)
+      .append(" ")
+      .append(eprel.getSupplierOrTrademark())
+      .append(" ")
+      .append(eprel.getModelIdentifier());
+
+    if (!"N\\A".equals(capacity)) {
+      sb.append(" ").append(capacity);
+    }
+
+    return sb.toString();
+  }
+}
