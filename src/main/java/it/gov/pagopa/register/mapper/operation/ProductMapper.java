@@ -6,22 +6,12 @@ import it.gov.pagopa.register.enums.ProductStatus;
 import it.gov.pagopa.register.enums.UserRole;
 import it.gov.pagopa.register.model.operation.Product;
 import it.gov.pagopa.register.model.operation.StatusChangeEvent;
-import org.apache.commons.csv.CSVFormat;
-import org.apache.commons.csv.CSVPrinter;
-import org.apache.commons.csv.CSVRecord;
 
-import java.io.StringReader;
-import java.io.StringWriter;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static it.gov.pagopa.register.constants.AssetRegisterConstants.*;
-import static it.gov.pagopa.register.utils.CsvUtils.DELIMITER;
 import static it.gov.pagopa.register.utils.EprelUtils.generateEprelUrl;
-import static it.gov.pagopa.register.utils.EprelUtils.mapEnergyClass;
 
 public class ProductMapper {
 
@@ -55,7 +45,7 @@ public class ProductMapper {
       .countryOfProduction(entity.getCountryOfProduction())
       .energyClass(entity.getEnergyClass())
       .linkEprel(generateEprelUrl(entity.getProductGroup(), entity.getEprelCode()))
-      .batchName(CATEGORIES_TO_IT_P.get(entity.getCategory()) + "_" + entity.getProductFileId() + ".csv")
+      .batchName(CATEGORIES_FOR_FILENAME.get(entity.getCategory()) + "_" + entity.getProductFileId() + ".csv")
       .productName(limitName(entity.getProductName()))
       .fullProductName(limitName(entity.getFullProductName()))
       .capacity(entity.getCapacity() == null || "N\\A".equals(entity.getCapacity()) ? "" : entity.getCapacity())
@@ -87,130 +77,6 @@ public class ProductMapper {
     return chronology;
   }
 
-  public static Product mapCookingHobToProduct(CSVRecord csvRecord, String orgId, String productFileId, String organizationName) {
-
-    String codeProduct = normalizeCsvCode(csvRecord.get(CODE_PRODUCT));
-    String gtinCode = normalizeCsvCode(csvRecord.get(CODE_GTIN_EAN));
-
-    String productName = CATEGORIES_TO_IT_S.get(COOKINGHOBS) + " " + csvRecord.get(BRAND) + " " + csvRecord.get(MODEL);
-    String fullProductName = gtinCode + " - " + productName;
-
-    return Product.builder()
-      .productFileId(productFileId)
-      .organizationId(orgId)
-      .registrationDate(LocalDateTime.now(ZoneOffset.UTC))
-      .status(ProductStatus.UPLOADED.name())
-      .productCode(codeProduct)
-      .gtinCode(gtinCode)
-      .category(COOKINGHOBS)
-      .countryOfProduction(csvRecord.get(COUNTRY_OF_PRODUCTION))
-      .brand(csvRecord.get(BRAND))
-      .model(csvRecord.get(MODEL))
-      .capacity("N\\A")
-      .productName(limitName(productName))
-      .fullProductName(limitName(fullProductName))
-      .organizationName(organizationName)
-      .statusChangeChronology(new ArrayList<>())
-      .formalMotivation("")
-      .build();
-  }
-
-  public static Product mapEprelToProduct(CSVRecord csvRecord, EprelProduct eprelData, String orgId, String productFileId, String category, String organizationName) {
-    String capacity = mapCapacity(category, eprelData);
-
-    String codeProduct = normalizeCsvCode(csvRecord.get(CODE_PRODUCT));
-    String gtinCode = normalizeCsvCode(csvRecord.get(CODE_GTIN_EAN));
-    String normalizedCategory = category != null ? category.trim().replaceAll("\\s+", "") : null;
-
-    String productName = limitName(mapName(null, eprelData, normalizedCategory, capacity));
-    String fullProductName = limitName(mapName(gtinCode, eprelData, normalizedCategory, capacity));
-
-    return Product.builder()
-      .productFileId(productFileId)
-      .organizationId(orgId)
-      .registrationDate(LocalDateTime.now(ZoneOffset.UTC))
-      .status(ProductStatus.UPLOADED.name())
-      .productCode(codeProduct)
-      .gtinCode(gtinCode)
-      .eprelCode(csvRecord.get(CODE_EPREL))
-      .category(normalizedCategory)
-      .productGroup(eprelData.getProductGroup())
-      .countryOfProduction(csvRecord.get(COUNTRY_OF_PRODUCTION))
-      .brand(eprelData.getSupplierOrTrademark())
-      .model(eprelData.getModelIdentifier())
-      .energyClass(mapEnergyClass(eprelData.getEnergyClass()))
-      .capacity(capacity)
-      .productName(productName)
-      .fullProductName(fullProductName)
-      .organizationName(organizationName)
-      .statusChangeChronology(new ArrayList<>())
-      .formalMotivation("")
-      .build();
-  }
-
-  public static String mapCapacity(String category, EprelProduct eprelData) {
-    if (eprelData == null) return "N\\A";
-    return switch (category) {
-      case WASHINGMACHINES, TUMBLEDRYERS ->
-        eprelData.getRatedCapacity() != null ? eprelData.getRatedCapacity() + " kg" : "N\\A";
-      case WASHERDRIERS ->
-        eprelData.getRatedCapacityWash() != null ? eprelData.getRatedCapacityWash() + " kg" : "N\\A";
-      case OVENS -> {
-        if (eprelData.getCavities() != null && !eprelData.getCavities().isEmpty()) {
-          yield eprelData.getCavities().stream()
-            .map(cavity -> cavity.getVolume() != null ? cavity.getVolume() + " l" : "N\\A")
-            .collect(Collectors.joining(" / "));
-        } else yield "N\\A";
-      }
-      case DISHWASHERS ->
-        eprelData.getRatedCapacity() != null ? eprelData.getRatedCapacity() + " c" : "N\\A";
-      case REFRIGERATINGAPPL ->
-        eprelData.getTotalVolume() != null ? eprelData.getTotalVolume() + " l" : "N\\A";
-      default -> "N\\A";
-    };
-  }
-
-  public static CSVRecord mapProductToCsvRow(Product product, String category, List<String> headers) {
-    try {
-      StringWriter out = new StringWriter();
-      CSVPrinter printer = new CSVPrinter(out, CSVFormat.Builder.create()
-        .setHeader(headers.toArray(new String[0]))
-        .setDelimiter(DELIMITER)
-        .build());
-
-      if (COOKINGHOBS.equals(category)) {
-        printer.printRecord(
-          product.getEprelCode(),
-          product.getGtinCode(),
-          product.getProductCode(),
-          product.getCategory(),
-          product.getCountryOfProduction(),
-          product.getModel(),
-          product.getBrand()
-        );
-      } else {
-        printer.printRecord(
-          product.getEprelCode(),
-          product.getGtinCode(),
-          product.getProductCode(),
-          product.getCategory(),
-          product.getCountryOfProduction()
-        );
-      }
-
-      CSVFormat format = CSVFormat.Builder.create()
-        .setHeader(headers.toArray(new String[0]))
-        .setSkipHeaderRecord(true)
-        .setDelimiter(DELIMITER)
-        .setTrim(true)
-        .build();
-      List<CSVRecord> records = format.parse(new StringReader(out.toString())).getRecords();
-      return records.isEmpty() ? null : records.getFirst();
-    } catch (Exception e) {
-      return null;
-    }
-  }
-
   public static String normalizeCsvCode(String value) {
     if (value == null) {
       return null;
@@ -234,7 +100,7 @@ public class ProductMapper {
     return v;
   }
 
-  private static String sanitizeBrandOrModelForDto(String value) {
+  public static String sanitizeBrandOrModelForDto(String value) {
     if (value == null) {
       return null;
     }
@@ -248,7 +114,7 @@ public class ProductMapper {
     return v;
   }
 
-  private static String sanitizeProductCodeForDto(String value) {
+  public static String sanitizeProductCodeForDto(String value) {
     if (value == null) {
       return null;
     }
@@ -266,7 +132,7 @@ public class ProductMapper {
     return v;
   }
 
-  private static String sanitizeGtinForDto(String value) {
+  public static String sanitizeGtinForDto(String value) {
     if (value == null) {
       return null;
     }
@@ -283,6 +149,7 @@ public class ProductMapper {
 
     return v;
   }
+
   private static String resolveProductType(EprelProduct eprel, String category) {
     if (REFRIGERATINGAPPL.equals(category)) {
       boolean isRefrigerator =
