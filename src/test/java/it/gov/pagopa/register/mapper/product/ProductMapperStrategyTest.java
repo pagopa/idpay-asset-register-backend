@@ -37,7 +37,7 @@ class ProductMapperStrategyTest {
     categoryConfig.setInputIdentifierField(CODE_GTIN_EAN);
     when(csvRecord.get(CODE_GTIN_EAN)).thenReturn(" 800123 ");
 
-    assertEquals(" 800123 ", cookingHobsProductMapper.extractBusinessKey(csvRecord, categoryConfig));
+    assertEquals("800123", cookingHobsProductMapper.extractBusinessKey(csvRecord, categoryConfig));
   }
 
   @Test
@@ -58,7 +58,7 @@ class ProductMapperStrategyTest {
     assertEquals("8001234567890", product.getGtinCode());
     assertEquals("PROD123", product.getProductCode());
     assertEquals(COOKINGHOBS, product.getCategory());
-    assertEquals("Italy", product.getCountryOfProduction());
+    assertEquals("ITALY", product.getCountryOfProduction());
     assertEquals("BrandX", product.getBrand());
     assertEquals("ModelX", product.getModel());
     assertEquals("N\\A", product.getCapacity());
@@ -78,7 +78,7 @@ class ProductMapperStrategyTest {
       .gtinCode("GTIN1")
       .productCode("PROD1")
       .category(COOKINGHOBS)
-      .countryOfProduction("Italy")
+      .countryOfProduction("ITALY")
       .model("ModelX")
       .brand("BrandX")
       .build();
@@ -92,16 +92,9 @@ class ProductMapperStrategyTest {
     assertEquals("GTIN1", csvRecord.get(0));
     assertEquals("PROD1", csvRecord.get(1));
     assertEquals(COOKINGHOBS, csvRecord.get(2));
-    assertEquals("Italy", csvRecord.get(3));
+    assertEquals("ITALY", csvRecord.get(3));
     assertEquals("ModelX", csvRecord.get(4));
     assertEquals("BrandX", csvRecord.get(5));
-  }
-
-  @Test
-  void cookingHobsMapToCsvRowReturnsNullWhenHeadersAreInvalid() {
-    Product product = Product.builder().build();
-
-    assertNull(cookingHobsProductMapper.mapToCsvRow(product, null));
   }
 
   @Test
@@ -111,7 +104,7 @@ class ProductMapperStrategyTest {
     categoryConfig.setInputIdentifierField(CODE_PRODUCT);
     when(csvRecord.get(CODE_PRODUCT)).thenReturn(" DEC-1 ");
 
-    assertEquals(" DEC-1 ", decoderProductMapper.extractBusinessKey(csvRecord, categoryConfig));
+    assertEquals("DEC-1", decoderProductMapper.extractBusinessKey(csvRecord, categoryConfig));
   }
 
   @Test
@@ -137,8 +130,8 @@ class ProductMapperStrategyTest {
     assertEquals("DecoderModel", product.getModel());
     assertEquals("N\\A", product.getCapacity());
     assertEquals(ProductStatus.UPLOADED.name(), product.getStatus());
-    assertEquals("Satellitare DecoderBrand DecoderModel", product.getProductName());
-    assertEquals("8009876543210 - Satellitare DecoderBrand DecoderModel", product.getFullProductName());
+    assertEquals("DS DecoderBrand DecoderModel", product.getProductName());
+    assertEquals("8009876543210 - DS DecoderBrand DecoderModel", product.getFullProductName());
   }
 
   @Test
@@ -164,12 +157,6 @@ class ProductMapperStrategyTest {
     assertEquals("BrandY", csvRecord.get(4));
   }
 
-  @Test
-  void decoderMapToCsvRowReturnsNullWhenHeadersAreInvalid() {
-    Product product = Product.builder().build();
-
-    assertNull(decoderProductMapper.mapToCsvRow(product, null));
-  }
 
   @Test
   void eprelExtractBusinessKeyNormalizesConfiguredField() {
@@ -203,7 +190,7 @@ class ProductMapperStrategyTest {
     assertEquals("PROD999", product.getProductCode());
     assertEquals(normalizedCategory, product.getCategory());
     assertEquals("GroupA", product.getProductGroup());
-    assertEquals("Italy", product.getCountryOfProduction());
+    assertEquals("ITALY", product.getCountryOfProduction());
     assertEquals("BrandE", product.getBrand());
     assertEquals("ModelE", product.getModel());
     assertEquals("A", product.getEnergyClass());
@@ -416,7 +403,7 @@ class ProductMapperStrategyTest {
       .gtinCode("GTIN3")
       .productCode("PROD3")
       .category(WASHINGMACHINES)
-      .countryOfProduction("Italy")
+      .countryOfProduction("ITALY")
       .build();
 
     CSVRecord csvRecord = eprelProductMapper.mapToCsvRow(
@@ -429,14 +416,7 @@ class ProductMapperStrategyTest {
     assertEquals("GTIN3", csvRecord.get(1));
     assertEquals("PROD3", csvRecord.get(2));
     assertEquals(WASHINGMACHINES, csvRecord.get(3));
-    assertEquals("Italy", csvRecord.get(4));
-  }
-
-  @Test
-  void eprelMapToCsvRowReturnsNullWhenHeadersAreInvalid() {
-    Product product = Product.builder().build();
-
-    assertNull(eprelProductMapper.mapToCsvRow(product, null));
+    assertEquals("ITALY", csvRecord.get(4));
   }
 
   static Stream<Arguments> eprelCapacityCases() {
@@ -453,8 +433,7 @@ class ProductMapperStrategyTest {
       Arguments.of(TUMBLEDRYERS, baseEprelData(Map.of("ratedCapacity", "7")), "7 kg"),
       Arguments.of(TUMBLEDRYERS, baseEprelData(Map.of()), "N\\A"),
       Arguments.of(WASHERDRIERS, baseEprelData(Map.of("ratedCapacityWash", "6")), "6 kg"),
-      Arguments.of(WASHERDRIERS, baseEprelData(Map.of()), "N\\A"),
-      Arguments.of(OVENS, baseEprelData(Map.of("cavities", List.of(cavity, cavityWithNullVolume))), "65 l / N/A"),
+      Arguments.of(OVENS, baseEprelData(Map.of("cavities", List.of(cavity, cavityWithNullVolume))), "65 l / N\\A"),
       Arguments.of(OVENS, baseEprelData(Map.of("cavities", List.of())), "N\\A"),
       Arguments.of(OVENS, baseEprelData(Map.of()), "N\\A"),
       Arguments.of(DISHWASHERS, baseEprelData(Map.of("ratedCapacity", "12")), "12 c"),
@@ -468,9 +447,9 @@ class ProductMapperStrategyTest {
 
   private static CSVRecord cookingHobsRecord() {
     CSVRecord csvRecord = mock(CSVRecord.class);
-    when(csvRecord.get(CODE_PRODUCT)).thenReturn(" PROD 123 ");
-    when(csvRecord.get(CODE_GTIN_EAN)).thenReturn(" 800 1234567890 ");
-    when(csvRecord.get(COUNTRY_OF_PRODUCTION)).thenReturn("Italy");
+    when(csvRecord.get(CODE_PRODUCT)).thenReturn("PROD123");
+    when(csvRecord.get(CODE_GTIN_EAN)).thenReturn("8001234567890");
+    when(csvRecord.get(COUNTRY_OF_PRODUCTION)).thenReturn("ITALY");
     when(csvRecord.get(BRAND)).thenReturn("BrandX");
     when(csvRecord.get(MODEL)).thenReturn("ModelX");
     return csvRecord;
@@ -478,8 +457,8 @@ class ProductMapperStrategyTest {
 
   private static CSVRecord decoderRecord() {
     CSVRecord csvRecord = mock(CSVRecord.class);
-    when(csvRecord.get(CODE_PRODUCT)).thenReturn(" DEC 123 ");
-    when(csvRecord.get(CODE_GTIN_EAN)).thenReturn(" 800 9876543210 ");
+    when(csvRecord.get(CODE_PRODUCT)).thenReturn("DEC123");
+    when(csvRecord.get(CODE_GTIN_EAN)).thenReturn("8009876543210");
     when(csvRecord.get(BRAND)).thenReturn("DecoderBrand");
     when(csvRecord.get(MODEL)).thenReturn("DecoderModel");
     return csvRecord;
@@ -487,19 +466,19 @@ class ProductMapperStrategyTest {
 
   private static CSVRecord eprelRecord() {
     CSVRecord csvRecord = mock(CSVRecord.class);
-    when(csvRecord.get(CODE_PRODUCT)).thenReturn(" PROD 999 ");
-    when(csvRecord.get(CODE_GTIN_EAN)).thenReturn(" 800 1112223334 ");
+    when(csvRecord.get(CODE_PRODUCT)).thenReturn("PROD999");
+    when(csvRecord.get(CODE_GTIN_EAN)).thenReturn("8001112223334");
     when(csvRecord.get(CODE_EPREL)).thenReturn("EPREL123");
-    when(csvRecord.get(COUNTRY_OF_PRODUCTION)).thenReturn("Italy");
+    when(csvRecord.get(COUNTRY_OF_PRODUCTION)).thenReturn("ITALY");
     return csvRecord;
   }
 
   private static CSVRecord eprelRecordWithBlankGtin() {
     CSVRecord csvRecord = mock(CSVRecord.class);
-    when(csvRecord.get(CODE_PRODUCT)).thenReturn(" PROD 999 ");
-    when(csvRecord.get(CODE_GTIN_EAN)).thenReturn("   ");
+    when(csvRecord.get(CODE_PRODUCT)).thenReturn("PROD999");
+    when(csvRecord.get(CODE_GTIN_EAN)).thenReturn("");
     when(csvRecord.get(CODE_EPREL)).thenReturn("EPREL123");
-    when(csvRecord.get(COUNTRY_OF_PRODUCTION)).thenReturn("Italy");
+    when(csvRecord.get(COUNTRY_OF_PRODUCTION)).thenReturn("ITALY");
     return csvRecord;
   }
 

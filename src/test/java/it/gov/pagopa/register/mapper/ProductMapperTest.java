@@ -1,7 +1,6 @@
 package it.gov.pagopa.register.mapper;
 
 import it.gov.pagopa.register.dto.operation.ProductDTO;
-import it.gov.pagopa.register.dto.utils.EprelProduct;
 import it.gov.pagopa.register.enums.ProductStatus;
 import it.gov.pagopa.register.enums.UserRole;
 import it.gov.pagopa.register.mapper.operation.ProductMapper;
@@ -13,7 +12,6 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import static it.gov.pagopa.register.constants.AssetRegisterConstants.WASHINGMACHINES;
 import static it.gov.pagopa.register.utils.ObjectMaker.buildStatusChangeEventsList;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -231,46 +229,6 @@ class ProductMapperTest {
     ProductDTO dto = ProductMapper.toDTO(product, UserRole.INVITALIA_ADMIN.getRole());
     assertEquals("", dto.getCapacity(), "In DTO, 'N\\A' diventa stringa vuota");
     assertEquals("full-name", dto.getFullProductName());
-  }
-
-
-
-  // ---------- mapProductName & mapFullProductName ----------
-
-  @Test
-  void testMapProductName_CapacityAppendedOnlyWhenNotNA() {
-    EprelProduct e = new EprelProduct();
-    e.setSupplierOrTrademark("BrandZ");
-    e.setModelIdentifier("ModelZ");
-    e.setEnergyClass("A");
-
-    String withCapacity = ProductMapper.mapName(null, e, WASHINGMACHINES, "8 kg");
-    assertTrue(withCapacity.endsWith("BrandZ ModelZ 8 kg"),
-      "Se la capacity è valorizzata, deve comparire alla fine del nome");
-
-    String withoutCapacity = ProductMapper.mapName(null, e, WASHINGMACHINES, "N\\A");
-    assertTrue(withoutCapacity.endsWith("BrandZ ModelZ"),
-      "Se la capacity è 'N\\A', non deve essere appesa");
-    assertFalse(withoutCapacity.endsWith("N\\A"), "Non deve chiudersi con 'N\\A'");
-  }
-
-  @Test
-  void testMapFullProductName_CapacityAppendedOnlyWhenNotNA_AndStartsWithGTIN() {
-    EprelProduct e = new EprelProduct();
-    e.setSupplierOrTrademark("BrandZ");
-    e.setModelIdentifier("ModelZ");
-    e.setEnergyClass("A");
-
-    String withCapacity = ProductMapper.mapName("GTIN111", e, WASHINGMACHINES, "8 kg");
-    assertEquals(withCapacity, ProductMapper.mapName("GTIN111", e, WASHINGMACHINES, "8 kg"),
-      "Il fullProductName deve essere costruito esattamente");
-    assertTrue(withCapacity.endsWith("BrandZ ModelZ 8 kg"),
-      "Se la capacity è valorizzata, deve comparire alla fine del nome");
-
-    String withoutCapacity = ProductMapper.mapName("GTIN111", e, WASHINGMACHINES, "N\\A");
-    assertTrue(withoutCapacity.endsWith("BrandZ ModelZ"),
-      "Se la capacity è 'N\\A', non deve essere appesa");
-    assertFalse(withoutCapacity.endsWith("N\\A"), "Non deve chiudersi con 'N\\A'");
   }
 
 }

@@ -1,7 +1,6 @@
 package it.gov.pagopa.register.mapper.operation;
 
 import it.gov.pagopa.register.dto.operation.ProductDTO;
-import it.gov.pagopa.register.dto.utils.EprelProduct;
 import it.gov.pagopa.register.enums.ProductStatus;
 import it.gov.pagopa.register.enums.UserRole;
 import it.gov.pagopa.register.model.operation.Product;
@@ -10,7 +9,8 @@ import it.gov.pagopa.register.model.operation.StatusChangeEvent;
 import java.util.ArrayList;
 import java.util.List;
 
-import static it.gov.pagopa.register.constants.AssetRegisterConstants.*;
+import static it.gov.pagopa.register.constants.AssetRegisterConstants.CATEGORIES_FOR_FILENAME;
+import static it.gov.pagopa.register.constants.AssetRegisterConstants.CATEGORIES_TO_IT_S;
 import static it.gov.pagopa.register.utils.EprelUtils.generateEprelUrl;
 
 public class ProductMapper {
@@ -41,13 +41,13 @@ public class ProductMapper {
       .brand(sanitizeBrandOrModelForDto(entity.getBrand()))
       .eprelCode(entity.getEprelCode())
       .gtinCode(sanitizeGtinForDto(entity.getGtinCode()))
-      .productCode(sanitizeProductCodeForDto(entity.getProductCode()))
+      .productCode(entity.getProductCode())
       .countryOfProduction(entity.getCountryOfProduction())
       .energyClass(entity.getEnergyClass())
       .linkEprel(generateEprelUrl(entity.getProductGroup(), entity.getEprelCode()))
       .batchName(CATEGORIES_FOR_FILENAME.get(entity.getCategory()) + "_" + entity.getProductFileId() + ".csv")
-      .productName(limitName(entity.getProductName()))
-      .fullProductName(limitName(entity.getFullProductName()))
+      .productName(entity.getProductName())
+      .fullProductName(entity.getFullProductName())
       .capacity(entity.getCapacity() == null || "N\\A".equals(entity.getCapacity()) ? "" : entity.getCapacity())
       .statusChangeChronology(chronology)
       .formalMotivation(entity.getFormalMotivation())
@@ -150,50 +150,5 @@ public class ProductMapper {
     return v;
   }
 
-  private static String resolveProductType(EprelProduct eprel, String category) {
-    if (REFRIGERATINGAPPL.equals(category)) {
-      boolean isRefrigerator =
-        eprel.getCompartments().stream().anyMatch(c -> {
-          if (REFRIGERATORS_CATEGORY.contains(c.getCompartmentType())) {
-            return true;
-          }
-          if (VARIABLE_TEMP.equals(c.getCompartmentType())) {
-            return c.getSubCompartments() != null &&
-              c.getSubCompartments().stream()
-                .map(EprelProduct.SubCompartment::getCompartmentType)
-                .anyMatch(REFRIGERATORS_CATEGORY::contains);
-          }
-          return false;
-        });
 
-      return isRefrigerator ? REFRIGERATOR_IT : FREEZER_IT;
-    }
-
-    return CATEGORIES_TO_IT_S.get(category);
-  }
-  public static String mapName(
-    String gtinOrNull,
-    EprelProduct eprel,
-    String category,
-    String capacity
-  ) {
-    String type = resolveProductType(eprel, category);
-
-    StringBuilder sb = new StringBuilder();
-    if (gtinOrNull != null && !gtinOrNull.isBlank()) {
-      sb.append(gtinOrNull).append(" - ");
-    }
-
-    sb.append(type)
-      .append(" ")
-      .append(eprel.getSupplierOrTrademark())
-      .append(" ")
-      .append(eprel.getModelIdentifier());
-
-    if (!"N\\A".equals(capacity)) {
-      sb.append(" ").append(capacity);
-    }
-
-    return sb.toString();
-  }
 }

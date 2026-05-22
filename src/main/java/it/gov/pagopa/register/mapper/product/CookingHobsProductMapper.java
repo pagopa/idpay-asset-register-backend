@@ -59,7 +59,7 @@ public class CookingHobsProductMapper implements ProductMapperStrategy {
       .organizationName(organizationName)
       .initiativeId(initiativeId)
       .category(COOKINGHOBS)
-      .capacity("N/A")
+      .capacity("N\\A")
       .registrationDate(LocalDateTime.now(ZoneOffset.UTC))
       .status(ProductStatus.UPLOADED.name())
       .statusChangeChronology(new ArrayList<>())

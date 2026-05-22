@@ -166,7 +166,7 @@ public class EprelProductMapper implements ProductMapperStrategy {
       .append(" ")
       .append(input.model);
 
-    if (!"N/A".equals(capacity)) {
+    if (!"N\\A".equals(capacity)) {
       sb.append(" ").append(capacity);
     }
 
@@ -178,24 +178,24 @@ public class EprelProductMapper implements ProductMapperStrategy {
   }
 
   private String mapCapacity(String category, Map<String, Object> data) {
-    if (data == null) return "N/A";
+    if (data == null) return "N\\A";
 
     return switch (category) {
       case WASHINGMACHINES, TUMBLEDRYERS ->
-        data.get(RATED_CAPACITY) != null ? data.get(RATED_CAPACITY) + " kg" : "N/A";
+        data.get(RATED_CAPACITY) != null ? data.get(RATED_CAPACITY) + " kg" : "N\\A";
 
       case WASHERDRIERS ->
-        data.get(RATED_CAPACITY_WASH) != null ? data.get(RATED_CAPACITY_WASH) + " kg" : "N/A";
+        data.get(RATED_CAPACITY_WASH) != null ? data.get(RATED_CAPACITY_WASH) + " kg" : "N\\A";
 
       case OVENS -> extractOvenCapacity(data);
 
       case DISHWASHERS ->
-        data.get(RATED_CAPACITY) != null ? data.get(RATED_CAPACITY) + " c" : "N/A";
+        data.get(RATED_CAPACITY) != null ? data.get(RATED_CAPACITY) + " c" : "N\\A";
 
       case REFRIGERATINGAPPL ->
-        data.get(TOTAL_VOLUME) != null ? data.get(TOTAL_VOLUME) + " l" : "N/A";
+        data.get(TOTAL_VOLUME) != null ? data.get(TOTAL_VOLUME) + " l" : "N\\A";
 
-      default -> "N/A";
+      default -> "N\\A";
     };
   }
 
@@ -205,11 +205,11 @@ public class EprelProductMapper implements ProductMapperStrategy {
     if (cavitiesObj instanceof List<?> cavities && !cavities.isEmpty()) {
       return cavities.stream()
         .map(c -> (EprelProduct.Cavity) c)
-        .map(c -> c.getVolume() != null ? c.getVolume() + " l" : "N/A")
+        .map(c -> c.getVolume() != null ? c.getVolume() + " l" : "N\\A")
         .collect(Collectors.joining(" / "));
     }
 
-    return "N/A";
+    return "N\\A";
   }
   private String resolveProductType(NormalizedInput input) {
 

@@ -58,7 +58,7 @@ public class DecoderProductMapper implements ProductMapperStrategy {
       .organizationId(orgId)
       .organizationName(organizationName)
       .initiativeId(initiativeId)
-      .capacity("N/A")
+      .capacity("N\\A")
       .registrationDate(LocalDateTime.now(ZoneOffset.UTC))
       .status(ProductStatus.UPLOADED.name())
       .statusChangeChronology(new ArrayList<>())
