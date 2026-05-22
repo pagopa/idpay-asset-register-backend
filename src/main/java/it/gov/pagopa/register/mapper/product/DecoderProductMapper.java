@@ -113,7 +113,7 @@ public class DecoderProductMapper implements ProductMapperStrategy {
 
 
   private String buildProductName(String category, String brand, String model) {
-    return CATEGORIES_TO_CODE.get(category) + " " + brand + " " + model;
+    return CATEGORIES_FOR_FILENAME.get(category) + " " + brand + " " + model;
   }
 
   private String buildFullProductName(String gtin, String productName) {

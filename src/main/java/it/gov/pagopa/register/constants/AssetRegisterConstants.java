@@ -75,7 +75,7 @@ public class AssetRegisterConstants {
   public static final String TERRESTRIAL_IT_S = "Terrestre";
   public static final String TERRESTRIAL_VIA_CABLE_IT_S = "Terrestre via Cavo";
   public static final String TERRESTRIAL_AND_SATELLITE_IT_S = "Terrestre e Satellitare";
-  public static final String TERRESTRIAL_SATELLITE_AND_VIA_CABLE_IT_S = "Terrestre Satellitare e via Cavo";
+  public static final String TERRESTRIAL_SATELLITE_AND_VIA_CABLE_IT_S = "Terrestre, Satellitare e via Cavo";
 
   public static final String SATELLITE_IT_P =  "Satellitare";
   public static final String TERRESTRIAL_IT_P = "Terrestre";
