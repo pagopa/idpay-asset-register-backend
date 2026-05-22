@@ -15,11 +15,11 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static it.gov.pagopa.register.constants.AssetRegisterConstants.*;
-import static it.gov.pagopa.register.mapper.operation.ProductMapper.limitName;
-import static it.gov.pagopa.register.mapper.operation.ProductMapper.normalizeCsvCode;
+import static it.gov.pagopa.register.mapper.operation.ProductMapper.*;
 import static it.gov.pagopa.register.utils.CsvUtils.DELIMITER;
 import static it.gov.pagopa.register.utils.EprelUtils.mapEnergyClass;
 
@@ -34,43 +34,8 @@ public class EprelProductMapper implements ProductMapperStrategy {
   private static final String TOTAL_VOLUME = "totalVolume";
 
   @Override
-  public String extractBusinessKey(
-    CSVRecord csvRecord,
-    CategoryConfig categoryConfig
-  ) {
-    return normalizeCsvCode(
-      csvRecord.get(categoryConfig.getInputIdentifierField())
-    );
-  }
-
-  @Override
-  public CSVRecord mapToCsvRow(Product product, List<String> headers) {
-    try {
-      StringWriter out = new StringWriter();
-      CSVPrinter printer = new CSVPrinter(out, CSVFormat.Builder.create()
-        .setHeader(headers.toArray(new String[0]))
-        .setDelimiter(DELIMITER)
-        .build());
-
-      printer.printRecord(
-        product.getEprelCode(),
-        product.getGtinCode(),
-        product.getProductCode(),
-        product.getCategory(),
-        product.getCountryOfProduction()
-      );
-
-      CSVFormat format = CSVFormat.Builder.create()
-        .setHeader(headers.toArray(new String[0]))
-        .setSkipHeaderRecord(true)
-        .setDelimiter(DELIMITER)
-        .setTrim(true)
-        .build();
-      List<CSVRecord> records = format.parse(new StringReader(out.toString())).getRecords();
-      return records.getFirst();
-    } catch (Exception _) {
-      return null;
-    }
+  public String extractBusinessKey(CSVRecord csvRecord, CategoryConfig categoryConfig) {
+    return normalizeCsvCode(csvRecord.get(categoryConfig.getInputIdentifierField()));
   }
 
   @Override
@@ -81,112 +46,125 @@ public class EprelProductMapper implements ProductMapperStrategy {
     String initiativeId,
     String productFileId,
     String organizationName,
-    MappingContext mappingContext
+    MappingContext context
   ) {
 
+    NormalizedInput input = normalize(csvRecord, category, context);
 
-    String normalizedCategory =
-      category != null ? category.trim().replaceAll("\\s+", "") : null;
-
-    String capacity = mapCapacity(normalizedCategory, mappingContext);
-
-    String codeProduct = normalizeCsvCode(csvRecord.get(CODE_PRODUCT));
-    String gtinCode = normalizeCsvCode(csvRecord.get(CODE_GTIN_EAN));
-
-    String productName =
-      limitName(mapName(null, mappingContext, normalizedCategory, capacity));
-
-    String fullProductName =
-      limitName(mapName(gtinCode, mappingContext, normalizedCategory, capacity));
+    String capacity = mapCapacity(input.category, input.externalData);
+    String productName = limitName(buildName(null, input, capacity));
+    String fullProductName = limitName(buildName(input.gtinCode, input, capacity));
 
     return Product.builder()
-      .id(gtinCode+"_"+initiativeId)
-      .gtinCode(gtinCode)
-      .productFileId(productFileId)
-      .organizationId(orgId)
-      .initiativeId(initiativeId)
-      .registrationDate(LocalDateTime.now(ZoneOffset.UTC))
-      .status(ProductStatus.UPLOADED.name())
+      .id(buildId(input.gtinCode, initiativeId))
+      .gtinCode(input.gtinCode)
+      .productCode(input.productCode)
+      .eprelCode(input.eprelCode)
+      .category(input.category)
 
-      .productCode(codeProduct)
-      .gtinCode(gtinCode)
-      .eprelCode(csvRecord.get(CODE_EPREL))
-      .category(normalizedCategory)
+      .brand(input.brand)
+      .model(input.model)
+      .energyClass(input.energyClass)
+      .productGroup(input.productGroup)
+      .countryOfProduction(input.country)
 
-      .productGroup(mappingContext.getExternalData().get("productGroup").toString())
-      .countryOfProduction(csvRecord.get(COUNTRY_OF_PRODUCTION))
-      .brand(mappingContext.getExternalData().get("supplierOrTrademark").toString())
-      .model(mappingContext.getExternalData().get("modelIdentifier").toString())
-      .energyClass(mapEnergyClass(mappingContext.getExternalData().get("energyClass").toString()))
       .capacity(capacity)
-
       .productName(productName)
       .fullProductName(fullProductName)
+
+      .productFileId(productFileId)
+      .organizationId(orgId)
       .organizationName(organizationName)
+      .initiativeId(initiativeId)
+
+      .registrationDate(LocalDateTime.now(ZoneOffset.UTC))
+      .status(ProductStatus.UPLOADED.name())
 
       .statusChangeChronology(new ArrayList<>())
       .formalMotivation("")
       .build();
   }
 
-  private String mapCapacity(String category, MappingContext eprelData) {
-    if (eprelData == null) return "N\\A";
+  @Override
+  public CSVRecord mapToCsvRow(Product product, List<String> headers) {
+    try {
+      StringWriter out = new StringWriter();
 
-    return switch (category) {
-      case WASHINGMACHINES, TUMBLEDRYERS ->
-        eprelData.getExternalData().get(RATED_CAPACITY) != null
-          ? eprelData.getExternalData().get(RATED_CAPACITY).toString() + " kg"
-          : "N\\A";
+      try (CSVPrinter printer = new CSVPrinter(out, CSVFormat.Builder.create()
+        .setHeader(headers.toArray(new String[0]))
+        .setDelimiter(DELIMITER)
+        .build())) {
 
-      case WASHERDRIERS ->
-        eprelData.getExternalData().get(RATED_CAPACITY_WASH) != null
-          ? eprelData.getExternalData().get(RATED_CAPACITY_WASH).toString() + " kg"
-          : "N\\A";
-
-      case OVENS -> {
-        Object cavitiesObj = eprelData.getExternalData().get(CAVITIES);
-
-        if (cavitiesObj instanceof List<?> cavities && !cavities.isEmpty()) {
-          yield cavities.stream()
-            .map(c -> (EprelProduct.Cavity) c)
-            .map(c -> c.getVolume() != null ? c.getVolume() + " l" : "N/A")
-            .collect(Collectors.joining(" / "));
-        }
-        yield "N\\A";
+        printer.printRecord(
+          product.getEprelCode(),
+          product.getGtinCode(),
+          product.getProductCode(),
+          product.getCategory(),
+          product.getCountryOfProduction()
+        );
       }
 
-      case DISHWASHERS ->
-        eprelData.getExternalData().get(RATED_CAPACITY) != null
-          ? eprelData.getExternalData().get(RATED_CAPACITY) + " c"
-          : "N\\A";
+      CSVFormat format = CSVFormat.Builder.create()
+        .setHeader(headers.toArray(new String[0]))
+        .setSkipHeaderRecord(true)
+        .setDelimiter(DELIMITER)
+        .setTrim(true)
+        .build();
 
-      case REFRIGERATINGAPPL ->
-        eprelData.getExternalData().get(TOTAL_VOLUME) != null
-          ? eprelData.getExternalData().get(TOTAL_VOLUME) + " l"
-          : "N\\A";
+      return format.parse(new StringReader(out.toString()))
+        .getRecords()
+        .getFirst();
 
-      default -> "N\\A";
-    };
+    } catch (Exception e) {
+      throw new IllegalStateException("Errore CSV EPREL", e);
+    }
   }
 
-  private String mapName(
-    String gtinOrNull,
-    MappingContext eprel,
-    String category,
-    String capacity
-  ) {
-    String type = resolveProductType(eprel, category);
+  private NormalizedInput normalize(CSVRecord csv, String category, MappingContext ctx) {
+
+    var ext = ctx.getExternalData();
+
+    return new NormalizedInput(
+      sanitizeGtinForDto(csv.get(CODE_GTIN_EAN)),
+      sanitizeProductCodeForDto(csv.get(CODE_PRODUCT)),
+      normalizeCsvCode(csv.get(CODE_EPREL)),
+      normalizeCategory(category),
+      normalizeCountry(csv.get(COUNTRY_OF_PRODUCTION)),
+      safe(ext.get("supplierOrTrademark")),
+      safe(ext.get("modelIdentifier")),
+      mapEnergyClass(safe(ext.get("energyClass"))),
+      safe(ext.get("productGroup")),
+      ext
+    );
+  }
+
+  private String normalizeCategory(String c) {
+    return c == null ? null : c.trim().replaceAll("\\s+", "");
+  }
+
+  private String normalizeCountry(String c) {
+    return c == null ? null : c.trim().toUpperCase();
+  }
+
+  private String safe(Object o) {
+    return o == null ? null : o.toString().trim();
+  }
+
+  private String buildName(String gtin, NormalizedInput input, String capacity) {
+
+    String type = resolveProductType(input);
 
     StringBuilder sb = new StringBuilder();
-    if (gtinOrNull != null && !gtinOrNull.isBlank()) {
-      sb.append(gtinOrNull).append(" - ");
+
+    if (gtin != null && !gtin.isBlank()) {
+      sb.append(gtin).append(" - ");
     }
 
     sb.append(type)
       .append(" ")
-      .append(eprel.getExternalData().get("supplierOrTrademark").toString())
+      .append(input.brand)
       .append(" ")
-      .append(eprel.getExternalData().get("modelIdentifier").toString());
+      .append(input.model);
 
     if (!"N\\A".equals(capacity)) {
       sb.append(" ").append(capacity);
@@ -195,50 +173,93 @@ public class EprelProductMapper implements ProductMapperStrategy {
     return sb.toString();
   }
 
-  private String resolveProductType(MappingContext eprel, String category) {
-
-    if (REFRIGERATINGAPPL.equals(category)) {
-      return resolveRefrigeratingProductType(eprel);
-    }
-
-    return CATEGORIES_TO_IT_S.get(category);
+  private String buildId(String gtin, String initiativeId) {
+    return gtin + "_" + initiativeId;
   }
 
-  private String resolveRefrigeratingProductType(MappingContext eprel) {
-    Object compartmentsObj = eprel.getExternalData().get("compartments");
+  private String mapCapacity(String category, Map<String, Object> data) {
+    if (data == null) return "N\\A";
 
-    if (compartmentsObj instanceof List<?> compartments && !compartments.isEmpty()) {
-      boolean isRefrigerator = compartments.stream()
+    return switch (category) {
+      case WASHINGMACHINES, TUMBLEDRYERS ->
+        data.get(RATED_CAPACITY) != null ? data.get(RATED_CAPACITY) + " kg" : "N\\A";
+
+      case WASHERDRIERS ->
+        data.get(RATED_CAPACITY_WASH) != null ? data.get(RATED_CAPACITY_WASH) + " kg" : "N\\A";
+
+      case OVENS -> extractOvenCapacity(data);
+
+      case DISHWASHERS ->
+        data.get(RATED_CAPACITY) != null ? data.get(RATED_CAPACITY) + " c" : "N\\A";
+
+      case REFRIGERATINGAPPL ->
+        data.get(TOTAL_VOLUME) != null ? data.get(TOTAL_VOLUME) + " l" : "N\\A";
+
+      default -> "N\\A";
+    };
+  }
+
+  private String extractOvenCapacity(Map<String, Object> data) {
+    Object cavitiesObj = data.get(CAVITIES);
+
+    if (cavitiesObj instanceof List<?> cavities && !cavities.isEmpty()) {
+      return cavities.stream()
+        .map(c -> (EprelProduct.Cavity) c)
+        .map(c -> c.getVolume() != null ? c.getVolume() + " l" : "N\\A")
+        .collect(Collectors.joining(" / "));
+    }
+
+    return "N\\A";
+  }
+  private String resolveProductType(NormalizedInput input) {
+
+    if (REFRIGERATINGAPPL.equals(input.category)) {
+      return resolveRefrigeratingType(input.externalData);
+    }
+
+    return CATEGORIES_TO_IT_S.get(input.category);
+  }
+
+  private String resolveRefrigeratingType(Map<String, Object> data) {
+    Object obj = data.get("compartments");
+
+    if (obj instanceof List<?> compartments && !compartments.isEmpty()) {
+      boolean isFridge = compartments.stream()
         .map(c -> (EprelProduct.RefrigeratorCompartment) c)
         .anyMatch(this::isRefrigerator);
 
-      return isRefrigerator ? REFRIGERATOR_IT : FREEZER_IT;
+      return isFridge ? REFRIGERATOR_IT : FREEZER_IT;
     }
 
     return FREEZER_IT;
   }
 
-  private boolean isRefrigerator(EprelProduct.RefrigeratorCompartment compartment) {
-    if (REFRIGERATORS_CATEGORY.contains(compartment.getCompartmentType())) {
+  private boolean isRefrigerator(EprelProduct.RefrigeratorCompartment c) {
+
+    if (REFRIGERATORS_CATEGORY.contains(c.getCompartmentType())) {
       return true;
     }
 
-    if (VARIABLE_TEMP.equals(compartment.getCompartmentType())) {
-      return hasRefrigeratorSubCompartment(compartment);
+    if (VARIABLE_TEMP.equals(c.getCompartmentType())) {
+      return c.getSubCompartments() != null &&
+        c.getSubCompartments().stream()
+          .map(EprelProduct.SubCompartment::getCompartmentType)
+          .anyMatch(REFRIGERATORS_CATEGORY::contains);
     }
 
     return false;
   }
 
-  private boolean hasRefrigeratorSubCompartment(EprelProduct.RefrigeratorCompartment compartment) {
-    if (compartment.getSubCompartments() == null) {
-      return false;
-    }
-
-    return compartment.getSubCompartments().stream()
-      .map(EprelProduct.SubCompartment::getCompartmentType)
-      .anyMatch(REFRIGERATORS_CATEGORY::contains);
-  }
-
-
+  private record NormalizedInput(
+    String gtinCode,
+    String productCode,
+    String eprelCode,
+    String category,
+    String country,
+    String brand,
+    String model,
+    String energyClass,
+    String productGroup,
+    Map<String, Object> externalData
+  ) {}
 }
