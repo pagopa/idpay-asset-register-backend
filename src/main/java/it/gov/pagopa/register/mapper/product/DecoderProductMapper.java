@@ -45,7 +45,7 @@ public class DecoderProductMapper implements ProductMapperStrategy {
     String codeProduct = normalizeCsvCode(csvRecord.get(CODE_PRODUCT));
     String gtinCode = normalizeCsvCode(csvRecord.get(CODE_GTIN_EAN));
 
-    String productName = CATEGORIES_TO_IT_S.get(category) + " " + csvRecord.get(BRAND) + " " + csvRecord.get(MODEL);
+    String productName = CATEGORIES_TO_CODE.get(category) + " " + csvRecord.get(BRAND) + " " + csvRecord.get(MODEL);
     String fullProductName = gtinCode + " - " + productName;
 
     return Product.builder()
