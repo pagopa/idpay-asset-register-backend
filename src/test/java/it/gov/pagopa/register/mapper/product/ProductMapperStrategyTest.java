@@ -130,8 +130,8 @@ class ProductMapperStrategyTest {
     assertEquals("DecoderModel", product.getModel());
     assertEquals("N\\A", product.getCapacity());
     assertEquals(ProductStatus.UPLOADED.name(), product.getStatus());
-    assertEquals("DS DecoderBrand DecoderModel", product.getProductName());
-    assertEquals("8009876543210 - DS DecoderBrand DecoderModel", product.getFullProductName());
+    assertEquals("Satellitare DecoderBrand DecoderModel", product.getProductName());
+    assertEquals("8009876543210 - Satellitare DecoderBrand DecoderModel", product.getFullProductName());
   }
 
   @Test
