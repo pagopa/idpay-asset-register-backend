@@ -16,8 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static it.gov.pagopa.register.constants.AssetRegisterConstants.*;
-import static it.gov.pagopa.register.mapper.operation.ProductMapper.limitName;
-import static it.gov.pagopa.register.mapper.operation.ProductMapper.normalizeCsvCode;
+import static it.gov.pagopa.register.mapper.operation.ProductMapper.*;
 import static it.gov.pagopa.register.utils.CsvUtils.DELIMITER;
 
 
@@ -27,9 +26,8 @@ public class CookingHobsProductMapper implements ProductMapperStrategy {
 
   @Override
   public String extractBusinessKey(CSVRecord csvRecord, CategoryConfig config) {
-    return csvRecord.get(config.getInputIdentifierField());
+    return normalizeCsvCode(csvRecord.get(config.getInputIdentifierField()));
   }
-
 
   @Override
   public Product mapToProduct(
@@ -42,33 +40,30 @@ public class CookingHobsProductMapper implements ProductMapperStrategy {
     MappingContext context
   ) {
 
-    String codeProduct = normalizeCsvCode(csvRecord.get(CODE_PRODUCT));
-    String gtinCode = normalizeCsvCode(csvRecord.get(CODE_GTIN_EAN));
+    NormalizedInput input = normalize(csvRecord);
 
-    String productName = CATEGORIES_TO_IT_S.get(COOKINGHOBS) + " " + csvRecord.get(BRAND) + " " + csvRecord.get(MODEL);
-    String fullProductName = gtinCode + " - " + productName;
+    String productName = buildProductName(input.brand, input.model);
+    String fullProductName = buildFullProductName(input.gtinCode, productName);
 
     return Product.builder()
-      .id(gtinCode+"_"+initiativeId)
-      .gtinCode(gtinCode)
-      .productFileId(productFileId)
-      .organizationId(orgId)
-      .registrationDate(LocalDateTime.now(ZoneOffset.UTC))
-      .status(ProductStatus.UPLOADED.name())
-      .productCode(codeProduct)
-      .initiativeId(initiativeId)
-      .gtinCode(gtinCode)
-      .category(COOKINGHOBS)
-      .countryOfProduction(csvRecord.get(COUNTRY_OF_PRODUCTION))
-      .brand(csvRecord.get(BRAND))
-      .model(csvRecord.get(MODEL))
-      .capacity("N\\A")
+      .id(buildId(input.gtinCode, initiativeId))
+      .gtinCode(input.gtinCode)
+      .productCode(input.productCode)
+      .brand(input.brand)
+      .model(input.model)
+      .countryOfProduction(input.country)
       .productName(limitName(productName))
       .fullProductName(limitName(fullProductName))
+      .productFileId(productFileId)
+      .organizationId(orgId)
       .organizationName(organizationName)
+      .initiativeId(initiativeId)
+      .category(COOKINGHOBS)
+      .capacity("N\\A")
+      .registrationDate(LocalDateTime.now(ZoneOffset.UTC))
+      .status(ProductStatus.UPLOADED.name())
       .statusChangeChronology(new ArrayList<>())
       .formalMotivation("")
-
       .build();
   }
 
@@ -76,19 +71,21 @@ public class CookingHobsProductMapper implements ProductMapperStrategy {
   public CSVRecord mapToCsvRow(Product product, List<String> headers) {
     try {
       StringWriter out = new StringWriter();
-      CSVPrinter printer = new CSVPrinter(out, CSVFormat.Builder.create()
+
+      try (CSVPrinter printer = new CSVPrinter(out, CSVFormat.Builder.create()
         .setHeader(headers.toArray(new String[0]))
         .setDelimiter(DELIMITER)
-        .build());
+        .build())) {
 
-      printer.printRecord(
-        product.getGtinCode(),
-        product.getProductCode(),
-        product.getCategory(),
-        product.getCountryOfProduction(),
-        product.getModel(),
-        product.getBrand()
-      );
+        printer.printRecord(
+          product.getGtinCode(),
+          product.getProductCode(),
+          product.getCategory(),
+          product.getCountryOfProduction(),
+          product.getModel(),
+          product.getBrand()
+        );
+      }
 
       CSVFormat format = CSVFormat.Builder.create()
         .setHeader(headers.toArray(new String[0]))
@@ -96,10 +93,48 @@ public class CookingHobsProductMapper implements ProductMapperStrategy {
         .setDelimiter(DELIMITER)
         .setTrim(true)
         .build();
-      List<CSVRecord> records = format.parse(new StringReader(out.toString())).getRecords();
-      return records.getFirst();
-    } catch (Exception _) {
-      return null;
+
+      return format.parse(new StringReader(out.toString()))
+        .getRecords()
+        .getFirst();
+
+    } catch (Exception e) {
+      throw new IllegalStateException("Errore nella generazione del CSV per CookingHobs", e);
     }
   }
+
+  private NormalizedInput normalize(CSVRecord csv) {
+    return new NormalizedInput(
+      sanitizeGtinForDto(csv.get(CODE_GTIN_EAN)),
+      sanitizeProductCodeForDto(csv.get(CODE_PRODUCT)),
+      sanitizeBrandOrModelForDto(csv.get(BRAND)),
+      sanitizeBrandOrModelForDto(csv.get(MODEL)),
+      normalizeCountry(csv.get(COUNTRY_OF_PRODUCTION))
+    );
+  }
+
+  private String normalizeCountry(String value) {
+    if (value == null) return null;
+    return value.trim().toUpperCase();
+  }
+
+  private String buildProductName(String brand, String model) {
+    return CATEGORIES_TO_IT_S.get(COOKINGHOBS) + " " + brand + " " + model;
+  }
+
+  private String buildFullProductName(String gtin, String productName) {
+    return gtin + " - " + productName;
+  }
+
+  private String buildId(String gtin, String initiativeId) {
+    return gtin + "_" + initiativeId;
+  }
+
+  private record NormalizedInput(
+    String gtinCode,
+    String productCode,
+    String brand,
+    String model,
+    String country
+  ) {}
 }
