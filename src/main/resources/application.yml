@@ -128,11 +128,12 @@ spring:
                   max.ms: ${KAFKA_COMMANDS_REQUEST_CONNECTION_TIMEOUT_MAX_MS:${KAFKA_CONSUMER_CONFIG_CONNECTION_TIMEOUT_MAX_MS:200000}}
                   ms: ${KAFKA_COMMANDS_REQUEST_CONNECTION_TIMEOUT_MS:${KAFKA_CONSUMER_CONFIG_CONNECTION_TIMEOUT_MS:100000}}
               standardHeaders: ${KAFKA_COMMANDS_STANDARD_HEADERS:${KAFKA_CONSUMER_CONFIG_STANDARD_HEADERS:both}}
-              startOffset: ${KAFKA_COMMANDS_REQUEST_START_OFFSET:${KAFKA_CONSUMER_CONFIG_START_OFFSET:earliest}}
+            startOffset: ${KAFKA_COMMANDS_REQUEST_START_OFFSET:${KAFKA_CONSUMER_CONFIG_START_OFFSET:earliest}}
   servlet:
     multipart:
-      max-file-size:  2MB
-      max-request-size: 2MB
+      max-file-size: 2MB
+      max-request-size: 3MB
+
 app:
   rest-client:
     one-trust:
