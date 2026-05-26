@@ -69,7 +69,7 @@ public class ProductSpecificRepositoryImpl implements ProductSpecificRepository 
       criteria.and(Product.Fields.eprelCode).regex(".*" + inputCriteria.getEprelCode() + ".*", "i");
     }
     if (inputCriteria.getGtinCode() != null) {
-      criteria.and(FIELD_ID).regex(".*" + inputCriteria.getGtinCode() + ".*", "i");
+      criteria.and(Product.Fields.gtinCode).regex(".*" + inputCriteria.getGtinCode() + ".*", "i");
     }
     if (inputCriteria.getProductName() != null) {
       criteria.and(Product.Fields.productName).regex(".*" + inputCriteria.getProductName() + ".*", "i");
@@ -82,6 +82,9 @@ public class ProductSpecificRepositoryImpl implements ProductSpecificRepository 
     }
     if (inputCriteria.getModel() != null) {
       criteria.and(Product.Fields.model).regex(".*" + inputCriteria.getModel() + ".*", "i");
+    }
+    if (inputCriteria.getProductCode() != null) {
+      criteria.and(Product.Fields.productCode).regex(".*" + inputCriteria.getProductCode() + ".*", "i");
     }
     if (inputCriteria.getStatus() != null) {
       criteria.and(Product.Fields.status).is(inputCriteria.getStatus());
