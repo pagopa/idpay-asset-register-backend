@@ -7,6 +7,7 @@ public class ValidationPatterns {
   public static final String OBJECT_ID_PATTERN = "^[a-fA-F0-9]{24}$";
   public static final String DIGITS_ONLY = "^\\d+$";
   public static final String GTIN_CODE = "^[a-zA-Z0-9]{1,14}$";
+  public static final String PRODUCT_CODE = "^[a-zA-Z0-9]{1,100}$";
   public static final String ANY_TEXT = ".*";
   public static final String ROLE_PATTERN = "^(operatore|invitalia|invitalia_admin)$";
 }
