@@ -21,5 +21,4 @@ public class AuthorizationControllerImpl implements AuthorizationController {
         UserPermissionDTO userPermissionDTO = rolePermissionService.getUserPermission(role);
         return new ResponseEntity<>(userPermissionDTO, HttpStatus.OK);
     }
-
 }
