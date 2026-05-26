@@ -32,6 +32,7 @@ public class EprelConnector {
     ResponseEntity<EprelProduct> response = restTemplate.getForEntity(uri, EprelProduct.class);
     return response.getBody();
   }
+
 }
 
 
