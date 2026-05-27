@@ -43,5 +43,7 @@ public class InitiativeConfig {
 
   private List<String> allowedReloadStatuses;
 
+  private String dmDate;
+
 
 }

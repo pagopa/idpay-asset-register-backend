@@ -39,7 +39,8 @@ public abstract class AbstractValidationService {
       String organizationName,
       CategoryConfig categoryConfig,
       List<String> allowedReloadStatuses,
-      ExternalContext externalContext
+      ExternalContext externalContext,
+      String dmDate
   ) {
 
     ProductMapperStrategy mapper =
@@ -67,7 +68,7 @@ public abstract class AbstractValidationService {
 
       // DB check
       if (!dbCheck(
-          orgId, csvRecord, existing, invalidRecords, errorMessages, allowedReloadStatuses)) {
+          orgId, csvRecord, existing, invalidRecords, errorMessages, allowedReloadStatuses, dmDate)) {
         isValidRecord = false;
       }
 

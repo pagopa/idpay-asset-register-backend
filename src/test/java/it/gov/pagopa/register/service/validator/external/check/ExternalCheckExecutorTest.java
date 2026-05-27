@@ -25,6 +25,8 @@ import static org.mockito.Mockito.when;
 @SpringBootTest(classes = ExternalCheckExecutor.class)
 class ExternalCheckExecutorTest {
 
+  public static final String CATEGORY = "CATEGORY";
+  public static final String DM_DATE = "01/01/2026";
   @MockitoBean
   private ExternalSystemClientDispatcher systemClientDispatcher;
 
@@ -52,7 +54,8 @@ class ExternalCheckExecutorTest {
       mock(CSVRecord.class),
       template,
       Map.of(),
-      "CAT"
+      CATEGORY,
+      DM_DATE
     );
 
     assertFalse(result.isValid());
@@ -74,7 +77,8 @@ class ExternalCheckExecutorTest {
       mock(CSVRecord.class),
       template,
       Map.of(),
-      "CAT"
+      CATEGORY,
+      DM_DATE
     );
 
     assertFalse(result.isValid());
@@ -96,7 +100,8 @@ class ExternalCheckExecutorTest {
       mock(CSVRecord.class),
       template,
       Map.of(),
-      "CAT"
+      CATEGORY,
+      DM_DATE
     );
 
     assertFalse(result.isValid());
@@ -121,7 +126,8 @@ class ExternalCheckExecutorTest {
       mock(CSVRecord.class),
       template,
       Map.of(),
-      "CAT"
+      CATEGORY,
+      DM_DATE
     );
 
     assertFalse(result.isValid());
@@ -150,7 +156,8 @@ class ExternalCheckExecutorTest {
       mock(CSVRecord.class),
       template,
       Map.of(),
-      "CATEGORY"
+      CATEGORY,
+      DM_DATE
     );
     assertFalse(result.isValid());
   }
@@ -176,7 +183,8 @@ class ExternalCheckExecutorTest {
       mock(CSVRecord.class),
       template,
       Map.of("param", "value"),
-      "CATEGORY"
+      CATEGORY,
+      DM_DATE
     );
 
     assertTrue(result.isValid());
