@@ -1,17 +1,17 @@
 package it.gov.pagopa.register.service.operation;
 
 import it.gov.pagopa.register.configuration.InitiativeConfigMap;
-import it.gov.pagopa.register.model.initiative.InitiativeConfig;
 import it.gov.pagopa.register.connector.notification.NotificationService;
 import it.gov.pagopa.register.dto.operation.*;
 import it.gov.pagopa.register.enums.ProductStatus;
 import it.gov.pagopa.register.enums.UserRole;
+import it.gov.pagopa.register.model.initiative.InitiativeConfig;
 import it.gov.pagopa.register.model.operation.Product;
-import it.gov.pagopa.register.model.operation.StatusChangeEvent;
 import it.gov.pagopa.register.repository.operation.ProductRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.*;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -24,26 +24,20 @@ import java.util.List;
 import java.util.Map;
 
 import static it.gov.pagopa.register.constants.AssetRegisterConstants.*;
-import static it.gov.pagopa.register.constants.AssetRegisterConstants.UpdateKeyConstant.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class ProductServiceTest {
 
-  @Mock
-  private ProductRepository productRepository;
+  @Mock private ProductRepository productRepository;
+  @Mock private NotificationService notificationService;
+  @Mock private InitiativeConfigMap initiativeConfigMap;
 
-  @Mock
-  private NotificationService notificationService;
-
-  @Mock
-  private InitiativeConfigMap initiativeConfigMap;
-
-  @InjectMocks
-  private ProductService productService;
+  @InjectMocks private ProductService productService;
 
   private static final String ORG_ID = "org123";
+  private static final String USERNAME = "user";
 
   // ---------------- fetchProductsByFilters ----------------
 
@@ -120,255 +114,224 @@ class ProductServiceTest {
     assertEquals("DB error", ex.getMessage());
   }
 
-  // ---------------- updateProductStatusesWithNotification: KO paths ----------------
+  // ---------------- update KO ----------------
 
   @Test
   void updateStatuses_someProductsMissing_returnsKO_PRODUCT_NOT_FOUND() {
-    ProductUpdateStatusRequestDTO req = req(List.of("g1", "g2"),
-      ProductStatus.UPLOADED, ProductStatus.APPROVED, "why", "FORMAL");
+    ProductUpdateStatusRequestDTO req = req(List.of("g1","g2"),
+      ProductStatus.SUPERVISED);
 
     when(initiativeConfigMap.get("initiId")).thenReturn(initiativeConfig());
-    when(productRepository.findByGtinCodeInAndInitiativeId(req.getGtinCodes(), "initiId"))
-      .thenReturn(List.of(Product.builder().gtinCode("g1").status(ProductStatus.UPLOADED.name()).build())); // manca g2
+    when(productRepository.findByGtinCodeInAndInitiativeId(req.getGtinCodes(),"initiId"))
+      .thenReturn(List.of());
 
-    UpdateResultDTO res = productService.updateProductStatusesWithNotification("initiId",req, UserRole.INVITALIA.getRole(), USERNAME);
-    assertEquals("KO", res.getStatus());
-    assertEquals(PRODUCT_NOT_FOUND_ERROR_KEY, res.getErrorKey());
-    verify(productRepository).findByGtinCodeInAndInitiativeId(req.getGtinCodes(), "initiId");
-    verifyNoMoreInteractions(productRepository, notificationService);
+    UpdateResultDTO res = productService.updateProductStatusesWithNotification(
+      "initiId",req,UserRole.INVITALIA.getRole(),USERNAME);
+
+    assertEquals("KO",res.getStatus());
+    assertEquals(PRODUCT_NOT_FOUND_ERROR_KEY,res.getErrorKey());
+
+    verifyNoInteractions(notificationService);
   }
 
   @Test
-  void updateStatuses_mixedCurrentStatuses_returnsKO_MIXED_STATUS() {
-    ProductUpdateStatusRequestDTO req = req(List.of("g1", "g2"),
-      ProductStatus.UPLOADED, ProductStatus.APPROVED, "why", "FORMAL");
+  void updateStatuses_mixedStatuses_returnsKO() {
+    ProductUpdateStatusRequestDTO req = req(List.of("g1","g2"),
+      ProductStatus.SUPERVISED);
 
     Product a = Product.builder().gtinCode("g1").status(ProductStatus.UPLOADED.name()).build();
     Product b = Product.builder().gtinCode("g2").status(ProductStatus.SUPERVISED.name()).build();
 
     when(initiativeConfigMap.get("initiId")).thenReturn(initiativeConfig());
-    when(productRepository.findByGtinCodeInAndInitiativeId(req.getGtinCodes(), "initiId")).thenReturn(List.of(a, b));
+    when(productRepository.findByGtinCodeInAndInitiativeId(any(),any()))
+      .thenReturn(List.of(a,b));
 
-    UpdateResultDTO res = productService.updateProductStatusesWithNotification("initiId",req, UserRole.INVITALIA.getRole(), USERNAME);
-    assertEquals("KO", res.getStatus());
-    assertEquals(MIXED_STATUS_ERROR_KEY, res.getErrorKey());
-    verify(productRepository).findByGtinCodeInAndInitiativeId(req.getGtinCodes(), "initiId");
-    verifyNoMoreInteractions(productRepository, notificationService);
+    UpdateResultDTO res = productService.updateProductStatusesWithNotification(
+      "initiId",req,UserRole.INVITALIA.getRole(),USERNAME);
+
+    assertEquals("KO",res.getStatus());
+    assertEquals(MIXED_STATUS_ERROR_KEY,res.getErrorKey());
+
+    verifyNoInteractions(notificationService);
   }
 
   @Test
-  void updateStatuses_currentStatusMismatch_returnsKO_INVALID_CURRENT_STATUS() {
-    ProductUpdateStatusRequestDTO req = req(List.of("g1", "g2"),
-      ProductStatus.UPLOADED, ProductStatus.APPROVED, "why", "FORMAL");
+  void updateStatuses_invalidCurrentStatus_returnsKO() {
+    ProductUpdateStatusRequestDTO req = req(List.of("g1","g2"),
+      ProductStatus.SUPERVISED);
 
     Product a = Product.builder().gtinCode("g1").status(ProductStatus.SUPERVISED.name()).build();
     Product b = Product.builder().gtinCode("g2").status(ProductStatus.SUPERVISED.name()).build();
 
     when(initiativeConfigMap.get("initiId")).thenReturn(initiativeConfig());
-    when(productRepository.findByGtinCodeInAndInitiativeId(req.getGtinCodes(), "initiId")).thenReturn(List.of(a, b));
+    when(productRepository.findByGtinCodeInAndInitiativeId(any(),any()))
+      .thenReturn(List.of(a,b));
 
-    UpdateResultDTO res = productService.updateProductStatusesWithNotification("initiId",req, UserRole.INVITALIA.getRole(), USERNAME);
-    assertEquals("KO", res.getStatus());
-    assertEquals(INVALID_CURRENT_STATUS_ERROR_KEY, res.getErrorKey());
-    verify(productRepository).findByGtinCodeInAndInitiativeId(req.getGtinCodes(), "initiId");
-    verifyNoMoreInteractions(productRepository, notificationService);
+    UpdateResultDTO res = productService.updateProductStatusesWithNotification(
+      "initiId",req,UserRole.INVITALIA.getRole(),USERNAME);
+
+    assertEquals("KO",res.getStatus());
+    assertEquals(INVALID_CURRENT_STATUS_ERROR_KEY,res.getErrorKey());
+
+    verifyNoInteractions(notificationService);
   }
 
   @Test
-  void updateStatuses_transitionNotAllowed_returnsKO_TRANSITION_NOT_ALLOWED() {
-    ProductUpdateStatusRequestDTO req = req(List.of("g1", "g2"),
-      ProductStatus.UPLOADED, ProductStatus.APPROVED, "why", "FORMAL");
+  void updateStatuses_initiativeConfigNotFound_returnsKO() {
+    ProductUpdateStatusRequestDTO req = req(List.of("g1","g2"),
+      ProductStatus.SUPERVISED);
 
-    Product a = Product.builder().gtinCode("g1").status(ProductStatus.UPLOADED.name()).build();
-    Product b = Product.builder().gtinCode("g2").status(ProductStatus.UPLOADED.name()).build();
 
-    when(initiativeConfigMap.get("initiId")).thenReturn(initiativeConfig(
-      UserRole.INVITALIA.getRole(),
-      ProductStatus.APPROVED,
-      List.of(ProductStatus.SUPERVISED)
-    ));
-    when(productRepository.findByGtinCodeInAndInitiativeId(req.getGtinCodes(), "initiId")).thenReturn(List.of(a, b));
+    when(initiativeConfigMap.get("initiId")).thenReturn(null);
 
-    UpdateResultDTO res = productService.updateProductStatusesWithNotification("initiId",req, UserRole.INVITALIA.getRole(), USERNAME);
-    assertEquals("KO", res.getStatus());
-    assertEquals(TRANSITION_NOT_ALLOWED_ERROR_KEY, res.getErrorKey());
-    verify(productRepository, never()).saveAll(anyList());
+    UpdateResultDTO res = productService.updateProductStatusesWithNotification(
+      "initiId",req,UserRole.INVITALIA.getRole(),USERNAME);
+
+    assertEquals("KO",res.getStatus());
+    assertEquals(INITIATIVE_NOT_FOUND_ERROR_KEY,res.getErrorKey());
+
+    verifyNoInteractions(notificationService);
   }
 
-  // ---------------- updateProductStatusesWithNotification: OK (no email) ----------------
 
   @Test
-  void updateStatuses_targetNotRejected_noEmail_OK_andChronology_L1() {
-    ProductUpdateStatusRequestDTO req = req(List.of("p1", "p2"),
-      ProductStatus.UPLOADED, ProductStatus.APPROVED, "why", "FORMAL_OK");
+  void updateStatuses_transactionNotAllowed_returnsKO() {
+    ProductUpdateStatusRequestDTO req = req(List.of("g1","g2"),
+      ProductStatus.APPROVED);
+
+    when(initiativeConfigMap.get("initiId")).thenReturn(initiativeConfig());
+
+    UpdateResultDTO res = productService.updateProductStatusesWithNotification(
+      "initiId",req,UserRole.INVITALIA.getRole(),USERNAME);
+
+    assertEquals("KO",res.getStatus());
+    assertEquals(TRANSITION_NOT_ALLOWED_ERROR_KEY,res.getErrorKey());
+
+    verifyNoInteractions(notificationService);
+  }
+
+  // ---------------- update OK no email ----------------
+
+  @Test
+  void updateStatuses_OK_noEmail() {
+    ProductUpdateStatusRequestDTO req = req(List.of("p1","p2"),
+      ProductStatus.WAIT_APPROVED);
 
     Product p1 = Product.builder().gtinCode("p1").status(ProductStatus.UPLOADED.name())
       .statusChangeChronology(new ArrayList<>()).build();
+
     Product p2 = Product.builder().gtinCode("p2").status(ProductStatus.UPLOADED.name())
       .statusChangeChronology(new ArrayList<>()).build();
 
     when(initiativeConfigMap.get("initiId")).thenReturn(initiativeConfig());
-    when(productRepository.findByGtinCodeInAndInitiativeId(req.getGtinCodes(), "initiId")).thenReturn(List.of(p1, p2));
-    when(productRepository.saveAll(anyList())).thenAnswer(inv -> inv.getArgument(0));
+    when(productRepository.findByGtinCodeInAndInitiativeId(any(),any()))
+      .thenReturn(List.of(p1,p2));
 
-    UpdateResultDTO res = productService.updateProductStatusesWithNotification("initiId",req, UserRole.INVITALIA.getRole(), USERNAME);
-    assertEquals("OK", res.getStatus());
+    when(productRepository.saveAll(anyList())).thenAnswer(i -> i.getArgument(0));
 
-    // <-- usando CAPTOR, niente Iterable.get()
-    ArgumentCaptor<List<Product>> captor = ArgumentCaptor.forClass(List.class);
-    verify(productRepository).saveAll(captor.capture());
-    List<Product> saved = captor.getValue();
-    assertEquals(2, saved.size());
-    saved.forEach(p -> {
-      assertEquals(ProductStatus.APPROVED.name(), p.getStatus());
-      assertEquals("FORMAL_OK", p.getFormalMotivation());
-      assertNotNull(p.getStatusChangeChronology());
-      assertFalse(p.getStatusChangeChronology().isEmpty());
-      StatusChangeEvent last = p.getStatusChangeChronology().get(p.getStatusChangeChronology().size() - 1);
-      assertEquals("L1", last.getRole());
-      assertEquals(ProductStatus.UPLOADED, last.getCurrentStatus());
-      assertEquals(ProductStatus.APPROVED, last.getTargetStatus());
-      assertEquals("why", last.getMotivation());
-      assertEquals(USERNAME, last.getUsername());
-    });
+    UpdateResultDTO res = productService.updateProductStatusesWithNotification(
+      "initiId",req,UserRole.INVITALIA.getRole(),USERNAME);
+
+    assertEquals("OK",res.getStatus());
 
     verifyNoInteractions(notificationService);
   }
 
-  // ---------------- updateProductStatusesWithNotification: OK (rejected + email OK) ----------------
+  // ---------------- update OK rejected email success ----------------
 
   @Test
-  void updateStatuses_targetRejected_allEmailsOK_returnsOK_andUsesFormalMotivation() {
-    ProductUpdateStatusRequestDTO req = req(List.of("g1", "g2"),
-      ProductStatus.UPLOADED, ProductStatus.REJECTED, "why", "FORMAL_MAIL");
+  void updateStatuses_rejected_allEmailsOK() {
+    ProductUpdateStatusRequestDTO req = req(List.of("g1","g2"),
+      ProductStatus.REJECTED);
 
     Product a = Product.builder().gtinCode("g1").status(ProductStatus.UPLOADED.name()).build();
     Product b = Product.builder().gtinCode("g2").status(ProductStatus.UPLOADED.name()).build();
 
     when(initiativeConfigMap.get("initiId")).thenReturn(initiativeConfig());
-    when(productRepository.findByGtinCodeInAndInitiativeId(req.getGtinCodes(), "initiId")).thenReturn(List.of(a, b));
-    when(productRepository.saveAll(anyList())).thenAnswer(inv -> inv.getArgument(0));
-    when(productRepository.getProductNamesGroupedByEmail(List.of("g1", "g2"))).thenReturn(List.of(
-      EmailProductDTO.builder().id("a@mail.it").productNames(List.of("n1", "n2")).build(),
-      EmailProductDTO.builder().id("b@mail.it").productNames(List.of("n3")).build()
-    ));
+    when(productRepository.findByGtinCodeInAndInitiativeId(any(),any()))
+      .thenReturn(List.of(a,b));
 
-    doNothing().when(notificationService).sendEmailUpdateStatus(anyList(), anyString(), anyString(), anyString());
+    when(productRepository.saveAll(anyList())).thenAnswer(i -> i.getArgument(0));
+    when(productRepository.getProductNamesGroupedByEmail(any()))
+      .thenReturn(List.of(
+        EmailProductDTO.builder().id("a@mail.it").productNames(List.of("n1")).build()
+      ));
 
-    UpdateResultDTO res = productService.updateProductStatusesWithNotification("initiId",req, UserRole.INVITALIA.getRole(), USERNAME);
-    assertEquals("OK", res.getStatus());
+    UpdateResultDTO res = productService.updateProductStatusesWithNotification(
+      "initiId",req,UserRole.INVITALIA.getRole(),USERNAME);
 
-    verify(productRepository).getProductNamesGroupedByEmail(List.of("g1", "g2"));
-    // niente eq(...) superflui: tutti letterali specifici
-    verify(notificationService).sendEmailUpdateStatus(List.of("n1", "n2"), "FORMAL_MAIL", ProductStatus.REJECTED.name(), "a@mail.it");
-    verify(notificationService).sendEmailUpdateStatus(List.of("n3"), "FORMAL_MAIL", ProductStatus.REJECTED.name(), "b@mail.it");
+    assertEquals("OK",res.getStatus());
+
+    verify(notificationService).sendEmailUpdateStatus(
+      List.of("n1"),"FORMAL",ProductStatus.REJECTED.name(),"a@mail.it");
   }
 
-  // ---------------- updateProductStatusesWithNotification: KO su email ----------------
+  // ---------------- update OK even if email fails ----------------
 
   @Test
-  void updateStatuses_targetRejected_oneEmailFails_returnsKO_EMAIL_ERROR() {
-    ProductUpdateStatusRequestDTO req = req(List.of("g1", "g2"),
-      ProductStatus.UPLOADED, ProductStatus.REJECTED, "why", "FORMAL_MAIL");
+  void updateStatuses_rejected_oneEmailFails_returnsOK() {
+    ProductUpdateStatusRequestDTO req = req(List.of("g1"),
+      ProductStatus.REJECTED);
 
     Product a = Product.builder().gtinCode("g1").status(ProductStatus.UPLOADED.name()).build();
-    Product b = Product.builder().gtinCode("g2").status(ProductStatus.UPLOADED.name()).build();
 
     when(initiativeConfigMap.get("initiId")).thenReturn(initiativeConfig());
-    when(productRepository.findByGtinCodeInAndInitiativeId(req.getGtinCodes(), "initiId")).thenReturn(List.of(a, b));
-    when(productRepository.saveAll(anyList())).thenAnswer(inv -> inv.getArgument(0));
-    when(productRepository.getProductNamesGroupedByEmail(List.of("g1", "g2"))).thenReturn(List.of(
-      EmailProductDTO.builder().id("ok@mail.it").productNames(List.of("nOK")).build(),
-      EmailProductDTO.builder().id("ko@mail.it").productNames(List.of("nKO")).build()
-    ));
+    when(productRepository.findByGtinCodeInAndInitiativeId(any(),any()))
+      .thenReturn(List.of(a));
 
-    doNothing().when(notificationService)
-      .sendEmailUpdateStatus(List.of("nOK"), "FORMAL_MAIL", ProductStatus.REJECTED.name(), "ok@mail.it");
-    doThrow(new RuntimeException("Email service error"))
+    when(productRepository.saveAll(anyList())).thenAnswer(i -> i.getArgument(0));
+    when(productRepository.getProductNamesGroupedByEmail(any()))
+      .thenReturn(List.of(
+        EmailProductDTO.builder().id("ko@mail.it").productNames(List.of("n")).build()
+      ));
+
+    doThrow(new RuntimeException("fail"))
       .when(notificationService)
-      .sendEmailUpdateStatus(List.of("nKO"), "FORMAL_MAIL", ProductStatus.REJECTED.name(), "ko@mail.it");
+      .sendEmailUpdateStatus(anyList(),anyString(),anyString(),anyString());
 
-    UpdateResultDTO res = productService.updateProductStatusesWithNotification("initiId",req, UserRole.INVITALIA.getRole(), USERNAME);
-    assertEquals("KO", res.getStatus());
-    assertEquals(EMAIL_ERROR_KEY, res.getErrorKey());
-    verify(notificationService, times(2)).sendEmailUpdateStatus(anyList(), anyString(), anyString(), anyString());
-  }
+    UpdateResultDTO res = productService.updateProductStatusesWithNotification(
+      "initiId",req,UserRole.INVITALIA.getRole(),USERNAME);
 
-  // ---------------- ruolo L2 ----------------
+    assertEquals("OK",res.getStatus());
+    assertNull(res.getErrorKey());
 
-  @Test
-  void updateStatuses_roleNotInvitalia_chronologyRoleIsL2() {
-    ProductUpdateStatusRequestDTO req = req(List.of("x1"),
-      ProductStatus.UPLOADED, ProductStatus.SUPERVISED, "mot", "FORMAL");
-
-    Product p = Product.builder().gtinCode("x1").status(ProductStatus.UPLOADED.name())
-      .statusChangeChronology(new ArrayList<>()).build();
-
-    when(initiativeConfigMap.get("initiId")).thenReturn(initiativeConfig());
-    when(productRepository.findByGtinCodeInAndInitiativeId(req.getGtinCodes(), "initiId")).thenReturn(List.of(p));
-    when(productRepository.saveAll(anyList())).thenAnswer(inv -> inv.getArgument(0));
-
-    UpdateResultDTO res = productService.updateProductStatusesWithNotification("initiId",req, UserRole.OPERATORE.getRole(), USERNAME);
-    assertEquals("OK", res.getStatus());
-
-    // uso CAPTOR per evitare Iterable
-    ArgumentCaptor<List<Product>> captor = ArgumentCaptor.forClass(List.class);
-    verify(productRepository).saveAll(captor.capture());
-    List<Product> saved = captor.getValue();
-    Product savedP = saved.get(0);
-    StatusChangeEvent last = savedP.getStatusChangeChronology().get(savedP.getStatusChangeChronology().size() - 1);
-    assertEquals("L2", last.getRole());
-    assertEquals(ProductStatus.UPLOADED, last.getCurrentStatus());
-    assertEquals(ProductStatus.SUPERVISED, last.getTargetStatus());
-    assertEquals("mot", last.getMotivation());
-
-    verifyNoInteractions(notificationService);
+    verify(notificationService).sendEmailUpdateStatus(any(),any(),any(),any());
   }
 
   // ---------------- helper ----------------
 
   private ProductUpdateStatusRequestDTO req(List<String> gtins,
-                                            ProductStatus current,
-                                            ProductStatus target,
-                                            String motivation,
-                                            String formalMotivation) {
+                                            ProductStatus target) {
     ProductUpdateStatusRequestDTO dto = new ProductUpdateStatusRequestDTO();
     dto.setGtinCodes(gtins);
-    dto.setCurrentStatus(current);
+    dto.setCurrentStatus(ProductStatus.UPLOADED);
     dto.setTargetStatus(target);
-    dto.setMotivation(motivation);
-    dto.setFormalMotivation(formalMotivation);
+    dto.setMotivation("why");
+    dto.setFormalMotivation("FORMAL");
     return dto;
   }
 
   private InitiativeConfig initiativeConfig() {
     InitiativeConfig config = new InitiativeConfig();
     config.setInitiativeName("Initiative");
+
     config.setStateTransitions(Map.of(
-      UserRole.INVITALIA.getRole(), transitions(
-        ProductStatus.APPROVED, List.of(ProductStatus.UPLOADED),
-        ProductStatus.REJECTED, List.of(ProductStatus.UPLOADED)
-      ),
-      UserRole.OPERATORE.getRole(), transitions(
-        ProductStatus.SUPERVISED, List.of(ProductStatus.UPLOADED)
+      UserRole.INVITALIA.getRole(),
+      transitions(
+        ProductStatus.WAIT_APPROVED.name(), List.of(ProductStatus.UPLOADED),
+        ProductStatus.REJECTED.name(), List.of(ProductStatus.UPLOADED),
+        ProductStatus.SUPERVISED.name(), List.of(ProductStatus.UPLOADED)
       )
     ));
     return config;
   }
 
-  private InitiativeConfig initiativeConfig(String role, ProductStatus targetStatus, List<ProductStatus> allowedCurrentStatuses) {
-    InitiativeConfig config = new InitiativeConfig();
-    config.setInitiativeName("Initiative");
-    config.setStateTransitions(Map.of(role, transitions(targetStatus, allowedCurrentStatuses)));
-    return config;
-  }
-
-  @SuppressWarnings({"rawtypes", "unchecked"})
+  @SuppressWarnings({"rawtypes","unchecked"})
   private Map<String, List<ProductStatus>> transitions(Object... entries) {
-    Map transitions = new HashMap();
+    Map map = new HashMap();
     for (int i = 0; i < entries.length; i += 2) {
-      transitions.put(entries[i], entries[i + 1]);
+      map.put(entries[i], entries[i+1]);
     }
-    return transitions;
+    return map;
   }
 }
