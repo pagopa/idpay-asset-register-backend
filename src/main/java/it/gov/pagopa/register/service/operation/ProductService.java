@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -124,7 +125,7 @@ public class ProductService {
     }
 
     List<Product> products = getProductsOrFail(request.getGtinCodes(), initiativeId);
-    if (products == null) {
+    if (products.isEmpty()) {
       return UpdateResultDTO.ko(PRODUCT_NOT_FOUND_ERROR_KEY);
     }
 
@@ -156,8 +157,6 @@ public class ProductService {
       log.error("[UPDATE_PRODUCT_STATUSES] - Config is null");
       return false;
     }
-
-
 
     return true;
   }
@@ -222,7 +221,7 @@ public class ProductService {
 
     if (products.isEmpty() || products.size() != gtins.size()) {
       log.warn("[UPDATE_PRODUCT_STATUSES] - Some products not found or not accessible");
-      return null;
+      return Collections.emptyList();
     }
 
     return products;
