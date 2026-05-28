@@ -84,6 +84,27 @@ class ProducerImportServiceTest {
     assertEquals(first.getCreatedAt(), first.getUpdatedAt());
   }
 
+  @Test
+  void importJson_shouldTrimProducerInputFields() {
+    String json = """
+      {"producerId":" 456 ","initiativeId":" 111 ","producerEmail":" producer@test.it ","producerName":" Producer 1 "}
+      """;
+    when(portalInitiativeService.getInitiativeDetail("111")).thenReturn(initiativeDetail());
+
+    producerImportService.importJson(json);
+
+    ArgumentCaptor<List<ProducersInitiative>> captor = ArgumentCaptor.forClass(List.class);
+    verify(producersInitiativeRepository).saveAll(captor.capture());
+
+    ProducersInitiative savedProducer = captor.getValue().getFirst();
+    assertEquals("456_111", savedProducer.getId());
+    assertEquals("456", savedProducer.getProducerId());
+    assertEquals("111", savedProducer.getInitiativeId());
+    assertEquals("producer@test.it", savedProducer.getProducerEmail());
+    assertEquals("Producer 1", savedProducer.getProducerName());
+    verify(portalInitiativeService).getInitiativeDetail("111");
+  }
+
   @ParameterizedTest
   @ValueSource(strings = {"", "\"producerEmail\":\" \",", "\"producerEmail\":\"not-an-email\","})
   void importJson_shouldSaveDefaultProducerEmailWhenMissingBlankOrInvalid(String producerEmailJsonProperty) {
