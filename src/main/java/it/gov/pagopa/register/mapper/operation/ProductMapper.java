@@ -121,8 +121,6 @@ public class ProductMapper {
 
     String v = value.trim();
 
-    v = v.replaceAll("[^a-zA-Z0-9 ]", "");
-
     v = v.replaceAll("\\s+", " ");
 
     if (v.length() > MAX_FIELD_100) {
@@ -140,8 +138,6 @@ public class ProductMapper {
     String v = value.trim();
 
     v = v.replaceAll("\\s+", "");
-
-    v = v.replaceAll("[^a-zA-Z0-9]", "");
 
     if (v.length() > MAX_GTIN_LENGTH) {
       v = v.substring(0, MAX_GTIN_LENGTH);
