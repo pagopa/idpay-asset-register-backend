@@ -33,13 +33,11 @@ public interface PortalInitiativeRestClient {
   );
 
   @GetMapping(
-    value = "/idpay/organization/{organizationId}/initiative/{initiativeId}",
+    value = "/idpay/initiative/{initiativeId}/beneficiary/view",
     produces = "application/json"
   )
-  ResponseEntity<InitiativeDTO> getInitiativeDetail(
-    @PathVariable("organizationId") String organizationId,
-    @PathVariable("initiativeId") String initiativeId,
-    @RequestParam(value = "role", required = false) String role
+  ResponseEntity<InitiativeDTO> getInitiativeBeneficiaryView(
+    @PathVariable("initiativeId") String initiativeId
   );
 
 }

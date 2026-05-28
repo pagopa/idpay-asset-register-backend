@@ -27,11 +27,10 @@ public class PortalInitiativeServiceImpl implements PortalInitiativeService {
 
   @Override
   public InitiativeDTO getInitiativeDetail(String organizationId, String initiativeId) {
-    log.info("[GET_INITIATIVE_DETAIL] - Fetching initiative detail for organizationId: {}, initiativeId: {}",
-      organizationId, initiativeId);
+    log.info("[GET_INITIATIVE_DETAIL] - Fetching initiative detail for initiativeId: {}", initiativeId);
 
     return portalInitiativeRestClient
-      .getInitiativeDetail(organizationId, initiativeId, null)
+      .getInitiativeBeneficiaryView(initiativeId)
       .getBody();
   }
 }

@@ -63,7 +63,7 @@ class PortalInitiativeServiceImplTest {
   }
 
   @Test
-  void getInitiativeDetail_Success() {
+  void getInitiativeDetail_UsesBeneficiaryViewByInitiativeId() {
 
     String organizationId = "producer-123";
     String initiativeId = "111";
@@ -77,13 +77,13 @@ class PortalInitiativeServiceImplTest {
       .organizationName("MIMIT")
       .build();
 
-    when(portalInitiativeRestClient.getInitiativeDetail(organizationId, initiativeId, null))
+    when(portalInitiativeRestClient.getInitiativeBeneficiaryView(initiativeId))
       .thenReturn(ResponseEntity.ok(detail));
 
     InitiativeDTO result = service.getInitiativeDetail(organizationId, initiativeId);
 
     assertEquals(detail, result);
-    verify(portalInitiativeRestClient).getInitiativeDetail(organizationId, initiativeId, null);
+    verify(portalInitiativeRestClient).getInitiativeBeneficiaryView(initiativeId);
     verifyNoMoreInteractions(portalInitiativeRestClient);
   }
 }
