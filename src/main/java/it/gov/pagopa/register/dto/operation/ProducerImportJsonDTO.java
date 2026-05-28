@@ -1,15 +1,13 @@
 package it.gov.pagopa.register.dto.operation;
 
 import lombok.Data;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @Data
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class ProducerImportJsonDTO {
   private String producerId;
   private String initiativeId;
-  private String initiativeName;
-  private String initiativeStatus;
-  private String initiativeStartDate;
-  private String initiativeEndDate;
-  private String initiativeServiceId;
-  private String initiativeOrganizationName;
+  private String producerEmail;
+  private String producerName;
 }

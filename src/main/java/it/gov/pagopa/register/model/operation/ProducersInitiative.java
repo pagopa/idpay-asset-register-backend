@@ -21,6 +21,8 @@ public class ProducersInitiative {
   private String id;
 
   private String producerId;
+  private String producerEmail;
+  private String producerName;
   private String initiativeId;
 
   private String initiativeName;

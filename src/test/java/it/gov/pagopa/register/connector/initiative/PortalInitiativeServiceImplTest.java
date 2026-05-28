@@ -10,6 +10,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.ResponseEntity;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -58,6 +59,30 @@ class PortalInitiativeServiceImplTest {
 
     verify(portalInitiativeRestClient)
       .getInitiativeSummary(organizationId, null);
+    verifyNoMoreInteractions(portalInitiativeRestClient);
+  }
+
+  @Test
+  void getInitiativeDetail_UsesBeneficiaryViewByInitiativeId() {
+
+    String initiativeId = "111";
+    InitiativeDTO detail = InitiativeDTO.builder()
+      .initiativeId(initiativeId)
+      .initiativeName("Iniziativa A")
+      .status(InitiativeStatus.PUBLISHED)
+      .startDate(LocalDate.of(2025, 12, 31))
+      .endDate(LocalDate.of(2026, 12, 30))
+      .serviceId("service1")
+      .organizationName("MIMIT")
+      .build();
+
+    when(portalInitiativeRestClient.getInitiativeBeneficiaryView(initiativeId))
+      .thenReturn(ResponseEntity.ok(detail));
+
+    InitiativeDTO result = service.getInitiativeDetail(initiativeId);
+
+    assertEquals(detail, result);
+    verify(portalInitiativeRestClient).getInitiativeBeneficiaryView(initiativeId);
     verifyNoMoreInteractions(portalInitiativeRestClient);
   }
 }
