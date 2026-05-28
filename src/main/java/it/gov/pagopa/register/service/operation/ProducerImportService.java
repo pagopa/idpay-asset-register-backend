@@ -38,6 +38,7 @@ public class ProducerImportService {
   private static final int SAVE_BATCH_SIZE = 1000;
   private static final Pattern EMAIL_VALIDATION_PATTERN = Pattern.compile(EMAIL_PATTERN);
   private static final String MISSING_REQUIRED_FIELD_MESSAGE = "Missing required field [%s]";
+  private static final String INITIATIVE_ID = "initiativeId";
 
   private final ProducersInitiativeRepository producersInitiativeRepository;
   private final ObjectMapper objectMapper;
@@ -166,12 +167,12 @@ public class ProducerImportService {
 
   private void validateProducerInput(ProducerImportJsonDTO dto) {
     requiredValue(dto.getProducerId(), "producerId");
-    requiredValue(dto.getInitiativeId(), "initiativeId");
+    requiredValue(dto.getInitiativeId(), INITIATIVE_ID);
     requiredValue(dto.getProducerName(), "producerName");
   }
 
   private InitiativeDTO getInitiativeDetail(ProducerImportJsonDTO dto, Map<String, InitiativeDTO> initiativeDetails) {
-    String initiativeId = requiredValue(dto.getInitiativeId(), "initiativeId");
+    String initiativeId = requiredValue(dto.getInitiativeId(), INITIATIVE_ID);
     return initiativeDetails.computeIfAbsent(initiativeId, portalInitiativeService::getInitiativeDetail);
   }
 
@@ -185,7 +186,7 @@ public class ProducerImportService {
 
   private ProducersInitiative toProducer(ProducerImportJsonDTO dto, InitiativeDTO initiativeDetail, LocalDateTime now) {
     String producerId = requiredValue(dto.getProducerId(), "producerId");
-    String initiativeId = requiredValue(dto.getInitiativeId(), "initiativeId");
+    String initiativeId = requiredValue(dto.getInitiativeId(), INITIATIVE_ID);
     String producerEmail = optionalEmail(dto.getProducerEmail());
     String producerName = requiredValue(dto.getProducerName(), "producerName");
     if (initiativeDetail == null) {
