@@ -83,16 +83,35 @@ class ProducerImportServiceTest {
   }
 
   @Test
-  void importJson_shouldRejectMissingProducerEmail() {
+  void importJson_shouldSaveDefaultProducerEmailWhenMissing() {
     String json = """
       {"producerId":"456","initiativeId":"111","producerName":"Producer 1"}
       """;
+    when(portalInitiativeService.getInitiativeDetail("456", "111")).thenReturn(initiativeDetail());
 
-    ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> producerImportService.importJson(json));
+    producerImportService.importJson(json);
 
-    assertEquals(HttpStatus.BAD_REQUEST, exception.getStatusCode());
-    assertTrue(exception.getReason().contains("producerEmail"));
-    verifyNoInteractions(portalInitiativeService, producersInitiativeRepository);
+    ArgumentCaptor<List<ProducersInitiative>> captor = ArgumentCaptor.forClass(List.class);
+    verify(producersInitiativeRepository).saveAll(captor.capture());
+
+    ProducersInitiative savedProducer = captor.getValue().getFirst();
+    assertEquals("-", savedProducer.getProducerEmail());
+  }
+
+  @Test
+  void importJson_shouldSaveDefaultProducerEmailWhenBlank() {
+    String json = """
+      {"producerId":"456","initiativeId":"111","producerEmail":" ","producerName":"Producer 1"}
+      """;
+    when(portalInitiativeService.getInitiativeDetail("456", "111")).thenReturn(initiativeDetail());
+
+    producerImportService.importJson(json);
+
+    ArgumentCaptor<List<ProducersInitiative>> captor = ArgumentCaptor.forClass(List.class);
+    verify(producersInitiativeRepository).saveAll(captor.capture());
+
+    ProducersInitiative savedProducer = captor.getValue().getFirst();
+    assertEquals("-", savedProducer.getProducerEmail());
   }
 
   @Test
