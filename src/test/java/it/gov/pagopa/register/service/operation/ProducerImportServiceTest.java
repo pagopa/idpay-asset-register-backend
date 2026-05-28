@@ -107,7 +107,7 @@ class ProducerImportServiceTest {
 
   @ParameterizedTest
   @ValueSource(strings = {"", "\"producerEmail\":\" \",", "\"producerEmail\":\"not-an-email\","})
-  void importJson_shouldSaveDefaultProducerEmailWhenMissingBlankOrInvalid(String producerEmailJsonProperty) {
+  void importJson_shouldSaveNullProducerEmailWhenMissingBlankOrInvalid(String producerEmailJsonProperty) {
     String json = """
       {"producerId":"456","initiativeId":"111",%s"producerName":"Producer 1"}
       """.formatted(producerEmailJsonProperty);
@@ -119,7 +119,7 @@ class ProducerImportServiceTest {
     verify(producersInitiativeRepository).saveAll(captor.capture());
 
     ProducersInitiative savedProducer = captor.getValue().getFirst();
-    assertEquals("-", savedProducer.getProducerEmail());
+    assertNull(savedProducer.getProducerEmail());
   }
 
   @Test

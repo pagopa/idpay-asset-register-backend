@@ -35,7 +35,6 @@ import static it.gov.pagopa.register.constants.ValidationPatterns.EMAIL_PATTERN;
 public class ProducerImportService {
 
   private static final String CSV_SOURCE = "CSV";
-  private static final String DEFAULT_PRODUCER_EMAIL = "-";
   private static final int SAVE_BATCH_SIZE = 1000;
   private static final Pattern EMAIL_VALIDATION_PATTERN = Pattern.compile(EMAIL_PATTERN);
   private static final String MISSING_REQUIRED_FIELD_MESSAGE = "Missing required field [%s]";
@@ -225,11 +224,11 @@ public class ProducerImportService {
   private String optionalEmail(String value) {
     String email = StringUtils.strip(value);
     if (StringUtils.isBlank(email)) {
-      return DEFAULT_PRODUCER_EMAIL;
+      return null;
     }
     return EMAIL_VALIDATION_PATTERN.matcher(email).matches()
       ? email
-      : DEFAULT_PRODUCER_EMAIL;
+      : null;
   }
 
   private LocalDate requiredDate(LocalDate value, String fieldName) {
