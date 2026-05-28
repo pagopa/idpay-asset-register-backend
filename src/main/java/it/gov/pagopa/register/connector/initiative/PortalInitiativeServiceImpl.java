@@ -24,4 +24,14 @@ public class PortalInitiativeServiceImpl implements PortalInitiativeService {
       .map(InitiativeMapper::toDTO)
       .toList();
   }
+
+  @Override
+  public InitiativeDTO getInitiativeDetail(String organizationId, String initiativeId) {
+    log.info("[GET_INITIATIVE_DETAIL] - Fetching initiative detail for organizationId: {}, initiativeId: {}",
+      organizationId, initiativeId);
+
+    return portalInitiativeRestClient
+      .getInitiativeDetail(organizationId, initiativeId, null)
+      .getBody();
+  }
 }

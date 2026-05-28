@@ -1,5 +1,7 @@
 package it.gov.pagopa.register.service.operation;
 
+import it.gov.pagopa.register.connector.initiative.PortalInitiativeService;
+import it.gov.pagopa.register.dto.operation.InitiativeDTO;
 import it.gov.pagopa.register.dto.operation.InitiativeStatus;
 import it.gov.pagopa.register.dto.operation.ProducerImportJsonDTO;
 import it.gov.pagopa.register.dto.operation.ProducerImportResultDTO;
@@ -16,13 +18,16 @@ import tools.jackson.core.JacksonException;
 import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.ObjectMapper;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
-import java.time.format.DateTimeParseException;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.regex.Pattern;
+
+import static it.gov.pagopa.register.constants.ValidationPatterns.EMAIL_PATTERN;
 
 @Slf4j
 @Service
@@ -31,11 +36,11 @@ public class ProducerImportService {
 
   private static final String CSV_SOURCE = "CSV";
   private static final int SAVE_BATCH_SIZE = 1000;
-  private static final String INITIATIVE_START_DATE = "initiativeStartDate";
-  private static final String INITIATIVE_END_DATE = "initiativeEndDate";
+  private static final Pattern EMAIL_VALIDATION_PATTERN = Pattern.compile(EMAIL_PATTERN);
 
   private final ProducersInitiativeRepository producersInitiativeRepository;
   private final ObjectMapper objectMapper;
+  private final PortalInitiativeService portalInitiativeService;
 
 
   public ProducerImportResultDTO importJson(String json) {
@@ -149,9 +154,32 @@ public class ProducerImportService {
     }
 
     LocalDateTime now = LocalDateTime.now();
+    Map<String, InitiativeDTO> initiativeDetails = new HashMap<>();
     return records.stream()
-      .map(producerImportJsonDTO -> toProducer(producerImportJsonDTO, now))
+      .map(producerImportJsonDTO -> {
+        validateProducerInput(producerImportJsonDTO);
+        return toProducer(
+          producerImportJsonDTO,
+          getInitiativeDetail(producerImportJsonDTO, initiativeDetails),
+          now);
+      })
       .toList();
+  }
+
+  private void validateProducerInput(ProducerImportJsonDTO dto) {
+    requiredValue(dto.getProducerId(), "producerId");
+    requiredValue(dto.getInitiativeId(), "initiativeId");
+    requiredEmail(dto.getProducerEmail(), "producerEmail");
+    requiredValue(dto.getProducerName(), "producerName");
+  }
+
+  private InitiativeDTO getInitiativeDetail(ProducerImportJsonDTO dto, Map<String, InitiativeDTO> initiativeDetails) {
+    String organizationId = requiredValue(dto.getProducerId(), "producerId");
+    String initiativeId = requiredValue(dto.getInitiativeId(), "initiativeId");
+    String cacheKey = organizationId + "_" + initiativeId;
+
+    return initiativeDetails.computeIfAbsent(cacheKey,
+      key -> portalInitiativeService.getInitiativeDetail(organizationId, initiativeId));
   }
 
   private ProducerImportJsonDTO readJsonLine(String line) {
@@ -168,12 +196,8 @@ public class ProducerImportService {
     ProducerImportJsonDTO dto = new ProducerImportJsonDTO();
     dto.setProducerId(stringValue(producerFields.get("producerId")));
     dto.setInitiativeId(stringValue(producerFields.get("initiativeId")));
-    dto.setInitiativeName(stringValue(producerFields.get("initiativeName")));
-    dto.setInitiativeStatus(stringValue(producerFields.get("initiativeStatus"), producerFields.get("InitiativeStatus")));
-    dto.setInitiativeStartDate(stringValue(producerFields.get(INITIATIVE_START_DATE)));
-    dto.setInitiativeEndDate(stringValue(producerFields.get(INITIATIVE_END_DATE)));
-    dto.setInitiativeServiceId(stringValue(producerFields.get("initiativeServiceId")));
-    dto.setInitiativeOrganizationName(stringValue(producerFields.get("initiativeOrganizationName")));
+    dto.setProducerEmail(stringValue(producerFields.get("producerEmail")));
+    dto.setProducerName(stringValue(producerFields.get("producerName")));
     return dto;
   }
 
@@ -185,22 +209,27 @@ public class ProducerImportService {
       .orElse(null);
   }
 
-  private ProducersInitiative toProducer(ProducerImportJsonDTO dto, LocalDateTime now) {
+  private ProducersInitiative toProducer(ProducerImportJsonDTO dto, InitiativeDTO initiativeDetail, LocalDateTime now) {
     String producerId = requiredValue(dto.getProducerId(), "producerId");
     String initiativeId = requiredValue(dto.getInitiativeId(), "initiativeId");
+    String producerEmail = requiredEmail(dto.getProducerEmail(), "producerEmail");
+    if (initiativeDetail == null) {
+      throw new IllegalArgumentException("Initiative detail not found for producerId [%s] and initiativeId [%s]"
+        .formatted(producerId, initiativeId));
+    }
 
     return ProducersInitiative.builder()
       .id(producerId + "_" + initiativeId)
       .producerId(producerId)
+      .producerEmail(producerEmail)
+      .producerName(requiredValue(dto.getProducerName(), "producerName"))
       .initiativeId(initiativeId)
-      .initiativeName(requiredValue(dto.getInitiativeName(), "initiativeName"))
-      .initiativeStatus(parseInitiativeStatus(requiredValue(dto.getInitiativeStatus(), "initiativeStatus")))
-      .initiativeStartDate(parseJsonDate(
-        requiredValue(dto.getInitiativeStartDate(), INITIATIVE_START_DATE), INITIATIVE_START_DATE))
-      .initiativeEndDate(parseJsonDate(
-        requiredValue(dto.getInitiativeEndDate(), INITIATIVE_END_DATE), INITIATIVE_END_DATE))
-      .initiativeServiceId(requiredValue(dto.getInitiativeServiceId(), "initiativeServiceId"))
-      .initiativeOrganizationName(requiredValue(dto.getInitiativeOrganizationName(), "initiativeOrganizationName"))
+      .initiativeName(requiredValue(initiativeDetail.getInitiativeName(), "initiativeName"))
+      .initiativeStatus(requiredStatus(initiativeDetail.getStatus(), "initiativeStatus"))
+      .initiativeStartDate(requiredDate(initiativeDetail.getStartDate(), "initiativeStartDate").atStartOfDay())
+      .initiativeEndDate(requiredDate(initiativeDetail.getEndDate(), "initiativeEndDate").atStartOfDay())
+      .initiativeServiceId(requiredValue(initiativeDetail.getServiceId(), "initiativeServiceId"))
+      .initiativeOrganizationName(requiredValue(initiativeDetail.getOrganizationName(), "initiativeOrganizationName"))
       .source(CSV_SOURCE)
       .enabled(Boolean.TRUE)
       .createdAt(now)
@@ -215,24 +244,25 @@ public class ProducerImportService {
     return value;
   }
 
-  private InitiativeStatus parseInitiativeStatus(String value) {
-    try {
-      return InitiativeStatus.valueOf(value);
-    } catch (IllegalArgumentException e) {
-      throw new IllegalArgumentException("Invalid initiativeStatus [%s]".formatted(value), e);
+  private String requiredEmail(String value, String fieldName) {
+    String email = requiredValue(value, fieldName);
+    if (!EMAIL_VALIDATION_PATTERN.matcher(email).matches()) {
+      throw new IllegalArgumentException("Invalid email field [%s]".formatted(fieldName));
     }
+    return email;
   }
 
-  private LocalDateTime parseJsonDate(String value, String fieldName) {
-    try {
-      return OffsetDateTime.parse(value).toLocalDateTime();
-    } catch (DateTimeParseException offsetDateTimeException) {
-      try {
-        return LocalDateTime.parse(value);
-      } catch (DateTimeParseException ex) {
-        ex.addSuppressed(offsetDateTimeException);
-        throw new IllegalArgumentException("Invalid date field [%s]".formatted(fieldName), ex);
-      }
+  private LocalDate requiredDate(LocalDate value, String fieldName) {
+    if (value == null) {
+      throw new IllegalArgumentException("Missing required field [%s]".formatted(fieldName));
     }
+    return value;
+  }
+
+  private InitiativeStatus requiredStatus(InitiativeStatus value, String fieldName) {
+    if (value == null) {
+      throw new IllegalArgumentException("Missing required field [%s]".formatted(fieldName));
+    }
+    return value;
   }
 }

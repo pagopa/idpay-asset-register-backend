@@ -1,6 +1,7 @@
 package it.gov.pagopa.register.connector.initiative;
 
 import it.gov.pagopa.register.dto.operation.InitiativeSummaryDTO;
+import it.gov.pagopa.register.dto.operation.InitiativeDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -28,6 +29,16 @@ public interface PortalInitiativeRestClient {
   )
   ResponseEntity<List<InitiativeSummaryDTO>> getInitiativeSummary(
     @PathVariable("organizationId") String organizationId,
+    @RequestParam(value = "role", required = false) String role
+  );
+
+  @GetMapping(
+    value = "/idpay/organization/{organizationId}/initiative/{initiativeId}",
+    produces = "application/json"
+  )
+  ResponseEntity<InitiativeDTO> getInitiativeDetail(
+    @PathVariable("organizationId") String organizationId,
+    @PathVariable("initiativeId") String initiativeId,
     @RequestParam(value = "role", required = false) String role
   );
 

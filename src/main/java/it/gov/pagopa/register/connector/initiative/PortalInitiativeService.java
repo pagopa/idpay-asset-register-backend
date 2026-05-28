@@ -7,4 +7,6 @@ import java.util.List;
 public interface PortalInitiativeService {
 
   List<InitiativeDTO> getInitiatives(String organizationId);
+
+  InitiativeDTO getInitiativeDetail(String organizationId, String initiativeId);
 }
