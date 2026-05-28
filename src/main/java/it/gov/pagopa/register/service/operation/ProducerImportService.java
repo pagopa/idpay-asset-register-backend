@@ -9,6 +9,7 @@ import it.gov.pagopa.register.model.operation.ProducersInitiative;
 import it.gov.pagopa.register.repository.operation.ProducersInitiativeRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.dao.QueryTimeoutException;
 import org.springframework.dao.TransientDataAccessResourceException;
 import org.springframework.http.HttpStatus;
@@ -128,11 +129,11 @@ public class ProducerImportService {
   }
 
   private List<ProducersInitiative> parseJson(String json) throws JacksonException {
-    if (json == null || json.isBlank()) {
+    if (StringUtils.isBlank(json)) {
       throw new IllegalArgumentException("JSON payload is empty");
     }
 
-    String trimmedJson = json.strip();
+    String trimmedJson = StringUtils.strip(json);
 
     List<ProducerImportJsonDTO> records;
 
@@ -142,8 +143,8 @@ public class ProducerImportService {
         });
     } else {
       records = Arrays.stream(trimmedJson.split("\\R"))
-        .map(String::strip)
-        .filter(line -> !line.isBlank())
+        .map(StringUtils::strip)
+        .filter(StringUtils::isNotBlank)
         .map(this::readJsonLine)
         .toList();
     }
@@ -214,17 +215,18 @@ public class ProducerImportService {
   }
 
   private String requiredValue(String value, String fieldName) {
-    if (value == null || value.isBlank()) {
+    String cleanedValue = StringUtils.strip(value);
+    if (StringUtils.isBlank(cleanedValue)) {
       throw new IllegalArgumentException(MISSING_REQUIRED_FIELD_MESSAGE.formatted(fieldName));
     }
-    return value.strip();
+    return cleanedValue;
   }
 
   private String optionalEmail(String value) {
-    if (value == null || value.isBlank()) {
+    String email = StringUtils.strip(value);
+    if (StringUtils.isBlank(email)) {
       return DEFAULT_PRODUCER_EMAIL;
     }
-    String email = value.strip();
     return EMAIL_VALIDATION_PATTERN.matcher(email).matches()
       ? email
       : DEFAULT_PRODUCER_EMAIL;
