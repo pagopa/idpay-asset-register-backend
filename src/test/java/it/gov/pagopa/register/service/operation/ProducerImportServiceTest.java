@@ -8,6 +8,8 @@ import it.gov.pagopa.register.model.operation.ProducersInitiative;
 import it.gov.pagopa.register.repository.operation.ProducersInitiativeRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -82,43 +84,12 @@ class ProducerImportServiceTest {
     assertEquals(first.getCreatedAt(), first.getUpdatedAt());
   }
 
-  @Test
-  void importJson_shouldSaveDefaultProducerEmailWhenMissing() {
+  @ParameterizedTest
+  @ValueSource(strings = {"", "\"producerEmail\":\" \",", "\"producerEmail\":\"not-an-email\","})
+  void importJson_shouldSaveDefaultProducerEmailWhenMissingBlankOrInvalid(String producerEmailJsonProperty) {
     String json = """
-      {"producerId":"456","initiativeId":"111","producerName":"Producer 1"}
-      """;
-    when(portalInitiativeService.getInitiativeDetail("111")).thenReturn(initiativeDetail());
-
-    producerImportService.importJson(json);
-
-    ArgumentCaptor<List<ProducersInitiative>> captor = ArgumentCaptor.forClass(List.class);
-    verify(producersInitiativeRepository).saveAll(captor.capture());
-
-    ProducersInitiative savedProducer = captor.getValue().getFirst();
-    assertEquals("-", savedProducer.getProducerEmail());
-  }
-
-  @Test
-  void importJson_shouldSaveDefaultProducerEmailWhenBlank() {
-    String json = """
-      {"producerId":"456","initiativeId":"111","producerEmail":" ","producerName":"Producer 1"}
-      """;
-    when(portalInitiativeService.getInitiativeDetail("111")).thenReturn(initiativeDetail());
-
-    producerImportService.importJson(json);
-
-    ArgumentCaptor<List<ProducersInitiative>> captor = ArgumentCaptor.forClass(List.class);
-    verify(producersInitiativeRepository).saveAll(captor.capture());
-
-    ProducersInitiative savedProducer = captor.getValue().getFirst();
-    assertEquals("-", savedProducer.getProducerEmail());
-  }
-
-  @Test
-  void importJson_shouldSaveDefaultProducerEmailWhenInvalid() {
-    String json = """
-      {"producerId":"456","initiativeId":"111","producerEmail":"not-an-email","producerName":"Producer 1"}
-      """;
+      {"producerId":"456","initiativeId":"111",%s"producerName":"Producer 1"}
+      """.formatted(producerEmailJsonProperty);
     when(portalInitiativeService.getInitiativeDetail("111")).thenReturn(initiativeDetail());
 
     producerImportService.importJson(json);

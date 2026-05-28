@@ -37,6 +37,7 @@ public class ProducerImportService {
   private static final String DEFAULT_PRODUCER_EMAIL = "-";
   private static final int SAVE_BATCH_SIZE = 1000;
   private static final Pattern EMAIL_VALIDATION_PATTERN = Pattern.compile(EMAIL_PATTERN);
+  private static final String MISSING_REQUIRED_FIELD_MESSAGE = "Missing required field [%s]";
 
   private final ProducersInitiativeRepository producersInitiativeRepository;
   private final ObjectMapper objectMapper;
@@ -211,29 +212,30 @@ public class ProducerImportService {
 
   private String requiredValue(String value, String fieldName) {
     if (value == null || value.isBlank()) {
-      throw new IllegalArgumentException("Missing required field [%s]".formatted(fieldName));
+      throw new IllegalArgumentException(MISSING_REQUIRED_FIELD_MESSAGE.formatted(fieldName));
     }
     return value;
   }
 
   private String optionalEmail(String value) {
-    return value == null || value.isBlank()
-      ? DEFAULT_PRODUCER_EMAIL
-      : EMAIL_VALIDATION_PATTERN.matcher(value).matches()
+    if (value == null || value.isBlank()) {
+      return DEFAULT_PRODUCER_EMAIL;
+    }
+    return EMAIL_VALIDATION_PATTERN.matcher(value).matches()
       ? value
       : DEFAULT_PRODUCER_EMAIL;
   }
 
   private LocalDate requiredDate(LocalDate value, String fieldName) {
     if (value == null) {
-      throw new IllegalArgumentException("Missing required field [%s]".formatted(fieldName));
+      throw new IllegalArgumentException(MISSING_REQUIRED_FIELD_MESSAGE.formatted(fieldName));
     }
     return value;
   }
 
   private InitiativeStatus requiredStatus(InitiativeStatus value, String fieldName) {
     if (value == null) {
-      throw new IllegalArgumentException("Missing required field [%s]".formatted(fieldName));
+      throw new IllegalArgumentException(MISSING_REQUIRED_FIELD_MESSAGE.formatted(fieldName));
     }
     return value;
   }
