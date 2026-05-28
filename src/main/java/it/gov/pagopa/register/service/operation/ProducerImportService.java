@@ -170,7 +170,7 @@ public class ProducerImportService {
   private void validateProducerInput(ProducerImportJsonDTO dto) {
     requiredValue(dto.getProducerId(), "producerId");
     requiredValue(dto.getInitiativeId(), "initiativeId");
-    optionalEmail(dto.getProducerEmail(), "producerEmail");
+    optionalEmail(dto.getProducerEmail());
     requiredValue(dto.getProducerName(), "producerName");
   }
 
@@ -213,7 +213,7 @@ public class ProducerImportService {
   private ProducersInitiative toProducer(ProducerImportJsonDTO dto, InitiativeDTO initiativeDetail, LocalDateTime now) {
     String producerId = requiredValue(dto.getProducerId(), "producerId");
     String initiativeId = requiredValue(dto.getInitiativeId(), "initiativeId");
-    String producerEmail = optionalEmail(dto.getProducerEmail(), "producerEmail");
+    String producerEmail = optionalEmail(dto.getProducerEmail());
     if (initiativeDetail == null) {
       throw new IllegalArgumentException("Initiative detail not found for producerId [%s] and initiativeId [%s]"
         .formatted(producerId, initiativeId));
@@ -245,18 +245,12 @@ public class ProducerImportService {
     return value;
   }
 
-  private String requiredEmail(String value, String fieldName) {
-    String email = requiredValue(value, fieldName);
-    if (!EMAIL_VALIDATION_PATTERN.matcher(email).matches()) {
-      throw new IllegalArgumentException("Invalid email field [%s]".formatted(fieldName));
-    }
-    return email;
-  }
-
-  private String optionalEmail(String value, String fieldName) {
+  private String optionalEmail(String value) {
     return value == null || value.isBlank()
       ? DEFAULT_PRODUCER_EMAIL
-      : requiredEmail(value, fieldName);
+      : EMAIL_VALIDATION_PATTERN.matcher(value).matches()
+      ? value
+      : DEFAULT_PRODUCER_EMAIL;
   }
 
   private LocalDate requiredDate(LocalDate value, String fieldName) {
