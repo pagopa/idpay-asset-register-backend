@@ -24,7 +24,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.regex.Pattern;
 
 import static it.gov.pagopa.register.constants.ValidationPatterns.EMAIL_PATTERN;
@@ -136,12 +135,9 @@ public class ProducerImportService {
     List<ProducerImportJsonDTO> records;
 
     if (trimmedJson.startsWith("[")) {
-      List<Map<String, Object>> jsonRecords = objectMapper.readValue(
-        trimmedJson, new TypeReference<List<Map<String, Object>>>() {
+      records = objectMapper.readValue(
+        trimmedJson, new TypeReference<List<ProducerImportJsonDTO>>() {
         });
-      records = jsonRecords.stream()
-        .map(this::toJsonDTO)
-        .toList();
     } else {
       records = Arrays.stream(trimmedJson.split("\\R"))
         .map(String::strip)
@@ -185,29 +181,10 @@ public class ProducerImportService {
 
   private ProducerImportJsonDTO readJsonLine(String line) {
     try {
-      Map<String, Object> producerFields = objectMapper.readValue(line, new TypeReference<Map<String, Object>>() {
-      });
-      return toJsonDTO(producerFields);
+      return objectMapper.readValue(line, ProducerImportJsonDTO.class);
     } catch (JacksonException e) {
       throw new IllegalArgumentException("Invalid JSON line", e);
     }
-  }
-
-  private ProducerImportJsonDTO toJsonDTO(Map<String, Object> producerFields) {
-    ProducerImportJsonDTO dto = new ProducerImportJsonDTO();
-    dto.setProducerId(stringValue(producerFields.get("producerId")));
-    dto.setInitiativeId(stringValue(producerFields.get("initiativeId")));
-    dto.setProducerEmail(stringValue(producerFields.get("producerEmail")));
-    dto.setProducerName(stringValue(producerFields.get("producerName")));
-    return dto;
-  }
-
-  private String stringValue(Object... values) {
-    return Arrays.stream(values)
-      .filter(Objects::nonNull)
-      .findFirst()
-      .map(Object::toString)
-      .orElse(null);
   }
 
   private ProducersInitiative toProducer(ProducerImportJsonDTO dto, InitiativeDTO initiativeDetail, LocalDateTime now) {
