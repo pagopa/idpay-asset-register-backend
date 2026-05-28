@@ -47,10 +47,10 @@ class ProducerImportServiceTest {
   void importJson_shouldMapJsonLinesAndSetInternalFields() {
     String json = """
       {"producerId":"456","initiativeId":"111","producerEmail":"producer1@test.it","producerName":"Producer 1"}
-      {"producerId":"678","initiativeId":"111","producerEmail":"producer2@test.it","producerName":"Producer 2"}
+      {"producerId":"678","initiativeId":"222","producerEmail":"producer2@test.it","producerName":"Producer 2"}
       """;
-    when(portalInitiativeService.getInitiativeDetail("456", "111")).thenReturn(initiativeDetail("1234567890", "MIMIT"));
-    when(portalInitiativeService.getInitiativeDetail("678", "111")).thenReturn(initiativeDetail("1234567891", "MEF"));
+    when(portalInitiativeService.getInitiativeDetail("111")).thenReturn(initiativeDetail("1234567890", "MIMIT"));
+    when(portalInitiativeService.getInitiativeDetail("222")).thenReturn(initiativeDetail("1234567891", "MEF"));
 
     ProducerImportResultDTO result = producerImportService.importJson(json);
 
@@ -87,7 +87,7 @@ class ProducerImportServiceTest {
     String json = """
       {"producerId":"456","initiativeId":"111","producerName":"Producer 1"}
       """;
-    when(portalInitiativeService.getInitiativeDetail("456", "111")).thenReturn(initiativeDetail());
+    when(portalInitiativeService.getInitiativeDetail("111")).thenReturn(initiativeDetail());
 
     producerImportService.importJson(json);
 
@@ -103,7 +103,7 @@ class ProducerImportServiceTest {
     String json = """
       {"producerId":"456","initiativeId":"111","producerEmail":" ","producerName":"Producer 1"}
       """;
-    when(portalInitiativeService.getInitiativeDetail("456", "111")).thenReturn(initiativeDetail());
+    when(portalInitiativeService.getInitiativeDetail("111")).thenReturn(initiativeDetail());
 
     producerImportService.importJson(json);
 
@@ -119,7 +119,7 @@ class ProducerImportServiceTest {
     String json = """
       {"producerId":"456","initiativeId":"111","producerEmail":"not-an-email","producerName":"Producer 1"}
       """;
-    when(portalInitiativeService.getInitiativeDetail("456", "111")).thenReturn(initiativeDetail());
+    when(portalInitiativeService.getInitiativeDetail("111")).thenReturn(initiativeDetail());
 
     producerImportService.importJson(json);
 
@@ -137,7 +137,7 @@ class ProducerImportServiceTest {
         {"producerId":"456","initiativeId":"111","producerEmail":"producer@test.it","producerName":"Producer"}
       ]
       """;
-    when(portalInitiativeService.getInitiativeDetail("456", "111")).thenReturn(initiativeDetail());
+    when(portalInitiativeService.getInitiativeDetail("111")).thenReturn(initiativeDetail());
 
     ProducerImportResultDTO result = producerImportService.importJson(json);
 
@@ -152,7 +152,7 @@ class ProducerImportServiceTest {
     String json = """
       {"producerId":"456","initiativeId":"111","producerEmail":"producer@test.it","producerName":"Producer"}
       """;
-    when(portalInitiativeService.getInitiativeDetail("456", "111")).thenReturn(nestedInitiativeDetail());
+    when(portalInitiativeService.getInitiativeDetail("111")).thenReturn(nestedInitiativeDetail());
 
     producerImportService.importJson(json);
 
@@ -178,7 +178,7 @@ class ProducerImportServiceTest {
     String json = """
       {"producerId":"456","initiativeId":"111","producerEmail":"producer@test.it","producerName":"Producer"}
       """;
-    when(portalInitiativeService.getInitiativeDetail("456", "111")).thenReturn(InitiativeDTO.builder()
+    when(portalInitiativeService.getInitiativeDetail("111")).thenReturn(InitiativeDTO.builder()
       .initiativeName("Iniziativa 1")
       .status(InitiativeStatus.PUBLISHED)
       .startDate(java.time.LocalDate.of(2025, 12, 31))
@@ -207,7 +207,7 @@ class ProducerImportServiceTest {
     String json = """
       {"producerId":"456","initiativeId":"111","producerEmail":"producer@test.it","producerName":"Producer"}
       """;
-    when(portalInitiativeService.getInitiativeDetail("456", "111")).thenReturn(initiativeDetail());
+    when(portalInitiativeService.getInitiativeDetail("111")).thenReturn(initiativeDetail());
 
     doThrow(new QueryTimeoutException("Mongo returned 408 request timeout"))
       .when(producersInitiativeRepository).saveAll(anyList());
@@ -231,9 +231,7 @@ class ProducerImportServiceTest {
         {"producerId":"%d","initiativeId":"111","producerEmail":"producer%d@test.it","producerName":"Producer %d"}
         """.formatted(i, i, i));
     }
-    for (int i = 0; i < 1001; i++) {
-      when(portalInitiativeService.getInitiativeDetail(String.valueOf(i), "111")).thenReturn(initiativeDetail());
-    }
+    when(portalInitiativeService.getInitiativeDetail("111")).thenReturn(initiativeDetail());
 
     when(producersInitiativeRepository.saveAll(anyList()))
       .thenAnswer(invocation -> invocation.getArgument(0))
@@ -256,7 +254,7 @@ class ProducerImportServiceTest {
     String json = """
       {"producerId":"456","initiativeId":"111","producerEmail":"producer@test.it","producerName":"Producer"}
       """;
-    when(portalInitiativeService.getInitiativeDetail("456", "111")).thenReturn(initiativeDetail());
+    when(portalInitiativeService.getInitiativeDetail("111")).thenReturn(initiativeDetail());
 
     when(producersInitiativeRepository.saveAll(anyList()))
       .thenThrow(new RuntimeException("generic db error"));
@@ -276,11 +274,11 @@ class ProducerImportServiceTest {
       {"producerId":"456","initiativeId":"111","producerEmail":"producer1@test.it","producerName":"Producer 1"}
       {"producerId":"456","initiativeId":"111","producerEmail":"producer2@test.it","producerName":"Producer 2"}
       """;
-    when(portalInitiativeService.getInitiativeDetail("456", "111")).thenReturn(initiativeDetail());
+    when(portalInitiativeService.getInitiativeDetail("111")).thenReturn(initiativeDetail());
 
     producerImportService.importJson(json);
 
-    verify(portalInitiativeService, times(1)).getInitiativeDetail("456", "111");
+    verify(portalInitiativeService, times(1)).getInitiativeDetail("111");
   }
 
   private InitiativeDTO initiativeDetail() {

@@ -8,5 +8,5 @@ public interface PortalInitiativeService {
 
   List<InitiativeDTO> getInitiatives(String organizationId);
 
-  InitiativeDTO getInitiativeDetail(String organizationId, String initiativeId);
+  InitiativeDTO getInitiativeDetail(String initiativeId);
 }

@@ -166,17 +166,11 @@ public class ProducerImportService {
   private void validateProducerInput(ProducerImportJsonDTO dto) {
     requiredValue(dto.getProducerId(), "producerId");
     requiredValue(dto.getInitiativeId(), "initiativeId");
-    optionalEmail(dto.getProducerEmail());
     requiredValue(dto.getProducerName(), "producerName");
   }
 
   private InitiativeDTO getInitiativeDetail(ProducerImportJsonDTO dto, Map<String, InitiativeDTO> initiativeDetails) {
-    String organizationId = requiredValue(dto.getProducerId(), "producerId");
-    String initiativeId = requiredValue(dto.getInitiativeId(), "initiativeId");
-    String cacheKey = organizationId + "_" + initiativeId;
-
-    return initiativeDetails.computeIfAbsent(cacheKey,
-      key -> portalInitiativeService.getInitiativeDetail(organizationId, initiativeId));
+    return initiativeDetails.computeIfAbsent(dto.getInitiativeId(), portalInitiativeService::getInitiativeDetail);
   }
 
   private ProducerImportJsonDTO readJsonLine(String line) {
@@ -188,8 +182,8 @@ public class ProducerImportService {
   }
 
   private ProducersInitiative toProducer(ProducerImportJsonDTO dto, InitiativeDTO initiativeDetail, LocalDateTime now) {
-    String producerId = requiredValue(dto.getProducerId(), "producerId");
-    String initiativeId = requiredValue(dto.getInitiativeId(), "initiativeId");
+    String producerId = dto.getProducerId();
+    String initiativeId = dto.getInitiativeId();
     String producerEmail = optionalEmail(dto.getProducerEmail());
     if (initiativeDetail == null) {
       throw new IllegalArgumentException("Initiative detail not found for producerId [%s] and initiativeId [%s]"
@@ -200,7 +194,7 @@ public class ProducerImportService {
       .id(producerId + "_" + initiativeId)
       .producerId(producerId)
       .producerEmail(producerEmail)
-      .producerName(requiredValue(dto.getProducerName(), "producerName"))
+      .producerName(dto.getProducerName())
       .initiativeId(initiativeId)
       .initiativeName(requiredValue(initiativeDetail.getInitiativeName(), "initiativeName"))
       .initiativeStatus(requiredStatus(initiativeDetail.getStatus(), "initiativeStatus"))

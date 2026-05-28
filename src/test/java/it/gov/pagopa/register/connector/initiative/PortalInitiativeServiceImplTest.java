@@ -65,7 +65,6 @@ class PortalInitiativeServiceImplTest {
   @Test
   void getInitiativeDetail_UsesBeneficiaryViewByInitiativeId() {
 
-    String organizationId = "producer-123";
     String initiativeId = "111";
     InitiativeDTO detail = InitiativeDTO.builder()
       .initiativeId(initiativeId)
@@ -80,7 +79,7 @@ class PortalInitiativeServiceImplTest {
     when(portalInitiativeRestClient.getInitiativeBeneficiaryView(initiativeId))
       .thenReturn(ResponseEntity.ok(detail));
 
-    InitiativeDTO result = service.getInitiativeDetail(organizationId, initiativeId);
+    InitiativeDTO result = service.getInitiativeDetail(initiativeId);
 
     assertEquals(detail, result);
     verify(portalInitiativeRestClient).getInitiativeBeneficiaryView(initiativeId);
