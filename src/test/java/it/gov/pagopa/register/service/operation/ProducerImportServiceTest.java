@@ -1,5 +1,8 @@
 package it.gov.pagopa.register.service.operation;
 
+import feign.FeignException;
+import feign.Request;
+import feign.Response;
 import it.gov.pagopa.register.connector.initiative.PortalInitiativeService;
 import it.gov.pagopa.register.dto.operation.InitiativeDTO;
 import it.gov.pagopa.register.dto.operation.InitiativeStatus;
@@ -20,7 +23,9 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyList;
@@ -260,6 +265,75 @@ class ProducerImportServiceTest {
   }
 
   @Test
+  void importProducers_shouldSkipRecordWhenPortalReturnsNotFoundAndSaveOthers() {
+    when(portalInitiativeService.getInitiativeDetail("111")).thenReturn(initiativeDetail());
+    when(portalInitiativeService.getInitiativeDetail("wrong")).thenThrow(initiativeNotFoundException());
+
+    ProducerImportResultDTO result = producerImportService.importProducers(List.of(
+      producerRequest("456", "111", "Producer 1", "producer1@test.it"),
+      producerRequest("999", "wrong", "Producer wrong", "wrong@test.it")
+    ));
+
+    ArgumentCaptor<List<ProducersInitiative>> captor = ArgumentCaptor.forClass(List.class);
+    verify(producersInitiativeRepository).saveAll(captor.capture());
+
+    assertEquals("PARTIAL", result.getStatus());
+    assertEquals(2, result.getTotalRecords());
+    assertEquals(1, result.getImportedRecords());
+    assertEquals(1, result.getFailedRecords());
+    assertEquals("456_111", captor.getValue().getFirst().getId());
+  }
+
+  @Test
+  void importProducers_shouldReportFailedRecordWhenProducerRequestIsNull() {
+    ProducerImportResultDTO result = producerImportService.importProducers(
+      java.util.Collections.singletonList(null)
+    );
+
+    assertEquals("PARTIAL", result.getStatus());
+    assertEquals(1, result.getTotalRecords());
+    assertEquals(0, result.getImportedRecords());
+    assertEquals(1, result.getFailedRecords());
+    verify(producersInitiativeRepository, never()).saveAll(anyList());
+    verifyNoInteractions(portalInitiativeService);
+  }
+
+  @Test
+  void importProducers_shouldReportFailedRecordWhenInitiativeDetailIsNull() {
+    when(portalInitiativeService.getInitiativeDetail("111")).thenReturn(null);
+
+    ProducerImportResultDTO result = producerImportService.importProducers(
+      List.of(producerRequest("456", "111", "Producer 1", null))
+    );
+
+    assertEquals("PARTIAL", result.getStatus());
+    assertEquals(1, result.getTotalRecords());
+    assertEquals(0, result.getImportedRecords());
+    assertEquals(1, result.getFailedRecords());
+    verify(producersInitiativeRepository, never()).saveAll(anyList());
+  }
+
+  @Test
+  void importProducers_shouldReportFailedRecordWhenInitiativeGeneralIsMissing() {
+    when(portalInitiativeService.getInitiativeDetail("111")).thenReturn(InitiativeDTO.builder()
+      .initiativeName("Iniziativa 1")
+      .status(InitiativeStatus.PUBLISHED)
+      .additionalInfo(new InitiativeDTO.InitiativeAdditionalDTO("service-id"))
+      .organizationName("MIMIT")
+      .build());
+
+    ProducerImportResultDTO result = producerImportService.importProducers(
+      List.of(producerRequest("456", "111", "Producer 1", null))
+    );
+
+    assertEquals("PARTIAL", result.getStatus());
+    assertEquals(1, result.getTotalRecords());
+    assertEquals(0, result.getImportedRecords());
+    assertEquals(1, result.getFailedRecords());
+    verify(producersInitiativeRepository, never()).saveAll(anyList());
+  }
+
+  @Test
   void importProducers_shouldCallPortalInitiativeOnceForSameInitiative() {
     when(portalInitiativeService.getInitiativeDetail("111")).thenReturn(initiativeDetail());
 
@@ -333,6 +407,25 @@ class ProducerImportServiceTest {
     request.setProducerName(producerName);
     request.setProducerEmail(producerEmail);
     return request;
+  }
+
+  private FeignException initiativeNotFoundException() {
+    Request request = Request.create(
+      Request.HttpMethod.GET,
+      "/idpay/initiative/wrong/beneficiary/view",
+      Map.of(),
+      null,
+      StandardCharsets.UTF_8,
+      null
+    );
+    Response response = Response.builder()
+      .status(404)
+      .reason("Not Found")
+      .request(request)
+      .headers(Map.of())
+      .body("{\"code\":\"INITIATIVE_NOT_FOUND\"}", StandardCharsets.UTF_8)
+      .build();
+    return FeignException.errorStatus("PortalInitiativeRestClient#getInitiativeBeneficiaryView(String)", response);
   }
 
   private InitiativeDTO initiativeDetail() {
