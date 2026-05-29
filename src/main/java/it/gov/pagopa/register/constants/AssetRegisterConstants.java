@@ -210,10 +210,10 @@ public class AssetRegisterConstants {
     Map.entry("ERROR_BLOCKED", "Il prodotto risulta bloccato nell'elenco della Banca dati europea dei prodotti per l'etichettatura energetica - EPREL"),
     Map.entry("ERROR_STATUS", "Il prodotto non è presente o caricato nell'elenco della Banca dati europea dei prodotti per l'etichettatura energetica - EPREL"),
     Map.entry("ERROR_PRODUCT_GROUP", "La categoria presente sulla Banca dati europea dei prodotti per l'etichettatura energetica - EPREL non è coerente con quella del file CSV"),
-    Map.entry("ERROR_ENERGY_CLASS", "La classe energetica non è conforme con quella prevista nel DM del 03/09/2025"),
+    Map.entry("ERROR_ENERGY_CLASS", "La classe energetica non è conforme con quella prevista nel DM del {}"),
     Map.entry("DUPLICATE_GTIN_EAN", "Il codice GTIN indicato nel file CSV è un duplicato"),
     Map.entry("DIFFERENT_ORGANIZATIONID", "Il prodotto indicato è associato ad un altro produttore"),
-    Map.entry("STATUS_NOT_VALID", "Il prodotto è sottoposto alle verifiche previste dal DM del 03/09/2025 e pertanto non è possibile variare le informazioni ad esso collegate"),
+    Map.entry("STATUS_NOT_VALID", "Il prodotto è sottoposto alle verifiche previste dal DM del {} e pertanto non è possibile variare le informazioni ad esso collegate"),
 
     // Csv Errors
     Map.entry("ERROR_GTIN_EAN", "Il Codice GTIN/EAN è obbligatorio e deve essere univoco ed alfanumerico e lungo al massimo 14 caratteri"),

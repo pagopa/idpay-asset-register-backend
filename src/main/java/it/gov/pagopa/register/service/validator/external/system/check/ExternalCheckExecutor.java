@@ -30,7 +30,8 @@ public class ExternalCheckExecutor {
       CSVRecord csvRecord,
       ExternalCheckTemplate template,
       Map<String, Object> categoryParameters,
-      String category
+      String category,
+      String dmDate
   ) {
 
     // Risolvi il client del sistema esterno (EPREL, altro)
@@ -82,7 +83,7 @@ public class ExternalCheckExecutor {
 
         if (!valid) {
           return ExternalCheckResult.ko(
-            ERROR_MAP.get(rule.getErrorKey()).replace("{}", category)
+            ERROR_MAP.get(rule.getErrorKey()).replace("{}", dmDate)
           );
         }
       }
