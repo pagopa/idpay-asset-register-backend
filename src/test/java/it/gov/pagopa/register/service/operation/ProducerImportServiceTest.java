@@ -102,6 +102,21 @@ class ProducerImportServiceTest {
   }
 
   @Test
+  void importProducers_shouldAllowSpecialCharactersInProducerName() {
+    when(portalInitiativeService.getInitiativeDetail("111")).thenReturn(initiativeDetail());
+
+    producerImportService.importProducers(List.of(
+      producerRequest("456", "111", "Producer/Name", "producer@test.it")
+    ));
+
+    ArgumentCaptor<List<ProducersInitiative>> captor = ArgumentCaptor.forClass(List.class);
+    verify(producersInitiativeRepository).saveAll(captor.capture());
+
+    ProducersInitiative savedProducer = captor.getValue().getFirst();
+    assertEquals("Producer/Name", savedProducer.getProducerName());
+  }
+
+  @Test
   void importProducers_shouldPersistInitiativeFieldsFromNestedPortalDetail() {
     when(portalInitiativeService.getInitiativeDetail("111")).thenReturn(nestedInitiativeDetail());
 

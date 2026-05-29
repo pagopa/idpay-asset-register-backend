@@ -143,8 +143,8 @@ public class ProducerImportService {
           now));
       } catch (RuntimeException e) {
         failedRecords++;
-        log.warn("[IMPORT_PRODUCERS] - Skipping producerId [{}], initiativeId [{}]. error={}",
-          producerId(request), initiativeId(request), e.getMessage());
+        log.warn("[IMPORT_PRODUCERS] - Skipping producerId [{}], initiativeId [{}]. invalidField=[{}], error={}",
+          producerId(request), initiativeId(request), invalidField(e), e.getMessage());
       }
     }
 
@@ -168,7 +168,7 @@ public class ProducerImportService {
       requiredValue(request.getProducerId(), "producerId"),
       requiredValue(request.getInitiativeId(), INITIATIVE_ID),
       requiredValue(request.getProducerName(), "producerName"),
-      optionalEmail(request.getProducerEmail())
+      optionalEmail(request.getProducerEmail(), request)
     );
   }
 
@@ -205,11 +205,27 @@ public class ProducerImportService {
     return cleanedValue;
   }
 
-  private String optionalEmail(String value) {
+  private String optionalEmail(String value, ProducerInitiativeRequestDTO request) {
     String email = StringUtils.strip(value);
-    return StringUtils.isNotBlank(email) && EMAIL_VALIDATION_PATTERN.matcher(email).matches()
-      ? email
-      : null;
+    if (StringUtils.isBlank(email)) {
+      return null;
+    }
+    if (EMAIL_VALIDATION_PATTERN.matcher(email).matches()) {
+      return email;
+    }
+    log.warn("[IMPORT_PRODUCERS] - Invalid producerEmail for producerId [{}], initiativeId [{}]. value will be stored as null",
+      producerId(request), initiativeId(request));
+    return null;
+  }
+
+  private String invalidField(RuntimeException e) {
+    String message = e.getMessage();
+    if (message == null || !message.startsWith("Missing required field [")) {
+      return message != null && message.toLowerCase().contains("initiative")
+        ? INITIATIVE_ID
+        : null;
+    }
+    return StringUtils.substringBetween(message, "[", "]");
   }
 
   private InitiativeDTO.InitiativeGeneralDTO requiredGeneral(InitiativeDTO initiativeDetail) {
