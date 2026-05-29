@@ -1,12 +1,12 @@
 package it.gov.pagopa.register.service.operation;
 
-import it.gov.pagopa.register.model.initiative.InitiativeConfig;
 import it.gov.pagopa.register.configuration.InitiativeConfigMap;
 import it.gov.pagopa.register.connector.notification.NotificationService;
 import it.gov.pagopa.register.dto.operation.*;
 import it.gov.pagopa.register.enums.ProductStatus;
 import it.gov.pagopa.register.enums.UserRole;
 import it.gov.pagopa.register.mapper.operation.ProductMapper;
+import it.gov.pagopa.register.model.initiative.InitiativeConfig;
 import it.gov.pagopa.register.model.operation.Product;
 import it.gov.pagopa.register.model.operation.StatusChangeEvent;
 import it.gov.pagopa.register.repository.operation.ProductRepository;
@@ -20,10 +20,11 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import static it.gov.pagopa.register.constants.AssetRegisterConstants.*;
-import static it.gov.pagopa.register.constants.AssetRegisterConstants.UpdateKeyConstant.EMAIL_ERROR_KEY;
 
 @Slf4j
 @Service
@@ -47,6 +48,7 @@ public class ProductService {
     String productFileId,
     String eprelCode,
     String gtinCode,
+    String productCode,
     String productName,
     String fullProductName,
     String brand,
@@ -66,6 +68,7 @@ public class ProductService {
         .productFileId(productFileId)
         .eprelCode(eprelCode)
         .gtinCode(gtinCode)
+        .productCode(productCode)
         .productName(productName)
         .fullProductName(fullProductName)
         .brand(brand)
@@ -87,9 +90,19 @@ public class ProductService {
     return buildProductListDTO(result);
   }
 
+  private ProductListDTO buildProductListDTO(Page<ProductDTO> result) {
+    return ProductListDTO.builder()
+      .content(result.getContent())
+      .pageNo(result.getNumber())
+      .pageSize(result.getSize())
+      .totalElements(result.getTotalElements())
+      .totalPages(result.getTotalPages())
+      .build();
+  }
+
   public UpdateResultDTO updateProductStatusesWithNotification(
     String initiativeId,
-    ProductUpdateStatusRequestDTO updateStatusDto,
+    ProductUpdateStatusRequestDTO request,
     String role,
     String username
   ) {
@@ -97,93 +110,182 @@ public class ProductService {
     log.info(
       "[UPDATE_PRODUCT_STATUSES] - Starting update - initiativeId: {}, targetStatus: {}, motivation: {}, formalMotivation: {}",
       initiativeId,
-      updateStatusDto.getTargetStatus(),
-      updateStatusDto.getMotivation(),
-      updateStatusDto.getFormalMotivation()
+      request.getTargetStatus(),
+      request.getMotivation(),
+      request.getFormalMotivation()
     );
 
-    // Recupero configurazione iniziativa
-    InitiativeConfig initiativeConfig =
-      initiativeConfigMap.get(initiativeId);
-
-    if (initiativeConfig == null) {
-      log.warn(
-        "[UPDATE_PRODUCT_STATUSES] - Initiative not found: {}",
-        initiativeId
-      );
+    InitiativeConfig config = initiativeConfigMap.get(initiativeId);
+    if(!validConfig(config)){
       return UpdateResultDTO.ko(INITIATIVE_NOT_FOUND_ERROR_KEY);
     }
 
-    // Recupero prodotti richiesti
-    List<Product> requestedProducts =
-      productRepository.findByGtinCodeInAndInitiativeId(updateStatusDto.getGtinCodes(),initiativeId);
-
-    if (requestedProducts.size() != updateStatusDto.getGtinCodes().size()) {
-      log.warn("[UPDATE_PRODUCT_STATUSES] - Some products not found or not accessible");
-      return UpdateResultDTO.ko(PRODUCT_NOT_FOUND_ERROR_KEY);
-    }
-
-    // Verifica che tutti i prodotti abbiano lo stesso stato corrente
-    String distinctCurrentStatus = requestedProducts.get(0).getStatus();
-
-    boolean mixedStatuses = requestedProducts.stream()
-      .map(Product::getStatus)
-      .anyMatch(status -> !status.equals(distinctCurrentStatus));
-
-    if (mixedStatuses) {
-      log.warn(
-        "[UPDATE_PRODUCT_STATUSES] - Mixed current statuses in request: {}",
-        requestedProducts.stream().map(Product::getStatus).distinct().toList()
-      );
-      return UpdateResultDTO.ko(MIXED_STATUS_ERROR_KEY);
-    }
-
-    // Verifica che currentStatus dichiarato dal client sia corretto
-    if (updateStatusDto.getCurrentStatus() == null ||
-      !updateStatusDto.getCurrentStatus().name().equals(distinctCurrentStatus)) {
-
-      log.warn(
-        "[UPDATE_PRODUCT_STATUSES] - Provided currentStatus ({}) does not match actual ({})",
-        updateStatusDto.getCurrentStatus(),
-        distinctCurrentStatus
-      );
-      return UpdateResultDTO.ko(INVALID_CURRENT_STATUS_ERROR_KEY);
-    }
-
-    // Verifica transizione di stato basata su InitiativeConfig
-    boolean transitionAllowed =
-      initiativeConfig.isTransitionAllowed(
-        role,
-        updateStatusDto.getCurrentStatus(),
-        updateStatusDto.getTargetStatus()
-      );
-
-    if (!transitionAllowed) {
-      log.warn(
-        "[UPDATE_PRODUCT_STATUSES] - Transition not allowed for role {}: {} -> {}",
-        role,
-        updateStatusDto.getCurrentStatus(),
-        updateStatusDto.getTargetStatus()
-      );
+    if (!isTransitionAllowed(config, role, request.getCurrentStatus(), request.getTargetStatus())) {
       return UpdateResultDTO.ko(TRANSITION_NOT_ALLOWED_ERROR_KEY);
     }
 
-    // Aggiornamento stato e storico
+    List<Product> products = getProductsOrFail(request.getGtinCodes(), initiativeId);
+    if (products.isEmpty()) {
+      return UpdateResultDTO.ko(PRODUCT_NOT_FOUND_ERROR_KEY);
+    }
+
+    String currentStatus = validateAndGetUniformStatus(products);
+    if (currentStatus == null) {
+      return UpdateResultDTO.ko(MIXED_STATUS_ERROR_KEY);
+    }
+
+    if (!isRequestStatusCoherent(request, currentStatus)) {
+      return UpdateResultDTO.ko(INVALID_CURRENT_STATUS_ERROR_KEY);
+    }
+
+    updateProducts(products, request, role, username);
+
+    List<Product> updatedProducts = productRepository.saveAll(products);
+
+    log.info(
+      "[UPDATE_PRODUCT_STATUSES] - Successfully updated {} products",
+      updatedProducts.size()
+    );
+
+    notifyIfRejected(updatedProducts, request);
+
+    return UpdateResultDTO.ok();
+  }
+
+  private boolean validConfig(InitiativeConfig config) {
+    if (config == null) {
+      log.error("[UPDATE_PRODUCT_STATUSES] - Config is null");
+      return false;
+    }
+
+    return true;
+  }
+
+  public boolean isTransitionAllowed(
+    InitiativeConfig config,
+    String role,
+    ProductStatus currentStatus,
+    ProductStatus targetStatus
+  ) {
+
+    Map<String, Map<String, List<ProductStatus>>> stateTransitions =
+      config.getStateTransitions();
+
+    Map<String, List<ProductStatus>> roleTransitions =
+      stateTransitions.get(role);
+
+    if (stateTransitions.isEmpty()) {
+      log.error(
+        "[UPDATE_PRODUCT_STATUSES] - stateTransitions missing or empty for initiative {}",
+        config.getInitiativeId()
+      );
+      return false;
+    }
+    if (roleTransitions.isEmpty()) {
+      log.warn(
+        "[UPDATE_PRODUCT_STATUSES] - No transitions configured for role {}",
+        role
+      );
+      return false;
+    }
+
+    List<ProductStatus> allowedInitialStates =
+      roleTransitions.get(targetStatus.name());
+
+    if (allowedInitialStates == null) {
+      log.warn(
+        "[UPDATE_PRODUCT_STATUSES] - No transitions configured for role {} and target {}",
+        role,
+        targetStatus
+      );
+      return false;
+    }
+
+    boolean allowed = allowedInitialStates.contains(currentStatus);
+
+    if (!allowed) {
+      log.warn(
+        "[UPDATE_PRODUCT_STATUSES] - Transition not allowed [role={}, {} -> {}]",
+        role,
+        currentStatus,
+        targetStatus
+      );
+    }
+
+    return allowed;
+  }
+  private List<Product> getProductsOrFail(List<String> gtins, String initiativeId) {
+
+    List<Product> products =
+      productRepository.findByGtinCodeInAndInitiativeId(gtins, initiativeId);
+
+    if (products.isEmpty() || products.size() != gtins.size()) {
+      log.warn("[UPDATE_PRODUCT_STATUSES] - Some products not found or not accessible");
+      return Collections.emptyList();
+    }
+
+    return products;
+  }
+
+  private String validateAndGetUniformStatus(List<Product> products) {
+
+    String firstStatus = products.get(0).getStatus();
+
+    boolean mixed = products.stream()
+      .map(Product::getStatus)
+      .anyMatch(status -> !status.equals(firstStatus));
+
+    if (mixed) {
+      log.warn(
+        "[UPDATE_PRODUCT_STATUSES] - Mixed current statuses in request: {}",
+        products.stream().map(Product::getStatus).distinct().toList()
+      );
+      return null;
+    }
+
+    return firstStatus;
+  }
+  private boolean isRequestStatusCoherent(ProductUpdateStatusRequestDTO request, String actualStatus) {
+
+    if (request.getCurrentStatus() == null) {
+      return false;
+    }
+
+    boolean valid = request.getCurrentStatus().name().equals(actualStatus);
+
+    if (!valid) {
+      log.warn(
+        "[UPDATE_PRODUCT_STATUSES] - Provided currentStatus ({}) does not match actual ({})",
+        request.getCurrentStatus(),
+        actualStatus
+      );
+    }
+
+    return valid;
+  }
+
+  private void updateProducts(
+    List<Product> products,
+    ProductUpdateStatusRequestDTO request,
+    String role,
+    String username
+  ) {
+
     LocalDateTime now = LocalDateTime.now();
 
-    requestedProducts.forEach(product -> {
+    for (Product product : products) {
 
       log.debug(
         "[UPDATE_PRODUCT_STATUSES] - Updating product {} status from {} to {}",
         product.getGtinCode(),
         product.getStatus(),
-        updateStatusDto.getTargetStatus().name()
+        request.getTargetStatus()
       );
 
-      product.setStatus(updateStatusDto.getTargetStatus().name());
+      product.setStatus(request.getTargetStatus().name());
 
-      if (StringUtils.isNotBlank(updateStatusDto.getFormalMotivation())) {
-        product.setFormalMotivation(updateStatusDto.getFormalMotivation());
+      if (StringUtils.isNotBlank(request.getFormalMotivation())) {
+        product.setFormalMotivation(request.getFormalMotivation());
       }
 
       if (product.getStatusChangeChronology() == null) {
@@ -191,51 +293,52 @@ public class ProductService {
       }
 
       product.getStatusChangeChronology().add(
-        StatusChangeEvent.builder()
-          .username(username)
-          .role(
-            UserRole.INVITALIA.getRole().equals(role)
-              ? "L1"
-              : "L2"
-          )
-          .updateDate(now)
-          .currentStatus(updateStatusDto.getCurrentStatus())
-          .targetStatus(updateStatusDto.getTargetStatus())
-          .motivation(updateStatusDto.getMotivation())
-          .build()
+        buildStatusChangeEvent(request, role, username, now)
       );
-    });
-
-    // Persistenza
-    List<Product> updatedProducts = productRepository.saveAll(requestedProducts);
-
-    log.info(
-      "[UPDATE_PRODUCT_STATUSES] - Successfully updated {} products",
-      updatedProducts.size()
-    );
-
-    // Notifica (solo per stato REJECTED)
-    if (ProductStatus.REJECTED.name().equals(updateStatusDto.getTargetStatus().name())) {
-
-      int failedEmails =
-        notifyStatusUpdates(
-          updatedProducts,
-          updateStatusDto.getTargetStatus(),
-          updateStatusDto.getFormalMotivation()
-        );
-
-      if (failedEmails > 0) {
-        log.warn(
-          "[UPDATE_PRODUCT_STATUSES] - Some email notifications failed. Total failures: {}",
-          failedEmails
-        );
-        return UpdateResultDTO.ko(EMAIL_ERROR_KEY);
-      }
     }
-
-    return UpdateResultDTO.ok();
+  }
+  private StatusChangeEvent buildStatusChangeEvent(
+    ProductUpdateStatusRequestDTO request,
+    String role,
+    String username,
+    LocalDateTime now
+  ) {
+    return StatusChangeEvent.builder()
+      .username(username)
+      .role(mapRole(role))
+      .updateDate(now)
+      .currentStatus(request.getCurrentStatus())
+      .targetStatus(request.getTargetStatus())
+      .motivation(request.getMotivation())
+      .build();
   }
 
+  private String mapRole(String role) {
+    return UserRole.INVITALIA.getRole().equals(role) ? "L1" : "L2";
+  }
+
+  private void notifyIfRejected(
+    List<Product> products,
+    ProductUpdateStatusRequestDTO request
+  ) {
+
+    if (request.getTargetStatus() != ProductStatus.REJECTED) {
+      return;
+    }
+
+    int failedEmails = notifyStatusUpdates(
+      products,
+      request.getTargetStatus(),
+      request.getFormalMotivation()
+    );
+
+    if (failedEmails > 0) {
+      log.warn(
+        "[UPDATE_PRODUCT_STATUSES] - Some email notifications failed. Total failures: {}",
+        failedEmails
+      );
+    }
+  }
   private int notifyStatusUpdates(List<Product> products, ProductStatus newStatus, String formalMotivation) {
     List<EmailProductDTO> emailToProducts = productRepository.getProductNamesGroupedByEmail(
       products.stream().map(Product::getGtinCode).toList()
@@ -260,13 +363,5 @@ public class ProductService {
     return failedEmails.size();
   }
 
-  private ProductListDTO buildProductListDTO(Page<ProductDTO> result) {
-    return ProductListDTO.builder()
-      .content(result.getContent())
-      .pageNo(result.getNumber())
-      .pageSize(result.getSize())
-      .totalElements(result.getTotalElements())
-      .totalPages(result.getTotalPages())
-      .build();
-  }
+
 }

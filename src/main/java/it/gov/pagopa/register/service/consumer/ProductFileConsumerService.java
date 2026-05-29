@@ -299,17 +299,17 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
         processErrorRecords(errors, messages, initiativeId, productFileId, headers);
         setProductFileStatus(productFileId, String.valueOf(PARTIAL), validProduct.size());
         log.info("[PRODUCT_UPLOAD] - File {} processed with {} errors", productFileId, errors.size());
-        notificationService.sendEmailPartial(CATEGORIES_TO_IT_P.get(category) + "_" + productFileId + CSV, userEmail);
+        notificationService.sendEmailPartial(CATEGORIES_FOR_FILENAME.get(category) + "_" + productFileId + CSV, userEmail);
       } else {
         setProductFileStatus(productFileId, String.valueOf(LOADED), savedProduct.size());
         log.info("[PRODUCT_UPLOAD] - File {} processed successfully with no errors", productFileId);
-        notificationService.sendEmailOk( CATEGORIES_TO_IT_P.get(category)  + "_" + productFileId + CSV, userEmail);
+        notificationService.sendEmailOk( CATEGORIES_FOR_FILENAME.get(category)  + "_" + productFileId + CSV, userEmail);
       }
     } else if (!errors.isEmpty()) {
       processErrorRecords(errors, messages,initiativeId, productFileId, headers);
       setProductFileStatus(productFileId, String.valueOf(PARTIAL), 0);
       log.info("[PRODUCT_UPLOAD] - File {} processed with {} errors", productFileId, errors.size());
-      notificationService.sendEmailPartial( CATEGORIES_TO_IT_P.get(category)  + "_" + productFileId + CSV, userEmail);
+      notificationService.sendEmailPartial( CATEGORIES_FOR_FILENAME.get(category)  + "_" + productFileId + CSV, userEmail);
     }
   }
 

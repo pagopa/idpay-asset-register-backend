@@ -37,10 +37,11 @@ public class ProductController {
     @RequestParam(required = false) @Pattern(regexp = OBJECT_ID_PATTERN) String productFileId,
     @RequestParam(required = false) @Pattern(regexp = DIGITS_ONLY) String eprelCode,
     @RequestParam(required = false) @Pattern(regexp = GTIN_CODE) String gtinCode,
+    @RequestParam(required = false) @Pattern(regexp = PRODUCT_CODE) String productCode,
     @RequestParam(required = false) ProductStatus status,
     @RequestParam(required = false) ProductCategories category,
-    @RequestParam(required = false) @Pattern(regexp = ANY_TEXT) String  brand,
-    @RequestParam(required = false) @Pattern(regexp = ANY_TEXT) String  model,
+    @RequestParam(required = false) @Pattern(regexp = BRAND) String  brand,
+    @RequestParam(required = false) @Pattern(regexp = MODEL) String  model,
     @PageableDefault(size = 20, sort = "registrationDate", direction = Sort.Direction.DESC) Pageable pageable
   ) {
     String categoryName = Optional.ofNullable(category).map(Enum::name).orElse(null);
@@ -53,6 +54,7 @@ public class ProductController {
       productFileId,
       eprelCode,
       gtinCode,
+      productCode,
       productName,
       fullProductName,
       brand,

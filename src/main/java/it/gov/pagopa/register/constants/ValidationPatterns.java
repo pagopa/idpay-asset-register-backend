@@ -6,8 +6,11 @@ public class ValidationPatterns {
   public static final String UUID_V4_PATTERN = "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$";
   public static final String OBJECT_ID_PATTERN = "^[a-fA-F0-9]{24}$";
   public static final String DIGITS_ONLY = "^\\d+$";
+  public static final String MODEL = "^[a-zA-Z0-9 /.]{1,100}$";
+  public static final String BRAND = "^[a-zA-Z0-9 &]{1,100}$";
   public static final String GTIN_CODE = "^[a-zA-Z0-9]{1,14}$";
+  public static final String PRODUCT_CODE = "^[a-zA-Z0-9]{1,100}$";
   public static final String ANY_TEXT = ".*";
   public static final String ROLE_PATTERN = "^(operatore|invitalia|invitalia_admin)$";
-  public static final String EMAIL_PATTERN = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$";
+  public static final String EMAIL_PATTERN = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$";
 }

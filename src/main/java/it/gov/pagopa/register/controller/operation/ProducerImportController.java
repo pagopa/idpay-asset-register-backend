@@ -24,8 +24,10 @@ public class ProducerImportController {
   private final ProducerImportService producerImportService;
 
   @PostMapping(value = "/producers", consumes = {MediaType.APPLICATION_JSON_VALUE})
-  public ResponseEntity<ProducerImportResultDTO> importProducers(@RequestBody String json) {
-    return ResponseEntity.ok(producerImportService.importJson(json));
+  public ResponseEntity<ProducerImportResultDTO> importProducers(
+    @RequestBody ProducerInitiativeImportRequestDTO request
+  ) {
+    return ResponseEntity.ok(producerImportService.importProducers(request.getProducers()));
   }
 
   @PutMapping("/initiatives/{initiativeId}/email")

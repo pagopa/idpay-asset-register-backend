@@ -61,6 +61,11 @@ public class AssetRegisterConstants {
   public static final String COOKINGHOBS_IT_S = "Piano cottura";
 
   // Bonus Decoder
+  public static final String SATELLITE_CODE =  "DS";
+  public static final String TERRESTRIAL_CODE = "DT";
+  public static final String TERRESTRIAL_VIA_CABLE_CODE = "DTC";
+  public static final String TERRESTRIAL_AND_SATELLITE_CODE = "DTS";
+  public static final String TERRESTRIAL_SATELLITE_AND_VIA_CABLE_CODE = "DTSC";
   public static final String SATELLITE =  "SATELLITE";
   public static final String TERRESTRIAL = "TERRESTRIAL";
   public static final String TERRESTRIAL_VIA_CABLE = "TERRESTRIAL_VIA_CABLE";
@@ -72,12 +77,21 @@ public class AssetRegisterConstants {
   public static final String TERRESTRIAL_AND_SATELLITE_IT_S = "Terrestre e Satellitare";
   public static final String TERRESTRIAL_SATELLITE_AND_VIA_CABLE_IT_S = "Terrestre, Satellitare e via Cavo";
 
-  public static final String SATELLITE_IT_P =  "Satellitari";
-  public static final String TERRESTRIAL_IT_P = "Terrestri";
-  public static final String TERRESTRIAL_VIA_CABLE_IT_P = "Terrestri via Cavo";
-  public static final String TERRESTRIAL_AND_SATELLITE_IT_P = "Terrestri e Satellitari";
-  public static final String TERRESTRIAL_SATELLITE_AND_VIA_CABLE_IT_P = "Terrestri, Satellitari e via Cavo";
+  public static final String SATELLITE_IT_P =  "Satellitare";
+  public static final String TERRESTRIAL_IT_P = "Terrestre";
+  public static final String TERRESTRIAL_VIA_CABLE_IT_P = "Terrestre_via_Cavo";
+  public static final String TERRESTRIAL_AND_SATELLITE_IT_P = "Terrestre_e_Satellitare";
+  public static final String TERRESTRIAL_SATELLITE_AND_VIA_CABLE_IT_P = "Terrestre_Satellitare_e_via_Cavo";
 
+  public static final Map<String, String> CATEGORIES_TO_CODE = Map.ofEntries(
+
+    /* BD */
+    Map.entry(SATELLITE, SATELLITE_CODE),
+    Map.entry(TERRESTRIAL, TERRESTRIAL_CODE),
+    Map.entry(TERRESTRIAL_VIA_CABLE, TERRESTRIAL_VIA_CABLE_CODE),
+    Map.entry(TERRESTRIAL_AND_SATELLITE, TERRESTRIAL_AND_SATELLITE_CODE),
+    Map.entry(TERRESTRIAL_SATELLITE_AND_VIA_CABLE, TERRESTRIAL_SATELLITE_AND_VIA_CABLE_CODE)
+  );
   public static final Map<String, String> CATEGORIES_TO_IT_S = Map.ofEntries(
     /* BE */
     Map.entry(WASHINGMACHINES, WASHINGMACHINES_IT_S),
@@ -97,7 +111,7 @@ public class AssetRegisterConstants {
     Map.entry(TERRESTRIAL_SATELLITE_AND_VIA_CABLE, TERRESTRIAL_SATELLITE_AND_VIA_CABLE_IT_S)
   );
 
-  public static final Map<String, String> CATEGORIES_TO_IT_P = Map.ofEntries(
+  public static final Map<String, String> CATEGORIES_FOR_FILENAME = Map.ofEntries(
     /* BE */
     Map.entry(WASHINGMACHINES, WASHINGMACHINES_IT_P),
     Map.entry(WASHERDRIERS, WASHERDRIERS_IT_P),
@@ -203,9 +217,10 @@ public class AssetRegisterConstants {
 
     // Csv Errors
     Map.entry("ERROR_GTIN_EAN", "Il Codice GTIN/EAN è obbligatorio e deve essere univoco ed alfanumerico e lungo al massimo 14 caratteri"),
-    Map.entry("ERROR_BRAND", "Il campo Marca è obbligatorio e deve contenere una stringa lunga al massimo 100 caratteri"),
-    Map.entry("ERROR_MODEL", "Il campo Modello è obbligatorio e deve contenere una stringa lunga al massimo 100 caratteri"),
+    Map.entry("ERROR_BRAND", "Il campo Marca è obbligatorio, non deve contenere caratteri speciali o lettere accentate e deve essere lungo al massimo 100 caratteri"),
+    Map.entry("ERROR_MODEL", "Il campo Modello è obbligatorio, non deve contenere caratteri speciali o lettere accentate e deve essere lungo al massimo 100 caratteri"),
     Map.entry("ERROR_CODE_PRODUCT", "Il Codice prodotto non deve contenere caratteri speciali o lettere accentate e deve essere lungo al massimo 100 caratteri"),
+    Map.entry("ERROR_CODE_PRODUCT_NOT_NULL", "Il campo Codice Prodotto è obbligatorio, non deve contenere caratteri speciali o lettere accentate e deve essere lungo al massimo 100 caratteri"),
     Map.entry("ERROR_COUNTRY_OF_PRODUCTION", "Paese di Produzione non è un ISO 3166 valido o non è in maiuscolo"),
     Map.entry("ERROR_CATEGORY_PRODUCTS", "Il campo Categoria è obbligatorio e deve essere \"{}\""),
     Map.entry("ERROR_CODE_EPREL", "Il Codice EPREL è obbligatorio e deve essere un valore numerico")

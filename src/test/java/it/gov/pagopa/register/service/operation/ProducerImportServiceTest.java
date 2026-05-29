@@ -1,21 +1,26 @@
 package it.gov.pagopa.register.service.operation;
 
 import it.gov.pagopa.register.constants.AssetRegisterConstants;
+import it.gov.pagopa.register.connector.initiative.PortalInitiativeService;
+import it.gov.pagopa.register.dto.operation.InitiativeDTO;
 import it.gov.pagopa.register.dto.operation.InitiativeStatus;
 import it.gov.pagopa.register.dto.operation.ProducerImportResultDTO;
+import it.gov.pagopa.register.dto.operation.ProducerInitiativeRequestDTO;
 import it.gov.pagopa.register.dto.operation.UpdatedOperativeEmailResult;
 import it.gov.pagopa.register.model.operation.ProducersInitiative;
 import it.gov.pagopa.register.repository.operation.ProducersInitiativeRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.dao.QueryTimeoutException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
-import tools.jackson.databind.json.JsonMapper;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -30,22 +35,26 @@ class ProducerImportServiceTest {
   @Mock
   private ProducersInitiativeRepository producersInitiativeRepository;
 
+  @Mock
+  private PortalInitiativeService portalInitiativeService;
+
   private ProducerImportService producerImportService;
 
   @BeforeEach
   void setUp() {
     MockitoAnnotations.openMocks(this);
-    producerImportService = new ProducerImportService(producersInitiativeRepository, JsonMapper.builder().build());
+    producerImportService = new ProducerImportService(producersInitiativeRepository, portalInitiativeService);
   }
 
   @Test
-  void importJson_shouldMapJsonLinesAndSetInternalFields() {
-    String json = """
-      {"producerId":"456","initiativeId":"111","initiativeName":"Iniziativa 1","initiativeStatus":"PUBLISHED","initiativeStartDate":"2025-12-31T22:00:00.000Z","initiativeEndDate":"2026-12-30T22:00:00.000Z","initiativeServiceId":"1234567890","initiativeOrganizationName":"MIMIT","operativeEmail":"test@pagopa.it"}
-      {"producerId":"678","initiativeId":"111","initiativeName":"Iniziativa 1","initiativeStatus":"PUBLISHED","initiativeStartDate":"2025-12-31T22:00:00.000Z","initiativeEndDate":"2026-12-30T22:00:00.000Z","initiativeServiceId":"1234567891","initiativeOrganizationName":"MEF"}
-      """;
+  void importProducers_shouldMapRequestsAndEnrichInitiativeFields() {
+    when(portalInitiativeService.getInitiativeDetail("111")).thenReturn(initiativeDetail("1234567890", "MIMIT"));
+    when(portalInitiativeService.getInitiativeDetail("222")).thenReturn(initiativeDetail("1234567891", "MEF"));
 
-    ProducerImportResultDTO result = producerImportService.importJson(json);
+    ProducerImportResultDTO result = producerImportService.importProducers(List.of(
+      producerRequest("456", "111", "Producer 1", "producer1@test.it"),
+      producerRequest("678", "222", "Producer 2", "producer2@test.it")
+    ));
 
     ArgumentCaptor<List<ProducersInitiative>> captor = ArgumentCaptor.forClass(List.class);
     verify(producersInitiativeRepository).saveAll(captor.capture());
@@ -61,8 +70,15 @@ class ProducerImportServiceTest {
     ProducersInitiative first = savedProducers.getFirst();
     assertEquals("456_111", first.getId());
     assertEquals("456", first.getProducerId());
+    assertEquals("producer1@test.it", first.getProducerEmail());
+    assertEquals("Producer 1", first.getProducerName());
     assertEquals("111", first.getInitiativeId());
+    assertEquals("Iniziativa 1", first.getInitiativeName());
     assertEquals(InitiativeStatus.PUBLISHED, first.getInitiativeStatus());
+    assertEquals(LocalDateTime.of(2025, 12, 31, 0, 0), first.getInitiativeStartDate());
+    assertEquals(LocalDateTime.of(2026, 12, 30, 0, 0), first.getInitiativeEndDate());
+    assertEquals("1234567890", first.getInitiativeServiceId());
+    assertEquals("MIMIT", first.getInitiativeOrganizationName());
     assertEquals(LocalDateTime.of(2025, 12, 31, 22, 0), first.getInitiativeStartDate());
     assertEquals(LocalDateTime.of(2026, 12, 30, 22, 0), first.getInitiativeEndDate());
     assertEquals("test@pagopa.it", first.getOperativeEmail());
@@ -114,72 +130,211 @@ class ProducerImportServiceTest {
   }
 
   @Test
-  void importJson_shouldRejectInvalidStatus() {
-    String json = """
-      {"producerId":"456","initiativeId":"111","initiativeName":"Iniziativa 1","initiativeStatus":"ACTIVE","initiativeStartDate":"2025-12-31T22:00:00.000Z","initiativeEndDate":"2026-12-30T22:00:00.000Z","initiativeServiceId":"1234567890","initiativeOrganizationName":"MIMIT"}
-      """;
+  void importProducers_shouldTrimProducerInputFields() {
+    when(portalInitiativeService.getInitiativeDetail("111")).thenReturn(initiativeDetail());
 
-    assertThrows(ResponseStatusException.class, () -> producerImportService.importJson(json));
+    producerImportService.importProducers(List.of(
+      producerRequest(" 456 ", " 111 ", " Producer 1 ", " producer@test.it ")
+    ));
+
+    ArgumentCaptor<List<ProducersInitiative>> captor = ArgumentCaptor.forClass(List.class);
+    verify(producersInitiativeRepository).saveAll(captor.capture());
+
+    ProducersInitiative savedProducer = captor.getValue().getFirst();
+    assertEquals("456_111", savedProducer.getId());
+    assertEquals("456", savedProducer.getProducerId());
+    assertEquals("111", savedProducer.getInitiativeId());
+    assertEquals("producer@test.it", savedProducer.getProducerEmail());
+    assertEquals("Producer 1", savedProducer.getProducerName());
+    verify(portalInitiativeService).getInitiativeDetail("111");
   }
 
   @Test
-  void importJson_shouldMapJsonArrayAndSaveProducers() {
-    String json = """
-      [
-        {"producerId":"456","initiativeId":"111","initiativeName":"Iniziativa 1","InitiativeStatus":"PUBLISHED","initiativeStartDate":"2025-12-31T22:00:00.000Z","initiativeEndDate":"2026-12-30T22:00:00.000Z","initiativeServiceId":"1234567890","initiativeOrganizationName":"MIMIT"}
-      ]
-      """;
+  void importProducers_shouldPersistInitiativeFieldsFromNestedPortalDetail() {
+    when(portalInitiativeService.getInitiativeDetail("111")).thenReturn(nestedInitiativeDetail());
 
-    ProducerImportResultDTO result = producerImportService.importJson(json);
+    producerImportService.importProducers(List.of(
+      producerRequest("456", "111", "Producer 1", "producer@test.it")
+    ));
 
-    assertEquals("OK", result.getStatus());
+    ArgumentCaptor<List<ProducersInitiative>> captor = ArgumentCaptor.forClass(List.class);
+    verify(producersInitiativeRepository).saveAll(captor.capture());
+
+    ProducersInitiative savedProducer = captor.getValue().getFirst();
+    assertEquals("456_111", savedProducer.getId());
+    assertEquals("Nested initiative", savedProducer.getInitiativeName());
+    assertEquals(InitiativeStatus.APPROVED, savedProducer.getInitiativeStatus());
+    assertEquals(LocalDateTime.of(2025, 1, 1, 0, 0), savedProducer.getInitiativeStartDate());
+    assertEquals(LocalDateTime.of(2025, 12, 31, 0, 0), savedProducer.getInitiativeEndDate());
+    assertEquals("nested-service", savedProducer.getInitiativeServiceId());
+    assertEquals("Nested org", savedProducer.getInitiativeOrganizationName());
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"", " ", "not-an-email"})
+  void importProducers_shouldSaveNullProducerEmailWhenMissingBlankOrInvalid(String producerEmail) {
+    when(portalInitiativeService.getInitiativeDetail("111")).thenReturn(initiativeDetail());
+
+    producerImportService.importProducers(List.of(
+      producerRequest("456", "111", "Producer 1", producerEmail)
+    ));
+
+    ArgumentCaptor<List<ProducersInitiative>> captor = ArgumentCaptor.forClass(List.class);
+    verify(producersInitiativeRepository).saveAll(captor.capture());
+
+    ProducersInitiative savedProducer = captor.getValue().getFirst();
+    assertNull(savedProducer.getProducerEmail());
+  }
+
+  @Test
+  void importProducers_shouldSaveNullProducerEmailWhenMissing() {
+    when(portalInitiativeService.getInitiativeDetail("111")).thenReturn(initiativeDetail());
+
+    producerImportService.importProducers(List.of(
+      producerRequest("456", "111", "Producer 1", null)
+    ));
+
+    ArgumentCaptor<List<ProducersInitiative>> captor = ArgumentCaptor.forClass(List.class);
+    verify(producersInitiativeRepository).saveAll(captor.capture());
+
+    ProducersInitiative savedProducer = captor.getValue().getFirst();
+    assertNull(savedProducer.getProducerEmail());
+  }
+
+  @Test
+  void importProducers_shouldReportFailedRecordWhenProducerRequiredFieldIsMissing() {
+    ProducerImportResultDTO result = producerImportService.importProducers(
+      List.of(producerRequest("456", " ", "Producer 1", null))
+    );
+
+    assertEquals("PARTIAL", result.getStatus());
     assertEquals(1, result.getTotalRecords());
+    assertEquals(0, result.getImportedRecords());
+    assertEquals(1, result.getFailedRecords());
+    verify(producersInitiativeRepository, never()).saveAll(anyList());
+    verifyNoInteractions(portalInitiativeService);
   }
 
   @Test
-  void importJson_shouldRejectEmptyPayload() {
+  void importProducers_shouldSkipRecordWhenProducerNameIsMissingAndSaveOthers() {
+    when(portalInitiativeService.getInitiativeDetail("111")).thenReturn(initiativeDetail());
+
+    ProducerImportResultDTO result = producerImportService.importProducers(List.of(
+      producerRequest("456", "111", "Producer 1", "producer1@test.it"),
+      producerRequest("999", "111", " ", "producer2@test.it")
+    ));
+
+    ArgumentCaptor<List<ProducersInitiative>> captor = ArgumentCaptor.forClass(List.class);
+    verify(producersInitiativeRepository).saveAll(captor.capture());
+
+    assertEquals("PARTIAL", result.getStatus());
+    assertEquals(2, result.getTotalRecords());
+    assertEquals(1, result.getImportedRecords());
+    assertEquals(1, result.getFailedRecords());
+    assertEquals(1, captor.getValue().size());
+    assertEquals("456_111", captor.getValue().getFirst().getId());
+  }
+
+  @Test
+  void importProducers_shouldRejectEmptyPayload() {
+    List<ProducerInitiativeRequestDTO> requests = List.of();
+
     ResponseStatusException exception = assertThrows(
       ResponseStatusException.class,
-      () -> producerImportService.importJson(" ")
+      () -> producerImportService.importProducers(requests)
     );
 
     assertEquals(HttpStatus.BAD_REQUEST, exception.getStatusCode());
   }
 
   @Test
-  void importJson_shouldReturnRequestTimeoutWhenDbBatchFailsWithTimeout() {
-    String json = """
-      {"producerId":"456","initiativeId":"111","initiativeName":"Iniziativa 1","initiativeStatus":"PUBLISHED","initiativeStartDate":"2025-12-31T22:00:00.000Z","initiativeEndDate":"2026-12-30T22:00:00.000Z","initiativeServiceId":"1234567890","initiativeOrganizationName":"MIMIT"}
-      """;
+  void importProducers_shouldReportFailedRecordWhenInitiativeDetailFieldIsMissing() {
+    when(portalInitiativeService.getInitiativeDetail("111")).thenReturn(InitiativeDTO.builder()
+      .initiativeName("Iniziativa 1")
+      .status(InitiativeStatus.PUBLISHED)
+      .general(new InitiativeDTO.InitiativeGeneralDTO(
+        LocalDate.of(2025, 12, 31),
+        LocalDate.of(2026, 12, 30)
+      ))
+      .additionalInfo(new InitiativeDTO.InitiativeAdditionalDTO(null))
+      .organizationName("MIMIT")
+      .build());
 
-    doThrow(new QueryTimeoutException("Mongo returned 408 request timeout"))
-      .when(producersInitiativeRepository).saveAll(anyList());
-
-    ResponseStatusException exception = assertThrows(
-      ResponseStatusException.class,
-      () -> producerImportService.importJson(json)
+    ProducerImportResultDTO result = producerImportService.importProducers(
+      List.of(producerRequest("456", "111", "Producer 1", null))
     );
 
-    assertEquals(HttpStatus.REQUEST_TIMEOUT, exception.getStatusCode());
+    assertEquals("PARTIAL", result.getStatus());
+    assertEquals(1, result.getTotalRecords());
+    assertEquals(0, result.getImportedRecords());
+    assertEquals(1, result.getFailedRecords());
+    verify(producersInitiativeRepository, never()).saveAll(anyList());
   }
 
   @Test
-  void importJson_shouldReportImportedAndFailedRecordsWhenOnlyOneBatchFails() {
-    StringBuilder json = new StringBuilder();
-    for (int i = 0; i < 1001; i++) {
-      json.append("""
-        {"producerId":"%d","initiativeId":"111","initiativeName":"Iniziativa 1","initiativeStatus":"PUBLISHED","initiativeStartDate":"2025-12-31T22:00:00.000Z","initiativeEndDate":"2026-12-30T22:00:00.000Z","initiativeServiceId":"1234567890","initiativeOrganizationName":"MIMIT"}
-        """.formatted(i));
-    }
+  void importProducers_shouldSkipRecordWhenInitiativeDetailFailsAndSaveOthers() {
+    when(portalInitiativeService.getInitiativeDetail("111")).thenReturn(initiativeDetail());
+    when(portalInitiativeService.getInitiativeDetail("wrong")).thenThrow(new RuntimeException("initiative not found"));
 
+    ProducerImportResultDTO result = producerImportService.importProducers(List.of(
+      producerRequest("456", "111", "Producer 1", "producer1@test.it"),
+      producerRequest("999", "wrong", "Producer wrong", "wrong@test.it")
+    ));
+
+    ArgumentCaptor<List<ProducersInitiative>> captor = ArgumentCaptor.forClass(List.class);
+    verify(producersInitiativeRepository).saveAll(captor.capture());
+
+    assertEquals("PARTIAL", result.getStatus());
+    assertEquals(2, result.getTotalRecords());
+    assertEquals(1, result.getImportedRecords());
+    assertEquals(1, result.getFailedRecords());
+    assertEquals(1, captor.getValue().size());
+    assertEquals("456_111", captor.getValue().getFirst().getId());
+  }
+
+  @Test
+  void importProducers_shouldCallPortalInitiativeOnceForSameInitiative() {
+    when(portalInitiativeService.getInitiativeDetail("111")).thenReturn(initiativeDetail());
+
+    producerImportService.importProducers(List.of(
+      producerRequest("456", "111", "Producer 1", "producer1@test.it"),
+      producerRequest("678", "111", "Producer 2", "producer2@test.it")
+    ));
+
+    verify(portalInitiativeService, times(1)).getInitiativeDetail("111");
+  }
+
+  @Test
+  void importProducers_shouldReturnRequestTimeoutWhenDbBatchFailsWithTimeout() {
+    when(portalInitiativeService.getInitiativeDetail("111")).thenReturn(initiativeDetail());
+    doThrow(new QueryTimeoutException("Mongo returned 408 request timeout"))
+      .when(producersInitiativeRepository).saveAll(anyList());
+    List<ProducerInitiativeRequestDTO> requests = List.of(producerRequest("456", "111", "Producer", null));
+
+    ResponseStatusException exception = assertThrows(
+      ResponseStatusException.class,
+      () -> producerImportService.importProducers(requests)
+    );
+
+    assertEquals(HttpStatus.REQUEST_TIMEOUT, exception.getStatusCode());
+    assertTrue(exception.getReason().contains("totalRecords=1"));
+    assertTrue(exception.getReason().contains("importedRecords=0"));
+    assertTrue(exception.getReason().contains("failedRecords=1"));
+  }
+
+  @Test
+  void importProducers_shouldReportImportedAndFailedRecordsWhenOnlyOneBatchFails() {
+    List<ProducerInitiativeRequestDTO> requests = java.util.stream.IntStream.range(0, 1001)
+      .mapToObj(i -> producerRequest(String.valueOf(i), "111", "Producer %d".formatted(i), "producer%d@test.it".formatted(i)))
+      .toList();
+    when(portalInitiativeService.getInitiativeDetail("111")).thenReturn(initiativeDetail());
     when(producersInitiativeRepository.saveAll(anyList()))
       .thenAnswer(invocation -> invocation.getArgument(0))
       .thenThrow(new QueryTimeoutException("Mongo returned 408 request timeout"));
 
-    String jsonPayload = json.toString();
     ResponseStatusException exception = assertThrows(
       ResponseStatusException.class,
-      () -> producerImportService.importJson(jsonPayload)
+      () -> producerImportService.importProducers(requests)
     );
 
     assertEquals(HttpStatus.REQUEST_TIMEOUT, exception.getStatusCode());
@@ -189,20 +344,60 @@ class ProducerImportServiceTest {
   }
 
   @Test
-  void importJson_shouldReturnInternalServerErrorWhenDbBatchFailsWithoutTimeout() {
-    String json = """
-      {"producerId":"456","initiativeId":"111","initiativeName":"Iniziativa 1","initiativeStatus":"PUBLISHED","initiativeStartDate":"2025-12-31T22:00:00.000Z","initiativeEndDate":"2026-12-30T22:00:00.000Z","initiativeServiceId":"1234567890","initiativeOrganizationName":"MIMIT"}
-      """;
-
+  void importProducers_shouldReturnInternalServerErrorWhenDbBatchFailsWithoutTimeout() {
+    when(portalInitiativeService.getInitiativeDetail("111")).thenReturn(initiativeDetail());
     when(producersInitiativeRepository.saveAll(anyList()))
       .thenThrow(new RuntimeException("generic db error"));
+    List<ProducerInitiativeRequestDTO> requests = List.of(producerRequest("456", "111", "Producer", null));
 
     ResponseStatusException exception = assertThrows(
       ResponseStatusException.class,
-      () -> producerImportService.importJson(json)
+      () -> producerImportService.importProducers(requests)
     );
 
     assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, exception.getStatusCode());
+    assertTrue(exception.getReason().contains("failedRecords=1"));
+  }
+
+  private ProducerInitiativeRequestDTO producerRequest(String producerId, String initiativeId, String producerName, String producerEmail) {
+    ProducerInitiativeRequestDTO request = new ProducerInitiativeRequestDTO();
+    request.setProducerId(producerId);
+    request.setInitiativeId(initiativeId);
+    request.setProducerName(producerName);
+    request.setProducerEmail(producerEmail);
+    return request;
+  }
+
+  private InitiativeDTO initiativeDetail() {
+    return initiativeDetail("1234567890", "MIMIT");
+  }
+
+  private InitiativeDTO initiativeDetail(String serviceId, String organizationName) {
+    return InitiativeDTO.builder()
+      .initiativeId("111")
+      .initiativeName("Iniziativa 1")
+      .status(InitiativeStatus.PUBLISHED)
+      .general(new InitiativeDTO.InitiativeGeneralDTO(
+        LocalDate.of(2025, 12, 31),
+        LocalDate.of(2026, 12, 30)
+      ))
+      .additionalInfo(new InitiativeDTO.InitiativeAdditionalDTO(serviceId))
+      .organizationName(organizationName)
+      .build();
+  }
+
+  private InitiativeDTO nestedInitiativeDetail() {
+    return InitiativeDTO.builder()
+      .initiativeId("111")
+      .initiativeName("Nested initiative")
+      .status(InitiativeStatus.APPROVED)
+      .general(new InitiativeDTO.InitiativeGeneralDTO(
+        LocalDate.of(2025, 1, 1),
+        LocalDate.of(2025, 12, 31)
+      ))
+      .additionalInfo(new InitiativeDTO.InitiativeAdditionalDTO("nested-service"))
+      .organizationName("Nested org")
+      .build();
   }
 
   @Test
