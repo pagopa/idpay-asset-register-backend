@@ -123,7 +123,7 @@ class ProducerImportServiceTest {
   }
 
   @ParameterizedTest
-  @ValueSource(strings = {"", " ", "not-an-email"})
+  @ValueSource(strings = {"", " ", "not-an-email", "test.rdb.dev@gmail"})
   void importProducers_shouldSaveNullProducerEmailWhenMissingBlankOrInvalid(String producerEmail) {
     when(portalInitiativeService.getInitiativeDetail("111")).thenReturn(initiativeDetail());
 
