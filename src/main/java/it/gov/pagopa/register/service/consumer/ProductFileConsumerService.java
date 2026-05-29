@@ -12,8 +12,10 @@ import it.gov.pagopa.register.dto.utils.EventDetails;
 import it.gov.pagopa.register.dto.utils.ProductValidationResult;
 import it.gov.pagopa.register.event.producer.ProductFileProducer;
 import it.gov.pagopa.register.exception.operation.EprelException;
+import it.gov.pagopa.register.model.operation.ProducersInitiative;
 import it.gov.pagopa.register.model.operation.Product;
 import it.gov.pagopa.register.model.operation.ProductFile;
+import it.gov.pagopa.register.repository.operation.ProducersInitiativeRepository;
 import it.gov.pagopa.register.repository.operation.ProductFileRepository;
 import it.gov.pagopa.register.repository.operation.ProductRepository;
 import it.gov.pagopa.register.service.validator.product.ValidationService;
@@ -57,6 +59,7 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
   private final ConsumerControlService consumerControlService;
   private final InitiativeConfigMap initiativeConfigMap;
   private final ObjectMapper objectMapper;
+  private final ProducersInitiativeRepository producersInitiativeRepository;
   protected ProductFileConsumerService(@Value("${spring.application.name}") String applicationName,
                                        ProductRepository productRepository,
                                        FileStorageClient fileStorageClient,
@@ -65,7 +68,8 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
                                        ValidationService validationService, NotificationServiceImpl notificationService,
                                        ProductFileProducer productFileProducer,
                                        ConsumerControlService consumerControlService,
-                                       InitiativeConfigMap initiativeConfigMap){
+                                       InitiativeConfigMap initiativeConfigMap,
+                                       ProducersInitiativeRepository producersInitiativeRepository){
     super(applicationName);
     this.productRepository = productRepository;
     this.fileStorageClient = fileStorageClient;
@@ -77,6 +81,7 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
     this.objectMapper = objectMapper;
     this.consumerControlService = consumerControlService;
     this.initiativeConfigMap = initiativeConfigMap;
+    this.producersInitiativeRepository = producersInitiativeRepository;
   }
 
   @Override
@@ -229,6 +234,21 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
                                     String initiativeId) {
 
     try {
+      String initiativeKey = orgId + "_" + initiativeId;
+      Optional<ProducersInitiative> initiativeOpt = producersInitiativeRepository.findById(initiativeKey);
+      if (initiativeOpt.isEmpty() || !Boolean.TRUE.equals(initiativeOpt.get().getEnabled())) {
+        log.warn("[PROCESS_FILE] - Organization {} is not enabled or not found for initiative: {}", orgId, initiativeId);
+        setProductFileStatus(fileId, String.valueOf(PARTIAL), 0);
+      }
+
+      String userEmail = null;
+      if (initiativeOpt.isPresent() && (initiativeOpt.get().getOperativeEmail() == null || initiativeOpt.get().getOperativeEmail().isBlank())) {
+        log.warn("[PROCESS_FILE] - Upload blocked. Missing operative email for key: {}", initiativeKey);
+        setProductFileStatus(fileId, String.valueOf(PARTIAL), 0);
+      } else {
+        userEmail = initiativeOpt.get().getOperativeEmail();
+      }
+
       setProductFileStatus(fileId, String.valueOf(IN_PROCESS), 0);
 
       List<String> headers = CsvUtils.readHeader(byteArrayOutputStream);
@@ -260,6 +280,7 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
         validationResult.getErrorMessages(),
         initiativeId,
         fileId,
+        userEmail,
         headers,
         category
       );
@@ -270,23 +291,23 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
     }
   }
 
-  private void processResult(List<Product> validProduct, List<CSVRecord> errors, Map<CSVRecord, String> messages, String initiativeId, String productFileId, List<String> headers, String category) {
+  private void processResult(List<Product> validProduct, List<CSVRecord> errors, Map<CSVRecord, String> messages, String initiativeId, String productFileId, String userEmail, List<String> headers, String category) {
     if (!validProduct.isEmpty()) {
       List<Product> savedProduct = productRepository.saveAll(validProduct);
       log.info("[PRODUCT_UPLOAD] - Saved {} valid products for file {}", savedProduct.size(), productFileId);
       if (!errors.isEmpty()) {
         processErrorRecords(errors, messages, initiativeId, productFileId, headers);
-        String userEmail = setProductFileStatus(productFileId, String.valueOf(PARTIAL), validProduct.size());
+        setProductFileStatus(productFileId, String.valueOf(PARTIAL), validProduct.size());
         log.info("[PRODUCT_UPLOAD] - File {} processed with {} errors", productFileId, errors.size());
         notificationService.sendEmailPartial(CATEGORIES_TO_IT_P.get(category) + "_" + productFileId + CSV, userEmail);
       } else {
-        String userEmail = setProductFileStatus(productFileId, String.valueOf(LOADED), savedProduct.size());
+        setProductFileStatus(productFileId, String.valueOf(LOADED), savedProduct.size());
         log.info("[PRODUCT_UPLOAD] - File {} processed successfully with no errors", productFileId);
         notificationService.sendEmailOk( CATEGORIES_TO_IT_P.get(category)  + "_" + productFileId + CSV, userEmail);
       }
     } else if (!errors.isEmpty()) {
       processErrorRecords(errors, messages,initiativeId, productFileId, headers);
-      String userEmail = setProductFileStatus(productFileId, String.valueOf(PARTIAL), 0);
+      setProductFileStatus(productFileId, String.valueOf(PARTIAL), 0);
       log.info("[PRODUCT_UPLOAD] - File {} processed with {} errors", productFileId, errors.size());
       notificationService.sendEmailPartial( CATEGORIES_TO_IT_P.get(category)  + "_" + productFileId + CSV, userEmail);
     }
@@ -313,7 +334,7 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
     }
   }
 
-  protected String setProductFileStatus(String fileId, String status, int added) {
+  protected void setProductFileStatus(String fileId, String status, int added) {
     Optional<ProductFile> productFileOptional = productFileRepository.findById(fileId);
 
     if (productFileOptional.isPresent()) {
@@ -322,10 +343,8 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
       productFile.setAddedProductNumber(added);
       productFileRepository.save(productFile);
       log.info("[PRODUCT_UPLOAD] - Final status for file {} set to: {}", fileId, status);
-      return productFile.getUserEmail();
     } else {
       log.warn("[PRODUCT_UPLOAD] - No product file found with id: {}", fileId);
-      return null;
     }
   }
 

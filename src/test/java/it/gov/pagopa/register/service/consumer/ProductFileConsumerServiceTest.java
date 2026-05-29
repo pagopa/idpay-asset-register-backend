@@ -12,8 +12,10 @@ import it.gov.pagopa.register.exception.operation.EprelException;
 import it.gov.pagopa.register.model.initiative.CategoryConfig;
 import it.gov.pagopa.register.model.initiative.CategoryExternalCheck;
 import it.gov.pagopa.register.model.initiative.InitiativeConfig;
+import it.gov.pagopa.register.model.operation.ProducersInitiative;
 import it.gov.pagopa.register.model.operation.Product;
 import it.gov.pagopa.register.model.operation.ProductFile;
+import it.gov.pagopa.register.repository.operation.ProducersInitiativeRepository;
 import it.gov.pagopa.register.repository.operation.ProductFileRepository;
 import it.gov.pagopa.register.repository.operation.ProductRepository;
 import it.gov.pagopa.register.service.validator.product.ValidationService;
@@ -56,6 +58,7 @@ class ProductFileConsumerServiceTest {
   @Mock private ConsumerControlService consumerControlService;
   @Mock private InitiativeConfigMap initiativeConfigMap;
   @Mock private ValidationService validationService;
+  @Mock private ProducersInitiativeRepository producersInitiativeRepository;
 
   private static final String INITIATIVE_ID = "687f8a176a5c92458819922a";
 
@@ -74,7 +77,8 @@ class ProductFileConsumerServiceTest {
       notificationService,
       productFileProducer,
       consumerControlService,
-      initiativeConfigMap
+      initiativeConfigMap,
+      producersInitiativeRepository
     );
   }
 
@@ -83,6 +87,11 @@ class ProductFileConsumerServiceTest {
     mockInitiative("COOKINGHOBS", false);
 
     StorageEventDTO event = buildEvent("COOKINGHOBS");
+
+    ProducersInitiative producersInitiative = new ProducersInitiative();
+    producersInitiative.setEnabled(true);
+    producersInitiative.setOperativeEmail("test@pagopa.it");
+    when(producersInitiativeRepository.findById("ORG123_" + INITIATIVE_ID)).thenReturn(Optional.of(producersInitiative));
 
     when(fileStorageClient.download(anyString())).thenReturn(new ByteArrayOutputStream());
     when(productFileRepository.findById(anyString()))
@@ -99,12 +108,16 @@ class ProductFileConsumerServiceTest {
     assertDoesNotThrow(() -> service.execute(List.of(event), null));
   }
 
-
   @Test
   void testExecute_shouldHandleEprelError() {
     mockInitiative("WASHINGMACHINES", true);
 
     StorageEventDTO event = buildEvent("WASHINGMACHINES");
+
+    ProducersInitiative producersInitiative = new ProducersInitiative();
+    producersInitiative.setEnabled(true);
+    producersInitiative.setOperativeEmail("test@pagopa.it");
+    when(producersInitiativeRepository.findById("ORG123_" + INITIATIVE_ID)).thenReturn(Optional.of(producersInitiative));
 
     when(fileStorageClient.download(anyString())).thenReturn(new ByteArrayOutputStream());
     when(productFileRepository.findById(anyString()))
@@ -122,11 +135,17 @@ class ProductFileConsumerServiceTest {
     verify(consumerControlService).stopConsumer();
     verify(consumerControlService).startEprelHealthCheck();
   }
+
   @Test
   void testExecute_onlyErrors_shouldNotSaveProducts_butUploadErrorFile() {
     mockInitiative("COOKINGHOBS", false);
 
     StorageEventDTO event = buildEvent("COOKINGHOBS");
+
+    ProducersInitiative producersInitiative = new ProducersInitiative();
+    producersInitiative.setEnabled(true);
+    producersInitiative.setOperativeEmail("test@pagopa.it");
+    when(producersInitiativeRepository.findById("ORG123_" + INITIATIVE_ID)).thenReturn(Optional.of(producersInitiative));
 
     when(fileStorageClient.download(any())).thenReturn(new ByteArrayOutputStream());
     when(productFileRepository.findById(any()))
@@ -166,6 +185,11 @@ class ProductFileConsumerServiceTest {
 
     StorageEventDTO event = buildEvent("COOKINGHOBS");
 
+    ProducersInitiative producersInitiative = new ProducersInitiative();
+    producersInitiative.setEnabled(true);
+    producersInitiative.setOperativeEmail("test@pagopa.it");
+    when(producersInitiativeRepository.findById("ORG123_" + INITIATIVE_ID)).thenReturn(Optional.of(producersInitiative));
+
     when(fileStorageClient.download(any())).thenReturn(new ByteArrayOutputStream());
     when(productFileRepository.findById(any()))
       .thenReturn(Optional.of(new ProductFile()));
@@ -196,6 +220,11 @@ class ProductFileConsumerServiceTest {
 
     StorageEventDTO event = buildEvent("COOKINGHOBS");
 
+    ProducersInitiative producersInitiative = new ProducersInitiative();
+    producersInitiative.setEnabled(true);
+    producersInitiative.setOperativeEmail("test@pagopa.it");
+    when(producersInitiativeRepository.findById("ORG123_" + INITIATIVE_ID)).thenReturn(Optional.of(producersInitiative));
+
     when(fileStorageClient.download(any())).thenReturn(new ByteArrayOutputStream());
     when(productFileRepository.findById(any()))
       .thenReturn(Optional.of(new ProductFile()));
@@ -216,7 +245,6 @@ class ProductFileConsumerServiceTest {
       any(), any(), any(), any(), any()))
       .thenReturn(result);
 
-    // mock static CSV
     try (MockedStatic<CsvUtils> utils = mockStatic(CsvUtils.class)) {
       utils.when(() -> CsvUtils.readHeader(any())).thenReturn(List.of("H"));
       utils.when(() -> CsvUtils.readCsvRecords((MultipartFile) any()))
@@ -231,6 +259,73 @@ class ProductFileConsumerServiceTest {
     verify(productRepository).saveAll(any());
     verify(fileStorageClient).upload(any(), anyString(), eq("text/csv"));
     verify(notificationService).sendEmailPartial(any(), any());
+  }
+
+  @Test
+  void testExecute_organizationNotEnabled_shouldSetPartial() {
+    mockInitiative("COOKINGHOBS", false);
+
+    StorageEventDTO event = buildEvent("COOKINGHOBS");
+
+    ProducersInitiative producersInitiative = new ProducersInitiative();
+    producersInitiative.setEnabled(false);
+    when(producersInitiativeRepository.findById("ORG123_" + INITIATIVE_ID)).thenReturn(Optional.of(producersInitiative));
+
+    when(fileStorageClient.download(any())).thenReturn(new ByteArrayOutputStream());
+    when(productFileRepository.findById(any())).thenReturn(Optional.of(new ProductFile()));
+
+    when(validationService.validateRecords(any(), any(), any(), any(), any(),
+      any(), any(), any(), any(), any()))
+      .thenReturn(validationResultWithValidProduct());
+
+    try (MockedStatic<CsvUtils> utils = mockStatic(CsvUtils.class)) {
+      utils.when(() -> CsvUtils.readHeader(any())).thenReturn(List.of("H"));
+      utils.when(() -> CsvUtils.readCsvRecords((MultipartFile) any()))
+        .thenReturn(List.of(mock(CSVRecord.class)));
+
+      assertDoesNotThrow(() -> service.execute(List.of(event), null));
+    }
+
+    verify(productRepository).saveAll(any());
+  }
+
+  @Test
+  void testExecute_missingOperativeEmail_shouldSetPartial() {
+    mockInitiative("COOKINGHOBS", false);
+
+    StorageEventDTO event = buildEvent("COOKINGHOBS");
+
+    ProducersInitiative producersInitiative = new ProducersInitiative();
+    producersInitiative.setEnabled(true);
+    producersInitiative.setOperativeEmail(null);
+    when(producersInitiativeRepository.findById("ORG123_" + INITIATIVE_ID)).thenReturn(Optional.of(producersInitiative));
+
+    when(fileStorageClient.download(any())).thenReturn(new ByteArrayOutputStream());
+    when(productFileRepository.findById(any())).thenReturn(Optional.of(new ProductFile()));
+
+    when(validationService.validateRecords(any(), any(), any(), any(), any(),
+      any(), any(), any(), any(), any()))
+      .thenReturn(validationResultWithValidProduct());
+
+    try (MockedStatic<CsvUtils> utils = mockStatic(CsvUtils.class)) {
+      utils.when(() -> CsvUtils.readHeader(any())).thenReturn(List.of("H"));
+      utils.when(() -> CsvUtils.readCsvRecords((MultipartFile) any()))
+        .thenReturn(List.of(mock(CSVRecord.class)));
+
+      assertDoesNotThrow(() -> service.execute(List.of(event), null));
+    }
+
+    verify(productRepository).saveAll(any());
+  }
+
+  @Test
+  void testSetProductFileStatus_fileNotFound_shouldLogWarn() {
+    when(productFileRepository.findById("UNKNOWN_FILE_ID"))
+      .thenReturn(Optional.empty());
+
+    assertDoesNotThrow(() -> service.setProductFileStatus("UNKNOWN_FILE_ID", "PARTIAL", 0));
+
+    verify(productFileRepository, never()).save(any());
   }
 
   @Test
@@ -278,9 +373,7 @@ class ProductFileConsumerServiceTest {
     }
   }
 
-
   private void mockInitiative(String category, boolean withExternalChecks) {
-
     CategoryConfig categoryConfig = new CategoryConfig(
       "TEMPLATE",
       "GTIN",
@@ -292,10 +385,7 @@ class ProductFileConsumerServiceTest {
 
     InitiativeConfig initiativeConfig = new InitiativeConfig();
     initiativeConfig.setCategories(Map.of(category, categoryConfig));
-
-
     initiativeConfig.setAllowedReloadStatuses(List.of("VALID"));
-
 
     when(initiativeConfigMap.get(anyString()))
       .thenReturn(initiativeConfig);

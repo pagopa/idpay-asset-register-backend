@@ -6,6 +6,7 @@ import it.gov.pagopa.register.dto.operation.*;
 import it.gov.pagopa.register.enums.UploadCsvStatus;
 import it.gov.pagopa.register.exception.operation.ReportNotFoundException;
 import it.gov.pagopa.register.mapper.operation.ProductFileMapper;
+import it.gov.pagopa.register.model.operation.ProducersInitiative;
 import it.gov.pagopa.register.model.operation.Product;
 import it.gov.pagopa.register.model.operation.ProductFile;
 import it.gov.pagopa.register.repository.operation.ProducersInitiativeRepository;
@@ -119,16 +120,16 @@ public class ProductFileService {
   }
 
   public ProductFileResult uploadFile(MultipartFile file, String category,  String initiativeId, String organizationId,
-                                      String userId, String userEmail, String organizationName) {
+                                      String userId, String organizationName) {
     try {
-      ProductFileResult result = validateFile(file, category, initiativeId, organizationId, userId, userEmail, organizationName);
+      ProductFileResult result = validateFile(file, category, initiativeId, organizationId, userId, organizationName);
 
       if (result.isKo()) {
         return result;
       }
 
       ProductFile productFile = saveProductFile(
-        category, organizationId, initiativeId, userId, userEmail,
+        category, organizationId, initiativeId, userId,
         file.getOriginalFilename(), result.getRecords(), organizationName
       );
 
@@ -145,11 +146,18 @@ public class ProductFileService {
   }
 
   public ProductFileResult validateFile(MultipartFile file, String category, String initiativeId, String organizationId,
-                                        String userId, String userEmail, String organizationName) {
+                                        String userId, String organizationName) {
 
-    if (!producersInitiativeRepository.existsByProducerIdAndInitiativeIdAndEnabledTrue(organizationId, initiativeId)) {
-      log.warn("[PROCESS_FILE] - Organization {} is not enabled for initiative: {}", organizationId, initiativeId);
+    String initiativeKey = organizationId + "_" + initiativeId;
+    Optional<ProducersInitiative> initiativeOpt = producersInitiativeRepository.findById(initiativeKey);
+    if (initiativeOpt.isEmpty() || !Boolean.TRUE.equals(initiativeOpt.get().getEnabled())) {
+      log.warn("[PROCESS_FILE] - Organization {} is not enabled or not found for initiative: {}", organizationId, initiativeId);
       return ProductFileResult.ko(AssetRegisterConstants.UploadKeyConstant.NOT_ENABLED_ERRORE_KEY);
+    }
+
+    if (initiativeOpt.get().getOperativeEmail() == null || initiativeOpt.get().getOperativeEmail().isBlank()) {
+      log.warn("[PROCESS_FILE] - Upload blocked. Missing operative email for key: {}", initiativeKey);
+      return ProductFileResult.ko(AssetRegisterConstants.UploadEmailKeyConstant.EMAIL_MISSING_ERROR_KEY);
     }
 
     if (productFileRepository.existsByInitiativeIdAndOrganizationIdAndUploadStatusIn(initiativeId, organizationId, BLOCKING_STATUSES)) {
@@ -174,7 +182,7 @@ public class ProductFileService {
       if (recordValidation.isKo()) {
         log.warn(VALIDATION_FAILED_LOG, originalFileName);
 
-        ProductFile productFile = saveProductFile(category, organizationId, initiativeId, userId, userEmail,
+        ProductFile productFile = saveProductFile(category, organizationId, initiativeId, userId,
           originalFileName, validation.getRecords(), organizationName);
 
         uploadFormalErrorFile(file, recordValidation, validation.getHeaders(), productFile);
@@ -220,7 +228,7 @@ public class ProductFileService {
   }
 
   @SuppressWarnings("java:S107")
-  private ProductFile saveProductFile(String category, String organizationId, String initiativeId, String userId, String userEmail,
+  private ProductFile saveProductFile(String category, String organizationId, String initiativeId, String userId,
                                       String originalFileName, List<CSVRecord> records, String organizationName) {
 
     return productFileRepository.save(ProductFile.builder()
@@ -232,7 +240,6 @@ public class ProductFileService {
       .userId(userId)
       .organizationId(organizationId)
       .dateUpload(LocalDateTime.now())
-      .userEmail(userEmail)
       .organizationName(organizationName)
       .initiativeId(initiativeId)
       .build());

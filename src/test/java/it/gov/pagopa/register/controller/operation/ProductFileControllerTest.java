@@ -1,6 +1,6 @@
 package it.gov.pagopa.register.controller.operation;
 
-
+import it.gov.pagopa.register.constants.AssetRegisterConstants;
 import it.gov.pagopa.register.dto.operation.*;
 import it.gov.pagopa.register.exception.operation.ReportNotFoundException;
 import it.gov.pagopa.register.service.operation.ProductFileService;
@@ -16,6 +16,7 @@ import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import tools.jackson.databind.ObjectMapper;
 
 import java.util.Collections;
@@ -27,9 +28,10 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(value={ProductFileController.class}, excludeAutoConfiguration =  { UserDetailsServiceAutoConfiguration.class , SecurityAutoConfiguration.class})
+@WebMvcTest(value={ProductFileController.class}, excludeAutoConfiguration = { UserDetailsServiceAutoConfiguration.class , SecurityAutoConfiguration.class})
 @AutoConfigureMockMvc(addFilters = false)
 class ProductFileControllerTest {
+
   @Autowired
   private MockMvc mockMvc;
 
@@ -39,7 +41,7 @@ class ProductFileControllerTest {
   @Autowired
   private ObjectMapper objectMapper;
 
-  private static final  String TEST_ID_UPLOAD = "687f8a176a5c92458819922a";
+  private static final String TEST_ID_UPLOAD = "687f8a176a5c92458819922a";
   private static final String INITIATIVE_ID = "687f8a176a5c92458819922b";
 
   @Test
@@ -61,7 +63,6 @@ class ProductFileControllerTest {
       .andExpect(status().isOk())
       .andExpect(jsonPath("$.content[0].fileName").value("test-file.txt"));
   }
-
 
   @Test
   void testDownloadListUpload_MissingHeader() throws Exception {
@@ -88,7 +89,6 @@ class ProductFileControllerTest {
       .andExpect(content().bytes(fileReportDTO.getData()));
   }
 
-
   @Test
   void downloadCsv_notFound() throws Exception {
     String initiativeId = INITIATIVE_ID;
@@ -106,16 +106,14 @@ class ProductFileControllerTest {
   void uploadProductFile_withInvalidExtension_KoStatus() throws Exception {
     MockMultipartFile wrongFile = new MockMultipartFile("csv", "file.txt", "text/plain", "data".getBytes());
 
-    Mockito.when(productFileService.uploadFile(any(),any(), any(), any(), any(), any(), any()))
+    Mockito.when(productFileService.uploadFile(any(), any(), any(), any(), any(), any()))
       .thenReturn(ProductFileResult.ko("EXTENSION_FILE_ERROR"));
 
     mockMvc.perform(multipart("/idpay/register/initiatives/{initiativeId}/product-files", INITIATIVE_ID)
         .file(wrongFile)
-        .param("initiativeId", INITIATIVE_ID)
         .param("category", "eprel")
         .header("x-organization-id", "83843864-f3c0-4def-badb-7f197471b72e")
         .header("x-user-id", "83843864-f3c0-4def-badb-7f197471b72e")
-        .header("x-user-email", "user@email.com")
         .header("x-organization-name", "org-name"))
       .andExpect(status().isOk())
       .andExpect(jsonPath("$.errorKey").value("EXTENSION_FILE_ERROR"));
@@ -124,16 +122,14 @@ class ProductFileControllerTest {
   @Test
   void uploadProductFile_withInvalidHeader_KoStatus() throws Exception {
     MockMultipartFile file = new MockMultipartFile("csv", "p.csv", "text/csv", "wrong,header".getBytes());
-    Mockito.when(productFileService.uploadFile(any(),any(), any(), any(), any(), any(), any()))
+    Mockito.when(productFileService.uploadFile(any(), any(), any(), any(), any(), any()))
       .thenReturn(ProductFileResult.ko("HEADER_FILE_ERROR"));
 
     mockMvc.perform(multipart("/idpay/register/initiatives/{initiativeId}/product-files", INITIATIVE_ID)
         .file(file)
-        .param("initiativeId", INITIATIVE_ID)
         .param("category", "eprel")
         .header("x-organization-id", "83843864-f3c0-4def-badb-7f197471b72e")
         .header("x-user-id", "83843864-f3c0-4def-badb-7f197471b72e")
-        .header("x-user-email", "user@email.com")
         .header("x-organization-name", "org-name"))
       .andExpect(status().isOk())
       .andExpect(jsonPath("$.errorKey").value("HEADER_FILE_ERROR"));
@@ -142,16 +138,14 @@ class ProductFileControllerTest {
   @Test
   void uploadProductFile_withTooManyRecords_KoStatus() throws Exception {
     MockMultipartFile file = new MockMultipartFile("csv", "big.csv", "text/csv", "id,name\n1,P".getBytes());
-    Mockito.when(productFileService.uploadFile(any(),any(), any(), any(), any(), any(), any()))
+    Mockito.when(productFileService.uploadFile(any(), any(), any(), any(), any(), any()))
       .thenReturn(ProductFileResult.ko("MAX_ROW_FILE_ERROR"));
 
     mockMvc.perform(multipart("/idpay/register/initiatives/{initiativeId}/product-files", INITIATIVE_ID)
         .file(file)
-        .param("initiativeId", INITIATIVE_ID)
         .param("category", "eprel")
         .header("x-organization-id", "83843864-f3c0-4def-badb-7f197471b72e")
         .header("x-user-id", "83843864-f3c0-4def-badb-7f197471b72e")
-        .header("x-user-email", "user@email.com")
         .header("x-organization-name", "org-name"))
       .andExpect(status().isOk())
       .andExpect(jsonPath("$.errorKey").value("MAX_ROW_FILE_ERROR"));
@@ -161,16 +155,14 @@ class ProductFileControllerTest {
   void uploadProductFile_withValidCsv_shouldReturnSuccess() throws Exception {
     MockMultipartFile file = new MockMultipartFile("csv", "valid.csv", "text/csv", "content".getBytes());
 
-    Mockito.when(productFileService.uploadFile(any(),any(), any(), any(), any(), any(), any()))
+    Mockito.when(productFileService.uploadFile(any(), any(), any(), any(), any(), any()))
       .thenReturn(ProductFileResult.ok());
 
     mockMvc.perform(multipart("/idpay/register/initiatives/{initiativeId}/product-files", INITIATIVE_ID)
         .file(file)
-        .param("initiativeId", INITIATIVE_ID)
         .param("category", "eprel")
         .header("x-organization-id", "83843864-f3c0-4def-badb-7f197471b72e")
         .header("x-user-id", "83843864-f3c0-4def-badb-7f197471b72e")
-        .header("x-user-email", "user@email.com")
         .header("x-organization-name", "org-name"))
       .andExpect(status().isOk())
       .andExpect(jsonPath("$.status").value("OK"));
@@ -208,12 +200,11 @@ class ProductFileControllerTest {
   void verifyProductFile_shouldReturnSuccess() throws Exception {
     MockMultipartFile file = new MockMultipartFile("csv", "verify.csv", "text/csv", "content".getBytes());
 
-    Mockito.when(productFileService.validateFile(any(),any(), any(), any(), any(), any(), any()))
+    Mockito.when(productFileService.validateFile(any(), any(), any(), any(), any(), any()))
       .thenReturn(ProductFileResult.ok());
 
     mockMvc.perform(multipart("/idpay/register/initiatives/{initiativeId}/product-files/verify", INITIATIVE_ID)
         .file(file)
-        .param("initiativeId", INITIATIVE_ID)
         .param("category", "eprel")
         .header("x-organization-id", "83843864-f3c0-4def-badb-7f197471b72e")
         .header("x-user-id", "83843864-f3c0-4def-badb-7f197471b72e")
@@ -226,12 +217,11 @@ class ProductFileControllerTest {
   @Test
   void verifyProductFile_shouldReturnKoStatus_whenValidationFails() throws Exception {
     MockMultipartFile file = new MockMultipartFile("csv", "verify.csv", "text/csv", "bad,header".getBytes());
-    Mockito.when(productFileService.validateFile(any(),any(), any(), any(), any(), any(), any()))
+    Mockito.when(productFileService.validateFile(any(), any(), any(), any(), any(), any()))
       .thenReturn(ProductFileResult.ko("INVALID_HEADER"));
 
     mockMvc.perform(multipart("/idpay/register/initiatives/{initiativeId}/product-files/verify", INITIATIVE_ID)
         .file(file)
-        .param("initiativeId", INITIATIVE_ID)
         .param("category", "eprel")
         .header("x-organization-id", "83843864-f3c0-4def-badb-7f197471b72e")
         .header("x-user-id", "83843864-f3c0-4def-badb-7f197471b72e")
@@ -242,5 +232,20 @@ class ProductFileControllerTest {
       .andExpect(jsonPath("$.errorKey").value("INVALID_HEADER"));
   }
 
+  @Test
+  void testHandleMaxSizeException() throws Exception {
+    MockMultipartFile file = new MockMultipartFile("csv", "overflow.csv", "text/csv", "content".getBytes());
 
+    Mockito.when(productFileService.uploadFile(any(), any(), any(), any(), any(), any()))
+      .thenThrow(new MaxUploadSizeExceededException(1024L));
+
+    mockMvc.perform(multipart("/idpay/register/initiatives/{initiativeId}/product-files", INITIATIVE_ID)
+        .file(file)
+        .param("category", "eprel")
+        .header("x-organization-id", "83843864-f3c0-4def-badb-7f197471b72e")
+        .header("x-user-id", "83843864-f3c0-4def-badb-7f197471b72e")
+        .header("x-organization-name", "org-name"))
+      .andExpect(status().isOk())
+      .andExpect(jsonPath("$.errorKey").value(AssetRegisterConstants.UploadKeyConstant.MAX_SIZE_FILE_ERROR_KEY));
+  }
 }

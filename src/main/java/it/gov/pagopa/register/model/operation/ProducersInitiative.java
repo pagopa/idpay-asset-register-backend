@@ -32,6 +32,8 @@ public class ProducersInitiative {
   private String initiativeServiceId;
   private String initiativeOrganizationName;
 
+  private String operativeEmail;
+
   private Boolean enabled;
   private String source;
 

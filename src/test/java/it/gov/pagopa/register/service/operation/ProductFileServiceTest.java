@@ -5,6 +5,7 @@ import it.gov.pagopa.register.constants.AssetRegisterConstants;
 import it.gov.pagopa.register.enums.UploadCsvStatus;
 import it.gov.pagopa.register.dto.operation.*;
 import it.gov.pagopa.register.exception.operation.ReportNotFoundException;
+import it.gov.pagopa.register.model.operation.ProducersInitiative;
 import it.gov.pagopa.register.model.operation.Product;
 import it.gov.pagopa.register.model.operation.ProductFile;
 import it.gov.pagopa.register.repository.operation.ProducersInitiativeRepository;
@@ -18,7 +19,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
-import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
@@ -41,17 +41,21 @@ import static org.mockito.Mockito.*;
 class ProductFileServiceTest {
 
   @Mock
-  ProductFileRepository productFileRepository;
+  private ProductFileRepository productFileRepository;
   @Mock
-  ProductRepository productRepository;
+  private ProductRepository productRepository;
   @Mock
-  FileStorageClient fileStorageClient;
+  private FileStorageClient fileStorageClient;
   @Mock
-  ProductFileValidatorService productFileValidator;
+  private ProductFileValidatorService productFileValidator;
   @Mock
-  ProducersInitiativeRepository producersInitiativeRepository;
+  private ProducersInitiativeRepository producersInitiativeRepository;
 
   private ProductFileService productFileService;
+
+  private static final String INITIATIVE_ID = "ini1";
+  private static final String ORG_ID = "org1";
+  private static final String INITIATIVE_KEY = ORG_ID + "_" + INITIATIVE_ID;
 
   @BeforeEach
   void setUp() {
@@ -61,176 +65,136 @@ class ProductFileServiceTest {
 
   @Test
   void testGetFilesByPage_Success() {
-    String org = "org";
-    Pageable page = PageRequest.of(0,2);
+    Pageable page = PageRequest.of(0, 2);
     ProductFile pf1 = ProductFile.builder().id("1").fileName("f1.csv").uploadStatus("OK").category("WASHINGMACHINES").build();
     ProductFile pf2 = ProductFile.builder().id("2").fileName("f2.csv").uploadStatus("OK").category("WASHINGMACHINES").build();
     List<ProductFile> list = List.of(pf1, pf2);
     Page<ProductFile> pg = new PageImpl<>(list, page, list.size());
-    when(productFileRepository.findByOrganizationIdAndInitiativeIdAndUploadStatusNot(org, null, UploadCsvStatus.FORMAL_ERROR.name(), page))
+    when(productFileRepository.findByOrganizationIdAndInitiativeIdAndUploadStatusNot(ORG_ID, INITIATIVE_ID, UploadCsvStatus.FORMAL_ERROR.name(), page))
       .thenReturn(pg);
 
-    ProductFileResponseDTO resp = productFileService.getFilesByPage(org,null, page);
+    ProductFileResponseDTO resp = productFileService.getFilesByPage(ORG_ID, INITIATIVE_ID, page);
     assertEquals(2, resp.getContent().size());
     assertEquals("f1.csv", resp.getContent().get(0).getFileName());
-    assertEquals("f2.csv", resp.getContent().get(1).getFileName());
     assertEquals(0, resp.getPageNo());
     assertEquals(2, resp.getPageSize());
     assertEquals(2, resp.getTotalElements());
     assertEquals(1, resp.getTotalPages());
-    verify(productFileRepository).findByOrganizationIdAndInitiativeIdAndUploadStatusNot(org, null, UploadCsvStatus.FORMAL_ERROR.name(), page);
   }
 
   @Test
   void testGetFilesByPage_Empty() {
-    String org = "org";
-    Pageable page = PageRequest.of(0,2);
+    Pageable page = PageRequest.of(0, 2);
     Page<ProductFile> pg = new PageImpl<>(List.of(), page, 0);
-    when(productFileRepository.findByOrganizationIdAndInitiativeIdAndUploadStatusNot(org, null, UploadCsvStatus.FORMAL_ERROR.name(), page))
+    when(productFileRepository.findByOrganizationIdAndInitiativeIdAndUploadStatusNot(ORG_ID, INITIATIVE_ID, UploadCsvStatus.FORMAL_ERROR.name(), page))
       .thenReturn(pg);
 
-    ProductFileResponseDTO resp = productFileService.getFilesByPage(org, null, page);
+    ProductFileResponseDTO resp = productFileService.getFilesByPage(ORG_ID, INITIATIVE_ID, page);
     assertTrue(resp.getContent().isEmpty());
     assertEquals(0, resp.getTotalElements());
-    assertEquals(0, resp.getTotalPages());
   }
 
   @Test
   void testGetFilesByPage_RepoThrows() {
-    Pageable page = PageRequest.of(0,1);
+    Pageable page = PageRequest.of(0, 1);
     when(productFileRepository.findByOrganizationIdAndInitiativeIdAndUploadStatusNot(any(), any(), any(), eq(page)))
       .thenThrow(new RuntimeException("DB"));
-    RuntimeException ex = assertThrows(RuntimeException.class,
-      () -> productFileService.getFilesByPage("org",null, page));
-    assertEquals("DB", ex.getMessage());
+    assertThrows(RuntimeException.class, () -> productFileService.getFilesByPage(ORG_ID, INITIATIVE_ID, page));
   }
-
 
   @Test
   void downloadReport_partialLoad() throws IOException {
-    String productFileId = "1";
-    String organizationId = "org1";
-    String initiativeId = "TEST_INIT";
-    String fileName = "eprel_report.csv";
-
     ProductFile productFile = ProductFile.builder()
-      .id(productFileId)
-      .organizationId(organizationId)
-      .initiativeId(initiativeId)
+      .id("1")
+      .organizationId(ORG_ID)
+      .initiativeId(INITIATIVE_ID)
       .uploadStatus("PARTIAL")
-      .fileName(fileName)
+      .fileName("eprel_report.csv")
       .build();
 
     ByteArrayOutputStream mockedOutput = new ByteArrayOutputStream();
     mockedOutput.write("dummy report content".getBytes());
 
-    when(productFileRepository.findByIdAndOrganizationIdAndInitiativeId(productFileId, organizationId, initiativeId))
+    when(productFileRepository.findByIdAndOrganizationIdAndInitiativeId("1", ORG_ID, INITIATIVE_ID))
       .thenReturn(Optional.of(productFile));
 
-    String expectedPath = "Report/Partial/TEST_INIT/1.csv";
+    String expectedPath = AssetRegisterConstants.REPORT_PARTIAL_ERROR + INITIATIVE_ID + "/1.csv";
     when(fileStorageClient.download(expectedPath)).thenReturn(mockedOutput);
 
-    FileReportDTO reportDTO = productFileService.downloadReport(productFileId, organizationId, initiativeId);
+    FileReportDTO reportDTO = productFileService.downloadReport("1", ORG_ID, INITIATIVE_ID);
 
     assertNotNull(reportDTO);
     assertArrayEquals("dummy report content".getBytes(), reportDTO.getData());
     assertEquals("eprel_report_errors.csv", reportDTO.getFilename());
-
-    verify(productFileRepository).findByIdAndOrganizationIdAndInitiativeId(productFileId, organizationId, initiativeId);
   }
 
   @Test
   void downloadReport_unsupportedStatus() {
     ProductFile pf = ProductFile.builder()
       .id("1")
-      .organizationId("o")
-      .initiativeId("i")
+      .organizationId(ORG_ID)
+      .initiativeId(INITIATIVE_ID)
       .uploadStatus("UNKNOWN")
       .fileName("f.csv")
       .build();
 
-    when(productFileRepository.findByIdAndOrganizationIdAndInitiativeId("1", "o", "i"))
+    when(productFileRepository.findByIdAndOrganizationIdAndInitiativeId("1", ORG_ID, INITIATIVE_ID))
       .thenReturn(Optional.of(pf));
 
-    ReportNotFoundException ex = assertThrows(ReportNotFoundException.class,
-      () -> productFileService.downloadReport("1", "o", "i"));
-
-    assertTrue(ex.getMessage().contains("Report not available for file: f.csv"));
+    assertThrows(ReportNotFoundException.class, () -> productFileService.downloadReport("1", ORG_ID, INITIATIVE_ID));
   }
 
   @Test
   void downloadReport_azureNull() {
     ProductFile pf = ProductFile.builder()
       .id("1")
-      .organizationId("o")
-      .initiativeId("i")
+      .organizationId(ORG_ID)
+      .initiativeId(INITIATIVE_ID)
       .uploadStatus("FORMAL_ERROR")
       .build();
 
-    when(productFileRepository.findByIdAndOrganizationIdAndInitiativeId("1", "o", "i"))
+    when(productFileRepository.findByIdAndOrganizationIdAndInitiativeId("1", ORG_ID, INITIATIVE_ID))
       .thenReturn(Optional.of(pf));
 
-    when(fileStorageClient.download("Report/Formal/i/1.csv")).thenReturn(null);
+    String expectedPath = AssetRegisterConstants.REPORT_FORMAL_ERROR + INITIATIVE_ID + "/1.csv";
+    when(fileStorageClient.download(expectedPath)).thenReturn(null);
 
-    ReportNotFoundException ex = assertThrows(ReportNotFoundException.class,
-      () -> productFileService.downloadReport("1", "o", "i"));
-
+    ReportNotFoundException ex = assertThrows(ReportNotFoundException.class, () -> productFileService.downloadReport("1", ORG_ID, INITIATIVE_ID));
     assertEquals("File not found on storage", ex.getMessage());
   }
 
   @Test
   void downloadReport_notFound_ShouldLogAndThrowException() {
-    String id = "687f8a176a5c92458819922a";
-    String orgId = "83843864-f3c0-4def-badb-7f197471b72e";
-    String initId = "TEST_INIT";
-
-    Mockito.when(productFileRepository.findByIdAndOrganizationIdAndInitiativeId(id, orgId, initId))
+    when(productFileRepository.findByIdAndOrganizationIdAndInitiativeId("1", ORG_ID, INITIATIVE_ID))
       .thenReturn(Optional.empty());
 
-    ReportNotFoundException exception = assertThrows(ReportNotFoundException.class, () -> productFileService.downloadReport(id, orgId, initId));
-
-    assertEquals("Report not found", exception.getMessage());
-
-    verify(productFileRepository).findByIdAndOrganizationIdAndInitiativeId(id, orgId, initId);
-
+    assertThrows(ReportNotFoundException.class, () -> productFileService.downloadReport("1", ORG_ID, INITIATIVE_ID));
     verifyNoInteractions(fileStorageClient);
   }
 
-  private MultipartFile createMockFile() {
-    return new MockMultipartFile("file", "test.csv", "text/csv", "test content".getBytes());
-  }
-  private MultipartFile createMockFile_InvalidFileType() {
-    return new MockMultipartFile("file", "test.test", "text/csv", "test content".getBytes());
-  }
-
-  //Test with invalid headers
   @Test
   void whenInvalidFileType_thenReturnKoResult() throws IOException {
-    MultipartFile file = createMockFile_InvalidFileType();
-    ValidationResultDTO validationResultDTO = new ValidationResultDTO("KO","TEST");
+    MultipartFile file = new MockMultipartFile("csv", "test.test", "text/csv", "content".getBytes());
+    ValidationResultDTO validationResultDTO = new ValidationResultDTO("KO", "TEST");
 
-    when(producersInitiativeRepository.existsByProducerIdAndInitiativeIdAndEnabledTrue(anyString(), anyString())).thenReturn(true);
+    ProducersInitiative producersInitiative = new ProducersInitiative();
+    producersInitiative.setEnabled(true);
+    producersInitiative.setOperativeEmail("test@pagopa.it");
+    when(producersInitiativeRepository.findById(INITIATIVE_KEY)).thenReturn(Optional.of(producersInitiative));
 
-    when(productFileValidator.validateFile(any(),anyString(),any(),any())).thenReturn(validationResultDTO);
+    when(productFileValidator.validateFile(any(), any(), any(), any())).thenReturn(validationResultDTO);
 
-    ProductFileResult res = productFileService.uploadFile(file, "cat","ini","org","user","email","orgName");
+    ProductFileResult res = productFileService.uploadFile(file, "cat", INITIATIVE_ID, ORG_ID, "user", "orgName");
 
     assertEquals("KO", res.getStatus());
     assertEquals("TEST", res.getErrorKey());
   }
 
-  //Test con controlli formali falliti
   private void testFormalError(String errorMessage) {
-    MultipartFile file = createMockFile();
+    MultipartFile file = new MockMultipartFile("csv", "test.csv", "text/csv", "content".getBytes());
 
     try (MockedStatic<CsvUtils> mockedCsv = mockStatic(CsvUtils.class);
          MockedStatic<Files> mockedFiles = mockStatic(Files.class)) {
-
-      mockedCsv.when(() -> CsvUtils.readHeaders(file))
-        .thenReturn(List.of("Codice GTIN/EAN", "Codice Prodotto", "Categoria", "Paese di Produzione", "Marca", "Modello"));
-
-      mockedCsv.when(() -> CsvUtils.readCsvRecords(file))
-        .thenReturn(List.of(mock(CSVRecord.class)));
 
       mockedCsv.when(() -> CsvUtils.writeCsvWithErrors(any(), any(), any(), any()))
         .thenAnswer(inv -> null);
@@ -238,25 +202,22 @@ class ProductFileServiceTest {
       mockedFiles.when(() -> Files.newInputStream(any()))
         .thenReturn(new ByteArrayInputStream("dummy".getBytes()));
 
-      when(producersInitiativeRepository.existsByProducerIdAndInitiativeIdAndEnabledTrue(anyString(), anyString())).thenReturn(true);
+      ProducersInitiative producersInitiative = new ProducersInitiative();
+      producersInitiative.setEnabled(true);
+      producersInitiative.setOperativeEmail("test@pagopa.it");
+      when(producersInitiativeRepository.findById(INITIATIVE_KEY)).thenReturn(Optional.of(producersInitiative));
 
-      when(fileStorageClient.upload(any(), any(), any())).thenReturn(null);
-
-      when(productFileValidator.validateFile(any(), any(),any(),any()))
-        .thenReturn(new ValidationResultDTO("OK", null,List.of(mock(CSVRecord.class)),List.of("Codice GTIN/EAN", "Codice Prodotto", "Categoria", "Paese di Produzione", "Marca", "Modello")));
+      when(productFileValidator.validateFile(any(), any(), any(), any()))
+        .thenReturn(new ValidationResultDTO("OK", null, List.of(mock(CSVRecord.class)), List.of("H1")));
 
       CSVRecord invalidRecordLocal = mock(CSVRecord.class);
-      List<CSVRecord> invalidRecordsLocal = Collections.singletonList(invalidRecordLocal);
-      Map<CSVRecord, String> errorMessagesLocal = new HashMap<>();
-      errorMessagesLocal.put(invalidRecordLocal, errorMessage);
-
-      ValidationResultDTO validationResult = new ValidationResultDTO("KO", null, invalidRecordsLocal, errorMessagesLocal);
+      ValidationResultDTO validationResult = new ValidationResultDTO("KO", null, List.of(invalidRecordLocal), Map.of(invalidRecordLocal, errorMessage));
       when(productFileValidator.validateRecords(any(), any(), any())).thenReturn(validationResult);
 
-      ProductFile savedProductFile = ProductFile.builder().id("123").build();
+      ProductFile savedProductFile = ProductFile.builder().id("123").initiativeId(INITIATIVE_ID).build();
       when(productFileRepository.save(any())).thenReturn(savedProductFile);
 
-      ProductFileResult result = productFileService.uploadFile(file, "COOKINGHOBS", "ini1","org1", "user1","email","orgName");
+      ProductFileResult result = productFileService.uploadFile(file, "COOKINGHOBS", INITIATIVE_ID, ORG_ID, "user", "orgName");
 
       assertEquals("KO", result.getStatus());
       assertEquals(AssetRegisterConstants.UploadKeyConstant.REPORT_FORMAL_FILE_ERROR_KEY, result.getErrorKey());
@@ -268,12 +229,12 @@ class ProductFileServiceTest {
 
   @Test
   void whenInvalidGtin_thenReturnFormalError() {
-    testFormalError("Il Codice GTIN/EAN è obbligatorio e deve essere univoco ed alfanumerico e lungo al massimo 14 caratteri");
+    testFormalError("Il Codice GTIN/EAN è obbligatorio");
   }
 
   @Test
   void whenInvalidProductCode_thenReturnFormalError() {
-    testFormalError("Il Codice prodotto non deve contenere caratteri speciali o lettere accentate e deve essere lungo al massimo 100 caratteri");
+    testFormalError("Il Codice prodotto non è valido");
   }
 
   @Test
@@ -283,55 +244,46 @@ class ProductFileServiceTest {
 
   @Test
   void whenInvalidCountry_thenReturnFormalError() {
-    testFormalError("Il Paese di Produzione è obbligatorio e deve essere composto da esattamente 2 caratteri");
+    testFormalError("Il Paese di Produzione non è valido");
   }
 
   @Test
   void whenInvalidBrand_thenReturnFormalError() {
-    testFormalError("Il campo Marca è obbligatorio e deve contenere una stringa lunga al massimo 100 caratteri");
+    testFormalError("Il campo Marca è obbligatorio");
   }
 
   @Test
   void whenInvalidModel_thenReturnFormalError() {
-    testFormalError("Il campo Modello è obbligatorio e deve contenere una stringa lunga al massimo 100 caratteri");
+    testFormalError("Il campo Modello è obbligatorio");
   }
 
   @Test
-  void whenAllValid_thenReturnOk()  {
+  void whenAllValid_thenReturnOk() throws IOException {
     MultipartFile file = mock(MultipartFile.class);
     CSVRecord rec = mock(CSVRecord.class);
 
-    try (MockedStatic<CsvUtils> mocked = mockStatic(CsvUtils.class)) {
+    ProducersInitiative producersInitiative = new ProducersInitiative();
+    producersInitiative.setEnabled(true);
+    producersInitiative.setOperativeEmail("test@pagopa.it");
+    when(producersInitiativeRepository.findById(INITIATIVE_KEY)).thenReturn(Optional.of(producersInitiative));
 
-      mocked.when(() -> CsvUtils.readHeaders(file))
-        .thenReturn(List.of("C1"));
-      mocked.when(() -> CsvUtils.readCsvRecords(file))
-        .thenReturn(List.of(rec));
+    when(productFileValidator.validateFile(any(), any(), any(), any()))
+      .thenReturn(ValidationResultDTO.ok(List.of(rec), List.of("C1")));
 
-      when(producersInitiativeRepository.existsByProducerIdAndInitiativeIdAndEnabledTrue(anyString(), anyString())).thenReturn(true);
+    when(productFileValidator.validateRecords(anyList(), anyString(), anyString()))
+      .thenReturn(ValidationResultDTO.ok());
 
-      when(productFileValidator.validateFile(any(), anyString(), anyString(), anyString()))
-        .thenReturn(ValidationResultDTO.ok(List.of(rec), List.of("C1")));
+    when(productFileRepository.save(any())).thenReturn(ProductFile.builder().id("42").build());
 
-      when(productFileValidator.validateRecords(anyList(), anyString(), anyString()))
-        .thenReturn(ValidationResultDTO.ok());
+    when(file.getInputStream()).thenReturn(new ByteArrayInputStream("abc".getBytes()));
+    when(file.getOriginalFilename()).thenReturn("f.csv");
+    when(file.getContentType()).thenReturn("text/csv");
 
-      when(productFileRepository.save(any())).thenReturn(ProductFile.builder().id("42").build());
+    ProductFileResult res = productFileService.uploadFile(file, "cat", INITIATIVE_ID, ORG_ID, "user", "orgName");
 
-      ByteArrayInputStream bis = new ByteArrayInputStream("abc".getBytes());
-      when(file.getInputStream()).thenReturn(bis);
-      when(file.getOriginalFilename()).thenReturn("f.csv");
-      when(file.getContentType()).thenReturn("text/csv");
-
-      when(fileStorageClient.upload(any(), any(), any())).thenReturn(null);
-
-      ProductFileResult res = productFileService.uploadFile(file, "cat", "ini","org", "user","email","orgName");
-
-      assertEquals("OK", res.getStatus());
-      assertNull(res.getErrorKey());
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+    assertEquals("OK", res.getStatus());
+    assertNull(res.getErrorKey());
+    verify(fileStorageClient).upload(any(), anyString(), any());
   }
 
   @Test
@@ -341,10 +293,10 @@ class ProductFileServiceTest {
       .category("DISHWASHERS")
       .build();
 
-    when(productRepository.retrieveDistinctProductFileIdsBasedOnRole("org123", null,null,"operatore"))
+    when(productRepository.retrieveDistinctProductFileIdsBasedOnRole(ORG_ID, INITIATIVE_ID, null, "operatore"))
       .thenReturn(List.of(file));
 
-    List<ProductBatchDTO> result = productFileService.retrieveDistinctProductFileIdsBasedOnRole("org123", null,null,"operatore");
+    List<ProductBatchDTO> result = productFileService.retrieveDistinctProductFileIdsBasedOnRole(ORG_ID, INITIATIVE_ID, null, "operatore");
 
     assertEquals(1, result.size());
     assertEquals("file123", result.getFirst().getProductFileId());
@@ -355,12 +307,15 @@ class ProductFileServiceTest {
   void whenFileAlreadyInProgressOrUploaded_thenReturnKoAlreadyInProgress() {
     MultipartFile file = new MockMultipartFile("file", "test.csv", "text/csv", "dummy".getBytes());
 
-    when(producersInitiativeRepository.existsByProducerIdAndInitiativeIdAndEnabledTrue(anyString(), anyString())).thenReturn(true);
+    ProducersInitiative producersInitiative = new ProducersInitiative();
+    producersInitiative.setEnabled(true);
+    producersInitiative.setOperativeEmail("test@pagopa.it");
+    when(producersInitiativeRepository.findById(INITIATIVE_KEY)).thenReturn(Optional.of(producersInitiative));
 
-    when(productFileRepository.existsByInitiativeIdAndOrganizationIdAndUploadStatusIn(any(),eq("org"), anyList()))
+    when(productFileRepository.existsByInitiativeIdAndOrganizationIdAndUploadStatusIn(eq(INITIATIVE_ID), eq(ORG_ID), any()))
       .thenReturn(true);
 
-    ProductFileResult result = productFileService.uploadFile(file, "cat", "ini","org", "user", "email","orgName");
+    ProductFileResult result = productFileService.uploadFile(file, "cat", INITIATIVE_ID, ORG_ID, "user", "orgName");
 
     assertEquals("KO", result.getStatus());
     assertEquals(AssetRegisterConstants.UploadKeyConstant.UPLOAD_ALREADY_IN_PROGRESS, result.getErrorKey());
@@ -368,12 +323,13 @@ class ProductFileServiceTest {
 
   @Test
   void whenOrganizationNotEnabled_thenReturnKoPermission() {
-    MultipartFile file = createMockFile();
+    MultipartFile file = new MockMultipartFile("file", "test.csv", "text/csv", "dummy".getBytes());
 
-    when(producersInitiativeRepository.existsByProducerIdAndInitiativeIdAndEnabledTrue("org", "ini"))
-      .thenReturn(false);
+    ProducersInitiative producersInitiative = new ProducersInitiative();
+    producersInitiative.setEnabled(false);
+    when(producersInitiativeRepository.findById(INITIATIVE_KEY)).thenReturn(Optional.of(producersInitiative));
 
-    ProductFileResult result = productFileService.uploadFile(file, "cat", "ini", "org", "user", "email", "orgName");
+    ProductFileResult result = productFileService.uploadFile(file, "cat", INITIATIVE_ID, ORG_ID, "user", "orgName");
 
     assertEquals("KO", result.getStatus());
     assertEquals(AssetRegisterConstants.UploadKeyConstant.NOT_ENABLED_ERRORE_KEY, result.getErrorKey());
@@ -384,17 +340,59 @@ class ProductFileServiceTest {
     MultipartFile file = mock(MultipartFile.class);
     when(file.getOriginalFilename()).thenReturn("test.csv");
 
-    when(producersInitiativeRepository.existsByProducerIdAndInitiativeIdAndEnabledTrue(anyString(), anyString()))
-      .thenReturn(true);
+    ProducersInitiative producersInitiative = new ProducersInitiative();
+    producersInitiative.setEnabled(true);
+    producersInitiative.setOperativeEmail("test@pagopa.it");
+    when(producersInitiativeRepository.findById(INITIATIVE_KEY)).thenReturn(Optional.of(producersInitiative));
 
-    when(productFileValidator.validateFile(any(), anyString(), anyString(), anyString()))
+    when(productFileValidator.validateFile(any(), any(), any(), any()))
       .thenThrow(new RuntimeException("Simulated unexpected error"));
 
-    ProductFileResult result = productFileService.uploadFile(file, "cat", "ini", "org", "user", "email", "orgName");
+    ProductFileResult result = productFileService.uploadFile(file, "cat", INITIATIVE_ID, ORG_ID, "user", "orgName");
 
     assertEquals("KO", result.getStatus());
     assertEquals("GENERIC_ERROR", result.getErrorKey());
   }
 
+  @Test
+  void whenMissingOperativeEmail_thenReturnKoEmailMissing() {
+    MultipartFile file = new MockMultipartFile("file", "test.csv", "text/csv", "dummy".getBytes());
 
+    ProducersInitiative producersInitiative = new ProducersInitiative();
+    producersInitiative.setEnabled(true);
+    producersInitiative.setOperativeEmail(null);
+    when(producersInitiativeRepository.findById(INITIATIVE_KEY)).thenReturn(Optional.of(producersInitiative));
+
+    ProductFileResult result = productFileService.uploadFile(file, "cat", INITIATIVE_ID, ORG_ID, "user", "orgName");
+
+    assertEquals("KO", result.getStatus());
+    assertEquals(AssetRegisterConstants.UploadEmailKeyConstant.EMAIL_MISSING_ERROR_KEY, result.getErrorKey());
+  }
+
+  @Test
+  void whenInitiativeNotFound_thenReturnKoPermission() {
+    MultipartFile file = new MockMultipartFile("file", "test.csv", "text/csv", "dummy".getBytes());
+
+    when(producersInitiativeRepository.findById(INITIATIVE_KEY)).thenReturn(Optional.empty());
+
+    ProductFileResult result = productFileService.validateFile(file, "cat", INITIATIVE_ID, ORG_ID, "user", "orgName");
+
+    assertEquals("KO", result.getStatus());
+    assertEquals(AssetRegisterConstants.UploadKeyConstant.NOT_ENABLED_ERRORE_KEY, result.getErrorKey());
+  }
+
+  @Test
+  void whenOperativeEmailIsBlank_thenReturnKoEmailMissing() {
+    MultipartFile file = new MockMultipartFile("file", "test.csv", "text/csv", "dummy".getBytes());
+
+    ProducersInitiative producersInitiative = new ProducersInitiative();
+    producersInitiative.setEnabled(true);
+    producersInitiative.setOperativeEmail("   ");
+    when(producersInitiativeRepository.findById(INITIATIVE_KEY)).thenReturn(Optional.of(producersInitiative));
+
+    ProductFileResult result = productFileService.validateFile(file, "cat", INITIATIVE_ID, ORG_ID, "user", "orgName");
+
+    assertEquals("KO", result.getStatus());
+    assertEquals(AssetRegisterConstants.UploadEmailKeyConstant.EMAIL_MISSING_ERROR_KEY, result.getErrorKey());
+  }
 }

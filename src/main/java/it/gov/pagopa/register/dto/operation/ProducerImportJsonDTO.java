@@ -12,4 +12,5 @@ public class ProducerImportJsonDTO {
   private String initiativeEndDate;
   private String initiativeServiceId;
   private String initiativeOrganizationName;
+  private String operativeEmail;
 }

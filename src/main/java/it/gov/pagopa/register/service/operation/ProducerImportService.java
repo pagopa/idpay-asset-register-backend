@@ -3,6 +3,7 @@ package it.gov.pagopa.register.service.operation;
 import it.gov.pagopa.register.dto.operation.InitiativeStatus;
 import it.gov.pagopa.register.dto.operation.ProducerImportJsonDTO;
 import it.gov.pagopa.register.dto.operation.ProducerImportResultDTO;
+import it.gov.pagopa.register.dto.operation.UpdatedOperativeEmailResult;
 import it.gov.pagopa.register.model.operation.ProducersInitiative;
 import it.gov.pagopa.register.repository.operation.ProducersInitiativeRepository;
 import lombok.RequiredArgsConstructor;
@@ -19,10 +20,12 @@ import tools.jackson.databind.ObjectMapper;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeParseException;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
+
+import static it.gov.pagopa.register.constants.AssetRegisterConstants.UploadEmailKeyConstant.EMAIL_INITATIVE_ERROR_KEY;
+import static it.gov.pagopa.register.constants.AssetRegisterConstants.UploadEmailKeyConstant.EMAIL_WRONG_ERROR_KEY;
+import static it.gov.pagopa.register.constants.ValidationPatterns.EMAIL_PATTERN;
+import static java.util.regex.Pattern.matches;
 
 @Slf4j
 @Service
@@ -170,6 +173,7 @@ public class ProducerImportService {
     dto.setInitiativeId(stringValue(producerFields.get("initiativeId")));
     dto.setInitiativeName(stringValue(producerFields.get("initiativeName")));
     dto.setInitiativeStatus(stringValue(producerFields.get("initiativeStatus"), producerFields.get("InitiativeStatus")));
+    dto.setOperativeEmail(stringValue(producerFields.get("operativeEmail")));
     dto.setInitiativeStartDate(stringValue(producerFields.get(INITIATIVE_START_DATE)));
     dto.setInitiativeEndDate(stringValue(producerFields.get(INITIATIVE_END_DATE)));
     dto.setInitiativeServiceId(stringValue(producerFields.get("initiativeServiceId")));
@@ -189,12 +193,23 @@ public class ProducerImportService {
     String producerId = requiredValue(dto.getProducerId(), "producerId");
     String initiativeId = requiredValue(dto.getInitiativeId(), "initiativeId");
 
+    String validatedEmail = null;
+    if (dto.getOperativeEmail() != null && !dto.getOperativeEmail().isBlank()) {
+      if (matches(EMAIL_PATTERN, dto.getOperativeEmail())) {
+        validatedEmail = dto.getOperativeEmail();
+      } else {
+        log.warn("[IMPORT_PRODUCERS] - Invalid email format [{}] for producer {} and initiative {}. Saving producer WITHOUT email.",
+          dto.getOperativeEmail(), producerId, initiativeId);
+      }
+    }
+
     return ProducersInitiative.builder()
       .id(producerId + "_" + initiativeId)
       .producerId(producerId)
       .initiativeId(initiativeId)
       .initiativeName(requiredValue(dto.getInitiativeName(), "initiativeName"))
       .initiativeStatus(parseInitiativeStatus(requiredValue(dto.getInitiativeStatus(), "initiativeStatus")))
+      .operativeEmail(validatedEmail)
       .initiativeStartDate(parseJsonDate(
         requiredValue(dto.getInitiativeStartDate(), INITIATIVE_START_DATE), INITIATIVE_START_DATE))
       .initiativeEndDate(parseJsonDate(
@@ -206,6 +221,33 @@ public class ProducerImportService {
       .createdAt(now)
       .updatedAt(now)
       .build();
+  }
+
+  public UpdatedOperativeEmailResult updateOperativeEmail(String organizationId, String initiativeId, String newEmail) {
+    String initiativeKey = organizationId + "_" + initiativeId;
+
+    log.info("[UPDATE_OPERATIVE_EMAIL] - Request to update operative email for key: {}", initiativeKey);
+
+    if (!matches(EMAIL_PATTERN, newEmail)) {
+      log.warn("[UPDATE_OPERATIVE_EMAIL] - Provided email [{}] has an invalid format for key: {}", newEmail, initiativeKey);
+      return UpdatedOperativeEmailResult.ko(EMAIL_WRONG_ERROR_KEY);
+    }
+
+    Optional<ProducersInitiative> optional = producersInitiativeRepository.findById(initiativeKey);
+      if(optional.isEmpty()){
+        log.error("[UPDATE_OPERATIVE_EMAIL] - Producer initiative not found for key: {}", initiativeKey);
+        return UpdatedOperativeEmailResult.ko(EMAIL_INITATIVE_ERROR_KEY);
+      }
+
+    ProducersInitiative initiative = optional.get();
+
+    initiative.setOperativeEmail(newEmail);
+    initiative.setUpdatedAt(LocalDateTime.now());
+
+    producersInitiativeRepository.save(initiative);
+
+    log.info("[UPDATE_OPERATIVE_EMAIL] - Operative email updated successfully to [{}] for key: {}", newEmail, initiativeKey);
+    return UpdatedOperativeEmailResult.ok();
   }
 
   private String requiredValue(String value, String fieldName) {

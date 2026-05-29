@@ -170,6 +170,15 @@ public class AssetRegisterConstants {
 
   }
 
+  public static final class UploadEmailKeyConstant {
+    private UploadEmailKeyConstant(){
+    }
+
+    public static final String EMAIL_WRONG_ERROR_KEY = "update.email.wrong.format";
+    public static final String EMAIL_INITATIVE_ERROR_KEY = "update.email.invalid.initiative";
+    public static final String EMAIL_MISSING_ERROR_KEY = "update.email.missing";
+  }
+
   //Eprel Messages Error
   public static final String ERROR_ORG = "Il produttore non risulta nell'elenco della Banca dati europea dei prodotti per l'etichettatura energetica; è necessario completare le informazioni sul portale EPREL";
   public static final String ERROR_TRADEMARK = "Il marchio associato al prodotto non risulta nell'elenco della Banca dati europea dei prodotti per l'etichettatura energetica - EPREL";
