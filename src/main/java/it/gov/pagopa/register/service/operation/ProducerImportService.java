@@ -134,19 +134,15 @@ public class ProducerImportService {
 
     String trimmedJson = StringUtils.strip(json);
 
-    List<ProducerImportJsonDTO> records;
-
-    if (trimmedJson.startsWith("[")) {
-      records = objectMapper.readValue(
+    List<ProducerImportJsonDTO> records = trimmedJson.startsWith("[")
+      ? objectMapper.readValue(
         trimmedJson, new TypeReference<List<ProducerImportJsonDTO>>() {
-        });
-    } else {
-      records = Arrays.stream(trimmedJson.split("\\R"))
+        })
+      : Arrays.stream(trimmedJson.split("\\R"))
         .map(StringUtils::strip)
         .filter(StringUtils::isNotBlank)
         .map(this::readJsonLine)
         .toList();
-    }
 
     if (records.isEmpty()) {
       throw new IllegalArgumentException("JSON payload does not contain records");
@@ -155,25 +151,21 @@ public class ProducerImportService {
     LocalDateTime now = LocalDateTime.now();
     Map<String, InitiativeDTO> initiativeDetails = new HashMap<>();
     return records.stream()
-      .map(producerImportJsonDTO -> {
-        validateProducerInput(producerImportJsonDTO);
-        return toProducer(
-          producerImportJsonDTO,
-          getInitiativeDetail(producerImportJsonDTO, initiativeDetails),
-          now);
-      })
+      .map(this::toProducerInput)
+      .map(producerInput -> toProducer(
+        producerInput,
+        initiativeDetails.computeIfAbsent(producerInput.initiativeId(), portalInitiativeService::getInitiativeDetail),
+        now))
       .toList();
   }
 
-  private void validateProducerInput(ProducerImportJsonDTO dto) {
-    requiredValue(dto.getProducerId(), "producerId");
-    requiredValue(dto.getInitiativeId(), INITIATIVE_ID);
-    requiredValue(dto.getProducerName(), "producerName");
-  }
-
-  private InitiativeDTO getInitiativeDetail(ProducerImportJsonDTO dto, Map<String, InitiativeDTO> initiativeDetails) {
-    String initiativeId = requiredValue(dto.getInitiativeId(), INITIATIVE_ID);
-    return initiativeDetails.computeIfAbsent(initiativeId, portalInitiativeService::getInitiativeDetail);
+  private ProducerInput toProducerInput(ProducerImportJsonDTO dto) {
+    return new ProducerInput(
+      requiredValue(dto.getProducerId(), "producerId"),
+      requiredValue(dto.getInitiativeId(), INITIATIVE_ID),
+      optionalEmail(dto.getProducerEmail()),
+      requiredValue(dto.getProducerName(), "producerName")
+    );
   }
 
   private ProducerImportJsonDTO readJsonLine(String line) {
@@ -184,22 +176,18 @@ public class ProducerImportService {
     }
   }
 
-  private ProducersInitiative toProducer(ProducerImportJsonDTO dto, InitiativeDTO initiativeDetail, LocalDateTime now) {
-    String producerId = requiredValue(dto.getProducerId(), "producerId");
-    String initiativeId = requiredValue(dto.getInitiativeId(), INITIATIVE_ID);
-    String producerEmail = optionalEmail(dto.getProducerEmail());
-    String producerName = requiredValue(dto.getProducerName(), "producerName");
+  private ProducersInitiative toProducer(ProducerInput producerInput, InitiativeDTO initiativeDetail, LocalDateTime now) {
     if (initiativeDetail == null) {
       throw new IllegalArgumentException("Initiative detail not found for producerId [%s] and initiativeId [%s]"
-        .formatted(producerId, initiativeId));
+        .formatted(producerInput.producerId(), producerInput.initiativeId()));
     }
 
     return ProducersInitiative.builder()
-      .id(producerId + "_" + initiativeId)
-      .producerId(producerId)
-      .producerEmail(producerEmail)
-      .producerName(producerName)
-      .initiativeId(initiativeId)
+      .id(producerInput.producerId() + "_" + producerInput.initiativeId())
+      .producerId(producerInput.producerId())
+      .producerEmail(producerInput.producerEmail())
+      .producerName(producerInput.producerName())
+      .initiativeId(producerInput.initiativeId())
       .initiativeName(requiredValue(initiativeDetail.getInitiativeName(), "initiativeName"))
       .initiativeStatus(requiredStatus(initiativeDetail.getStatus(), "initiativeStatus"))
       .initiativeStartDate(requiredDate(initiativeDetail.getStartDate(), "initiativeStartDate").atStartOfDay())
@@ -223,10 +211,7 @@ public class ProducerImportService {
 
   private String optionalEmail(String value) {
     String email = StringUtils.strip(value);
-    if (StringUtils.isBlank(email)) {
-      return null;
-    }
-    return EMAIL_VALIDATION_PATTERN.matcher(email).matches()
+    return StringUtils.isNotBlank(email) && EMAIL_VALIDATION_PATTERN.matcher(email).matches()
       ? email
       : null;
   }
@@ -243,5 +228,8 @@ public class ProducerImportService {
       throw new IllegalArgumentException(MISSING_REQUIRED_FIELD_MESSAGE.formatted(fieldName));
     }
     return value;
+  }
+
+  private record ProducerInput(String producerId, String initiativeId, String producerEmail, String producerName) {
   }
 }
