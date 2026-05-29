@@ -18,16 +18,18 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.dao.QueryTimeoutException;
 import org.springframework.http.HttpStatus;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.lang.reflect.Constructor;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 class ProducerImportServiceTest {
@@ -79,54 +81,28 @@ class ProducerImportServiceTest {
     assertEquals(LocalDateTime.of(2026, 12, 30, 0, 0), first.getInitiativeEndDate());
     assertEquals("1234567890", first.getInitiativeServiceId());
     assertEquals("MIMIT", first.getInitiativeOrganizationName());
-    assertEquals(LocalDateTime.of(2025, 12, 31, 22, 0), first.getInitiativeStartDate());
-    assertEquals(LocalDateTime.of(2026, 12, 30, 22, 0), first.getInitiativeEndDate());
-    assertEquals("test@pagopa.it", first.getOperativeEmail());
+    assertEquals("producer1@test.it", first.getOperativeEmail());
     assertEquals("CSV", first.getSource());
     assertTrue(first.getEnabled());
     assertNotNull(first.getCreatedAt());
   }
 
   @Test
-  void importJson_withInvalidEmailFormat_shouldSaveWithoutEmail() {
-    String json = """
-      {"producerId":"456","initiativeId":"111","initiativeName":"Iniziativa 1","initiativeStatus":"PUBLISHED","initiativeStartDate":"2025-12-31T22:00:00.000Z","initiativeEndDate":"2026-12-30T22:00:00.000Z","initiativeServiceId":"1234567890","initiativeOrganizationName":"MIMIT","operativeEmail":"invalid-email-format"}
-      """;
+  void importProducers_withInvalidEmailFormat_shouldSaveWithoutOperativeEmail() {
+    when(portalInitiativeService.getInitiativeDetail("111")).thenReturn(initiativeDetail());
 
-    ProducerImportResultDTO result = producerImportService.importJson(json);
+    ProducerImportResultDTO result = producerImportService.importProducers(List.of(
+      producerRequest("456", "111", "Producer 1", "invalid-email-format")
+    ));
 
     ArgumentCaptor<List<ProducersInitiative>> captor = ArgumentCaptor.forClass(List.class);
     verify(producersInitiativeRepository).saveAll(captor.capture());
 
     ProducersInitiative saved = captor.getValue().getFirst();
+
+    assertNull(saved.getProducerEmail());
     assertNull(saved.getOperativeEmail());
     assertEquals("OK", result.getStatus());
-  }
-
-  @Test
-  void importJson_withLocalDateFormat_shouldParseCorrectly() {
-    String json = """
-      {"producerId":"456","initiativeId":"111","initiativeName":"Iniziativa 1","initiativeStatus":"PUBLISHED","initiativeStartDate":"2025-12-31T22:00:00","initiativeEndDate":"2026-12-30T22:00:00","initiativeServiceId":"1234567890","initiativeOrganizationName":"MIMIT"}
-      """;
-
-    ProducerImportResultDTO result = producerImportService.importJson(json);
-
-    ArgumentCaptor<List<ProducersInitiative>> captor = ArgumentCaptor.forClass(List.class);
-    verify(producersInitiativeRepository).saveAll(captor.capture());
-
-    ProducersInitiative saved = captor.getValue().getFirst();
-    assertEquals(LocalDateTime.of(2025, 12, 31, 22, 0), saved.getInitiativeStartDate());
-    assertEquals("OK", result.getStatus());
-  }
-
-  @Test
-  void importJson_withInvalidDateFormat_shouldThrowBadRequest() {
-    String json = """
-      {"producerId":"456","initiativeId":"111","initiativeName":"Iniziativa 1","initiativeStatus":"PUBLISHED","initiativeStartDate":"invalid-date","initiativeEndDate":"2026-12-30T22:00:00","initiativeServiceId":"1234567890","initiativeOrganizationName":"MIMIT"}
-      """;
-
-    ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> producerImportService.importJson(json));
-    assertEquals(HttpStatus.BAD_REQUEST, exception.getStatusCode());
   }
 
   @Test
@@ -172,7 +148,7 @@ class ProducerImportServiceTest {
 
   @ParameterizedTest
   @ValueSource(strings = {"", " ", "not-an-email"})
-  void importProducers_shouldSaveNullProducerEmailWhenMissingBlankOrInvalid(String producerEmail) {
+  void importProducers_shouldSaveNullOperativeEmailWhenMissingBlankOrInvalid(String producerEmail) {
     when(portalInitiativeService.getInitiativeDetail("111")).thenReturn(initiativeDetail());
 
     producerImportService.importProducers(List.of(
@@ -183,7 +159,7 @@ class ProducerImportServiceTest {
     verify(producersInitiativeRepository).saveAll(captor.capture());
 
     ProducersInitiative savedProducer = captor.getValue().getFirst();
-    assertNull(savedProducer.getProducerEmail());
+    assertNull(savedProducer.getOperativeEmail());
   }
 
   @Test
@@ -199,6 +175,7 @@ class ProducerImportServiceTest {
 
     ProducersInitiative savedProducer = captor.getValue().getFirst();
     assertNull(savedProducer.getProducerEmail());
+    assertNull(savedProducer.getOperativeEmail());
   }
 
   @Test
@@ -256,7 +233,7 @@ class ProducerImportServiceTest {
         LocalDate.of(2025, 12, 31),
         LocalDate.of(2026, 12, 30)
       ))
-      .additionalInfo(new InitiativeDTO.InitiativeAdditionalDTO(null))
+      .additionalInfo(new InitiativeDTO.InitiativeAdditionalDTO(null)) // serviceId mancante
       .organizationName("MIMIT")
       .build());
 
@@ -359,45 +336,19 @@ class ProducerImportServiceTest {
     assertTrue(exception.getReason().contains("failedRecords=1"));
   }
 
-  private ProducerInitiativeRequestDTO producerRequest(String producerId, String initiativeId, String producerName, String producerEmail) {
-    ProducerInitiativeRequestDTO request = new ProducerInitiativeRequestDTO();
-    request.setProducerId(producerId);
-    request.setInitiativeId(initiativeId);
-    request.setProducerName(producerName);
-    request.setProducerEmail(producerEmail);
-    return request;
-  }
+  @Test
+  void importProducers_shouldReportFailedRecordWhenInitiativeDetailIsNull() {
+    when(portalInitiativeService.getInitiativeDetail("111")).thenReturn(null);
 
-  private InitiativeDTO initiativeDetail() {
-    return initiativeDetail("1234567890", "MIMIT");
-  }
+    ProducerImportResultDTO result = producerImportService.importProducers(List.of(
+      producerRequest("456", "111", "Producer 1", "test@email.com")
+    ));
 
-  private InitiativeDTO initiativeDetail(String serviceId, String organizationName) {
-    return InitiativeDTO.builder()
-      .initiativeId("111")
-      .initiativeName("Iniziativa 1")
-      .status(InitiativeStatus.PUBLISHED)
-      .general(new InitiativeDTO.InitiativeGeneralDTO(
-        LocalDate.of(2025, 12, 31),
-        LocalDate.of(2026, 12, 30)
-      ))
-      .additionalInfo(new InitiativeDTO.InitiativeAdditionalDTO(serviceId))
-      .organizationName(organizationName)
-      .build();
-  }
-
-  private InitiativeDTO nestedInitiativeDetail() {
-    return InitiativeDTO.builder()
-      .initiativeId("111")
-      .initiativeName("Nested initiative")
-      .status(InitiativeStatus.APPROVED)
-      .general(new InitiativeDTO.InitiativeGeneralDTO(
-        LocalDate.of(2025, 1, 1),
-        LocalDate.of(2025, 12, 31)
-      ))
-      .additionalInfo(new InitiativeDTO.InitiativeAdditionalDTO("nested-service"))
-      .organizationName("Nested org")
-      .build();
+    assertEquals("PARTIAL", result.getStatus());
+    assertEquals(1, result.getTotalRecords());
+    assertEquals(0, result.getImportedRecords());
+    assertEquals(1, result.getFailedRecords());
+    verify(producersInitiativeRepository, never()).saveAll(anyList());
   }
 
   @Test
@@ -449,35 +400,88 @@ class ProducerImportServiceTest {
     verify(producersInitiativeRepository, never()).save(any());
   }
 
-  @Test
-  void importJson_withNullEmail_shouldSaveSuccessfullyWithoutEmail() {
-    String json = """
-      {"producerId":"456","initiativeId":"111","initiativeName":"Iniziativa 1","initiativeStatus":"PUBLISHED","initiativeStartDate":"2025-12-31T22:00:00.000Z","initiativeEndDate":"2026-12-30T22:00:00.000Z","initiativeServiceId":"1234567890","initiativeOrganizationName":"MIMIT"}
-      """;
+  private ProducerInitiativeRequestDTO producerRequest(String producerId, String initiativeId, String producerName, String producerEmail) {
+    ProducerInitiativeRequestDTO request = new ProducerInitiativeRequestDTO();
+    request.setProducerId(producerId);
+    request.setInitiativeId(initiativeId);
+    request.setProducerName(producerName);
+    request.setProducerEmail(producerEmail);
+    return request;
+  }
 
-    ProducerImportResultDTO result = producerImportService.importJson(json);
+  private InitiativeDTO initiativeDetail() {
+    return initiativeDetail("1234567890", "MIMIT");
+  }
 
-    ArgumentCaptor<List<ProducersInitiative>> captor = ArgumentCaptor.forClass(List.class);
-    verify(producersInitiativeRepository).saveAll(captor.capture());
+  private InitiativeDTO initiativeDetail(String serviceId, String organizationName) {
+    return InitiativeDTO.builder()
+      .initiativeId("111")
+      .initiativeName("Iniziativa 1")
+      .status(InitiativeStatus.PUBLISHED)
+      .general(new InitiativeDTO.InitiativeGeneralDTO(
+        LocalDate.of(2025, 12, 31),
+        LocalDate.of(2026, 12, 30)
+      ))
+      .additionalInfo(new InitiativeDTO.InitiativeAdditionalDTO(serviceId))
+      .organizationName(organizationName)
+      .build();
+  }
 
-    ProducersInitiative saved = captor.getValue().getFirst();
-    assertNull(saved.getOperativeEmail());
-    assertEquals("OK", result.getStatus());
+  private InitiativeDTO nestedInitiativeDetail() {
+    return InitiativeDTO.builder()
+      .initiativeId("111")
+      .initiativeName("Nested initiative")
+      .status(InitiativeStatus.APPROVED)
+      .general(new InitiativeDTO.InitiativeGeneralDTO(
+        LocalDate.of(2025, 1, 1),
+        LocalDate.of(2025, 12, 31)
+      ))
+      .additionalInfo(new InitiativeDTO.InitiativeAdditionalDTO("nested-service"))
+      .organizationName("Nested org")
+      .build();
   }
 
   @Test
-  void importJson_withBlankEmail_shouldSaveSuccessfullyWithoutEmail() {
-    String json = """
-      {"producerId":"456","initiativeId":"111","initiativeName":"Iniziativa 1","initiativeStatus":"PUBLISHED","initiativeStartDate":"2025-12-31T22:00:00.000Z","initiativeEndDate":"2026-12-30T22:00:00.000Z","initiativeServiceId":"1234567890","initiativeOrganizationName":"MIMIT","operativeEmail":"   "}
-      """;
+  void toProducer_withInvalidEmailFormat_shouldTriggerLogWarnAndSaveWithoutOperativeEmail() throws Exception {
+    Class<?> producerInputClass = Class.forName("it.gov.pagopa.register.service.operation.ProducerImportService$ProducerInput");
+    Constructor<?> constructor = producerInputClass.getDeclaredConstructor(String.class, String.class, String.class, String.class);
+    constructor.setAccessible(true);
+    Object mockProducerInput = constructor.newInstance("456", "111", "Producer 1", "invalid-email-format");
 
-    ProducerImportResultDTO result = producerImportService.importJson(json);
+    InitiativeDTO initiativeDetail = initiativeDetail();
 
-    ArgumentCaptor<List<ProducersInitiative>> captor = ArgumentCaptor.forClass(List.class);
-    verify(producersInitiativeRepository).saveAll(captor.capture());
+    ProducersInitiative result = (ProducersInitiative) ReflectionTestUtils.invokeMethod(
+      producerImportService,
+      "toProducer",
+      mockProducerInput,
+      initiativeDetail,
+      LocalDateTime.now()
+    );
 
-    ProducersInitiative saved = captor.getValue().getFirst();
-    assertNull(saved.getOperativeEmail());
-    assertEquals("OK", result.getStatus());
+    assertNotNull(result);
+    assertEquals("invalid-email-format", result.getProducerEmail());
+    assertNull(result.getOperativeEmail());
+  }
+
+  @Test
+  void toProducer_withValidEmailFormat_shouldCoverMatchesBranch() throws Exception {
+    Class<?> producerInputClass = Class.forName("it.gov.pagopa.register.service.operation.ProducerImportService$ProducerInput");
+    Constructor<?> constructor = producerInputClass.getDeclaredConstructor(String.class, String.class, String.class, String.class);
+    constructor.setAccessible(true);
+    Object mockProducerInput = constructor.newInstance("456", "111", "Producer 1", "valid@email.com");
+
+    InitiativeDTO initiativeDetail = initiativeDetail();
+
+    ProducersInitiative result = (ProducersInitiative) ReflectionTestUtils.invokeMethod(
+      producerImportService,
+      "toProducer",
+      mockProducerInput,
+      initiativeDetail,
+      LocalDateTime.now()
+    );
+
+    assertNotNull(result);
+    assertEquals("valid@email.com", result.getProducerEmail());
+    assertEquals("valid@email.com", result.getOperativeEmail()); // Copre il ramo di successo del matches interno
   }
 }

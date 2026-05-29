@@ -1,6 +1,7 @@
 package it.gov.pagopa.register.controller.operation;
 
 import it.gov.pagopa.register.dto.operation.ProducerImportResultDTO;
+import it.gov.pagopa.register.dto.operation.ProducerInitiativeImportRequestDTO;
 import it.gov.pagopa.register.dto.operation.UpdateOperativeEmailDTO;
 import it.gov.pagopa.register.dto.operation.UpdatedOperativeEmailResult;
 import it.gov.pagopa.register.service.operation.ProducerImportService;
