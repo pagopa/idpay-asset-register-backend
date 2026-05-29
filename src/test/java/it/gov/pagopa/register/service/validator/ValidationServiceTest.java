@@ -174,7 +174,7 @@ class ValidationServiceTest {
     when(initiative.getExternalCheckTemplates())
       .thenReturn(Map.of("CHECK", template));
 
-    when(externalCheckExecutor.execute(any(), any(), any(), any()))
+    when(externalCheckExecutor.execute(any(), any(), any(), any(), any()))
       .thenReturn(ExternalCheckResult.ok(Map.of("k", "v")));
 
     ExternalContext context =
@@ -204,7 +204,7 @@ class ValidationServiceTest {
     when(initiative.getExternalCheckTemplates())
       .thenReturn(Map.of("CHECK", template));
 
-    when(externalCheckExecutor.execute(any(), any(), any(), any()))
+    when(externalCheckExecutor.execute(any(), any(), any(), any(), any()))
       .thenReturn(ExternalCheckResult.ko("ERROR"));
 
     ExternalContext context =
@@ -244,7 +244,7 @@ class ValidationServiceTest {
     when(initiative.getExternalCheckTemplates())
       .thenReturn(Map.of("CHECK", template));
 
-    when(externalCheckExecutor.execute(any(), any(), any(), any()))
+    when(externalCheckExecutor.execute(any(), any(), any(), any(), any()))
       .thenReturn(ExternalCheckResult.ko("ERR"));
 
     ProductValidationResult result = validationService.validateRecords(

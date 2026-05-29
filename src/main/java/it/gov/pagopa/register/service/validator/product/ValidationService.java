@@ -50,7 +50,8 @@ public class ValidationService extends AbstractValidationService {
               csvRecord,
               template,
               check.getParameters(),
-              context.getCategory()
+              context.getCategory(),
+              context.getInitiativeConfig().getDmDate()
           );
 
       if (!result.isValid()) {
@@ -93,7 +94,8 @@ public class ValidationService extends AbstractValidationService {
         organizationName,
         categoryConfig,
         allowedReloadStatuses,
-        context
+        context,
+        initiativeConfig.getDmDate()
     );
   }
 }
