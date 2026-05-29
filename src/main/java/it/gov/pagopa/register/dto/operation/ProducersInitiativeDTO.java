@@ -14,8 +14,6 @@ import java.time.LocalDateTime;
 public class ProducersInitiativeDTO {
 
   private String producerId;
-  private String producerEmail;
-  private String producerName;
   private String initiativeId;
   private String initiativeName;
   private String initiativeStatus;
