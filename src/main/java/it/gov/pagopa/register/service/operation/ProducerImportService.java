@@ -38,7 +38,6 @@ public class ProducerImportService {
   private static final int SAVE_BATCH_SIZE = 1000;
   private static final Pattern EMAIL_VALIDATION_PATTERN = Pattern.compile(EMAIL_PATTERN);
   private static final String MISSING_REQUIRED_FIELD_MESSAGE = "Missing required field [%s]";
-  private static final String INITIATIVE_ID = "initiativeId";
 
   private final ProducersInitiativeRepository producersInitiativeRepository;
   private final ObjectMapper objectMapper;
@@ -167,13 +166,12 @@ public class ProducerImportService {
 
   private void validateProducerInput(ProducerImportJsonDTO dto) {
     requiredValue(dto.getProducerId(), "producerId");
-    requiredValue(dto.getInitiativeId(), INITIATIVE_ID);
+    requiredValue(dto.getInitiativeId(), "initiativeId");
     requiredValue(dto.getProducerName(), "producerName");
   }
 
   private InitiativeDTO getInitiativeDetail(ProducerImportJsonDTO dto, Map<String, InitiativeDTO> initiativeDetails) {
-    String initiativeId = requiredValue(dto.getInitiativeId(), INITIATIVE_ID);
-    return initiativeDetails.computeIfAbsent(initiativeId, portalInitiativeService::getInitiativeDetail);
+    return initiativeDetails.computeIfAbsent(dto.getInitiativeId(), portalInitiativeService::getInitiativeDetail);
   }
 
   private ProducerImportJsonDTO readJsonLine(String line) {
@@ -185,10 +183,9 @@ public class ProducerImportService {
   }
 
   private ProducersInitiative toProducer(ProducerImportJsonDTO dto, InitiativeDTO initiativeDetail, LocalDateTime now) {
-    String producerId = requiredValue(dto.getProducerId(), "producerId");
-    String initiativeId = requiredValue(dto.getInitiativeId(), INITIATIVE_ID);
+    String producerId = dto.getProducerId();
+    String initiativeId = dto.getInitiativeId();
     String producerEmail = optionalEmail(dto.getProducerEmail());
-    String producerName = requiredValue(dto.getProducerName(), "producerName");
     if (initiativeDetail == null) {
       throw new IllegalArgumentException("Initiative detail not found for producerId [%s] and initiativeId [%s]"
         .formatted(producerId, initiativeId));
@@ -198,7 +195,7 @@ public class ProducerImportService {
       .id(producerId + "_" + initiativeId)
       .producerId(producerId)
       .producerEmail(producerEmail)
-      .producerName(producerName)
+      .producerName(dto.getProducerName())
       .initiativeId(initiativeId)
       .initiativeName(requiredValue(initiativeDetail.getInitiativeName(), "initiativeName"))
       .initiativeStatus(requiredStatus(initiativeDetail.getStatus(), "initiativeStatus"))
@@ -217,16 +214,15 @@ public class ProducerImportService {
     if (value == null || value.isBlank()) {
       throw new IllegalArgumentException(MISSING_REQUIRED_FIELD_MESSAGE.formatted(fieldName));
     }
-    return value.strip();
+    return value;
   }
 
   private String optionalEmail(String value) {
     if (value == null || value.isBlank()) {
       return DEFAULT_PRODUCER_EMAIL;
     }
-    String email = value.strip();
-    return EMAIL_VALIDATION_PATTERN.matcher(email).matches()
-      ? email
+    return EMAIL_VALIDATION_PATTERN.matcher(value).matches()
+      ? value
       : DEFAULT_PRODUCER_EMAIL;
   }
 
