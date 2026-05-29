@@ -101,6 +101,27 @@ class ProducerImportServiceTest {
     verify(portalInitiativeService).getInitiativeDetail("111");
   }
 
+  @Test
+  void importProducers_shouldPersistInitiativeFieldsFromNestedPortalDetail() {
+    when(portalInitiativeService.getInitiativeDetail("111")).thenReturn(nestedInitiativeDetail());
+
+    producerImportService.importProducers(List.of(
+      producerRequest("456", "111", "Producer 1", "producer@test.it")
+    ));
+
+    ArgumentCaptor<List<ProducersInitiative>> captor = ArgumentCaptor.forClass(List.class);
+    verify(producersInitiativeRepository).saveAll(captor.capture());
+
+    ProducersInitiative savedProducer = captor.getValue().getFirst();
+    assertEquals("456_111", savedProducer.getId());
+    assertEquals("Nested initiative", savedProducer.getInitiativeName());
+    assertEquals(InitiativeStatus.APPROVED, savedProducer.getInitiativeStatus());
+    assertEquals(LocalDateTime.of(2025, 1, 1, 0, 0), savedProducer.getInitiativeStartDate());
+    assertEquals(LocalDateTime.of(2025, 12, 31, 0, 0), savedProducer.getInitiativeEndDate());
+    assertEquals("nested-service", savedProducer.getInitiativeServiceId());
+    assertEquals("Nested org", savedProducer.getInitiativeOrganizationName());
+  }
+
   @ParameterizedTest
   @ValueSource(strings = {"", " ", "not-an-email"})
   void importProducers_shouldSaveNullProducerEmailWhenMissingBlankOrInvalid(String producerEmail) {
@@ -158,8 +179,10 @@ class ProducerImportServiceTest {
     when(portalInitiativeService.getInitiativeDetail("111")).thenReturn(InitiativeDTO.builder()
       .initiativeName("Iniziativa 1")
       .status(InitiativeStatus.PUBLISHED)
-      .startDate(LocalDate.of(2025, 12, 31))
-      .endDate(LocalDate.of(2026, 12, 30))
+      .general(new InitiativeDTO.InitiativeGeneralDTO(
+        LocalDate.of(2025, 12, 31),
+        LocalDate.of(2026, 12, 30)
+      ))
       .organizationName("MIMIT")
       .build());
 
@@ -255,10 +278,26 @@ class ProducerImportServiceTest {
       .initiativeId("111")
       .initiativeName("Iniziativa 1")
       .status(InitiativeStatus.PUBLISHED)
-      .startDate(LocalDate.of(2025, 12, 31))
-      .endDate(LocalDate.of(2026, 12, 30))
-      .serviceId(serviceId)
+      .general(new InitiativeDTO.InitiativeGeneralDTO(
+        LocalDate.of(2025, 12, 31),
+        LocalDate.of(2026, 12, 30)
+      ))
+      .additionalInfo(new InitiativeDTO.InitiativeAdditionalDTO(serviceId))
       .organizationName(organizationName)
+      .build();
+  }
+
+  private InitiativeDTO nestedInitiativeDetail() {
+    return InitiativeDTO.builder()
+      .initiativeId("111")
+      .initiativeName("Nested initiative")
+      .status(InitiativeStatus.APPROVED)
+      .general(new InitiativeDTO.InitiativeGeneralDTO(
+        LocalDate.of(2025, 1, 1),
+        LocalDate.of(2025, 12, 31)
+      ))
+      .additionalInfo(new InitiativeDTO.InitiativeAdditionalDTO("nested-service"))
+      .organizationName("Nested org")
       .build();
   }
 }

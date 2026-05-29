@@ -162,9 +162,9 @@ public class ProducerImportService {
       .initiativeId(producerInput.initiativeId())
       .initiativeName(requiredValue(initiativeDetail.getInitiativeName(), "initiativeName"))
       .initiativeStatus(requiredStatus(initiativeDetail.getStatus(), "initiativeStatus"))
-      .initiativeStartDate(requiredDate(initiativeDetail.getStartDate(), "initiativeStartDate").atStartOfDay())
-      .initiativeEndDate(requiredDate(initiativeDetail.getEndDate(), "initiativeEndDate").atStartOfDay())
-      .initiativeServiceId(requiredValue(initiativeDetail.getServiceId(), "initiativeServiceId"))
+      .initiativeStartDate(requiredDate(requiredGeneral(initiativeDetail).getStartDate(), "initiativeStartDate").atStartOfDay())
+      .initiativeEndDate(requiredDate(requiredGeneral(initiativeDetail).getEndDate(), "initiativeEndDate").atStartOfDay())
+      .initiativeServiceId(requiredValue(requiredAdditionalInfo(initiativeDetail).getServiceId(), "initiativeServiceId"))
       .initiativeOrganizationName(requiredValue(initiativeDetail.getOrganizationName(), "initiativeOrganizationName"))
       .source(CSV_SOURCE)
       .enabled(Boolean.TRUE)
@@ -186,6 +186,20 @@ public class ProducerImportService {
     return StringUtils.isNotBlank(email) && EMAIL_VALIDATION_PATTERN.matcher(email).matches()
       ? email
       : null;
+  }
+
+  private InitiativeDTO.InitiativeGeneralDTO requiredGeneral(InitiativeDTO initiativeDetail) {
+    if (initiativeDetail.getGeneral() == null) {
+      throw new IllegalArgumentException(MISSING_REQUIRED_FIELD_MESSAGE.formatted("initiativeGeneral"));
+    }
+    return initiativeDetail.getGeneral();
+  }
+
+  private InitiativeDTO.InitiativeAdditionalDTO requiredAdditionalInfo(InitiativeDTO initiativeDetail) {
+    if (initiativeDetail.getAdditionalInfo() == null) {
+      throw new IllegalArgumentException(MISSING_REQUIRED_FIELD_MESSAGE.formatted("initiativeAdditionalInfo"));
+    }
+    return initiativeDetail.getAdditionalInfo();
   }
 
   private LocalDate requiredDate(LocalDate value, String fieldName) {
