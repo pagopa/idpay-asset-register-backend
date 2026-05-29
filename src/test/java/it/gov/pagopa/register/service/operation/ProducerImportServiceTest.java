@@ -183,6 +183,7 @@ class ProducerImportServiceTest {
         LocalDate.of(2025, 12, 31),
         LocalDate.of(2026, 12, 30)
       ))
+      .additionalInfo(new InitiativeDTO.InitiativeAdditionalDTO(null))
       .organizationName("MIMIT")
       .build());
 
