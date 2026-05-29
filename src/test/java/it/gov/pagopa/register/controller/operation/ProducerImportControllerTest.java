@@ -13,7 +13,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -33,7 +33,7 @@ class ProducerImportControllerTest {
 
   @Test
   void importProducers_shouldReturnImportedRecords() throws Exception {
-    Mockito.when(producerImportService.importJson(anyString()))
+    Mockito.when(producerImportService.importProducers(anyList()))
       .thenReturn(ProducerImportResultDTO.builder()
         .status("OK")
         .totalRecords(2)
@@ -45,8 +45,12 @@ class ProducerImportControllerTest {
     mockMvc.perform(post("/idpay/register/producers")
         .contentType(MediaType.APPLICATION_JSON)
         .content("""
-          {"producerId":"456","initiativeId":"111","initiativeName":"Iniziativa 1","initiativeStatus":"PUBLISHED","initiativeStartDate":"2025-12-31T22:00:00.000Z","initiativeEndDate":"2026-12-30T22:00:00.000Z","initiativeServiceId":"1234567890","initiativeOrganizationName":"MIMIT"}
-          {"producerId":"678","initiativeId":"111","initiativeName":"Iniziativa 1","initiativeStatus":"PUBLISHED","initiativeStartDate":"2025-12-31T22:00:00.000Z","initiativeEndDate":"2026-12-30T22:00:00.000Z","initiativeServiceId":"1234567891","initiativeOrganizationName":"MEF"}
+          {
+            "producers": [
+              {"producerId":"456","initiativeId":"111","producerName":"Producer 1","producerEmail":"producer1@test.it"},
+              {"producerId":"678","initiativeId":"222","producerName":"Producer 2","producerEmail":"producer2@test.it"}
+            ]
+          }
           """))
       .andExpect(status().isOk())
       .andExpect(jsonPath("$.status").value("OK"))

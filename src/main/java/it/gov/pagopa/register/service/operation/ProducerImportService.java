@@ -1,8 +1,10 @@
 package it.gov.pagopa.register.service.operation;
 
+import it.gov.pagopa.register.connector.initiative.PortalInitiativeService;
+import it.gov.pagopa.register.dto.operation.InitiativeDTO;
 import it.gov.pagopa.register.dto.operation.InitiativeStatus;
-import it.gov.pagopa.register.dto.operation.ProducerImportJsonDTO;
 import it.gov.pagopa.register.dto.operation.ProducerImportResultDTO;
+import it.gov.pagopa.register.dto.operation.ProducerInitiativeRequestDTO;
 import it.gov.pagopa.register.model.operation.ProducersInitiative;
 import it.gov.pagopa.register.repository.operation.ProducersInitiativeRepository;
 import lombok.RequiredArgsConstructor;
@@ -13,17 +15,15 @@ import org.springframework.dao.TransientDataAccessResourceException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
-import tools.jackson.core.JacksonException;
-import tools.jackson.core.type.TypeReference;
-import tools.jackson.databind.ObjectMapper;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
-import java.time.format.DateTimeParseException;
-import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
+import java.util.regex.Pattern;
+
+import static it.gov.pagopa.register.constants.ValidationPatterns.EMAIL_PATTERN;
 
 @Slf4j
 @Service
@@ -37,24 +37,20 @@ public class ProducerImportService {
   private static final String INITIATIVE_ID = "initiativeId";
 
   private final ProducersInitiativeRepository producersInitiativeRepository;
-  private final ObjectMapper objectMapper;
+  private final PortalInitiativeService portalInitiativeService;
 
-
-  public ProducerImportResultDTO importJson(String json) {
-    log.info("[IMPORT_PRODUCERS] - Importing producers from json payload");
+  public ProducerImportResultDTO importProducers(List<ProducerInitiativeRequestDTO> requests) {
+    log.info("[IMPORT_PRODUCERS] - Importing producers from request payload");
 
     try {
-      List<ProducersInitiative> producers = parseJson(json);
+      List<ProducersInitiative> producers = toProducers(requests);
       ProducerImportResultDTO result = saveInBatches(producers);
 
       log.info("[IMPORT_PRODUCERS] - Import completed. totalRecords={}, importedRecords={}, failedRecords={}",
         result.getTotalRecords(), result.getImportedRecords(), result.getFailedRecords());
       return result;
-    } catch (JacksonException e) {
-      log.warn("[IMPORT_PRODUCERS] - Invalid json payload: {}", e.getMessage());
-      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid JSON payload", e);
     } catch (IllegalArgumentException e) {
-      log.warn("[IMPORT_PRODUCERS] - Invalid json content: {}", e.getMessage());
+      log.warn("[IMPORT_PRODUCERS] - Invalid request content: {}", e.getMessage());
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e);
     }
   }
@@ -122,29 +118,15 @@ public class ProducerImportService {
     return false;
   }
 
-  private List<ProducersInitiative> parseJson(String json) throws JacksonException {
-    if (StringUtils.isBlank(json)) {
-      throw new IllegalArgumentException("JSON payload is empty");
-    }
-
-    String trimmedJson = StringUtils.strip(json);
-
-    List<ProducerImportJsonDTO> records = trimmedJson.startsWith("[")
-      ? objectMapper.readValue(
-        trimmedJson, new TypeReference<List<ProducerImportJsonDTO>>() {
-        })
-      : Arrays.stream(trimmedJson.split("\\R"))
-        .map(StringUtils::strip)
-        .filter(StringUtils::isNotBlank)
-        .map(this::readJsonLine)
-        .toList();
-
-    if (records.isEmpty()) {
-      throw new IllegalArgumentException("JSON payload does not contain records");
+  private List<ProducersInitiative> toProducers(List<ProducerInitiativeRequestDTO> requests) {
+    if (requests == null || requests.isEmpty()) {
+      throw new IllegalArgumentException("Producer request payload does not contain records");
     }
 
     LocalDateTime now = LocalDateTime.now();
-    return records.stream()
+    Map<String, InitiativeDTO> initiativeDetails = new HashMap<>();
+
+    return requests.stream()
       .map(this::toProducerInput)
       .map(producerInput -> toProducer(
         producerInput,
@@ -153,23 +135,17 @@ public class ProducerImportService {
       .toList();
   }
 
-  private ProducerInput toProducerInput(ProducerImportJsonDTO dto) {
-    return new ProducerInput(
-      requiredValue(dto.getProducerId(), "producerId"),
-      requiredValue(dto.getInitiativeId(), INITIATIVE_ID),
-      optionalEmail(dto.getProducerEmail()),
-      requiredValue(dto.getProducerName(), "producerName")
-    );
-  }
-
-  private ProducerImportJsonDTO readJsonLine(String line) {
-    try {
-      Map<String, Object> producerFields = objectMapper.readValue(line, new TypeReference<Map<String, Object>>() {
-      });
-      return toJsonDTO(producerFields);
-    } catch (JacksonException e) {
-      throw new IllegalArgumentException("Invalid JSON line", e);
+  private ProducerInput toProducerInput(ProducerInitiativeRequestDTO request) {
+    if (request == null) {
+      throw new IllegalArgumentException("Producer request cannot be null");
     }
+
+    return new ProducerInput(
+      requiredValue(request.getProducerId(), "producerId"),
+      requiredValue(request.getInitiativeId(), INITIATIVE_ID),
+      requiredValue(request.getProducerName(), "producerName"),
+      optionalEmail(request.getProducerEmail())
+    );
   }
 
   private ProducersInitiative toProducer(ProducerInput producerInput, InitiativeDTO initiativeDetail, LocalDateTime now) {
@@ -181,8 +157,8 @@ public class ProducerImportService {
     return ProducersInitiative.builder()
       .id(producerInput.producerId() + "_" + producerInput.initiativeId())
       .producerId(producerInput.producerId())
-      .producerEmail(producerInput.producerEmail())
       .producerName(producerInput.producerName())
+      .producerEmail(producerInput.producerEmail())
       .initiativeId(producerInput.initiativeId())
       .initiativeName(requiredValue(initiativeDetail.getInitiativeName(), "initiativeName"))
       .initiativeStatus(requiredStatus(initiativeDetail.getStatus(), "initiativeStatus"))
@@ -212,19 +188,20 @@ public class ProducerImportService {
       : null;
   }
 
-  private LocalDateTime parseJsonDate(String value, String fieldName) {
-    try {
-      return OffsetDateTime.parse(value).toLocalDateTime();
-    } catch (DateTimeParseException offsetDateTimeException) {
-      try {
-        return LocalDateTime.parse(value);
-      } catch (DateTimeParseException ex) {
-        ex.addSuppressed(offsetDateTimeException);
-        throw new IllegalArgumentException("Invalid date field [%s]".formatted(fieldName), ex);
-      }
+  private LocalDate requiredDate(LocalDate value, String fieldName) {
+    if (value == null) {
+      throw new IllegalArgumentException(MISSING_REQUIRED_FIELD_MESSAGE.formatted(fieldName));
     }
+    return value;
   }
 
-  private record ProducerInput(String producerId, String initiativeId, String producerEmail, String producerName) {
+  private InitiativeStatus requiredStatus(InitiativeStatus value, String fieldName) {
+    if (value == null) {
+      throw new IllegalArgumentException(MISSING_REQUIRED_FIELD_MESSAGE.formatted(fieldName));
+    }
+    return value;
+  }
+
+  private record ProducerInput(String producerId, String initiativeId, String producerName, String producerEmail) {
   }
 }

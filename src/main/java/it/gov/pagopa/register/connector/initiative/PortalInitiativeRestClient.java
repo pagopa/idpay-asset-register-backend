@@ -31,4 +31,12 @@ public interface PortalInitiativeRestClient {
     @RequestParam(value = "role", required = false) String role
   );
 
+  @GetMapping(
+    value = "/idpay/initiative/{initiativeId}/beneficiary/view",
+    produces = "application/json"
+  )
+  ResponseEntity<it.gov.pagopa.register.dto.operation.InitiativeDTO> getInitiativeBeneficiaryView(
+    @PathVariable("initiativeId") String initiativeId
+  );
+
 }
