@@ -1,5 +1,6 @@
 package it.gov.pagopa.register.service.operation;
 
+import feign.FeignException;
 import it.gov.pagopa.register.connector.initiative.PortalInitiativeService;
 import it.gov.pagopa.register.dto.operation.InitiativeDTO;
 import it.gov.pagopa.register.dto.operation.InitiativeStatus;
@@ -143,8 +144,7 @@ public class ProducerImportService {
           now));
       } catch (RuntimeException e) {
         failedRecords++;
-        log.warn("[IMPORT_PRODUCERS] - Skipping producerId [{}], initiativeId [{}]. invalidField=[{}], error={}",
-          producerId(request), initiativeId(request), invalidField(e), e.getMessage());
+        logSkippedRecord(request, e);
       }
     }
 
@@ -157,6 +157,17 @@ public class ProducerImportService {
 
   private String initiativeId(ProducerInitiativeRequestDTO request) {
     return request == null ? null : StringUtils.strip(request.getInitiativeId());
+  }
+
+  private void logSkippedRecord(ProducerInitiativeRequestDTO request, RuntimeException e) {
+    if (e instanceof FeignException feignException) {
+      log.warn("[IMPORT_PRODUCERS] - Skipping producer record. producerId=[{}], initiativeId=[{}], invalidField=[{}], portalStatus=[{}], portalError={}",
+        producerId(request), initiativeId(request), invalidField(e), feignException.status(), portalError(feignException));
+      return;
+    }
+
+    log.warn("[IMPORT_PRODUCERS] - Skipping producer record. producerId=[{}], initiativeId=[{}], invalidField=[{}], error={}",
+      producerId(request), initiativeId(request), invalidField(e), e.getMessage());
   }
 
   private ProducerInput toProducerInput(ProducerInitiativeRequestDTO request) {
@@ -219,6 +230,9 @@ public class ProducerImportService {
   }
 
   private String invalidField(RuntimeException e) {
+    if (e instanceof FeignException.NotFound) {
+      return INITIATIVE_ID;
+    }
     String message = e.getMessage();
     if (message == null || !message.startsWith("Missing required field [")) {
       return message != null && message.toLowerCase().contains("initiative")
@@ -226,6 +240,11 @@ public class ProducerImportService {
         : null;
     }
     return StringUtils.substringBetween(message, "[", "]");
+  }
+
+  private String portalError(FeignException e) {
+    String responseBody = e.contentUTF8();
+    return StringUtils.isNotBlank(responseBody) ? responseBody : e.getMessage();
   }
 
   private InitiativeDTO.InitiativeGeneralDTO requiredGeneral(InitiativeDTO initiativeDetail) {
