@@ -189,9 +189,11 @@ class ProducerImportServiceTest {
 
   @Test
   void importProducers_shouldRejectEmptyPayload() {
+    List<ProducerInitiativeRequestDTO> requests = List.of();
+
     ResponseStatusException exception = assertThrows(
       ResponseStatusException.class,
-      () -> producerImportService.importProducers(List.of())
+      () -> producerImportService.importProducers(requests)
     );
 
     assertEquals(HttpStatus.BAD_REQUEST, exception.getStatusCode());
@@ -259,10 +261,11 @@ class ProducerImportServiceTest {
     when(portalInitiativeService.getInitiativeDetail("111")).thenReturn(initiativeDetail());
     doThrow(new QueryTimeoutException("Mongo returned 408 request timeout"))
       .when(producersInitiativeRepository).saveAll(anyList());
+    List<ProducerInitiativeRequestDTO> requests = List.of(producerRequest("456", "111", "Producer", null));
 
     ResponseStatusException exception = assertThrows(
       ResponseStatusException.class,
-      () -> producerImportService.importProducers(List.of(producerRequest("456", "111", "Producer", null)))
+      () -> producerImportService.importProducers(requests)
     );
 
     assertEquals(HttpStatus.REQUEST_TIMEOUT, exception.getStatusCode());
@@ -297,10 +300,11 @@ class ProducerImportServiceTest {
     when(portalInitiativeService.getInitiativeDetail("111")).thenReturn(initiativeDetail());
     when(producersInitiativeRepository.saveAll(anyList()))
       .thenThrow(new RuntimeException("generic db error"));
+    List<ProducerInitiativeRequestDTO> requests = List.of(producerRequest("456", "111", "Producer", null));
 
     ResponseStatusException exception = assertThrows(
       ResponseStatusException.class,
-      () -> producerImportService.importProducers(List.of(producerRequest("456", "111", "Producer", null)))
+      () -> producerImportService.importProducers(requests)
     );
 
     assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, exception.getStatusCode());
