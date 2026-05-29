@@ -1,5 +1,6 @@
 package it.gov.pagopa.register.service.operation;
 
+import feign.FeignException;
 import it.gov.pagopa.register.connector.initiative.PortalInitiativeService;
 import it.gov.pagopa.register.dto.operation.*;
 import it.gov.pagopa.register.model.operation.ProducersInitiative;
@@ -145,8 +146,7 @@ public class ProducerImportService {
           now));
       } catch (RuntimeException e) {
         failedRecords++;
-        log.warn("[IMPORT_PRODUCERS] - Skipping producerId [{}], initiativeId [{}]. error={}",
-          producerId(request), initiativeId(request), e.getMessage());
+        logSkippedRecord(request, e);
       }
     }
 
@@ -161,6 +161,17 @@ public class ProducerImportService {
     return request == null ? null : StringUtils.strip(request.getInitiativeId());
   }
 
+  private void logSkippedRecord(ProducerInitiativeRequestDTO request, RuntimeException e) {
+    if (e instanceof FeignException feignException) {
+      log.warn("[IMPORT_PRODUCERS] - Skipping producer record. producerId=[{}], initiativeId=[{}], invalidField=[{}], portalStatus=[{}], portalError={}",
+        producerId(request), initiativeId(request), invalidField(e), feignException.status(), portalError(feignException));
+      return;
+    }
+
+    log.warn("[IMPORT_PRODUCERS] - Skipping producer record. producerId=[{}], initiativeId=[{}], invalidField=[{}], error={}",
+      producerId(request), initiativeId(request), invalidField(e), e.getMessage());
+  }
+
   private ProducerInput toProducerInput(ProducerInitiativeRequestDTO request) {
     if (request == null) {
       throw new IllegalArgumentException("Producer request cannot be null");
@@ -170,7 +181,7 @@ public class ProducerImportService {
       requiredValue(request.getProducerId(), "producerId"),
       requiredValue(request.getInitiativeId(), INITIATIVE_ID),
       requiredValue(request.getProducerName(), "producerName"),
-      optionalEmail(request.getProducerEmail())
+      optionalEmail(request.getProducerEmail(), request)
     );
   }
 
@@ -245,11 +256,35 @@ public class ProducerImportService {
     return cleanedValue;
   }
 
-  private String optionalEmail(String value) {
+  private String optionalEmail(String value, ProducerInitiativeRequestDTO request) {
     String email = StringUtils.strip(value);
-    return StringUtils.isNotBlank(email) && EMAIL_VALIDATION_PATTERN.matcher(email).matches()
-      ? email
-      : null;
+    if (StringUtils.isBlank(email)) {
+      return null;
+    }
+    if (EMAIL_VALIDATION_PATTERN.matcher(email).matches()) {
+      return email;
+    }
+    log.warn("[IMPORT_PRODUCERS] - Invalid producerEmail for producerId [{}], initiativeId [{}]. value will be stored as null",
+      producerId(request), initiativeId(request));
+    return null;
+  }
+
+  private String invalidField(RuntimeException e) {
+    if (e instanceof FeignException.NotFound) {
+      return INITIATIVE_ID;
+    }
+    String message = e.getMessage();
+    if (message == null || !message.startsWith("Missing required field [")) {
+      return message != null && message.toLowerCase().contains("initiative")
+        ? INITIATIVE_ID
+        : null;
+    }
+    return StringUtils.substringBetween(message, "[", "]");
+  }
+
+  private String portalError(FeignException e) {
+    String responseBody = e.contentUTF8();
+    return StringUtils.isNotBlank(responseBody) ? responseBody : e.getMessage();
   }
 
   private InitiativeDTO.InitiativeGeneralDTO requiredGeneral(InitiativeDTO initiativeDetail) {
