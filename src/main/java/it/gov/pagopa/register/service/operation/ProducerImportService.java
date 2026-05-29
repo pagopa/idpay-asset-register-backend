@@ -1,7 +1,5 @@
 package it.gov.pagopa.register.service.operation;
 
-import it.gov.pagopa.register.connector.initiative.PortalInitiativeService;
-import it.gov.pagopa.register.dto.operation.InitiativeDTO;
 import it.gov.pagopa.register.dto.operation.InitiativeStatus;
 import it.gov.pagopa.register.dto.operation.ProducerImportJsonDTO;
 import it.gov.pagopa.register.dto.operation.ProducerImportResultDTO;
@@ -19,15 +17,13 @@ import tools.jackson.core.JacksonException;
 import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.ObjectMapper;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.format.DateTimeParseException;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Pattern;
-
-import static it.gov.pagopa.register.constants.ValidationPatterns.EMAIL_PATTERN;
+import java.util.Objects;
 
 @Slf4j
 @Service
@@ -42,7 +38,6 @@ public class ProducerImportService {
 
   private final ProducersInitiativeRepository producersInitiativeRepository;
   private final ObjectMapper objectMapper;
-  private final PortalInitiativeService portalInitiativeService;
 
 
   public ProducerImportResultDTO importJson(String json) {
@@ -149,7 +144,6 @@ public class ProducerImportService {
     }
 
     LocalDateTime now = LocalDateTime.now();
-    Map<String, InitiativeDTO> initiativeDetails = new HashMap<>();
     return records.stream()
       .map(this::toProducerInput)
       .map(producerInput -> toProducer(
@@ -170,7 +164,9 @@ public class ProducerImportService {
 
   private ProducerImportJsonDTO readJsonLine(String line) {
     try {
-      return objectMapper.readValue(line, ProducerImportJsonDTO.class);
+      Map<String, Object> producerFields = objectMapper.readValue(line, new TypeReference<Map<String, Object>>() {
+      });
+      return toJsonDTO(producerFields);
     } catch (JacksonException e) {
       throw new IllegalArgumentException("Invalid JSON line", e);
     }
@@ -216,18 +212,17 @@ public class ProducerImportService {
       : null;
   }
 
-  private LocalDate requiredDate(LocalDate value, String fieldName) {
-    if (value == null) {
-      throw new IllegalArgumentException(MISSING_REQUIRED_FIELD_MESSAGE.formatted(fieldName));
+  private LocalDateTime parseJsonDate(String value, String fieldName) {
+    try {
+      return OffsetDateTime.parse(value).toLocalDateTime();
+    } catch (DateTimeParseException offsetDateTimeException) {
+      try {
+        return LocalDateTime.parse(value);
+      } catch (DateTimeParseException ex) {
+        ex.addSuppressed(offsetDateTimeException);
+        throw new IllegalArgumentException("Invalid date field [%s]".formatted(fieldName), ex);
+      }
     }
-    return value;
-  }
-
-  private InitiativeStatus requiredStatus(InitiativeStatus value, String fieldName) {
-    if (value == null) {
-      throw new IllegalArgumentException(MISSING_REQUIRED_FIELD_MESSAGE.formatted(fieldName));
-    }
-    return value;
   }
 
   private record ProducerInput(String producerId, String initiativeId, String producerEmail, String producerName) {
