@@ -520,4 +520,56 @@ class ProducerImportServiceTest {
     assertNotNull(result);
     assertEquals("valid@email.com", result.getProducerEmail());
   }
+
+  @Test
+  void updateOperativeEmail_Success() {
+    String orgId = "org123";
+    String initiativeId = "init123";
+    String key = orgId + "_" + initiativeId;
+    String newEmail = "new.email@pagopa.it";
+
+    ProducersInitiative initiative = new ProducersInitiative();
+    initiative.setId(key);
+
+    when(producersInitiativeRepository.findById(key)).thenReturn(java.util.Optional.of(initiative));
+
+    it.gov.pagopa.register.dto.operation.UpdatedOperativeEmailResult result =
+      producerImportService.updateOperativeEmail(orgId, initiativeId, newEmail);
+
+    assertEquals("OK", result.getStatus());
+    assertNull(result.getErrorKey());
+    assertEquals(newEmail, initiative.getProducerEmail());
+    assertNotNull(initiative.getUpdatedAt());
+    verify(producersInitiativeRepository).save(initiative);
+  }
+
+  @Test
+  void updateOperativeEmail_withInvalidEmailFormat_shouldReturnKo() {
+    String orgId = "org123";
+    String initiativeId = "init123";
+
+    it.gov.pagopa.register.dto.operation.UpdatedOperativeEmailResult result =
+      producerImportService.updateOperativeEmail(orgId, initiativeId, "invalid-email");
+
+    assertEquals("KO", result.getStatus());
+    assertEquals(it.gov.pagopa.register.constants.AssetRegisterConstants.UploadEmailKeyConstant.EMAIL_WRONG_ERROR_KEY, result.getErrorKey());
+    verify(producersInitiativeRepository, never()).findById(anyString());
+    verify(producersInitiativeRepository, never()).save(any());
+  }
+
+  @Test
+  void updateOperativeEmail_initiativeNotFound_shouldReturnKo() {
+    String orgId = "org123";
+    String initiativeId = "init123";
+    String key = orgId + "_" + initiativeId;
+
+    when(producersInitiativeRepository.findById(key)).thenReturn(java.util.Optional.empty());
+
+    it.gov.pagopa.register.dto.operation.UpdatedOperativeEmailResult result =
+      producerImportService.updateOperativeEmail(orgId, initiativeId, "valid@email.com");
+
+    assertEquals("KO", result.getStatus());
+    assertEquals(it.gov.pagopa.register.constants.AssetRegisterConstants.UploadEmailKeyConstant.EMAIL_INITATIVE_ERROR_KEY, result.getErrorKey());
+    verify(producersInitiativeRepository, never()).save(any());
+  }
 }
