@@ -205,9 +205,8 @@ public class ProducerImportService {
       .id(producerInput.producerId() + "_" + producerInput.initiativeId())
       .producerId(producerInput.producerId())
       .producerName(producerInput.producerName())
-      .producerEmail(producerInput.producerEmail())
+      .producerEmail(validatedEmail)
       .initiativeId(producerInput.initiativeId())
-      .operativeEmail(validatedEmail)
       .initiativeName(requiredValue(initiativeDetail.getInitiativeName(), "initiativeName"))
       .initiativeStatus(requiredStatus(initiativeDetail.getStatus(), "initiativeStatus"))
       .initiativeStartDate(requiredDate(requiredGeneral(initiativeDetail).getStartDate(), "initiativeStartDate").atStartOfDay())
@@ -239,7 +238,7 @@ public class ProducerImportService {
 
     ProducersInitiative initiative = optional.get();
 
-    initiative.setOperativeEmail(newEmail);
+    initiative.setProducerEmail(newEmail);
     initiative.setUpdatedAt(LocalDateTime.now());
 
     producersInitiativeRepository.save(initiative);

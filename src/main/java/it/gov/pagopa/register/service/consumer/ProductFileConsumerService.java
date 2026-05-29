@@ -242,11 +242,11 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
       }
 
       String userEmail = null;
-      if (initiativeOpt.isPresent() && (initiativeOpt.get().getOperativeEmail() == null || initiativeOpt.get().getOperativeEmail().isBlank())) {
+      if (initiativeOpt.isPresent() && (initiativeOpt.get().getProducerEmail() == null || initiativeOpt.get().getProducerEmail().isBlank())) {
         log.warn("[PROCESS_FILE] - Upload blocked. Missing operative email for key: {}", initiativeKey);
         setProductFileStatus(fileId, String.valueOf(PARTIAL), 0);
       } else {
-        userEmail = initiativeOpt.get().getOperativeEmail();
+        userEmail = initiativeOpt.get().getProducerEmail();
       }
 
       setProductFileStatus(fileId, String.valueOf(IN_PROCESS), 0);

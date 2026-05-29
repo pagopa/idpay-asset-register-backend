@@ -90,7 +90,7 @@ class ProductFileConsumerServiceTest {
 
     ProducersInitiative producersInitiative = new ProducersInitiative();
     producersInitiative.setEnabled(true);
-    producersInitiative.setOperativeEmail("test@pagopa.it");
+    producersInitiative.setProducerEmail("test@pagopa.it");
     when(producersInitiativeRepository.findById("ORG123_" + INITIATIVE_ID)).thenReturn(Optional.of(producersInitiative));
 
     when(fileStorageClient.download(anyString())).thenReturn(new ByteArrayOutputStream());
@@ -116,7 +116,7 @@ class ProductFileConsumerServiceTest {
 
     ProducersInitiative producersInitiative = new ProducersInitiative();
     producersInitiative.setEnabled(true);
-    producersInitiative.setOperativeEmail("test@pagopa.it");
+    producersInitiative.setProducerEmail("test@pagopa.it");
     when(producersInitiativeRepository.findById("ORG123_" + INITIATIVE_ID)).thenReturn(Optional.of(producersInitiative));
 
     when(fileStorageClient.download(anyString())).thenReturn(new ByteArrayOutputStream());
@@ -144,7 +144,7 @@ class ProductFileConsumerServiceTest {
 
     ProducersInitiative producersInitiative = new ProducersInitiative();
     producersInitiative.setEnabled(true);
-    producersInitiative.setOperativeEmail("test@pagopa.it");
+    producersInitiative.setProducerEmail("test@pagopa.it");
     when(producersInitiativeRepository.findById("ORG123_" + INITIATIVE_ID)).thenReturn(Optional.of(producersInitiative));
 
     when(fileStorageClient.download(any())).thenReturn(new ByteArrayOutputStream());
@@ -187,7 +187,7 @@ class ProductFileConsumerServiceTest {
 
     ProducersInitiative producersInitiative = new ProducersInitiative();
     producersInitiative.setEnabled(true);
-    producersInitiative.setOperativeEmail("test@pagopa.it");
+    producersInitiative.setProducerEmail("test@pagopa.it");
     when(producersInitiativeRepository.findById("ORG123_" + INITIATIVE_ID)).thenReturn(Optional.of(producersInitiative));
 
     when(fileStorageClient.download(any())).thenReturn(new ByteArrayOutputStream());
@@ -222,7 +222,7 @@ class ProductFileConsumerServiceTest {
 
     ProducersInitiative producersInitiative = new ProducersInitiative();
     producersInitiative.setEnabled(true);
-    producersInitiative.setOperativeEmail("test@pagopa.it");
+    producersInitiative.setProducerEmail("test@pagopa.it");
     when(producersInitiativeRepository.findById("ORG123_" + INITIATIVE_ID)).thenReturn(Optional.of(producersInitiative));
 
     when(fileStorageClient.download(any())).thenReturn(new ByteArrayOutputStream());
@@ -297,7 +297,7 @@ class ProductFileConsumerServiceTest {
 
     ProducersInitiative producersInitiative = new ProducersInitiative();
     producersInitiative.setEnabled(true);
-    producersInitiative.setOperativeEmail(null);
+    producersInitiative.setProducerEmail(null);
     when(producersInitiativeRepository.findById("ORG123_" + INITIATIVE_ID)).thenReturn(Optional.of(producersInitiative));
 
     when(fileStorageClient.download(any())).thenReturn(new ByteArrayOutputStream());

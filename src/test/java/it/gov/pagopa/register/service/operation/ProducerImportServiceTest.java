@@ -1,6 +1,5 @@
 package it.gov.pagopa.register.service.operation;
 
-import it.gov.pagopa.register.constants.AssetRegisterConstants;
 import feign.FeignException;
 import feign.Request;
 import feign.Response;
@@ -9,7 +8,6 @@ import it.gov.pagopa.register.dto.operation.InitiativeDTO;
 import it.gov.pagopa.register.dto.operation.InitiativeStatus;
 import it.gov.pagopa.register.dto.operation.ProducerImportResultDTO;
 import it.gov.pagopa.register.dto.operation.ProducerInitiativeRequestDTO;
-import it.gov.pagopa.register.dto.operation.UpdatedOperativeEmailResult;
 import it.gov.pagopa.register.model.operation.ProducersInitiative;
 import it.gov.pagopa.register.repository.operation.ProducersInitiativeRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -30,11 +28,9 @@ import java.time.LocalDateTime;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 class ProducerImportServiceTest {
@@ -86,7 +82,6 @@ class ProducerImportServiceTest {
     assertEquals(LocalDateTime.of(2026, 12, 30, 0, 0), first.getInitiativeEndDate());
     assertEquals("1234567890", first.getInitiativeServiceId());
     assertEquals("MIMIT", first.getInitiativeOrganizationName());
-    assertEquals("producer1@test.it", first.getOperativeEmail());
     assertEquals("CSV", first.getSource());
     assertTrue(first.getEnabled());
     assertNotNull(first.getCreatedAt());
@@ -107,7 +102,6 @@ class ProducerImportServiceTest {
     ProducersInitiative saved = captor.getValue().getFirst();
 
     assertNull(saved.getProducerEmail());
-    assertNull(saved.getOperativeEmail());
     assertEquals("OK", result.getStatus());
   }
 
@@ -180,7 +174,7 @@ class ProducerImportServiceTest {
     verify(producersInitiativeRepository).saveAll(captor.capture());
 
     ProducersInitiative savedProducer = captor.getValue().getFirst();
-    assertNull(savedProducer.getOperativeEmail());
+    assertNull(savedProducer.getProducerEmail());
   }
 
   @Test
@@ -196,7 +190,6 @@ class ProducerImportServiceTest {
 
     ProducersInitiative savedProducer = captor.getValue().getFirst();
     assertNull(savedProducer.getProducerEmail());
-    assertNull(savedProducer.getOperativeEmail());
   }
 
   @Test
@@ -504,8 +497,7 @@ class ProducerImportServiceTest {
     );
 
     assertNotNull(result);
-    assertEquals("invalid-email-format", result.getProducerEmail());
-    assertNull(result.getOperativeEmail());
+    assertNull(result.getProducerEmail());
   }
 
   @Test
@@ -527,6 +519,5 @@ class ProducerImportServiceTest {
 
     assertNotNull(result);
     assertEquals("valid@email.com", result.getProducerEmail());
-    assertEquals("valid@email.com", result.getOperativeEmail()); // Copre il ramo di successo del matches interno
   }
 }

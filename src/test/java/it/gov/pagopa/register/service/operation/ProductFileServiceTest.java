@@ -179,7 +179,7 @@ class ProductFileServiceTest {
 
     ProducersInitiative producersInitiative = new ProducersInitiative();
     producersInitiative.setEnabled(true);
-    producersInitiative.setOperativeEmail("test@pagopa.it");
+    producersInitiative.setProducerEmail("test@pagopa.it");
     when(producersInitiativeRepository.findById(INITIATIVE_KEY)).thenReturn(Optional.of(producersInitiative));
 
     when(productFileValidator.validateFile(any(), any(), any(), any())).thenReturn(validationResultDTO);
@@ -204,7 +204,7 @@ class ProductFileServiceTest {
 
       ProducersInitiative producersInitiative = new ProducersInitiative();
       producersInitiative.setEnabled(true);
-      producersInitiative.setOperativeEmail("test@pagopa.it");
+      producersInitiative.setProducerEmail("test@pagopa.it");
       when(producersInitiativeRepository.findById(INITIATIVE_KEY)).thenReturn(Optional.of(producersInitiative));
 
       when(productFileValidator.validateFile(any(), any(), any(), any()))
@@ -264,7 +264,7 @@ class ProductFileServiceTest {
 
     ProducersInitiative producersInitiative = new ProducersInitiative();
     producersInitiative.setEnabled(true);
-    producersInitiative.setOperativeEmail("test@pagopa.it");
+    producersInitiative.setProducerEmail("test@pagopa.it");
     when(producersInitiativeRepository.findById(INITIATIVE_KEY)).thenReturn(Optional.of(producersInitiative));
 
     when(productFileValidator.validateFile(any(), any(), any(), any()))
@@ -309,7 +309,7 @@ class ProductFileServiceTest {
 
     ProducersInitiative producersInitiative = new ProducersInitiative();
     producersInitiative.setEnabled(true);
-    producersInitiative.setOperativeEmail("test@pagopa.it");
+    producersInitiative.setProducerEmail("test@pagopa.it");
     when(producersInitiativeRepository.findById(INITIATIVE_KEY)).thenReturn(Optional.of(producersInitiative));
 
     when(productFileRepository.existsByInitiativeIdAndOrganizationIdAndUploadStatusIn(eq(INITIATIVE_ID), eq(ORG_ID), any()))
@@ -342,7 +342,7 @@ class ProductFileServiceTest {
 
     ProducersInitiative producersInitiative = new ProducersInitiative();
     producersInitiative.setEnabled(true);
-    producersInitiative.setOperativeEmail("test@pagopa.it");
+    producersInitiative.setProducerEmail("test@pagopa.it");
     when(producersInitiativeRepository.findById(INITIATIVE_KEY)).thenReturn(Optional.of(producersInitiative));
 
     when(productFileValidator.validateFile(any(), any(), any(), any()))
@@ -360,7 +360,7 @@ class ProductFileServiceTest {
 
     ProducersInitiative producersInitiative = new ProducersInitiative();
     producersInitiative.setEnabled(true);
-    producersInitiative.setOperativeEmail(null);
+    producersInitiative.setProducerEmail(null);
     when(producersInitiativeRepository.findById(INITIATIVE_KEY)).thenReturn(Optional.of(producersInitiative));
 
     ProductFileResult result = productFileService.uploadFile(file, "cat", INITIATIVE_ID, ORG_ID, "user", "orgName");
@@ -387,7 +387,7 @@ class ProductFileServiceTest {
 
     ProducersInitiative producersInitiative = new ProducersInitiative();
     producersInitiative.setEnabled(true);
-    producersInitiative.setOperativeEmail("   ");
+    producersInitiative.setProducerEmail("   ");
     when(producersInitiativeRepository.findById(INITIATIVE_KEY)).thenReturn(Optional.of(producersInitiative));
 
     ProductFileResult result = productFileService.validateFile(file, "cat", INITIATIVE_ID, ORG_ID, "user", "orgName");
