@@ -18,6 +18,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -43,8 +44,12 @@ public class ProducerImportService {
     log.info("[IMPORT_PRODUCERS] - Importing producers from request payload");
 
     try {
-      List<ProducersInitiative> producers = toProducers(requests);
-      ProducerImportResultDTO result = saveInBatches(producers);
+      ProducerConversionResult conversionResult = toProducers(requests);
+      ProducerImportResultDTO result = saveInBatches(
+        conversionResult.producers(),
+        conversionResult.totalRecords(),
+        conversionResult.failedRecords()
+      );
 
       log.info("[IMPORT_PRODUCERS] - Import completed. totalRecords={}, importedRecords={}, failedRecords={}",
         result.getTotalRecords(), result.getImportedRecords(), result.getFailedRecords());
@@ -55,9 +60,8 @@ public class ProducerImportService {
     }
   }
 
-  private ProducerImportResultDTO saveInBatches(List<ProducersInitiative> producers) {
+  private ProducerImportResultDTO saveInBatches(List<ProducersInitiative> producers, int totalRecords, int failedRecords) {
     int importedRecords = 0;
-    int failedRecords = 0;
     RuntimeException lastError = null;
 
     log.info("[IMPORT_PRODUCERS] - Saving {} producer records in batches of {}",
@@ -71,7 +75,7 @@ public class ProducerImportService {
         producersInitiativeRepository.saveAll(batch);
         importedRecords += batch.size();
         log.info("[IMPORT_PRODUCERS] - Saved batch {}/{} records. importedRecords={}, remainingRecords={}",
-          start + 1, end, importedRecords, producers.size() - importedRecords - failedRecords);
+          start + 1, end, importedRecords, totalRecords - importedRecords - failedRecords);
       } catch (RuntimeException e) {
         failedRecords += batch.size();
         lastError = e;
@@ -80,20 +84,22 @@ public class ProducerImportService {
       }
     }
 
-    if (failedRecords > 0) {
+    if (lastError != null) {
       String message = "Producer import partially failed. totalRecords=%d, importedRecords=%d, failedRecords=%d"
-        .formatted(producers.size(), importedRecords, failedRecords);
+        .formatted(totalRecords, importedRecords, failedRecords);
       HttpStatus status = isRequestTimeout(lastError) ? HttpStatus.REQUEST_TIMEOUT : HttpStatus.INTERNAL_SERVER_ERROR;
       log.error("[IMPORT_PRODUCERS] - {}", message, lastError);
       throw new ResponseStatusException(status, message, lastError);
     }
 
     return ProducerImportResultDTO.builder()
-      .status("OK")
-      .totalRecords(producers.size())
+      .status(failedRecords > 0 ? "PARTIAL" : "OK")
+      .totalRecords(totalRecords)
       .importedRecords(importedRecords)
-      .failedRecords(0)
-      .message("Producer import completed successfully")
+      .failedRecords(failedRecords)
+      .message(failedRecords > 0
+        ? "Producer import completed with failed records"
+        : "Producer import completed successfully")
       .build();
   }
 
@@ -118,21 +124,39 @@ public class ProducerImportService {
     return false;
   }
 
-  private List<ProducersInitiative> toProducers(List<ProducerInitiativeRequestDTO> requests) {
+  private ProducerConversionResult toProducers(List<ProducerInitiativeRequestDTO> requests) {
     if (requests == null || requests.isEmpty()) {
       throw new IllegalArgumentException("Producer request payload does not contain records");
     }
 
     LocalDateTime now = LocalDateTime.now();
     Map<String, InitiativeDTO> initiativeDetails = new HashMap<>();
+    List<ProducersInitiative> producers = new ArrayList<>();
+    int failedRecords = 0;
 
-    return requests.stream()
-      .map(this::toProducerInput)
-      .map(producerInput -> toProducer(
-        producerInput,
-        initiativeDetails.computeIfAbsent(producerInput.initiativeId(), portalInitiativeService::getInitiativeDetail),
-        now))
-      .toList();
+    for (ProducerInitiativeRequestDTO request : requests) {
+      try {
+        ProducerInput producerInput = toProducerInput(request);
+        producers.add(toProducer(
+          producerInput,
+          initiativeDetails.computeIfAbsent(producerInput.initiativeId(), portalInitiativeService::getInitiativeDetail),
+          now));
+      } catch (RuntimeException e) {
+        failedRecords++;
+        log.warn("[IMPORT_PRODUCERS] - Skipping producerId [{}], initiativeId [{}]. error={}",
+          producerId(request), initiativeId(request), e.getMessage());
+      }
+    }
+
+    return new ProducerConversionResult(producers, requests.size(), failedRecords);
+  }
+
+  private String producerId(ProducerInitiativeRequestDTO request) {
+    return request == null ? null : StringUtils.strip(request.getProducerId());
+  }
+
+  private String initiativeId(ProducerInitiativeRequestDTO request) {
+    return request == null ? null : StringUtils.strip(request.getInitiativeId());
   }
 
   private ProducerInput toProducerInput(ProducerInitiativeRequestDTO request) {
@@ -217,5 +241,8 @@ public class ProducerImportService {
   }
 
   private record ProducerInput(String producerId, String initiativeId, String producerName, String producerEmail) {
+  }
+
+  private record ProducerConversionResult(List<ProducersInitiative> producers, int totalRecords, int failedRecords) {
   }
 }

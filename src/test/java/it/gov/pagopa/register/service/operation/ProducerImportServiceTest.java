@@ -154,14 +154,37 @@ class ProducerImportServiceTest {
   }
 
   @Test
-  void importProducers_shouldRejectMissingProducerRequiredField() {
-    ResponseStatusException exception = assertThrows(
-      ResponseStatusException.class,
-      () -> producerImportService.importProducers(List.of(producerRequest("456", " ", "Producer 1", null)))
+  void importProducers_shouldReportFailedRecordWhenProducerRequiredFieldIsMissing() {
+    ProducerImportResultDTO result = producerImportService.importProducers(
+      List.of(producerRequest("456", " ", "Producer 1", null))
     );
 
-    assertEquals(HttpStatus.BAD_REQUEST, exception.getStatusCode());
-    assertTrue(exception.getReason().contains("initiativeId"));
+    assertEquals("PARTIAL", result.getStatus());
+    assertEquals(1, result.getTotalRecords());
+    assertEquals(0, result.getImportedRecords());
+    assertEquals(1, result.getFailedRecords());
+    verify(producersInitiativeRepository, never()).saveAll(anyList());
+    verifyNoInteractions(portalInitiativeService);
+  }
+
+  @Test
+  void importProducers_shouldSkipRecordWhenProducerNameIsMissingAndSaveOthers() {
+    when(portalInitiativeService.getInitiativeDetail("111")).thenReturn(initiativeDetail());
+
+    ProducerImportResultDTO result = producerImportService.importProducers(List.of(
+      producerRequest("456", "111", "Producer 1", "producer1@test.it"),
+      producerRequest("999", "111", " ", "producer2@test.it")
+    ));
+
+    ArgumentCaptor<List<ProducersInitiative>> captor = ArgumentCaptor.forClass(List.class);
+    verify(producersInitiativeRepository).saveAll(captor.capture());
+
+    assertEquals("PARTIAL", result.getStatus());
+    assertEquals(2, result.getTotalRecords());
+    assertEquals(1, result.getImportedRecords());
+    assertEquals(1, result.getFailedRecords());
+    assertEquals(1, captor.getValue().size());
+    assertEquals("456_111", captor.getValue().getFirst().getId());
   }
 
   @Test
@@ -175,7 +198,7 @@ class ProducerImportServiceTest {
   }
 
   @Test
-  void importProducers_shouldRejectMissingInitiativeDetailField() {
+  void importProducers_shouldReportFailedRecordWhenInitiativeDetailFieldIsMissing() {
     when(portalInitiativeService.getInitiativeDetail("111")).thenReturn(InitiativeDTO.builder()
       .initiativeName("Iniziativa 1")
       .status(InitiativeStatus.PUBLISHED)
@@ -187,13 +210,36 @@ class ProducerImportServiceTest {
       .organizationName("MIMIT")
       .build());
 
-    ResponseStatusException exception = assertThrows(
-      ResponseStatusException.class,
-      () -> producerImportService.importProducers(List.of(producerRequest("456", "111", "Producer 1", null)))
+    ProducerImportResultDTO result = producerImportService.importProducers(
+      List.of(producerRequest("456", "111", "Producer 1", null))
     );
 
-    assertEquals(HttpStatus.BAD_REQUEST, exception.getStatusCode());
-    assertTrue(exception.getReason().contains("initiativeServiceId"));
+    assertEquals("PARTIAL", result.getStatus());
+    assertEquals(1, result.getTotalRecords());
+    assertEquals(0, result.getImportedRecords());
+    assertEquals(1, result.getFailedRecords());
+    verify(producersInitiativeRepository, never()).saveAll(anyList());
+  }
+
+  @Test
+  void importProducers_shouldSkipRecordWhenInitiativeDetailFailsAndSaveOthers() {
+    when(portalInitiativeService.getInitiativeDetail("111")).thenReturn(initiativeDetail());
+    when(portalInitiativeService.getInitiativeDetail("wrong")).thenThrow(new RuntimeException("initiative not found"));
+
+    ProducerImportResultDTO result = producerImportService.importProducers(List.of(
+      producerRequest("456", "111", "Producer 1", "producer1@test.it"),
+      producerRequest("999", "wrong", "Producer wrong", "wrong@test.it")
+    ));
+
+    ArgumentCaptor<List<ProducersInitiative>> captor = ArgumentCaptor.forClass(List.class);
+    verify(producersInitiativeRepository).saveAll(captor.capture());
+
+    assertEquals("PARTIAL", result.getStatus());
+    assertEquals(2, result.getTotalRecords());
+    assertEquals(1, result.getImportedRecords());
+    assertEquals(1, result.getFailedRecords());
+    assertEquals(1, captor.getValue().size());
+    assertEquals("456_111", captor.getValue().getFirst().getId());
   }
 
   @Test
