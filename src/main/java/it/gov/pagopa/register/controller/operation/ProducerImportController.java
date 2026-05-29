@@ -1,6 +1,7 @@
 package it.gov.pagopa.register.controller.operation;
 
 import it.gov.pagopa.register.dto.operation.ProducerImportResultDTO;
+import it.gov.pagopa.register.dto.operation.ProducerInitiativeImportRequestDTO;
 import it.gov.pagopa.register.service.operation.ProducerImportService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
@@ -20,7 +21,9 @@ public class ProducerImportController {
   private final ProducerImportService producerImportService;
 
   @PostMapping(value = "/producers", consumes = {MediaType.APPLICATION_JSON_VALUE})
-  public ResponseEntity<ProducerImportResultDTO> importProducers(@RequestBody String json) {
-    return ResponseEntity.ok(producerImportService.importJson(json));
+  public ResponseEntity<ProducerImportResultDTO> importProducers(
+    @RequestBody ProducerInitiativeImportRequestDTO request
+  ) {
+    return ResponseEntity.ok(producerImportService.importProducers(request.getProducers()));
   }
 }

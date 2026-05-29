@@ -19,5 +19,22 @@ public class InitiativeDTO {
   private LocalDate endDate;
 
   private String serviceId;
+  private InitiativeGeneralDTO general;
+  private InitiativeAdditionalDTO additionalInfo;
   private Boolean enabled;
+
+  @Data
+  @NoArgsConstructor
+  @AllArgsConstructor
+  public static class InitiativeGeneralDTO {
+    private LocalDate startDate;
+    private LocalDate endDate;
+  }
+
+  @Data
+  @NoArgsConstructor
+  @AllArgsConstructor
+  public static class InitiativeAdditionalDTO {
+    private String serviceId;
+  }
 }
