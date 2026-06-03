@@ -60,4 +60,23 @@ class PortalInitiativeServiceImplTest {
       .getInitiativeSummary(organizationId, null);
     verifyNoMoreInteractions(portalInitiativeRestClient);
   }
+
+  @Test
+  void getInitiativeDetail_Success() {
+    InitiativeDTO initiativeDTO = InitiativeDTO.builder()
+      .initiativeId("111")
+      .initiativeName("Iniziativa A")
+      .status(InitiativeStatus.PUBLISHED)
+      .build();
+    when(portalInitiativeRestClient.getInitiativeBeneficiaryView("111"))
+      .thenReturn(ResponseEntity.ok(initiativeDTO));
+
+    InitiativeDTO result = service.getInitiativeDetail("111");
+
+    assertEquals("111", result.getInitiativeId());
+    assertEquals("Iniziativa A", result.getInitiativeName());
+    assertEquals(InitiativeStatus.PUBLISHED, result.getStatus());
+    verify(portalInitiativeRestClient).getInitiativeBeneficiaryView("111");
+    verifyNoMoreInteractions(portalInitiativeRestClient);
+  }
 }

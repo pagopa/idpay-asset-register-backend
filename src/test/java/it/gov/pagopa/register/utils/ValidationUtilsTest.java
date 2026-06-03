@@ -17,13 +17,16 @@ import static org.mockito.Mockito.mock;
 
 class ValidationUtilsTest {
 
+  public static final String DM_DATE = "01/01/2026";
+  public static final String ORG = "org";
+
   @Test
   void dbCheck_returnsTrueWhenProductDoesNotExist() {
     CSVRecord csvRecord = mock(CSVRecord.class);
     List<CSVRecord> invalidRecords = new ArrayList<>();
     Map<CSVRecord, String> errorMessages = new HashMap<>();
 
-    boolean result = ValidationUtils.dbCheck("org", csvRecord, Optional.empty(), invalidRecords, errorMessages, List.of());
+    boolean result = ValidationUtils.dbCheck(ORG, csvRecord, Optional.empty(), invalidRecords, errorMessages, List.of(), DM_DATE);
 
     assertTrue(result);
     assertTrue(invalidRecords.isEmpty());
@@ -37,7 +40,7 @@ class ValidationUtilsTest {
     List<CSVRecord> invalidRecords = new ArrayList<>();
     Map<CSVRecord, String> errorMessages = new HashMap<>();
 
-    boolean result = ValidationUtils.dbCheck("org", csvRecord, Optional.of(product), invalidRecords, errorMessages, List.of("LOADED"));
+    boolean result = ValidationUtils.dbCheck(ORG, csvRecord, Optional.of(product), invalidRecords, errorMessages, List.of("LOADED"), DM_DATE);
 
     assertFalse(result);
     assertEquals(List.of(csvRecord), invalidRecords);
@@ -47,11 +50,11 @@ class ValidationUtilsTest {
   @Test
   void dbCheck_rejectsProductsWithStatusNotAllowedForReload() {
     CSVRecord csvRecord = mock(CSVRecord.class);
-    Product product = Product.builder().organizationId("org").status("APPROVED").build();
+    Product product = Product.builder().organizationId(ORG).status("APPROVED").build();
     List<CSVRecord> invalidRecords = new ArrayList<>();
     Map<CSVRecord, String> errorMessages = new HashMap<>();
 
-    boolean result = ValidationUtils.dbCheck("org", csvRecord, Optional.of(product), invalidRecords, errorMessages, List.of("LOADED"));
+    boolean result = ValidationUtils.dbCheck(ORG, csvRecord, Optional.of(product), invalidRecords, errorMessages, List.of("LOADED"), DM_DATE);
 
     assertFalse(result);
     assertEquals(STATUS_NOT_VALID, errorMessages.get(csvRecord));

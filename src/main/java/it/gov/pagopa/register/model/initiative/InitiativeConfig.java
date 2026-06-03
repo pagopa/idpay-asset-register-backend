@@ -42,31 +42,8 @@ public class InitiativeConfig {
   private Map<String, Map<String, List<ProductStatus>>> stateTransitions;
 
   private List<String> allowedReloadStatuses;
-  public boolean isTransitionAllowed(
-    String role,
-    ProductStatus currentStatus,
-    ProductStatus targetStatus
-  ) {
 
-    if (stateTransitions == null) {
-      return false;
-    }
+  private String dmDate;
 
-    Map<String, List<ProductStatus>> roleTransitions =
-      stateTransitions.get(role);
-
-    if (roleTransitions == null) {
-      return false;
-    }
-
-    List<ProductStatus> allowedInitialStates =
-      roleTransitions.get(targetStatus);
-
-    if (allowedInitialStates == null) {
-      return false;
-    }
-
-    return allowedInitialStates.contains(currentStatus);
-  }
 
 }

@@ -15,7 +15,7 @@ import static it.gov.pagopa.register.constants.AssetRegisterConstants.STATUS_NOT
 public class ValidationUtils {
 
   private ValidationUtils(){}
-  public static boolean dbCheck(String orgId, CSVRecord csvRecord, Optional<Product> optProduct, List<CSVRecord> invalidRecords, Map<CSVRecord, String> errorMessages, List<String> allowedReloadStatuses) {
+  public static boolean dbCheck(String orgId, CSVRecord csvRecord, Optional<Product> optProduct, List<CSVRecord> invalidRecords, Map<CSVRecord, String> errorMessages, List<String> allowedReloadStatuses,String dmDate) {
     boolean isProductPresent = optProduct.isPresent();
     boolean dbCheck = true;
     if (isProductPresent) {
@@ -24,7 +24,7 @@ public class ValidationUtils {
         dbCheck = false;
       }
       else if (!allowedReloadStatuses.contains(optProduct.get().getStatus())) {
-        addError(csvRecord, STATUS_NOT_VALID, invalidRecords, errorMessages);
+        addError(csvRecord, STATUS_NOT_VALID.replace("{}",dmDate), invalidRecords, errorMessages);
         dbCheck = false;
       }
     }
