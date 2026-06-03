@@ -291,27 +291,36 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
     }
   }
 
-  @SuppressWarnings("java:S00107")
-  private void processResult(List<Product> validProduct, List<CSVRecord> errors, Map<CSVRecord, String> messages, String initiativeId, String productFileId, String userEmail, List<String> headers, String category) {
+  private void processResult(List<Product> validProduct, List<CSVRecord> errors, Map<CSVRecord, String> messages,
+                             String initiativeId, String productFileId, String userEmail, List<String> headers, String category) {
+
+    int savedCount = 0;
+
     if (!validProduct.isEmpty()) {
       List<Product> savedProduct = productRepository.saveAll(validProduct);
-      log.info("[PRODUCT_UPLOAD] - Saved {} valid products for file {}", savedProduct.size(), productFileId);
-      if (!errors.isEmpty()) {
-        processErrorRecords(errors, messages, initiativeId, productFileId, headers);
-        setProductFileStatus(productFileId, String.valueOf(PARTIAL), validProduct.size());
-        log.info("[PRODUCT_UPLOAD] - File {} processed with {} errors", productFileId, errors.size());
-        notificationService.sendEmailPartial(CATEGORIES_FOR_FILENAME.get(category) + "_" + productFileId + CSV, userEmail);
-      } else {
-        setProductFileStatus(productFileId, String.valueOf(LOADED), savedProduct.size());
-        log.info("[PRODUCT_UPLOAD] - File {} processed successfully with no errors", productFileId);
-        notificationService.sendEmailOk( CATEGORIES_FOR_FILENAME.get(category)  + "_" + productFileId + CSV, userEmail);
-      }
-    } else if (!errors.isEmpty()) {
-      processErrorRecords(errors, messages,initiativeId, productFileId, headers);
-      setProductFileStatus(productFileId, String.valueOf(PARTIAL), 0);
-      log.info("[PRODUCT_UPLOAD] - File {} processed with {} errors", productFileId, errors.size());
-      notificationService.sendEmailPartial( CATEGORIES_FOR_FILENAME.get(category)  + "_" + productFileId + CSV, userEmail);
+      savedCount = savedProduct.size();
+      log.info("[PRODUCT_UPLOAD] - Saved {} valid products for file {}", savedCount, productFileId);
     }
+
+    if (!errors.isEmpty()) {
+      handleErrors(errors, messages, initiativeId, productFileId, headers, userEmail, category, savedCount);
+    } else if (savedCount > 0) {
+      setProductFileStatus(productFileId, String.valueOf(LOADED), savedCount);
+      log.info("[PRODUCT_UPLOAD] - File {} processed successfully with no errors", productFileId);
+
+      String fileName = CATEGORIES_FOR_FILENAME.get(category) + "_" + productFileId + CSV;
+      notificationService.sendEmailOk(fileName, userEmail);
+    }
+  }
+
+  private void handleErrors(List<CSVRecord> errors, Map<CSVRecord, String> messages, String initiativeId,
+                            String productFileId, List<String> headers, String userEmail, String category, int savedCount) {
+    processErrorRecords(errors, messages, initiativeId, productFileId, headers);
+    setProductFileStatus(productFileId, String.valueOf(PARTIAL), savedCount);
+    log.info("[PRODUCT_UPLOAD] - File {} processed with {} errors", productFileId, errors.size());
+
+    String fileName = CATEGORIES_FOR_FILENAME.get(category) + "_" + productFileId + CSV;
+    notificationService.sendEmailPartial(fileName, userEmail);
   }
 
   @SuppressWarnings("java:S5443") //The system used will be Linux so never create a file without specified permissions
