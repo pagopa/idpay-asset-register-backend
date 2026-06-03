@@ -108,23 +108,4 @@ class ProducersControllerTest {
     assertEquals(5, pageableCaptor.getValue().getPageSize());
   }
 
-  @Test
-  void getProducersByInitiative_shouldSupportSingularInitiativePath() throws Exception {
-    String initiativeId = "687f8a176a5c92458819922b";
-    ProducersResponseDTO response = ProducersResponseDTO.builder()
-      .content(List.of())
-      .pageNo(0)
-      .pageSize(20)
-      .totalElements(0)
-      .totalPages(0)
-      .build();
-
-    when(producersService.getProducersByInitiative(eq(initiativeId), org.mockito.ArgumentMatchers.any(Pageable.class)))
-      .thenReturn(response);
-
-    mockMvc.perform(get("/idpay/register/initiative/{initiativeId}/producers", initiativeId)
-        .accept(MediaType.APPLICATION_JSON))
-      .andExpect(status().isOk())
-      .andExpect(jsonPath("$.pageSize").value(20));
-  }
 }

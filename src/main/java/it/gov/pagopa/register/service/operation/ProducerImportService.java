@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.regex.Pattern;
 
 import static it.gov.pagopa.register.constants.ValidationPatterns.EMAIL_PATTERN;
@@ -210,7 +211,8 @@ public class ProducerImportService {
   }
 
   private LocalDateTime resolveCreatedAt(String producerInitiativeId, LocalDateTime now) {
-    return producersInitiativeRepository.findById(producerInitiativeId)
+    return Optional.ofNullable(producersInitiativeRepository.findById(producerInitiativeId))
+      .flatMap(existingProducer -> existingProducer)
       .map(ProducersInitiative::getCreatedAt)
       .orElse(now);
   }
