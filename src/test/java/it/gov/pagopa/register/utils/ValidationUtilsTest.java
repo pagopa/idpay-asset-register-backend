@@ -57,7 +57,7 @@ class ValidationUtilsTest {
     boolean result = ValidationUtils.dbCheck(ORG, csvRecord, Optional.of(product), invalidRecords, errorMessages, List.of("LOADED"), DM_DATE);
 
     assertFalse(result);
-    assertEquals(STATUS_NOT_VALID, errorMessages.get(csvRecord));
+    assertEquals(STATUS_NOT_VALID.replace("{}","01/01/2026"), errorMessages.get(csvRecord));
   }
 
   @Test
