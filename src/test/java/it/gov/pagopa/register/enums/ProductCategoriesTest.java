@@ -12,8 +12,8 @@ class ProductCategoriesTest {
   void values_includeApplianceAndDecoderCategories() {
     assertTrue(Arrays.asList(ProductCategories.values()).contains(ProductCategories.WASHINGMACHINES));
     assertTrue(Arrays.asList(ProductCategories.values()).contains(ProductCategories.COOKINGHOBS));
-    assertTrue(Arrays.asList(ProductCategories.values()).contains(ProductCategories.SATELLITE));
-    assertTrue(Arrays.asList(ProductCategories.values()).contains(ProductCategories.TERRESTRIAL_SATELLITE_AND_VIA_CABLE));
+    assertTrue(Arrays.asList(ProductCategories.values()).contains(ProductCategories.DS));
+    assertTrue(Arrays.asList(ProductCategories.values()).contains(ProductCategories.DTSC));
   }
 
   @Test

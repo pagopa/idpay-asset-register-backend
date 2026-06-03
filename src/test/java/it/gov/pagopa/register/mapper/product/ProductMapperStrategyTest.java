@@ -113,7 +113,7 @@ class ProductMapperStrategyTest {
 
     Product product = decoderProductMapper.mapToProduct(
       csvRecord,
-      SATELLITE,
+      SATELLITE_CODE,
       ORG_ID,
       INITIATIVE_ID,
       PRODUCT_FILE_ID,
@@ -124,7 +124,7 @@ class ProductMapperStrategyTest {
     assertEquals("8009876543210_" + INITIATIVE_ID, product.getId());
     assertEquals("8009876543210", product.getGtinCode());
     assertEquals("DEC123", product.getProductCode());
-    assertEquals(SATELLITE, product.getCategory());
+    assertEquals(SATELLITE_CODE, product.getCategory());
     assertNull(product.getCountryOfProduction());
     assertEquals("DecoderBrand", product.getBrand());
     assertEquals("DecoderModel", product.getModel());
