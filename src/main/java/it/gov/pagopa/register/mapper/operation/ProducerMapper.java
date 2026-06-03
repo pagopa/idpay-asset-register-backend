@@ -9,6 +9,7 @@ public class ProducerMapper {
 
   public static ProducerDTO toDTO(ProducersInitiative entity) {
     return ProducerDTO.builder()
+      .producerId(entity.getProducerId())
       .producerName(entity.getProducerName())
       .createdAt(entity.getCreatedAt())
       .updatedAt(entity.getUpdatedAt())
