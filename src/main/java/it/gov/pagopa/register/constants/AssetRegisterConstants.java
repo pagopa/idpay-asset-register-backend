@@ -199,10 +199,10 @@ public class AssetRegisterConstants {
   public static final String ERROR_BLOCKED = "Il prodotto risulta bloccato nell'elenco della Banca dati europea dei prodotti per l'etichettatura energetica - EPREL";
   public static final String ERROR_STATUS = "Il prodotto non è presente o caricato nell'elenco della Banca dati europea dei prodotti per l'etichettatura energetica - EPREL";
   public static final String ERROR_PRODUCT_GROU = "La categoria presente sulla Banca dati europea dei prodotti per l'etichettatura energetica - EPREL non è coerente con quella del file CSV";
-  public static final String ERROR_ENERGY_CLASS = "La classe energetica non è conforme con quella prevista nel DM del 03/09/2025";
+  public static final String ERROR_ENERGY_CLASS = "La classe energetica non è conforme con quella prevista nel DM del {}";
   public static final String DUPLICATE_GTIN_EAN = "Il codice GTIN indicato nel file CSV è un duplicato";
   public static final String DIFFERENT_ORGANIZATIONID = "Il prodotto indicato è associato ad un altro produttore";
-  public static final String STATUS_NOT_VALID = "Il prodotto è sottoposto alle verifiche previste dal DM del 03/09/2025 e pertanto non è possibile variare le informazioni ad esso collegate";
+  public static final String STATUS_NOT_VALID = "Il prodotto è sottoposto alle verifiche previste dal DM del {} e pertanto non è possibile variare le informazioni ad esso collegate";
   public static final Map<String, String> ERROR_MAP = Map.ofEntries(
     // Eprel Error
     Map.entry("ERROR_ORG", "Il produttore non risulta nell'elenco della Banca dati europea dei prodotti per l'etichettatura energetica; è necessario completare le informazioni sul portale EPREL"),
