@@ -13,6 +13,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class ProducerDTO {
 
+  private String producerId;
   private String producerName;
   private LocalDateTime createdAt;
   private LocalDateTime updatedAt;
