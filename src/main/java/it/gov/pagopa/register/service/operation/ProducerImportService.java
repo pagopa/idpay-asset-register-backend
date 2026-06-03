@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.regex.Pattern;
 
 import static it.gov.pagopa.register.constants.ValidationPatterns.EMAIL_PATTERN;
@@ -190,6 +191,7 @@ public class ProducerImportService {
       throw new IllegalArgumentException("Initiative detail not found for producerId [%s] and initiativeId [%s]"
         .formatted(producerInput.producerId(), producerInput.initiativeId()));
     }
+    String producerInitiativeId = producerInput.producerId() + "_" + producerInput.initiativeId();
 
     String validatedEmail = null;
     if (producerInput.producerEmail != null && !producerInput.producerEmail.isBlank()) {
@@ -202,7 +204,7 @@ public class ProducerImportService {
     }
 
     return ProducersInitiative.builder()
-      .id(producerInput.producerId() + "_" + producerInput.initiativeId())
+      .id(producerInitiativeId)
       .producerId(producerInput.producerId())
       .producerName(producerInput.producerName())
       .producerEmail(validatedEmail)
@@ -215,9 +217,16 @@ public class ProducerImportService {
       .initiativeOrganizationName(requiredValue(initiativeDetail.getOrganizationName(), "initiativeOrganizationName"))
       .source(CSV_SOURCE)
       .enabled(Boolean.TRUE)
-      .createdAt(now)
+      .createdAt(resolveCreatedAt(producerInitiativeId, now))
       .updatedAt(now)
       .build();
+  }
+
+  private LocalDateTime resolveCreatedAt(String producerInitiativeId, LocalDateTime now) {
+    return Optional.ofNullable(producersInitiativeRepository.findById(producerInitiativeId))
+      .flatMap(existingProducer -> existingProducer)
+      .map(ProducersInitiative::getCreatedAt)
+      .orElse(now);
   }
 
   public UpdatedOperativeEmailResult updateOperativeEmail(String organizationId, String initiativeId, String newEmail) {

@@ -28,6 +28,7 @@ import java.time.LocalDateTime;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyList;
@@ -159,6 +160,32 @@ class ProducerImportServiceTest {
     assertEquals(LocalDateTime.of(2025, 12, 31, 0, 0), savedProducer.getInitiativeEndDate());
     assertEquals("nested-service", savedProducer.getInitiativeServiceId());
     assertEquals("Nested org", savedProducer.getInitiativeOrganizationName());
+  }
+
+  @Test
+  void importProducers_shouldKeepExistingCreatedAtWhenProducerInitiativeAlreadyExists() {
+    LocalDateTime existingCreatedAt = LocalDateTime.of(2024, 1, 1, 9, 0);
+    when(portalInitiativeService.getInitiativeDetail("111")).thenReturn(initiativeDetail());
+    when(producersInitiativeRepository.findById("456_111")).thenReturn(Optional.of(
+      ProducersInitiative.builder()
+        .id("456_111")
+        .createdAt(existingCreatedAt)
+        .updatedAt(LocalDateTime.of(2024, 2, 1, 9, 0))
+        .build()
+    ));
+
+    producerImportService.importProducers(List.of(
+      producerRequest("456", "111", "Producer 1 updated", "producer@test.it")
+    ));
+
+    ArgumentCaptor<List<ProducersInitiative>> captor = ArgumentCaptor.forClass(List.class);
+    verify(producersInitiativeRepository).saveAll(captor.capture());
+
+    ProducersInitiative savedProducer = captor.getValue().getFirst();
+    assertEquals(existingCreatedAt, savedProducer.getCreatedAt());
+    assertNotNull(savedProducer.getUpdatedAt());
+    assertNotEquals(existingCreatedAt, savedProducer.getUpdatedAt());
+    assertEquals("Producer 1 updated", savedProducer.getProducerName());
   }
 
   @ParameterizedTest
