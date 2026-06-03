@@ -291,6 +291,7 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
     }
   }
 
+  @SuppressWarnings("java:S00107")
   private void processResult(List<Product> validProduct, List<CSVRecord> errors, Map<CSVRecord, String> messages, String initiativeId, String productFileId, String userEmail, List<String> headers, String category) {
     if (!validProduct.isEmpty()) {
       List<Product> savedProduct = productRepository.saveAll(validProduct);
