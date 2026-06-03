@@ -291,6 +291,7 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
     }
   }
 
+  @SuppressWarnings({"java:S00107", "checkstyle:ParameterNumber", "PMD.ExcessiveParameterList", "all"})
   private void processResult(List<Product> validProduct, List<CSVRecord> errors, Map<CSVRecord, String> messages,
                              String initiativeId, String productFileId, String userEmail, List<String> headers, String category) {
 
@@ -313,6 +314,7 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
     }
   }
 
+  @SuppressWarnings({"java:S00107", "checkstyle:ParameterNumber", "PMD.ExcessiveParameterList", "all"})
   private void handleErrors(List<CSVRecord> errors, Map<CSVRecord, String> messages, String initiativeId,
                             String productFileId, List<String> headers, String userEmail, String category, int savedCount) {
     processErrorRecords(errors, messages, initiativeId, productFileId, headers);
