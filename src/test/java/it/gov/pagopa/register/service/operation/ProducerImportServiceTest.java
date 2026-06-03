@@ -19,8 +19,10 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.dao.QueryTimeoutException;
 import org.springframework.http.HttpStatus;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.lang.reflect.Constructor;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.nio.charset.StandardCharsets;
@@ -85,6 +87,23 @@ class ProducerImportServiceTest {
     assertTrue(first.getEnabled());
     assertNotNull(first.getCreatedAt());
     assertEquals(first.getCreatedAt(), first.getUpdatedAt());
+  }
+
+  @Test
+  void importProducers_withInvalidEmailFormat_shouldSaveWithoutOperativeEmail() {
+    when(portalInitiativeService.getInitiativeDetail("111")).thenReturn(initiativeDetail());
+
+    ProducerImportResultDTO result = producerImportService.importProducers(List.of(
+      producerRequest("456", "111", "Producer 1", "invalid-email-format")
+    ));
+
+    ArgumentCaptor<List<ProducersInitiative>> captor = ArgumentCaptor.forClass(List.class);
+    verify(producersInitiativeRepository).saveAll(captor.capture());
+
+    ProducersInitiative saved = captor.getValue().getFirst();
+
+    assertNull(saved.getProducerEmail());
+    assertEquals("OK", result.getStatus());
   }
 
   @Test
@@ -255,7 +274,7 @@ class ProducerImportServiceTest {
         LocalDate.of(2025, 12, 31),
         LocalDate.of(2026, 12, 30)
       ))
-      .additionalInfo(new InitiativeDTO.InitiativeAdditionalDTO(null))
+      .additionalInfo(new InitiativeDTO.InitiativeAdditionalDTO(null)) // serviceId mancante
       .organizationName("MIMIT")
       .build());
 
@@ -485,5 +504,99 @@ class ProducerImportServiceTest {
       .additionalInfo(new InitiativeDTO.InitiativeAdditionalDTO("nested-service"))
       .organizationName("Nested org")
       .build();
+  }
+
+  @Test
+  void toProducer_withInvalidEmailFormat_shouldTriggerLogWarnAndSaveWithoutOperativeEmail() throws Exception {
+    Class<?> producerInputClass = Class.forName("it.gov.pagopa.register.service.operation.ProducerImportService$ProducerInput");
+    Constructor<?> constructor = producerInputClass.getDeclaredConstructor(String.class, String.class, String.class, String.class);
+    constructor.setAccessible(true);
+    Object mockProducerInput = constructor.newInstance("456", "111", "Producer 1", "invalid-email-format");
+
+    InitiativeDTO initiativeDetail = initiativeDetail();
+
+    ProducersInitiative result = (ProducersInitiative) ReflectionTestUtils.invokeMethod(
+      producerImportService,
+      "toProducer",
+      mockProducerInput,
+      initiativeDetail,
+      LocalDateTime.now()
+    );
+
+    assertNotNull(result);
+    assertNull(result.getProducerEmail());
+  }
+
+  @Test
+  void toProducer_withValidEmailFormat_shouldCoverMatchesBranch() throws Exception {
+    Class<?> producerInputClass = Class.forName("it.gov.pagopa.register.service.operation.ProducerImportService$ProducerInput");
+    Constructor<?> constructor = producerInputClass.getDeclaredConstructor(String.class, String.class, String.class, String.class);
+    constructor.setAccessible(true);
+    Object mockProducerInput = constructor.newInstance("456", "111", "Producer 1", "valid@email.com");
+
+    InitiativeDTO initiativeDetail = initiativeDetail();
+
+    ProducersInitiative result = (ProducersInitiative) ReflectionTestUtils.invokeMethod(
+      producerImportService,
+      "toProducer",
+      mockProducerInput,
+      initiativeDetail,
+      LocalDateTime.now()
+    );
+
+    assertNotNull(result);
+    assertEquals("valid@email.com", result.getProducerEmail());
+  }
+
+  @Test
+  void updateOperativeEmail_Success() {
+    String orgId = "org123";
+    String initiativeId = "init123";
+    String key = orgId + "_" + initiativeId;
+    String newEmail = "new.email@pagopa.it";
+
+    ProducersInitiative initiative = new ProducersInitiative();
+    initiative.setId(key);
+
+    when(producersInitiativeRepository.findById(key)).thenReturn(java.util.Optional.of(initiative));
+
+    it.gov.pagopa.register.dto.operation.UpdatedOperativeEmailResult result =
+      producerImportService.updateOperativeEmail(orgId, initiativeId, newEmail);
+
+    assertEquals("OK", result.getStatus());
+    assertNull(result.getErrorKey());
+    assertEquals(newEmail, initiative.getProducerEmail());
+    assertNotNull(initiative.getUpdatedAt());
+    verify(producersInitiativeRepository).save(initiative);
+  }
+
+  @Test
+  void updateOperativeEmail_withInvalidEmailFormat_shouldReturnKo() {
+    String orgId = "org123";
+    String initiativeId = "init123";
+
+    it.gov.pagopa.register.dto.operation.UpdatedOperativeEmailResult result =
+      producerImportService.updateOperativeEmail(orgId, initiativeId, "invalid-email");
+
+    assertEquals("KO", result.getStatus());
+    assertEquals(it.gov.pagopa.register.constants.AssetRegisterConstants.UploadEmailKeyConstant.EMAIL_WRONG_ERROR_KEY, result.getErrorKey());
+    verify(producersInitiativeRepository, never()).findById(anyString());
+    verify(producersInitiativeRepository, never()).save(any());
+  }
+
+  @Test
+  void updateOperativeEmail_initiativeNotFound_shouldReturnKo() {
+    String orgId = "org123";
+    String initiativeId = "init123";
+    String key = orgId + "_" + initiativeId;
+
+    when(producersInitiativeRepository.findById(key)).thenReturn(java.util.Optional.empty());
+
+    it.gov.pagopa.register.dto.operation.UpdatedOperativeEmailResult result =
+      producerImportService.updateOperativeEmail(orgId, initiativeId, "valid@email.com");
+
+    assertEquals("KO", result.getStatus());
+    assertEquals(it.gov.pagopa.register.constants.AssetRegisterConstants.UploadEmailKeyConstant.EMAIL_INITATIVE_ERROR_KEY, result.getErrorKey());
+    verify(producersInitiativeRepository, never()).save(any());
   }
 }

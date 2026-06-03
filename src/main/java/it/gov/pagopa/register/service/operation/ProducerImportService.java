@@ -2,10 +2,7 @@ package it.gov.pagopa.register.service.operation;
 
 import feign.FeignException;
 import it.gov.pagopa.register.connector.initiative.PortalInitiativeService;
-import it.gov.pagopa.register.dto.operation.InitiativeDTO;
-import it.gov.pagopa.register.dto.operation.InitiativeStatus;
-import it.gov.pagopa.register.dto.operation.ProducerImportResultDTO;
-import it.gov.pagopa.register.dto.operation.ProducerInitiativeRequestDTO;
+import it.gov.pagopa.register.dto.operation.*;
 import it.gov.pagopa.register.model.operation.ProducersInitiative;
 import it.gov.pagopa.register.repository.operation.ProducersInitiativeRepository;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +24,11 @@ import java.util.Optional;
 import java.util.regex.Pattern;
 
 import static it.gov.pagopa.register.constants.ValidationPatterns.EMAIL_PATTERN;
+import java.util.*;
+
+import static it.gov.pagopa.register.constants.AssetRegisterConstants.UploadEmailKeyConstant.EMAIL_INITATIVE_ERROR_KEY;
+import static it.gov.pagopa.register.constants.AssetRegisterConstants.UploadEmailKeyConstant.EMAIL_WRONG_ERROR_KEY;
+import static java.util.regex.Pattern.matches;
 
 @Slf4j
 @Service
@@ -191,11 +193,21 @@ public class ProducerImportService {
     }
     String producerInitiativeId = producerInput.producerId() + "_" + producerInput.initiativeId();
 
+    String validatedEmail = null;
+    if (producerInput.producerEmail != null && !producerInput.producerEmail.isBlank()) {
+      if (matches(EMAIL_PATTERN, producerInput.producerEmail)) {
+        validatedEmail = producerInput.producerEmail;
+      } else {
+        log.warn("[IMPORT_PRODUCERS] - Invalid email format [{}] for producer {} and initiative {}. Saving producer WITHOUT email.",
+          producerInput.producerEmail, producerInput.producerId, producerInput.initiativeId);
+      }
+    }
+
     return ProducersInitiative.builder()
       .id(producerInitiativeId)
       .producerId(producerInput.producerId())
       .producerName(producerInput.producerName())
-      .producerEmail(producerInput.producerEmail())
+      .producerEmail(validatedEmail)
       .initiativeId(producerInput.initiativeId())
       .initiativeName(requiredValue(initiativeDetail.getInitiativeName(), "initiativeName"))
       .initiativeStatus(requiredStatus(initiativeDetail.getStatus(), "initiativeStatus"))
@@ -215,6 +227,33 @@ public class ProducerImportService {
       .flatMap(existingProducer -> existingProducer)
       .map(ProducersInitiative::getCreatedAt)
       .orElse(now);
+  }
+
+  public UpdatedOperativeEmailResult updateOperativeEmail(String organizationId, String initiativeId, String newEmail) {
+    String initiativeKey = organizationId + "_" + initiativeId;
+
+    log.info("[UPDATE_OPERATIVE_EMAIL] - Request to update operative email for key: {}", initiativeKey);
+
+    if (!matches(EMAIL_PATTERN, newEmail)) {
+      log.warn("[UPDATE_OPERATIVE_EMAIL] - Provided email [{}] has an invalid format for key: {}", newEmail, initiativeKey);
+      return UpdatedOperativeEmailResult.ko(EMAIL_WRONG_ERROR_KEY);
+    }
+
+    Optional<ProducersInitiative> optional = producersInitiativeRepository.findById(initiativeKey);
+      if(optional.isEmpty()){
+        log.error("[UPDATE_OPERATIVE_EMAIL] - Producer initiative not found for key: {}", initiativeKey);
+        return UpdatedOperativeEmailResult.ko(EMAIL_INITATIVE_ERROR_KEY);
+      }
+
+    ProducersInitiative initiative = optional.get();
+
+    initiative.setProducerEmail(newEmail);
+    initiative.setUpdatedAt(LocalDateTime.now());
+
+    producersInitiativeRepository.save(initiative);
+
+    log.info("[UPDATE_OPERATIVE_EMAIL] - Operative email updated successfully to [{}] for key: {}", newEmail, initiativeKey);
+    return UpdatedOperativeEmailResult.ok();
   }
 
   private String requiredValue(String value, String fieldName) {
