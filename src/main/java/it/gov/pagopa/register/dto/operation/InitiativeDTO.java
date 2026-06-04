@@ -12,7 +12,7 @@ public class InitiativeDTO {
   private String initiativeId;
   private String initiativeName;
   private String organizationName;
-
+  private String organizationEmail;
   private InitiativeStatus status;
 
   private LocalDate startDate;

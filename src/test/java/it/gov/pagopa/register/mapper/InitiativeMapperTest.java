@@ -20,6 +20,7 @@ class InitiativeMapperTest {
       .producerId("123")
       .initiativeId("111")
       .initiativeName("Iniziativa A")
+      .producerEmail("email@test.it")
       .initiativeStatus(InitiativeStatus.APPROVED)
       .initiativeServiceId("service1")
       .initiativeOrganizationName("MIMIT")
@@ -36,6 +37,7 @@ class InitiativeMapperTest {
     assertEquals("APPROVED", dto.getStatus().toString());
     assertEquals("service1", dto.getServiceId());
     assertEquals("MIMIT", dto.getOrganizationName());
+    assertEquals("email@test.it",dto.getOrganizationEmail());
     assertTrue(dto.getEnabled());
   }
 
