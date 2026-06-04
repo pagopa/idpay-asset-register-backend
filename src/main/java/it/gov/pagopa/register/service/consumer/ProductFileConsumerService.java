@@ -309,8 +309,9 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
       log.info("[PRODUCT_UPLOAD] - File {} processed successfully with no errors", productFileId);
 
       String fileName = CATEGORIES_FOR_FILENAME.get(category) + "_" + productFileId + CSV;
-      if(!userEmail.isBlank())
+      if(!userEmail.isBlank()) {
         notificationService.sendEmailOk(fileName, userEmail);
+      }
     }
   }
 
@@ -322,8 +323,9 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
     log.info("[PRODUCT_UPLOAD] - File {} processed with {} errors", productFileId, errors.size());
 
     String fileName = CATEGORIES_FOR_FILENAME.get(category) + "_" + productFileId + CSV;
-    if(!userEmail.isBlank())
+    if(!userEmail.isBlank()) {
       notificationService.sendEmailPartial(fileName, userEmail);
+    }
   }
 
   @SuppressWarnings("java:S5443") //The system used will be Linux so never create a file without specified permissions

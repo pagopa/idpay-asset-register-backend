@@ -360,7 +360,7 @@ public class ProductService {
 
     for (EmailProductDTO dto : emailToProducts) {
 
-      String email = dto.getId();
+      String email = dto.getEmail();
 
       if (email.equals("null")) {
         log.warn(
