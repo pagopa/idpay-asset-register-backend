@@ -285,7 +285,7 @@ class ProductSpecificRepositoryTest {
   @Test
   void testGetProductNamesGroupedByEmail_shouldReturnGroupedResults() {
     EmailProductDTO dto = EmailProductDTO.builder()
-      .id("user@example.com")
+      .email("user@example.com")
       .productNames(List.of("Product A", "Product B"))
       .build();
 
@@ -298,7 +298,7 @@ class ProductSpecificRepositoryTest {
       repository.getProductNamesGroupedByEmail(List.of("gtin1", "gtin2"),"initiativeId");
 
     assertEquals(1, results.size());
-    assertEquals("user@example.com", results.get(0).getId());
+    assertEquals("user@example.com", results.get(0).getEmail());
     assertTrue(results.get(0).getProductNames().containsAll(List.of("Product A", "Product B")));
   }
 
