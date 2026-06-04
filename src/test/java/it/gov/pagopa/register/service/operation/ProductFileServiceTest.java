@@ -355,21 +355,6 @@ class ProductFileServiceTest {
   }
 
   @Test
-  void whenMissingOperativeEmail_thenReturnKoEmailMissing() {
-    MultipartFile file = new MockMultipartFile("file", "test.csv", "text/csv", "dummy".getBytes());
-
-    ProducersInitiative producersInitiative = new ProducersInitiative();
-    producersInitiative.setEnabled(true);
-    producersInitiative.setProducerEmail(null);
-    when(producersInitiativeRepository.findById(INITIATIVE_KEY)).thenReturn(Optional.of(producersInitiative));
-
-    ProductFileResult result = productFileService.uploadFile(file, "cat", INITIATIVE_ID, ORG_ID, "user", "orgName");
-
-    assertEquals("KO", result.getStatus());
-    assertEquals(AssetRegisterConstants.UploadEmailKeyConstant.EMAIL_MISSING_ERROR_KEY, result.getErrorKey());
-  }
-
-  @Test
   void whenInitiativeNotFound_thenReturnKoPermission() {
     MultipartFile file = new MockMultipartFile("file", "test.csv", "text/csv", "dummy".getBytes());
 
@@ -381,18 +366,4 @@ class ProductFileServiceTest {
     assertEquals(AssetRegisterConstants.UploadKeyConstant.NOT_ENABLED_ERRORE_KEY, result.getErrorKey());
   }
 
-  @Test
-  void whenOperativeEmailIsBlank_thenReturnKoEmailMissing() {
-    MultipartFile file = new MockMultipartFile("file", "test.csv", "text/csv", "dummy".getBytes());
-
-    ProducersInitiative producersInitiative = new ProducersInitiative();
-    producersInitiative.setEnabled(true);
-    producersInitiative.setProducerEmail("   ");
-    when(producersInitiativeRepository.findById(INITIATIVE_KEY)).thenReturn(Optional.of(producersInitiative));
-
-    ProductFileResult result = productFileService.validateFile(file, "cat", INITIATIVE_ID, ORG_ID, "user", "orgName");
-
-    assertEquals("KO", result.getStatus());
-    assertEquals(AssetRegisterConstants.UploadEmailKeyConstant.EMAIL_MISSING_ERROR_KEY, result.getErrorKey());
-  }
 }

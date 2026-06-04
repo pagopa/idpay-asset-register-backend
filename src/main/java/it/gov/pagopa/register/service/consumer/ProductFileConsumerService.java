@@ -241,10 +241,9 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
         setProductFileStatus(fileId, String.valueOf(PARTIAL), 0);
       }
 
-      String userEmail = null;
-      if (initiativeOpt.isPresent() && (initiativeOpt.get().getProducerEmail() == null || initiativeOpt.get().getProducerEmail().isBlank())) {
-        log.warn("[PROCESS_FILE] - Upload blocked. Missing operative email for key: {}", initiativeKey);
-        setProductFileStatus(fileId, String.valueOf(PARTIAL), 0);
+      String userEmail = "";
+      if (initiativeOpt.isEmpty() || (initiativeOpt.get().getProducerEmail() == null || initiativeOpt.get().getProducerEmail().isBlank())) {
+        log.warn("[PROCESS_FILE] - Missing operative email for producers {} and initiative {}", orgId, initiativeId);
       } else {
         userEmail = initiativeOpt.get().getProducerEmail();
       }
@@ -310,7 +309,9 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
       log.info("[PRODUCT_UPLOAD] - File {} processed successfully with no errors", productFileId);
 
       String fileName = CATEGORIES_FOR_FILENAME.get(category) + "_" + productFileId + CSV;
-      notificationService.sendEmailOk(fileName, userEmail);
+      if(!userEmail.isBlank()) {
+        notificationService.sendEmailOk(fileName, userEmail);
+      }
     }
   }
 
@@ -322,7 +323,9 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
     log.info("[PRODUCT_UPLOAD] - File {} processed with {} errors", productFileId, errors.size());
 
     String fileName = CATEGORIES_FOR_FILENAME.get(category) + "_" + productFileId + CSV;
-    notificationService.sendEmailPartial(fileName, userEmail);
+    if(!userEmail.isBlank()) {
+      notificationService.sendEmailPartial(fileName, userEmail);
+    }
   }
 
   @SuppressWarnings("java:S5443") //The system used will be Linux so never create a file without specified permissions

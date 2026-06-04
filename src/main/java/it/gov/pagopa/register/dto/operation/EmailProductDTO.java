@@ -10,7 +10,7 @@ import java.util.List;
 @Builder
 public class EmailProductDTO {
   @Id
-  private String id;
+  private String email;
   private List<String> productNames;
 
 }
