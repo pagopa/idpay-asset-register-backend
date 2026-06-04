@@ -22,6 +22,7 @@ import static it.gov.pagopa.register.constants.AssetRegisterConstants.*;
 public class ProductSpecificRepositoryImpl implements ProductSpecificRepository {
 
 
+  public static final String PRODUCT_NAME = "productName";
   private final MongoTemplate mongoTemplate;
 
   @Override
@@ -120,24 +121,54 @@ public class ProductSpecificRepositoryImpl implements ProductSpecificRepository 
   }
 
   @Override
-  public List<EmailProductDTO> getProductNamesGroupedByEmail(List<String> gtinCodes) {
+  public List<EmailProductDTO> getProductNamesGroupedByEmail(
+    List<String> gtinCodes,
+    String initiativeId
+  ) {
+
+    List<String> productIds = gtinCodes.stream()
+      .map(gtin -> gtin + "_" + initiativeId)
+      .toList();
+
     Aggregation aggregation = Aggregation.newAggregation(
+
+      Aggregation.match(Criteria.where("_id").in(productIds)),
+
       Aggregation.addFields()
-        .addField("productFileIdObj")
-        .withValue(ConvertOperators.ToObjectId.toObjectId("$productFileId"))
+        .addField("producerInitiativeId")
+        .withValue(
+          StringOperators.Concat.valueOf("producerId")
+            .concat("_")
+            .concatValueOf("initiativeId")
+        )
         .build(),
-      Aggregation.match(Criteria.where("_id").in(gtinCodes)),
-      Aggregation.lookup("product_file", "productFileIdObj", "_id", "fileInfo"),
-      Aggregation.unwind("fileInfo"),
-      Aggregation.group("fileInfo.userEmail")
-        .addToSet("productName").as("productNames")
+
+      Aggregation.lookup(
+        "producers_initiative",
+        "producerInitiativeId",
+        "_id",
+        "producerInfo"
+      ),
+
+      Aggregation.unwind("producerInfo", true),
+
+      Aggregation.project()
+        .and(PRODUCT_NAME).as(PRODUCT_NAME)
+        .and(
+          ConditionalOperators.ifNull("producerInfo.producerEmail")
+            .then("null")
+        ).as("email"),
+
+      Aggregation.group("email")
+        .addToSet(PRODUCT_NAME).as("productNames")
+
     );
 
-    AggregationResults<EmailProductDTO> results =
-      mongoTemplate.aggregate(aggregation, "product", EmailProductDTO.class);
-
-    return results.getMappedResults();
+    return mongoTemplate
+      .aggregate(aggregation, "product", EmailProductDTO.class)
+      .getMappedResults();
   }
+
 
   @Override
   public List<Product> findByIds(List<String> productIds) {

@@ -21,7 +21,7 @@ public interface ProductSpecificRepository {
 
   List<Product> findUpdatableProducts(List<String> productIds, ProductStatus currentStatus, ProductStatus targetStatus, String role);
 
-  List<EmailProductDTO> getProductNamesGroupedByEmail(List<String> gtinCodes);
+  List<EmailProductDTO> getProductNamesGroupedByEmail(List<String> gtinCodes, String initiativeId);
 
   List<Product> findByIds(List<String> productIds);
 

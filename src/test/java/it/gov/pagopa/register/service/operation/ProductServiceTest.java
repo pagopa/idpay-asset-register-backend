@@ -252,7 +252,7 @@ class ProductServiceTest {
       .thenReturn(List.of(a,b));
 
     when(productRepository.saveAll(anyList())).thenAnswer(i -> i.getArgument(0));
-    when(productRepository.getProductNamesGroupedByEmail(any()))
+    when(productRepository.getProductNamesGroupedByEmail(any(),any()))
       .thenReturn(List.of(
         EmailProductDTO.builder().id("a@mail.it").productNames(List.of("n1")).build()
       ));
@@ -280,7 +280,7 @@ class ProductServiceTest {
       .thenReturn(List.of(a));
 
     when(productRepository.saveAll(anyList())).thenAnswer(i -> i.getArgument(0));
-    when(productRepository.getProductNamesGroupedByEmail(any()))
+    when(productRepository.getProductNamesGroupedByEmail(any(),any()))
       .thenReturn(List.of(
         EmailProductDTO.builder().id("ko@mail.it").productNames(List.of("n")).build()
       ));

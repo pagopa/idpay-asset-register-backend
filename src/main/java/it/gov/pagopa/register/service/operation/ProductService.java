@@ -147,7 +147,7 @@ public class ProductService {
       updatedProducts.size()
     );
 
-    notifyIfRejected(updatedProducts, request);
+    notifyIfRejected(updatedProducts, request, initiativeId);
 
     return UpdateResultDTO.ok();
   }
@@ -319,7 +319,8 @@ public class ProductService {
 
   private void notifyIfRejected(
     List<Product> products,
-    ProductUpdateStatusRequestDTO request
+    ProductUpdateStatusRequestDTO request,
+    String initiativeId
   ) {
 
     if (request.getTargetStatus() != ProductStatus.REJECTED) {
@@ -329,7 +330,9 @@ public class ProductService {
     int failedEmails = notifyStatusUpdates(
       products,
       request.getTargetStatus(),
-      request.getFormalMotivation()
+      request.getFormalMotivation(),
+      initiativeId
+
     );
 
     if (failedEmails > 0) {
@@ -339,24 +342,48 @@ public class ProductService {
       );
     }
   }
-  private int notifyStatusUpdates(List<Product> products, ProductStatus newStatus, String formalMotivation) {
-    List<EmailProductDTO> emailToProducts = productRepository.getProductNamesGroupedByEmail(
-      products.stream().map(Product::getGtinCode).toList()
-    );
+  private int notifyStatusUpdates(
+    List<Product> products,
+    ProductStatus newStatus,
+    String formalMotivation,
+    String initiativeId
+  ) {
+
+    List<String> gtinCodes = products.stream()
+      .map(Product::getGtinCode)
+      .toList();
+
+    List<EmailProductDTO> emailToProducts =
+      productRepository.getProductNamesGroupedByEmail(gtinCodes, initiativeId);
 
     List<String> failedEmails = new ArrayList<>();
 
     for (EmailProductDTO dto : emailToProducts) {
+
+      String email = dto.getId();
+
+      if (email.equals("null")) {
+        log.warn(
+          "[UPDATE_PRODUCT_STATUSES] - Skipping products [{}] because email is null",
+          dto.getProductNames()
+        );
+        continue;
+      }
+
       try {
         notificationService.sendEmailUpdateStatus(
           dto.getProductNames(),
           formalMotivation,
           newStatus.name(),
-          dto.getId()
+          email
         );
       } catch (Exception e) {
-        log.debug("[UPDATE_PRODUCT_STATUSES] - Failed to send email to {}: {}", dto.getId(), e.getMessage());
-        failedEmails.add(dto.getId());
+        log.debug(
+          "[UPDATE_PRODUCT_STATUSES] - Failed to send email to {}: {}",
+          email,
+          e.getMessage()
+        );
+        failedEmails.add(email);
       }
     }
 
