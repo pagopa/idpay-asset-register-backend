@@ -137,7 +137,7 @@ public class ProductSpecificRepositoryImpl implements ProductSpecificRepository 
       Aggregation.addFields()
         .addField("producerInitiativeId")
         .withValue(
-          StringOperators.Concat.valueOf("producerId")
+          StringOperators.Concat.valueOf("organizationId")
             .concat("_")
             .concatValueOf("initiativeId")
         )

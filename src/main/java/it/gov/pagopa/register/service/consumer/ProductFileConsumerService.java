@@ -241,7 +241,7 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
         setProductFileStatus(fileId, String.valueOf(PARTIAL), 0);
       }
 
-      String userEmail = null;
+      String userEmail = "";
       if (initiativeOpt.isEmpty() || (initiativeOpt.get().getProducerEmail() == null || initiativeOpt.get().getProducerEmail().isBlank())) {
         log.warn("[PROCESS_FILE] - Missing operative email for producers {} and initiative {}", orgId, initiativeId);
       } else {
@@ -309,7 +309,7 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
       log.info("[PRODUCT_UPLOAD] - File {} processed successfully with no errors", productFileId);
 
       String fileName = CATEGORIES_FOR_FILENAME.get(category) + "_" + productFileId + CSV;
-      if(userEmail != null)
+      if(!userEmail.isBlank())
         notificationService.sendEmailOk(fileName, userEmail);
     }
   }
@@ -322,7 +322,7 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
     log.info("[PRODUCT_UPLOAD] - File {} processed with {} errors", productFileId, errors.size());
 
     String fileName = CATEGORIES_FOR_FILENAME.get(category) + "_" + productFileId + CSV;
-    if(userEmail != null)
+    if(!userEmail.isBlank())
       notificationService.sendEmailPartial(fileName, userEmail);
   }
 
