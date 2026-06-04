@@ -18,6 +18,7 @@ public class InitiativeMapper {
       .endDate(entity.getInitiativeEndDate().toLocalDate())
       .serviceId(entity.getInitiativeServiceId())
       .organizationName(entity.getInitiativeOrganizationName())
+      .organizationEmail(entity.getProducerEmail())
       .enabled(entity.getEnabled())
       .build();
   }
