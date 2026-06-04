@@ -364,7 +364,7 @@ public class ProductService {
 
       if (email.equals("null")) {
         log.warn(
-          "[UPDATE_PRODUCT_STATUSES] - Skipping products [{}] because email is null",
+          "[UPDATE_PRODUCT_STATUSES] - Skipping products {} because email is null",
           dto.getProductNames()
         );
         continue;
