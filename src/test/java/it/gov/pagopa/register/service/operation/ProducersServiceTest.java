@@ -31,9 +31,9 @@ class ProducersServiceTest {
   private ProducersService producersService;
 
   @Test
-  void getProducersByInitiative_shouldReturnUnpagedProducerDataByDefault() {
+  void getProducersByInitiative_shouldReturnPagedProducerData() {
     String initiativeId = "initiative-1";
-    Pageable pageable = PageRequest.of(3, 20);
+    Pageable pageable = PageRequest.of(0, 20);
     LocalDateTime createdAt = LocalDateTime.of(2026, 1, 1, 10, 30);
     LocalDateTime updatedAt = LocalDateTime.of(2026, 1, 2, 11, 45);
 
@@ -43,40 +43,36 @@ class ProducersServiceTest {
       .updatedAt(updatedAt)
       .build();
 
-    when(producersInitiativeRepository.findByInitiativeId(initiativeId, Pageable.unpaged()))
-      .thenReturn(new PageImpl<>(List.of(producer), Pageable.unpaged(), 1));
+    when(producersInitiativeRepository.findByInitiativeId(initiativeId, pageable))
+      .thenReturn(new PageImpl<>(List.of(producer), pageable, 1));
 
-    ProducersResponseDTO result = producersService.getProducersByInitiative(initiativeId, pageable, false);
+    ProducersResponseDTO result = producersService.getProducersByInitiative(initiativeId, pageable);
 
     assertEquals(1, result.getContent().size());
     assertEquals("Producer 1", result.getContent().getFirst().getProducerName());
     assertEquals(createdAt, result.getContent().getFirst().getCreatedAt());
     assertEquals(updatedAt, result.getContent().getFirst().getUpdatedAt());
     assertEquals(0, result.getPageNo());
-    assertEquals(1, result.getPageSize());
+    assertEquals(20, result.getPageSize());
     assertEquals(1, result.getTotalElements());
     assertEquals(1, result.getTotalPages());
-    verify(producersInitiativeRepository).findByInitiativeId(initiativeId, Pageable.unpaged());
+    verify(producersInitiativeRepository).findByInitiativeId(initiativeId, pageable);
   }
 
   @Test
-  void getProducersByInitiative_shouldUseRequestedPageableWhenPagedIsTrue() {
+  void getProducersByInitiative_shouldRemoveSortBeforeQueryingMongo() {
     String initiativeId = "initiative-1";
     Pageable pageable = PageRequest.of(2, 5, Sort.by("producerName").ascending());
 
     when(producersInitiativeRepository.findByInitiativeId(org.mockito.ArgumentMatchers.eq(initiativeId), org.mockito.ArgumentMatchers.any(Pageable.class)))
-      .thenReturn(new PageImpl<>(List.of(), pageable, 0));
+      .thenReturn(new PageImpl<>(List.of(), PageRequest.of(2, 5), 0));
 
-    ProducersResponseDTO result = producersService.getProducersByInitiative(initiativeId, pageable, true);
+    producersService.getProducersByInitiative(initiativeId, pageable);
 
     ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
     verify(producersInitiativeRepository).findByInitiativeId(org.mockito.ArgumentMatchers.eq(initiativeId), pageableCaptor.capture());
     assertEquals(2, pageableCaptor.getValue().getPageNumber());
     assertEquals(5, pageableCaptor.getValue().getPageSize());
-    assertEquals(Sort.by("producerName").ascending(), pageableCaptor.getValue().getSort());
-    assertEquals(2, result.getPageNo());
-    assertEquals(5, result.getPageSize());
-    assertEquals(0, result.getTotalElements());
-    assertEquals(0, result.getTotalPages());
+    assertEquals(Sort.unsorted(), pageableCaptor.getValue().getSort());
   }
 }

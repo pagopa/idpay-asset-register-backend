@@ -19,7 +19,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -44,7 +43,7 @@ class ProducersControllerTest {
   private ProducersService producersService;
 
   @Test
-  void getProducersByInitiative_shouldReturnProducersWithPaginationDisabledByDefault() throws Exception {
+  void getProducersByInitiative_shouldReturnPagedProducersWithDefaultSize() throws Exception {
     String initiativeId = "687f8a176a5c92458819922b";
     LocalDateTime createdAt = LocalDateTime.of(2026, 1, 1, 10, 30);
     LocalDateTime updatedAt = LocalDateTime.of(2026, 1, 2, 11, 45);
@@ -56,12 +55,12 @@ class ProducersControllerTest {
         .updatedAt(updatedAt)
         .build()))
       .pageNo(0)
-      .pageSize(1)
+      .pageSize(1000)
       .totalElements(1)
       .totalPages(1)
       .build();
 
-    when(producersService.getProducersByInitiative(eq(initiativeId), any(Pageable.class), eq(false)))
+    when(producersService.getProducersByInitiative(eq(initiativeId), org.mockito.ArgumentMatchers.any(Pageable.class)))
       .thenReturn(response);
 
     mockMvc.perform(get("/idpay/register/initiatives/{initiativeId}/producers", initiativeId)
@@ -71,17 +70,17 @@ class ProducersControllerTest {
       .andExpect(jsonPath("$.content[0].createdAt").value("2026-01-01T10:30:00"))
       .andExpect(jsonPath("$.content[0].updatedAt").value("2026-01-02T11:45:00"))
       .andExpect(jsonPath("$.pageNo").value(0))
-      .andExpect(jsonPath("$.pageSize").value(1))
+      .andExpect(jsonPath("$.pageSize").value(1000))
       .andExpect(jsonPath("$.totalElements").value(1))
       .andExpect(jsonPath("$.totalPages").value(1));
 
     ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
-    verify(producersService).getProducersByInitiative(eq(initiativeId), pageableCaptor.capture(), eq(false));
-    assertEquals(20, pageableCaptor.getValue().getPageSize());
+    verify(producersService).getProducersByInitiative(eq(initiativeId), pageableCaptor.capture());
+    assertEquals(1000, pageableCaptor.getValue().getPageSize());
   }
 
   @Test
-  void getProducersByInitiative_shouldUseRequestedPageableWhenPagedIsTrue() throws Exception {
+  void getProducersByInitiative_shouldUseRequestedPageable() throws Exception {
     String initiativeId = "687f8a176a5c92458819922b";
 
     ProducersResponseDTO response = ProducersResponseDTO.builder()
@@ -92,11 +91,10 @@ class ProducersControllerTest {
       .totalPages(0)
       .build();
 
-    when(producersService.getProducersByInitiative(eq(initiativeId), any(Pageable.class), eq(true)))
+    when(producersService.getProducersByInitiative(eq(initiativeId), org.mockito.ArgumentMatchers.any(Pageable.class)))
       .thenReturn(response);
 
     mockMvc.perform(get("/idpay/register/initiatives/{initiativeId}/producers", initiativeId)
-        .param("paged", "true")
         .param("page", "2")
         .param("size", "5")
         .accept(MediaType.APPLICATION_JSON))
@@ -105,7 +103,7 @@ class ProducersControllerTest {
       .andExpect(jsonPath("$.pageSize").value(5));
 
     ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
-    verify(producersService).getProducersByInitiative(eq(initiativeId), pageableCaptor.capture(), eq(true));
+    verify(producersService).getProducersByInitiative(eq(initiativeId), pageableCaptor.capture());
     assertEquals(2, pageableCaptor.getValue().getPageNumber());
     assertEquals(5, pageableCaptor.getValue().getPageSize());
   }
