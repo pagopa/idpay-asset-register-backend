@@ -9,8 +9,8 @@ import it.gov.pagopa.register.model.operation.StatusChangeEvent;
 import java.util.ArrayList;
 import java.util.List;
 
-import static it.gov.pagopa.register.constants.AssetRegisterConstants.CATEGORIES_FOR_FILENAME;
-import static it.gov.pagopa.register.constants.AssetRegisterConstants.CATEGORIES_TO_IT_S;
+import static it.gov.pagopa.register.constants.AssetRegisterConstants.Category.Labels.CATEGORIES_FOR_DTO;
+import static it.gov.pagopa.register.constants.AssetRegisterConstants.Category.Labels.CATEGORIES_FOR_FILENAME;
 import static it.gov.pagopa.register.utils.EprelUtils.generateEprelUrl;
 
 public class ProductMapper {
@@ -37,7 +37,7 @@ public class ProductMapper {
         : entity.getStatus())
       .model(sanitizeBrandOrModelForDto(entity.getModel()))
       .productGroup(entity.getProductGroup())
-      .category(CATEGORIES_TO_IT_S.get(entity.getCategory()))
+      .category(CATEGORIES_FOR_DTO.get(entity.getCategory()))
       .brand(sanitizeBrandOrModelForDto(entity.getBrand()))
       .eprelCode(entity.getEprelCode())
       .gtinCode(sanitizeGtinForDto(entity.getGtinCode()))

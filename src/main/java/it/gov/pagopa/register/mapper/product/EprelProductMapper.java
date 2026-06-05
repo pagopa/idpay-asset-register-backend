@@ -18,7 +18,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static it.gov.pagopa.register.constants.AssetRegisterConstants.*;
+import static it.gov.pagopa.register.constants.AssetRegisterConstants.Category.*;
+import static it.gov.pagopa.register.constants.AssetRegisterConstants.Category.Labels.CATEGORIES_FOR_PRODUCT_NAME;
+import static it.gov.pagopa.register.constants.AssetRegisterConstants.CsvHeader.*;
+import static it.gov.pagopa.register.constants.AssetRegisterConstants.Refrigerator.*;
 import static it.gov.pagopa.register.mapper.operation.ProductMapper.*;
 import static it.gov.pagopa.register.utils.CsvUtils.DELIMITER;
 import static it.gov.pagopa.register.utils.EprelUtils.mapEnergyClass;
@@ -217,7 +220,7 @@ public class EprelProductMapper implements ProductMapperStrategy {
       return resolveRefrigeratingType(input.externalData);
     }
 
-    return CATEGORIES_TO_IT_S.get(input.category);
+    return CATEGORIES_FOR_PRODUCT_NAME.get(input.category);
   }
 
   private String resolveRefrigeratingType(Map<String, Object> data) {

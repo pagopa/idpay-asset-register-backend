@@ -8,8 +8,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import static it.gov.pagopa.register.constants.AssetRegisterConstants.DIFFERENT_ORGANIZATIONID;
-import static it.gov.pagopa.register.constants.AssetRegisterConstants.STATUS_NOT_VALID;
+import static it.gov.pagopa.register.constants.AssetRegisterConstants.ERROR_MAP;
+import static it.gov.pagopa.register.constants.AssetRegisterConstants.ErrorKey.DIFFERENT_ORGANIZATIONID;
+import static it.gov.pagopa.register.constants.AssetRegisterConstants.ErrorKey.STATUS_NOT_VALID;
+
 
 @Slf4j
 public class ValidationUtils {
@@ -20,11 +22,11 @@ public class ValidationUtils {
     boolean dbCheck = true;
     if (isProductPresent) {
       if (!orgId.equals(optProduct.get().getOrganizationId())) {
-        addError(csvRecord, DIFFERENT_ORGANIZATIONID, invalidRecords, errorMessages);
+        addError(csvRecord, ERROR_MAP.get(DIFFERENT_ORGANIZATIONID), invalidRecords, errorMessages);
         dbCheck = false;
       }
       else if (!allowedReloadStatuses.contains(optProduct.get().getStatus())) {
-        addError(csvRecord, STATUS_NOT_VALID.replace("{}",dmDate), invalidRecords, errorMessages);
+        addError(csvRecord, ERROR_MAP.get(STATUS_NOT_VALID).replace("{}",dmDate), invalidRecords, errorMessages);
         dbCheck = false;
       }
     }

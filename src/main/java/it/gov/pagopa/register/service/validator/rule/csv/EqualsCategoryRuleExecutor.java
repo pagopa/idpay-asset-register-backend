@@ -5,7 +5,8 @@ import it.gov.pagopa.register.service.validator.rule.RuleContext;
 import it.gov.pagopa.register.service.validator.rule.RuleExecutor;
 import org.springframework.stereotype.Component;
 
-import static it.gov.pagopa.register.constants.AssetRegisterConstants.CATEGORIES_TO_IT_S;
+import static it.gov.pagopa.register.constants.AssetRegisterConstants.Category.Labels.CATEGORIES_FOR_CSV_CHECK;
+
 
 @Component
 public class EqualsCategoryRuleExecutor implements RuleExecutor {
@@ -23,7 +24,7 @@ public class EqualsCategoryRuleExecutor implements RuleExecutor {
     CsvRuleContext ctx = (CsvRuleContext) context;
 
     String csvCategory = ctx.getValue(rule.getField());
-    String userCategory = CATEGORIES_TO_IT_S.get(ctx.getCategory());
+    String userCategory = CATEGORIES_FOR_CSV_CHECK.get(ctx.getCategory());
 
     if (csvCategory == null) {
       return false;

@@ -10,8 +10,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import static it.gov.pagopa.register.constants.AssetRegisterConstants.DIFFERENT_ORGANIZATIONID;
-import static it.gov.pagopa.register.constants.AssetRegisterConstants.STATUS_NOT_VALID;
+import static it.gov.pagopa.register.constants.AssetRegisterConstants.*;
+import static it.gov.pagopa.register.constants.AssetRegisterConstants.ErrorKey.DIFFERENT_ORGANIZATIONID;
+import static it.gov.pagopa.register.constants.AssetRegisterConstants.ErrorKey.STATUS_NOT_VALID;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
 
@@ -44,7 +45,7 @@ class ValidationUtilsTest {
 
     assertFalse(result);
     assertEquals(List.of(csvRecord), invalidRecords);
-    assertEquals(DIFFERENT_ORGANIZATIONID, errorMessages.get(csvRecord));
+    assertEquals(ERROR_MAP.get(DIFFERENT_ORGANIZATIONID), errorMessages.get(csvRecord));
   }
 
   @Test
@@ -57,7 +58,7 @@ class ValidationUtilsTest {
     boolean result = ValidationUtils.dbCheck(ORG, csvRecord, Optional.of(product), invalidRecords, errorMessages, List.of("LOADED"), DM_DATE);
 
     assertFalse(result);
-    assertEquals(STATUS_NOT_VALID.replace("{}","01/01/2026"), errorMessages.get(csvRecord));
+    assertEquals(ERROR_MAP.get(STATUS_NOT_VALID).replace("{}","01/01/2026"), errorMessages.get(csvRecord));
   }
 
   @Test

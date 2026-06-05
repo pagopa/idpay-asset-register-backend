@@ -43,6 +43,7 @@ import java.util.*;
 import java.util.regex.Matcher;
 
 import static it.gov.pagopa.register.constants.AssetRegisterConstants.*;
+import static it.gov.pagopa.register.constants.AssetRegisterConstants.Category.Labels.CATEGORIES_FOR_FILENAME;
 import static it.gov.pagopa.register.enums.UploadCsvStatus.*;
 
 @Slf4j
