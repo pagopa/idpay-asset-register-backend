@@ -38,6 +38,7 @@ import java.util.Optional;
 import java.util.Set;
 
 import static it.gov.pagopa.register.constants.AssetRegisterConstants.*;
+import static it.gov.pagopa.register.constants.AssetRegisterConstants.UploadError.*;
 import static it.gov.pagopa.register.constants.LogConstants.*;
 
 
@@ -152,12 +153,12 @@ public class ProductFileService {
     Optional<ProducersInitiative> initiativeOpt = producersInitiativeRepository.findById(initiativeKey);
     if (initiativeOpt.isEmpty() || !Boolean.TRUE.equals(initiativeOpt.get().getEnabled())) {
       log.warn("[PROCESS_FILE] - Organization {} is not enabled or not found for initiative: {}", organizationId, initiativeId);
-      return ProductFileResult.ko(AssetRegisterConstants.UploadKeyConstant.NOT_ENABLED_ERRORE_KEY);
+      return ProductFileResult.ko(NOT_ENABLED_ERRORE_KEY);
     }
 
     if (productFileRepository.existsByInitiativeIdAndOrganizationIdAndUploadStatusIn(initiativeId, organizationId, BLOCKING_STATUSES)) {
       log.warn("[PROCESS_FILE] - Existing file in UPLOADED or IN_PROCESS state for org: {} and initiative: {}", organizationId, initiativeId);
-      return ProductFileResult.ko(AssetRegisterConstants.UploadKeyConstant.UPLOAD_ALREADY_IN_PROGRESS);
+      return ProductFileResult.ko(UPLOAD_ALREADY_IN_PROGRESS);
     }
 
     try {
@@ -183,7 +184,7 @@ public class ProductFileService {
         uploadFormalErrorFile(file, recordValidation, validation.getHeaders(), productFile);
 
         log.warn("[PROCESS_FILE] - File processed with formal errors: {}", originalFileName);
-        return ProductFileResult.ko(AssetRegisterConstants.UploadKeyConstant.REPORT_FORMAL_FILE_ERROR_KEY, productFile.getId());
+        return ProductFileResult.ko(REPORT_FORMAL_FILE_ERROR_KEY, productFile.getId());
       }
 
       return ProductFileResult.ok(validation.getRecords());

@@ -14,7 +14,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
-import static it.gov.pagopa.register.constants.AssetRegisterConstants.*;
+import static it.gov.pagopa.register.constants.AssetRegisterConstants.Category.*;
+import static it.gov.pagopa.register.constants.AssetRegisterConstants.CsvHeader.*;
+import static it.gov.pagopa.register.constants.AssetRegisterConstants.Refrigerator.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;

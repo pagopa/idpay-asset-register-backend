@@ -23,11 +23,10 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
+import static it.gov.pagopa.register.constants.AssetRegisterConstants.UploadEmailError.EMAIL_INITATIVE_ERROR_KEY;
+import static it.gov.pagopa.register.constants.AssetRegisterConstants.UploadEmailError.EMAIL_WRONG_ERROR_KEY;
 import static it.gov.pagopa.register.constants.ValidationPatterns.EMAIL_PATTERN;
-import java.util.*;
 
-import static it.gov.pagopa.register.constants.AssetRegisterConstants.UploadEmailKeyConstant.EMAIL_INITATIVE_ERROR_KEY;
-import static it.gov.pagopa.register.constants.AssetRegisterConstants.UploadEmailKeyConstant.EMAIL_WRONG_ERROR_KEY;
 import static java.util.regex.Pattern.matches;
 
 @Slf4j

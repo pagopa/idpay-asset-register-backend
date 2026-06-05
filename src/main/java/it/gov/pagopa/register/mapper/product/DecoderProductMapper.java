@@ -1,7 +1,7 @@
 package it.gov.pagopa.register.mapper.product;
 
-import it.gov.pagopa.register.model.initiative.CategoryConfig;
 import it.gov.pagopa.register.enums.ProductStatus;
+import it.gov.pagopa.register.model.initiative.CategoryConfig;
 import it.gov.pagopa.register.model.operation.Product;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
@@ -15,7 +15,8 @@ import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 
-import static it.gov.pagopa.register.constants.AssetRegisterConstants.*;
+import static it.gov.pagopa.register.constants.AssetRegisterConstants.Category.Labels.CATEGORIES_FOR_PRODUCT_NAME;
+import static it.gov.pagopa.register.constants.AssetRegisterConstants.CsvHeader.*;
 import static it.gov.pagopa.register.mapper.operation.ProductMapper.*;
 import static it.gov.pagopa.register.utils.CsvUtils.DELIMITER;
 
@@ -113,7 +114,7 @@ public class DecoderProductMapper implements ProductMapperStrategy {
 
 
   private String buildProductName(String category, String brand, String model) {
-    return CATEGORIES_TO_IT_S.get(category) + " " + brand + " " + model;
+    return CATEGORIES_FOR_PRODUCT_NAME.get(category) + " " + brand + " " + model;
   }
 
   private String buildFullProductName(String gtin, String productName) {

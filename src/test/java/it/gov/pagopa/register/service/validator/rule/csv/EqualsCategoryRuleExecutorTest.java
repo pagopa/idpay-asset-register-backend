@@ -1,17 +1,15 @@
 package it.gov.pagopa.register.service.validator.rule.csv;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.when;
-
-import it.gov.pagopa.register.constants.AssetRegisterConstants;
 import it.gov.pagopa.register.model.initiative.ValidationRule;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import static it.gov.pagopa.register.constants.AssetRegisterConstants.Category.Labels.CATEGORIES_FOR_CSV_CHECK;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class EqualsCategoryRuleExecutorTest {
@@ -36,7 +34,7 @@ class EqualsCategoryRuleExecutorTest {
 
   @Test
   void testEvaluate_True() {
-    var entry = AssetRegisterConstants.CATEGORIES_TO_IT_S.entrySet().iterator().next();
+    var entry = CATEGORIES_FOR_CSV_CHECK.entrySet().iterator().next();
     String realKey = entry.getKey();
     String realValue = entry.getValue();
 

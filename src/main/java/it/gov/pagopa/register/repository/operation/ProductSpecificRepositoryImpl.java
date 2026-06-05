@@ -13,10 +13,11 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.aggregation.*;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
+
 import java.util.*;
 
 import static it.gov.pagopa.register.constants.AggregationConstants.*;
-import static it.gov.pagopa.register.constants.AssetRegisterConstants.*;
+import static it.gov.pagopa.register.constants.AssetRegisterConstants.Category.*;
 
 @RequiredArgsConstructor
 public class ProductSpecificRepositoryImpl implements ProductSpecificRepository {

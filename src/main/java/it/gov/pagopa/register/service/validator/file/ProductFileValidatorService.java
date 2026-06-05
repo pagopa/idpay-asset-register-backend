@@ -22,7 +22,9 @@ import java.io.IOException;
 import java.util.*;
 
 import static it.gov.pagopa.register.constants.AssetRegisterConstants.*;
-import static it.gov.pagopa.register.constants.AssetRegisterConstants.UploadKeyConstant.*;
+import static it.gov.pagopa.register.constants.AssetRegisterConstants.Category.Labels.CATEGORIES_FOR_CSV_CHECK;
+import static it.gov.pagopa.register.constants.AssetRegisterConstants.UploadError.*;
+
 
 @Component
 @RequiredArgsConstructor
@@ -206,7 +208,7 @@ public class ProductFileValidatorService {
 
         if (!valid) {
           errors.add(
-            ERROR_MAP.get(rule.getErrorKey()).replace("{}", CATEGORIES_TO_IT_S.get(category))
+            ERROR_MAP.get(rule.getErrorKey()).replace("{}", CATEGORIES_FOR_CSV_CHECK.get(category))
           );
         }
       }
