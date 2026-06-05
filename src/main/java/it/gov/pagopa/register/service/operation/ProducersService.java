@@ -19,12 +19,15 @@ public class ProducersService {
 
   private final ProducersInitiativeRepository producersInitiativeRepository;
 
-  public ProducersResponseDTO getProducersByInitiative(String initiativeId, Pageable pageable) {
+  public ProducersResponseDTO getProducersByInitiative(String initiativeId, Pageable pageable, boolean paged) {
     log.info("[GET_PRODUCERS_BY_INITIATIVE] - Fetching producers for initiativeId: {}", initiativeId);
 
-    Pageable unsortedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
+    Pageable executedPageable = paged
+      ? PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), pageable.getSort())
+      : Pageable.unpaged();
+
     Page<ProducersInitiative> producersPage =
-      producersInitiativeRepository.findByInitiativeId(initiativeId, unsortedPageable);
+      producersInitiativeRepository.findByInitiativeId(initiativeId, executedPageable);
     Page<ProducerDTO> producerDTOPage = producersPage.map(ProducerMapper::toDTO);
 
     log.info("[GET_PRODUCERS_BY_INITIATIVE] - Fetched {} producers for initiativeId: {}",
@@ -32,10 +35,10 @@ public class ProducersService {
 
     return ProducersResponseDTO.builder()
       .content(producerDTOPage.getContent())
-      .pageNo(producerDTOPage.getNumber())
-      .pageSize(producerDTOPage.getSize())
+      .pageNo(paged ? producerDTOPage.getNumber() : 0)
+      .pageSize(paged ? producerDTOPage.getSize() : producerDTOPage.getTotalElements())
       .totalElements(producerDTOPage.getTotalElements())
-      .totalPages(producerDTOPage.getTotalPages())
+      .totalPages(paged ? producerDTOPage.getTotalPages() : 1)
       .build();
   }
 }
