@@ -155,11 +155,6 @@ public class ProductFileService {
       return ProductFileResult.ko(AssetRegisterConstants.UploadKeyConstant.NOT_ENABLED_ERRORE_KEY);
     }
 
-    if (initiativeOpt.get().getProducerEmail() == null || initiativeOpt.get().getProducerEmail().isBlank()) {
-      log.warn("[PROCESS_FILE] - Upload blocked. Missing operative email for key: {}", initiativeKey);
-      return ProductFileResult.ko(AssetRegisterConstants.UploadEmailKeyConstant.EMAIL_MISSING_ERROR_KEY);
-    }
-
     if (productFileRepository.existsByInitiativeIdAndOrganizationIdAndUploadStatusIn(initiativeId, organizationId, BLOCKING_STATUSES)) {
       log.warn("[PROCESS_FILE] - Existing file in UPLOADED or IN_PROCESS state for org: {} and initiative: {}", organizationId, initiativeId);
       return ProductFileResult.ko(AssetRegisterConstants.UploadKeyConstant.UPLOAD_ALREADY_IN_PROGRESS);
