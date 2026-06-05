@@ -23,7 +23,7 @@ public class ProducersController {
   @GetMapping("/producers")
   public ResponseEntity<ProducersResponseDTO> getProducersByInitiative(
     @PathVariable("initiativeId") String initiativeId,
-    @PageableDefault(size = 20) Pageable pageable
+    @PageableDefault(size = 1000) Pageable pageable
   ) {
     return ResponseEntity.ok(producersService.getProducersByInitiative(initiativeId, pageable));
   }

@@ -55,7 +55,7 @@ class ProducersControllerTest {
         .updatedAt(updatedAt)
         .build()))
       .pageNo(0)
-      .pageSize(20)
+      .pageSize(1000)
       .totalElements(1)
       .totalPages(1)
       .build();
@@ -70,13 +70,13 @@ class ProducersControllerTest {
       .andExpect(jsonPath("$.content[0].createdAt").value("2026-01-01T10:30:00"))
       .andExpect(jsonPath("$.content[0].updatedAt").value("2026-01-02T11:45:00"))
       .andExpect(jsonPath("$.pageNo").value(0))
-      .andExpect(jsonPath("$.pageSize").value(20))
+      .andExpect(jsonPath("$.pageSize").value(1000))
       .andExpect(jsonPath("$.totalElements").value(1))
       .andExpect(jsonPath("$.totalPages").value(1));
 
     ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
     verify(producersService).getProducersByInitiative(eq(initiativeId), pageableCaptor.capture());
-    assertEquals(20, pageableCaptor.getValue().getPageSize());
+    assertEquals(1000, pageableCaptor.getValue().getPageSize());
   }
 
   @Test
