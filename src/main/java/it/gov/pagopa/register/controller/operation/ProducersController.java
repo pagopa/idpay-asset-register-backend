@@ -10,7 +10,6 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @Validated
@@ -24,9 +23,8 @@ public class ProducersController {
   @GetMapping("/producers")
   public ResponseEntity<ProducersResponseDTO> getProducersByInitiative(
     @PathVariable("initiativeId") String initiativeId,
-    @RequestParam(name = "paged", required = false, defaultValue = "false") boolean paged,
-    @PageableDefault(size = 20) Pageable pageable
+    @PageableDefault(size = 1000) Pageable pageable
   ) {
-    return ResponseEntity.ok(producersService.getProducersByInitiative(initiativeId, pageable, paged));
+    return ResponseEntity.ok(producersService.getProducersByInitiative(initiativeId, pageable));
   }
 }
