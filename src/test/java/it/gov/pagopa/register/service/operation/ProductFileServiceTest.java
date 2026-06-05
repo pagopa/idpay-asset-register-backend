@@ -34,6 +34,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.*;
 
+import static it.gov.pagopa.register.constants.AssetRegisterConstants.UploadError.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -220,7 +221,7 @@ class ProductFileServiceTest {
       ProductFileResult result = productFileService.uploadFile(file, "COOKINGHOBS", INITIATIVE_ID, ORG_ID, "user", "orgName");
 
       assertEquals("KO", result.getStatus());
-      assertEquals(AssetRegisterConstants.UploadKeyConstant.REPORT_FORMAL_FILE_ERROR_KEY, result.getErrorKey());
+      assertEquals(REPORT_FORMAL_FILE_ERROR_KEY, result.getErrorKey());
       assertEquals("123", result.getProductFileId());
     } catch (IOException e) {
       throw new RuntimeException(e);
@@ -318,7 +319,7 @@ class ProductFileServiceTest {
     ProductFileResult result = productFileService.uploadFile(file, "cat", INITIATIVE_ID, ORG_ID, "user", "orgName");
 
     assertEquals("KO", result.getStatus());
-    assertEquals(AssetRegisterConstants.UploadKeyConstant.UPLOAD_ALREADY_IN_PROGRESS, result.getErrorKey());
+    assertEquals(UPLOAD_ALREADY_IN_PROGRESS, result.getErrorKey());
   }
 
   @Test
@@ -332,7 +333,7 @@ class ProductFileServiceTest {
     ProductFileResult result = productFileService.uploadFile(file, "cat", INITIATIVE_ID, ORG_ID, "user", "orgName");
 
     assertEquals("KO", result.getStatus());
-    assertEquals(AssetRegisterConstants.UploadKeyConstant.NOT_ENABLED_ERRORE_KEY, result.getErrorKey());
+    assertEquals(NOT_ENABLED_ERRORE_KEY, result.getErrorKey());
   }
 
   @Test
@@ -363,7 +364,7 @@ class ProductFileServiceTest {
     ProductFileResult result = productFileService.validateFile(file, "cat", INITIATIVE_ID, ORG_ID, "user", "orgName");
 
     assertEquals("KO", result.getStatus());
-    assertEquals(AssetRegisterConstants.UploadKeyConstant.NOT_ENABLED_ERRORE_KEY, result.getErrorKey());
+    assertEquals(NOT_ENABLED_ERRORE_KEY, result.getErrorKey());
   }
 
 }

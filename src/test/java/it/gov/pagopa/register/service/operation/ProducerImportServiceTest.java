@@ -30,6 +30,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import static it.gov.pagopa.register.constants.AssetRegisterConstants.UploadEmailError.EMAIL_INITATIVE_ERROR_KEY;
+import static it.gov.pagopa.register.constants.AssetRegisterConstants.UploadEmailError.EMAIL_WRONG_ERROR_KEY;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.*;
@@ -579,7 +581,7 @@ class ProducerImportServiceTest {
       producerImportService.updateOperativeEmail(orgId, initiativeId, "invalid-email");
 
     assertEquals("KO", result.getStatus());
-    assertEquals(it.gov.pagopa.register.constants.AssetRegisterConstants.UploadEmailKeyConstant.EMAIL_WRONG_ERROR_KEY, result.getErrorKey());
+    assertEquals(EMAIL_WRONG_ERROR_KEY, result.getErrorKey());
     verify(producersInitiativeRepository, never()).findById(anyString());
     verify(producersInitiativeRepository, never()).save(any());
   }
@@ -596,7 +598,7 @@ class ProducerImportServiceTest {
       producerImportService.updateOperativeEmail(orgId, initiativeId, "valid@email.com");
 
     assertEquals("KO", result.getStatus());
-    assertEquals(it.gov.pagopa.register.constants.AssetRegisterConstants.UploadEmailKeyConstant.EMAIL_INITATIVE_ERROR_KEY, result.getErrorKey());
+    assertEquals(EMAIL_INITATIVE_ERROR_KEY, result.getErrorKey());
     verify(producersInitiativeRepository, never()).save(any());
   }
 }

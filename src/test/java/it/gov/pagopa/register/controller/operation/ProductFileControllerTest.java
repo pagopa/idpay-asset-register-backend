@@ -1,6 +1,5 @@
 package it.gov.pagopa.register.controller.operation;
 
-import it.gov.pagopa.register.constants.AssetRegisterConstants;
 import it.gov.pagopa.register.dto.operation.*;
 import it.gov.pagopa.register.exception.operation.ReportNotFoundException;
 import it.gov.pagopa.register.service.operation.ProductFileService;
@@ -22,6 +21,7 @@ import tools.jackson.databind.ObjectMapper;
 import java.util.Collections;
 import java.util.List;
 
+import static it.gov.pagopa.register.constants.AssetRegisterConstants.UploadError.MAX_SIZE_FILE_ERROR_KEY;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -46,7 +46,6 @@ class ProductFileControllerTest {
 
   @Test
   void testDownloadListUpload_Success() throws Exception {
-    String initiativeId = INITIATIVE_ID;
     ProductFileDTO fileDTO = new ProductFileDTO();
     fileDTO.setFileName("test-file.txt");
 
@@ -57,7 +56,7 @@ class ProductFileControllerTest {
     Mockito.when(productFileService.getFilesByPage(eq("83843864-f3c0-4def-badb-7f197471b72e"), any(), any(Pageable.class)))
       .thenReturn(mockResponse);
 
-    mockMvc.perform(get("/idpay/register/initiatives/{initiativeId}/product-files", initiativeId)
+    mockMvc.perform(get("/idpay/register/initiatives/{initiativeId}/product-files", INITIATIVE_ID)
         .header("x-organization-id", "83843864-f3c0-4def-badb-7f197471b72e")
         .contentType(MediaType.APPLICATION_JSON))
       .andExpect(status().isOk())
@@ -170,11 +169,10 @@ class ProductFileControllerTest {
 
   @Test
   void shouldReturn200AndListWhenOrganizationIdIsValid() throws Exception {
-    String initiativeId = INITIATIVE_ID;
-    Mockito.when(productFileService.retrieveDistinctProductFileIdsBasedOnRole(any(), any(), any(), any()))
+      Mockito.when(productFileService.retrieveDistinctProductFileIdsBasedOnRole(any(), any(), any(), any()))
       .thenReturn(List.of(new ProductBatchDTO("file123", "test.csv")));
 
-    mockMvc.perform(get("/idpay/register/initiatives/{initiativeId}/product-files/batch-list", initiativeId)
+    mockMvc.perform(get("/idpay/register/initiatives/{initiativeId}/product-files/batch-list", INITIATIVE_ID)
         .header("x-organization-id", "83843864-f3c0-4def-badb-7f197471b72e")
         .header("x-organization-role", "operatore")
         .accept(MediaType.APPLICATION_JSON))
@@ -184,11 +182,10 @@ class ProductFileControllerTest {
 
   @Test
   void shouldReturn200WithEmptyListWhenNoFilesFound() throws Exception {
-    String initiativeId = INITIATIVE_ID;
-    Mockito.when(productFileService.retrieveDistinctProductFileIdsBasedOnRole(any(), any(), any(), any()))
+      Mockito.when(productFileService.retrieveDistinctProductFileIdsBasedOnRole(any(), any(), any(), any()))
       .thenReturn(List.of());
 
-    mockMvc.perform(get("/idpay/register/initiatives/{initiativeId}/product-files/batch-list", initiativeId)
+    mockMvc.perform(get("/idpay/register/initiatives/{initiativeId}/product-files/batch-list", INITIATIVE_ID)
         .header("x-organization-role", "operatore")
         .header("x-organization-id", "83843864-f3c0-4def-badb-7f197471b72e")
         .accept(MediaType.APPLICATION_JSON))
@@ -246,6 +243,6 @@ class ProductFileControllerTest {
         .header("x-user-id", "83843864-f3c0-4def-badb-7f197471b72e")
         .header("x-organization-name", "org-name"))
       .andExpect(status().isOk())
-      .andExpect(jsonPath("$.errorKey").value(AssetRegisterConstants.UploadKeyConstant.MAX_SIZE_FILE_ERROR_KEY));
+      .andExpect(jsonPath("$.errorKey").value(MAX_SIZE_FILE_ERROR_KEY));
   }
 }

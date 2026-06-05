@@ -12,7 +12,9 @@ import org.apache.commons.csv.CSVRecord;
 
 import java.util.*;
 
-import static it.gov.pagopa.register.constants.AssetRegisterConstants.DUPLICATE_GTIN_EAN;
+
+import static it.gov.pagopa.register.constants.AssetRegisterConstants.ERROR_MAP;
+import static it.gov.pagopa.register.constants.AssetRegisterConstants.ErrorKey.*;
 import static it.gov.pagopa.register.utils.ValidationUtils.dbCheck;
 
 @Slf4j
@@ -137,7 +139,7 @@ public abstract class AbstractValidationService {
 
     // NOTE: DUPLICATE_GTIN_EAN assumes GTIN/EAN as the unique key.
     // This will not be valid if products without GTIN/EAN as identifier are introduced.
-    errorMessages.put(duplicateRow, DUPLICATE_GTIN_EAN);
+    errorMessages.put(duplicateRow,ERROR_MAP.get(DUPLICATE_GTIN_EAN));
 
     return true;
   }
