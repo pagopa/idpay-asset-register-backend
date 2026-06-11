@@ -246,7 +246,7 @@ public class ProducerImportService {
 
     ProducersInitiative initiative = optional.get();
 
-    initiative.setProducerEmail(newEmail);
+    initiative.setProducerEmail(newEmail.toLowerCase());
     initiative.setUpdatedAt(LocalDateTime.now());
 
     producersInitiativeRepository.save(initiative);
