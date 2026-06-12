@@ -11,6 +11,6 @@ public class ValidationPatterns {
   public static final String GTIN_CODE = "^[a-zA-Z0-9]{1,14}$";
   public static final String PRODUCT_CODE = "^[a-zA-Z0-9]{1,100}$";
   public static final String ANY_TEXT = ".*";
-  public static final String ROLE_PATTERN = "^(operatore|invitalia|invitalia_admin)$";
-  public static final String EMAIL_PATTERN = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)*\\.[A-Za-z]{2,}$";
+  public static final String ROLE_PATTERN = "^(operatore|invitalia|invitalia_admin|support)$";
+  public static final String EMAIL_PATTERN = "^(?=.{1,255}$)[A-Za-z0-9]([A-Za-z0-9+_-]*(\\.[A-Za-z0-9+_-]+)*)?@[A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)*\\.[A-Za-z]{2,}$";
 }
