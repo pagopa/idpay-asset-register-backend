@@ -6,7 +6,8 @@ import lombok.Getter;
 public enum UserRole {
   OPERATORE("operatore"),
   INVITALIA("invitalia"),
-  INVITALIA_ADMIN("invitalia_admin");
+  INVITALIA_ADMIN("invitalia_admin"),
+  SUPPORT("support");
 
   private final String role;
 
