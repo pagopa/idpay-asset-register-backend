@@ -23,7 +23,7 @@ public class InitiativeService {
 
   public List<InitiativeDTO> getInitiatives(String role, String organizationId) {
 
-    if(role.equals(UserRole.OPERATORE.getRole()))
+    if(role.equals(UserRole.OPERATORE.getRole()) || role.equals((UserRole.SUPPORT.getRole())))
       return repository.findByProducerIdOrderByInitiativeNameAsc(organizationId)
         .stream()
         .filter(ProducersInitiative::getEnabled)

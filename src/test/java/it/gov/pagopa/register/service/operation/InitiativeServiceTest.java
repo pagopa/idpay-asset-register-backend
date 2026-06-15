@@ -13,6 +13,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
+import java.time.Month;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -37,14 +38,17 @@ class InitiativeServiceTest {
     // given
     String organizationId = "org-123";
     String role = UserRole.OPERATORE.getRole();
+    LocalDateTime today = LocalDateTime.of(2026, Month.JUNE, 15, 12, 0);
+    LocalDateTime fixedStartDate = today.minusDays(7);
+    LocalDateTime fixedEndDate = today.plusDays(30);
 
     ProducersInitiative firstInitiative = ProducersInitiative.builder()
       .initiativeId("111")
       .initiativeName("Alpha initiative")
       .enabled(true)
       .initiativeStatus(InitiativeStatus.PUBLISHED)
-      .initiativeEndDate(LocalDateTime.now())
-      .initiativeStartDate(LocalDateTime.now())
+      .initiativeEndDate(fixedEndDate)
+      .initiativeStartDate(fixedStartDate)
       .build();
 
     ProducersInitiative disabledInitiative = ProducersInitiative.builder()
@@ -52,8 +56,8 @@ class InitiativeServiceTest {
       .initiativeName("Disabled initiative")
       .enabled(false)
       .initiativeStatus(InitiativeStatus.PUBLISHED)
-      .initiativeEndDate(LocalDateTime.now())
-      .initiativeStartDate(LocalDateTime.now())
+      .initiativeEndDate(fixedEndDate)
+      .initiativeStartDate(fixedStartDate)
       .build();
 
     ProducersInitiative secondInitiative = ProducersInitiative.builder()
@@ -61,8 +65,8 @@ class InitiativeServiceTest {
       .initiativeName("Beta initiative")
       .enabled(true)
       .initiativeStatus(InitiativeStatus.PUBLISHED)
-      .initiativeEndDate(LocalDateTime.now())
-      .initiativeStartDate(LocalDateTime.now())
+      .initiativeEndDate(fixedEndDate)
+      .initiativeStartDate(fixedStartDate)
       .build();
 
     when(repository.findByProducerIdOrderByInitiativeNameAsc(organizationId))
@@ -113,5 +117,39 @@ class InitiativeServiceTest {
 
     verify(portalInitiativeService).getInitiatives(organizationId);
     verifyNoInteractions(repository);
+  }
+
+  @Test
+  void getInitiatives_WhenRoleIsSupport_ReturnsEnabledInitiativesOrderedByName() {
+
+    // given
+    String organizationId = "org-123";
+    String role = UserRole.SUPPORT.getRole();
+    LocalDateTime today = LocalDateTime.of(2026, Month.JUNE, 15, 12, 0);
+    LocalDateTime fixedStartDate = today.minusDays(7);
+    LocalDateTime fixedEndDate = today.plusDays(30);
+
+    ProducersInitiative initiative = ProducersInitiative.builder()
+      .initiativeId("555")
+      .initiativeName("Support initiative")
+      .enabled(true)
+      .initiativeStatus(InitiativeStatus.PUBLISHED)
+      .initiativeEndDate(fixedEndDate)
+      .initiativeStartDate(fixedStartDate)
+      .build();
+
+    when(repository.findByProducerIdOrderByInitiativeNameAsc(organizationId))
+      .thenReturn(List.of(initiative));
+
+    // when
+    List<InitiativeDTO> result = service.getInitiatives(role, organizationId);
+
+    // then
+    assertEquals(1, result.size());
+    assertEquals("555", result.getFirst().getInitiativeId());
+    assertTrue(result.getFirst().getEnabled());
+
+    verify(repository).findByProducerIdOrderByInitiativeNameAsc(organizationId);
+    verifyNoInteractions(portalInitiativeService);
   }
 }
