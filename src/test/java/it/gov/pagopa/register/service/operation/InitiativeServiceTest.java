@@ -114,4 +114,35 @@ class InitiativeServiceTest {
     verify(portalInitiativeService).getInitiatives(organizationId);
     verifyNoInteractions(repository);
   }
+
+  @Test
+  void getInitiatives_WhenRoleIsSupport_ReturnsEnabledInitiativesOrderedByName() {
+
+    // given
+    String organizationId = "org-123";
+    String role = UserRole.SUPPORT.getRole();
+
+    ProducersInitiative initiative = ProducersInitiative.builder()
+      .initiativeId("555")
+      .initiativeName("Support initiative")
+      .enabled(true)
+      .initiativeStatus(InitiativeStatus.PUBLISHED)
+      .initiativeEndDate(LocalDateTime.now())
+      .initiativeStartDate(LocalDateTime.now())
+      .build();
+
+    when(repository.findByProducerIdOrderByInitiativeNameAsc(organizationId))
+      .thenReturn(List.of(initiative));
+
+    // when
+    List<InitiativeDTO> result = service.getInitiatives(role, organizationId);
+
+    // then
+    assertEquals(1, result.size());
+    assertEquals("555", result.getFirst().getInitiativeId());
+    assertTrue(result.getFirst().getEnabled());
+
+    verify(repository).findByProducerIdOrderByInitiativeNameAsc(organizationId);
+    verifyNoInteractions(portalInitiativeService);
+  }
 }
