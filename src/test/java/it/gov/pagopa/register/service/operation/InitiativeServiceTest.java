@@ -37,14 +37,17 @@ class InitiativeServiceTest {
     // given
     String organizationId = "org-123";
     String role = UserRole.OPERATORE.getRole();
+    LocalDateTime today = LocalDateTime.of(2026, 6, 15, 12, 0);
+    LocalDateTime fixedStartDate = today.minusDays(7);
+    LocalDateTime fixedEndDate = today.plusDays(30);
 
     ProducersInitiative firstInitiative = ProducersInitiative.builder()
       .initiativeId("111")
       .initiativeName("Alpha initiative")
       .enabled(true)
       .initiativeStatus(InitiativeStatus.PUBLISHED)
-      .initiativeEndDate(LocalDateTime.now())
-      .initiativeStartDate(LocalDateTime.now())
+      .initiativeEndDate(fixedEndDate)
+      .initiativeStartDate(fixedStartDate)
       .build();
 
     ProducersInitiative disabledInitiative = ProducersInitiative.builder()
@@ -52,8 +55,8 @@ class InitiativeServiceTest {
       .initiativeName("Disabled initiative")
       .enabled(false)
       .initiativeStatus(InitiativeStatus.PUBLISHED)
-      .initiativeEndDate(LocalDateTime.now())
-      .initiativeStartDate(LocalDateTime.now())
+      .initiativeEndDate(fixedEndDate)
+      .initiativeStartDate(fixedStartDate)
       .build();
 
     ProducersInitiative secondInitiative = ProducersInitiative.builder()
@@ -61,8 +64,8 @@ class InitiativeServiceTest {
       .initiativeName("Beta initiative")
       .enabled(true)
       .initiativeStatus(InitiativeStatus.PUBLISHED)
-      .initiativeEndDate(LocalDateTime.now())
-      .initiativeStartDate(LocalDateTime.now())
+      .initiativeEndDate(fixedEndDate)
+      .initiativeStartDate(fixedStartDate)
       .build();
 
     when(repository.findByProducerIdOrderByInitiativeNameAsc(organizationId))
@@ -121,14 +124,17 @@ class InitiativeServiceTest {
     // given
     String organizationId = "org-123";
     String role = UserRole.SUPPORT.getRole();
+    LocalDateTime today = LocalDateTime.of(2026, 6, 15, 12, 0);
+    LocalDateTime fixedStartDate = today.minusDays(7);
+    LocalDateTime fixedEndDate = today.plusDays(30);
 
     ProducersInitiative initiative = ProducersInitiative.builder()
       .initiativeId("555")
       .initiativeName("Support initiative")
       .enabled(true)
       .initiativeStatus(InitiativeStatus.PUBLISHED)
-      .initiativeEndDate(LocalDateTime.now())
-      .initiativeStartDate(LocalDateTime.now())
+      .initiativeEndDate(fixedEndDate)
+      .initiativeStartDate(fixedStartDate)
       .build();
 
     when(repository.findByProducerIdOrderByInitiativeNameAsc(organizationId))
