@@ -13,6 +13,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
+import java.time.Month;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -37,7 +38,7 @@ class InitiativeServiceTest {
     // given
     String organizationId = "org-123";
     String role = UserRole.OPERATORE.getRole();
-    LocalDateTime today = LocalDateTime.of(2026, 6, 15, 12, 0);
+    LocalDateTime today = LocalDateTime.of(2026, Month.JUNE, 15, 12, 0);
     LocalDateTime fixedStartDate = today.minusDays(7);
     LocalDateTime fixedEndDate = today.plusDays(30);
 
@@ -124,7 +125,7 @@ class InitiativeServiceTest {
     // given
     String organizationId = "org-123";
     String role = UserRole.SUPPORT.getRole();
-    LocalDateTime today = LocalDateTime.of(2026, 6, 15, 12, 0);
+    LocalDateTime today = LocalDateTime.of(2026, Month.JUNE, 15, 12, 0);
     LocalDateTime fixedStartDate = today.minusDays(7);
     LocalDateTime fixedEndDate = today.plusDays(30);
 
