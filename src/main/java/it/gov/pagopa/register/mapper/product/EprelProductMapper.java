@@ -21,6 +21,7 @@ import java.util.stream.Collectors;
 import static it.gov.pagopa.register.constants.AssetRegisterConstants.Category.*;
 import static it.gov.pagopa.register.constants.AssetRegisterConstants.Category.Labels.CATEGORIES_FOR_PRODUCT_NAME;
 import static it.gov.pagopa.register.constants.AssetRegisterConstants.CsvHeader.*;
+import static it.gov.pagopa.register.constants.AssetRegisterConstants.EprelField.*;
 import static it.gov.pagopa.register.constants.AssetRegisterConstants.Refrigerator.*;
 import static it.gov.pagopa.register.mapper.operation.ProductMapper.*;
 import static it.gov.pagopa.register.utils.CsvUtils.DELIMITER;
@@ -30,11 +31,6 @@ import static it.gov.pagopa.register.utils.EprelUtils.mapEnergyClass;
 @SuppressWarnings({"java:S6830", "java:S117"})
 @Component("EPREL")
 public class EprelProductMapper implements ProductMapperStrategy {
-
-  private static final String RATED_CAPACITY = "ratedCapacity";
-  private static final String RATED_CAPACITY_WASH = "ratedCapacityWash";
-  private static final String CAVITIES = "cavities";
-  private static final String TOTAL_VOLUME = "totalVolume";
 
   @Override
   public String extractBusinessKey(CSVRecord csvRecord, CategoryConfig categoryConfig) {
