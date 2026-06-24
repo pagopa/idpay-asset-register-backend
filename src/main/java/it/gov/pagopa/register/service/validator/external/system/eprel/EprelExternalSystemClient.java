@@ -13,6 +13,8 @@ import org.springframework.util.StringUtils;
 import java.util.HashMap;
 import java.util.Map;
 
+import static it.gov.pagopa.register.constants.AssetRegisterConstants.EprelField.*;
+
 @Component
 @RequiredArgsConstructor
 @Slf4j
@@ -67,19 +69,19 @@ public class EprelExternalSystemClient implements ExternalSystemClient {
 
     Map<String, Object> data = new HashMap<>();
 
-    data.put("status", eprelProduct.getStatus());
-    data.put("energyClass", eprelProduct.getEnergyClass());
-    data.put("energyClassWash", eprelProduct.getEnergyClassWash());
-    data.put("blocked", eprelProduct.getBlocked());
-    data.put("productGroup", eprelProduct.getProductGroup());
-    data.put("orgVerificationStatus", eprelProduct.getOrgVerificationStatus());
-    data.put("trademarkVerificationStatus", eprelProduct.getTrademarkVerificationStatus());
-    data.put("supplierOrTrademark", eprelProduct.getSupplierOrTrademark());
-    data.put("modelIdentifier", eprelProduct.getModelIdentifier());
-    data.put("getRatedCapacity", eprelProduct.getRatedCapacity());
-    data.put("getRatedCapacityWas", eprelProduct.getRatedCapacityWash());
-    data.put("cavities", eprelProduct.getCavities());
-    data.put("totalVolume", eprelProduct.getTotalVolume());
+    data.put(STATUS, eprelProduct.getStatus());
+    data.put(ENERGY_CLASS, eprelProduct.getEnergyClass());
+    data.put(ENERGY_CLASS_WASH, eprelProduct.getEnergyClassWash());
+    data.put(BLOCKED, eprelProduct.getBlocked());
+    data.put(PRODUCT_GROUP, eprelProduct.getProductGroup());
+    data.put(ORG_VERIFICATION_STATUS, eprelProduct.getOrgVerificationStatus());
+    data.put(TRADEMARK_VERIFICATION_STATUS, eprelProduct.getTrademarkVerificationStatus());
+    data.put(SUPPLIER_OR_TRADEMARK, eprelProduct.getSupplierOrTrademark());
+    data.put(MODEL_IDENTIFIER, eprelProduct.getModelIdentifier());
+    data.put(RATED_CAPACITY, eprelProduct.getRatedCapacity());
+    data.put(RATED_CAPACITY_WASH, eprelProduct.getRatedCapacityWash());
+    data.put(CAVITIES, eprelProduct.getCavities());
+    data.put(TOTAL_VOLUME, eprelProduct.getTotalVolume());
     return data;
   }
 }

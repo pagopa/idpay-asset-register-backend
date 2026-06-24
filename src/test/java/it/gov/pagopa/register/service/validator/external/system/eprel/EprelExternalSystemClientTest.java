@@ -12,6 +12,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import java.util.List;
 import java.util.Map;
 
+import static it.gov.pagopa.register.constants.AssetRegisterConstants.EprelField.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
@@ -96,18 +97,18 @@ class EprelExternalSystemClientTest {
 
     Map<String, Object> result = client.fetch(csvRecord, template);
 
-    assertEquals("ACTIVE", result.get("status"));
-    assertEquals("A", result.get("energyClass"));
-    assertEquals("B", result.get("energyClassWash"));
-    assertEquals(false, result.get("blocked"));
-    assertEquals("GROUP", result.get("productGroup"));
-    assertEquals("OK", result.get("orgVerificationStatus"));
-    assertEquals("OK", result.get("trademarkVerificationStatus"));
-    assertEquals("SUPPLIER", result.get("supplierOrTrademark"));
-    assertEquals("MODEL", result.get("modelIdentifier"));
-    assertEquals("10", result.get("getRatedCapacity"));
-    assertEquals("8", result.get("getRatedCapacityWas"));
-    assertEquals("100", result.get("totalVolume"));
+    assertEquals("ACTIVE", result.get(STATUS));
+    assertEquals("A", result.get(ENERGY_CLASS));
+    assertEquals("B", result.get(ENERGY_CLASS_WASH));
+    assertEquals(false, result.get(BLOCKED));
+    assertEquals("GROUP", result.get(PRODUCT_GROUP));
+    assertEquals("OK", result.get(ORG_VERIFICATION_STATUS));
+    assertEquals("OK", result.get(TRADEMARK_VERIFICATION_STATUS));
+    assertEquals("SUPPLIER", result.get(SUPPLIER_OR_TRADEMARK));
+    assertEquals("MODEL", result.get(MODEL_IDENTIFIER));
+    assertEquals("10", result.get(RATED_CAPACITY));
+    assertEquals("8", result.get(RATED_CAPACITY_WASH));
+    assertEquals("100", result.get(TOTAL_VOLUME));
 
     List<?> cavities = (List<?>) result.get("cavities");
 

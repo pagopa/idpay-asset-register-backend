@@ -292,4 +292,23 @@ public final class AssetRegisterConstants {
 
   // TEST
   public static final String USERNAME = "USERNAME";
+
+  //
+  public static final class EprelField {
+    private EprelField() {}
+
+    public static final String STATUS = "status";
+    public static final String ENERGY_CLASS = "energyClass";
+    public static final String ENERGY_CLASS_WASH = "energyClassWash";
+    public static final String BLOCKED = "blocked";
+    public static final String PRODUCT_GROUP = "productGroup";
+    public static final String ORG_VERIFICATION_STATUS = "orgVerificationStatus";
+    public static final String TRADEMARK_VERIFICATION_STATUS = "trademarkVerificationStatus";
+    public static final String SUPPLIER_OR_TRADEMARK = "supplierOrTrademark";
+    public static final String MODEL_IDENTIFIER = "modelIdentifier";
+    public static final String RATED_CAPACITY = "ratedCapacity";
+    public static final String RATED_CAPACITY_WASH = "ratedCapacityWash"; // attenzione al naming
+    public static final String CAVITIES = "cavities";
+    public static final String TOTAL_VOLUME = "totalVolume";
+  }
 }
