@@ -38,6 +38,7 @@ public class ProductMapper {
       .model(sanitizeBrandOrModelForDto(entity.getModel()))
       .productGroup(entity.getProductGroup())
       .category(CATEGORIES_FOR_DTO.get(entity.getCategory()))
+      .categoryCode(entity.getCategory())
       .brand(sanitizeBrandOrModelForDto(entity.getBrand()))
       .eprelCode(entity.getEprelCode())
       .gtinCode(sanitizeGtinForDto(entity.getGtinCode()))
