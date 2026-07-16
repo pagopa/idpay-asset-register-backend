@@ -2,6 +2,7 @@ package it.gov.pagopa.register.dto.operation;
 
 import lombok.*;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Data
 @Builder
@@ -22,6 +23,8 @@ public class InitiativeDTO {
   private InitiativeGeneralDTO general;
   private InitiativeAdditionalDTO additionalInfo;
   private Boolean enabled;
+  private LocalDateTime createdAt;
+  private LocalDateTime updatedAt;
 
   @Data
   @NoArgsConstructor
