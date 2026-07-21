@@ -8,13 +8,16 @@ import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
 import org.springframework.lang.Nullable;
+import org.springframework.util.StringUtils;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
+import java.util.Arrays;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -83,5 +86,35 @@ public class ValidationExceptionHandler {
     log.debug("Something went wrong while validating http request parameters", ex);
 
     return new ErrorDTO(templateValidationErrorDTO.getCode(), message);
+  }
+
+  @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+  @ResponseStatus(HttpStatus.BAD_REQUEST)
+  public ErrorDTO handleMethodArgumentTypeMismatchException(
+    MethodArgumentTypeMismatchException ex, HttpServletRequest request) {
+
+    String message = buildTypeMismatchMessage(ex);
+
+    log.info("A MethodArgumentTypeMismatchException occurred handling request {}: HttpStatus 400 - {}",
+      ErrorManager.getRequestDetails(request), message);
+    log.debug("Something went wrong while binding request parameters", ex);
+
+    return new ErrorDTO(templateValidationErrorDTO.getCode(), message);
+  }
+
+  private String buildTypeMismatchMessage(MethodArgumentTypeMismatchException ex) {
+    if (ex.getRequiredType() != null && ex.getRequiredType().isEnum()) {
+      String allowedValues = Arrays.stream(ex.getRequiredType().getEnumConstants())
+        .map(String::valueOf)
+        .collect(Collectors.joining(", "));
+      String invalidValue = String.valueOf(ex.getValue());
+      return String.format("[%s]: invalid value '%s'. Allowed values: %s",
+        ex.getName(), invalidValue, allowedValues);
+    }
+
+    String valueMessage = StringUtils.hasText(ex.getValue() != null ? ex.getValue().toString() : null)
+      ? String.format(" value '%s'", ex.getValue())
+      : "";
+    return String.format("[%s]: invalid request parameter%s", ex.getName(), valueMessage);
   }
 }
