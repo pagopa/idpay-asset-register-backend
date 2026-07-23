@@ -112,7 +112,8 @@ public class ValidationExceptionHandler {
         ex.getName(), invalidValue, allowedValues);
     }
 
-    String valueMessage = StringUtils.hasText(ex.getValue() != null ? ex.getValue().toString() : null)
+    String value = ex.getValue() != null ? ex.getValue().toString() : null;
+    String valueMessage = StringUtils.hasText(value)
       ? String.format(" value '%s'", ex.getValue())
       : "";
     return String.format("[%s]: invalid request parameter%s", ex.getName(), valueMessage);
