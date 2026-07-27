@@ -199,6 +199,23 @@ class ProductFileValidatorServiceTest {
   }
 
   @Test
+  void validateFile_CsvTemplatesNullError() throws IOException {
+    MockMultipartFile file = csv("test.csv", HEADER + "\n12345");
+
+    InitiativeConfig config = new InitiativeConfig();
+    CategoryConfig categoryConfig = new CategoryConfig("TEMPLATE", HEADER, List.of(), "EPREL");
+    config.setCategories(Map.of(CATEGORY, categoryConfig));
+    config.setCsvTemplates(null);
+
+    when(initiativeConfigMap.get(INITIATIVE_ID)).thenReturn(config);
+
+    ValidationResultDTO result = productFileValidator.validateFile(file, CATEGORY, INITIATIVE_ID, "organization");
+
+    assertEquals("KO", result.getStatus());
+    assertEquals(INITIATIVE_CONFIG_ERROR, result.getErrorKey());
+  }
+
+  @Test
   void validateFile_CsvTemplateHeadersEmptyError() throws IOException {
     MockMultipartFile file = csv("test.csv", HEADER + "\n12345");
 

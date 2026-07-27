@@ -69,13 +69,24 @@ public class ProductFileValidatorService {
     }
 
     InitiativeConfig initiativeConfig = initiativeConfigMap.get(initiativeId);
+    if (initiativeConfig == null) {
+      log.error("[VALIDATE_FILE] - Unknown initiative");
+      return ValidationResultDTO.ko(INITIATIVE_CONFIG_ERROR);
+    }
+
     ValidationResultDTO configCheck = checkInitiativeAndCategoryConfig(initiativeConfig, category);
     if (configCheck != null) {
       return configCheck;
     }
 
     CategoryConfig categoryConfig = initiativeConfig.getCategories().get(category);
-    CsvTemplate csvTemplate = initiativeConfig.getCsvTemplates().get(categoryConfig.getCsvTemplate());
+    Map<String, CsvTemplate> csvTemplates = initiativeConfig.getCsvTemplates();
+    if (csvTemplates == null || csvTemplates.isEmpty()) {
+      log.error("[VALIDATE_FILE] - CSV templates section not valid");
+      return ValidationResultDTO.ko(INITIATIVE_CONFIG_ERROR);
+    }
+
+    CsvTemplate csvTemplate = csvTemplates.get(categoryConfig.getCsvTemplate());
 
     if (csvTemplate == null) {
       log.error("[VALIDATE_FILE] - CSV template not found for category: {}", category);
@@ -116,11 +127,6 @@ public class ProductFileValidatorService {
   }
 
   private ValidationResultDTO checkInitiativeAndCategoryConfig(InitiativeConfig initiativeConfig, String category) {
-    if (initiativeConfig == null) {
-      log.error("[VALIDATE_FILE] - Unknown initiative");
-      return ValidationResultDTO.ko(INITIATIVE_CONFIG_ERROR);
-    }
-
     if (initiativeConfig.getCategories() == null || initiativeConfig.getCategories().isEmpty()) {
       log.error("[VALIDATE_FILE] - CSV template category section not valid ");
       return ValidationResultDTO.ko(INITIATIVE_CONFIG_ERROR);
