@@ -85,6 +85,52 @@ class ProductServiceTest {
   }
 
   @Test
+  void fetchProductsByFilters_uploadedForNonInvitaliaIncludesWaitApproved() {
+    Pageable pageable = PageRequest.of(0, 20);
+    when(productRepository.getCriteria(argThat(criteria -> criteria.getStatus() == null)))
+      .thenReturn(new Criteria());
+    when(productRepository.findByFilter(any(Criteria.class), eq(pageable))).thenReturn(List.of());
+    when(productRepository.getCount(any(Criteria.class))).thenReturn(0L);
+
+    productService.fetchProductsByFilters(
+      ORG_ID, null, null, null, null, null, null, null, null, null, null,
+      ProductStatus.UPLOADED.name(), pageable, UserRole.OPERATORE.getRole()
+    );
+
+    verify(productRepository).findByFilter(
+      argThat(criteria -> {
+        Object statusFilter = criteria.getCriteriaObject().get(Product.Fields.status);
+        return statusFilter != null
+          && statusFilter.toString().contains(ProductStatus.UPLOADED.name())
+          && statusFilter.toString().contains(ProductStatus.WAIT_APPROVED.name());
+      }),
+      eq(pageable)
+    );
+  }
+
+  @Test
+  void fetchProductsByFilters_uploadedForInvitaliaAdminKeepsExactFilter() {
+    Pageable pageable = PageRequest.of(0, 20);
+    when(productRepository.getCriteria(argThat(criteria ->
+      ProductStatus.UPLOADED.name().equals(criteria.getStatus())
+    ))).thenReturn(Criteria.where(Product.Fields.status).is(ProductStatus.UPLOADED.name()));
+    when(productRepository.findByFilter(any(Criteria.class), eq(pageable))).thenReturn(List.of());
+    when(productRepository.getCount(any(Criteria.class))).thenReturn(0L);
+
+    productService.fetchProductsByFilters(
+      ORG_ID, null, null, null, null, null, null, null, null, null, null,
+      ProductStatus.UPLOADED.name(), pageable, UserRole.INVITALIA_ADMIN.getRole()
+    );
+
+    verify(productRepository).findByFilter(
+      argThat(criteria -> ProductStatus.UPLOADED.name().equals(
+        criteria.getCriteriaObject().get(Product.Fields.status)
+      )),
+      eq(pageable)
+    );
+  }
+
+  @Test
   void fetchProductsByFilters_empty() {
     Pageable pageable = PageRequest.of(0, 5);
 

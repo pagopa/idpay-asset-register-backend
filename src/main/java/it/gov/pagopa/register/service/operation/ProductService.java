@@ -60,6 +60,9 @@ public class ProductService {
     log.info("[GET_PRODUCTS] - Fetching products for organizationId: {}, initiativeId: {}, category: {}, productFileId: {}, eprelCode: {}, gtinCode: {}, productName: {}, brand: {}, model: {}, status: {}, sort: {}",
       organizationId, initiativeId, category, productFileId, eprelCode, gtinCode, productName, brand, model, status, pageable.getSort());
 
+    boolean includeWaitApproved = ProductStatus.UPLOADED.name().equals(status)
+      && !isInvitaliaRole(role);
+
     final Criteria criteria = productRepository.getCriteria(
       ProductCriteriaDTO.builder()
         .organizationId(organizationId)
@@ -73,9 +76,16 @@ public class ProductService {
         .fullProductName(fullProductName)
         .brand(brand)
         .model(model)
-        .status(status)
+        .status(includeWaitApproved ? null : status)
         .build()
     );
+
+    if (includeWaitApproved) {
+      criteria.and(Product.Fields.status).in(
+        ProductStatus.UPLOADED.name(),
+        ProductStatus.WAIT_APPROVED.name()
+      );
+    }
 
     List<Product> entities = productRepository.findByFilter(criteria, pageable);
     Long count = productRepository.getCount(criteria);
@@ -88,6 +98,11 @@ public class ProductService {
     log.info("[GET_PRODUCTS] - Returning {} products for page {} of size {}", result.getTotalElements(), result.getNumber(), result.getSize());
 
     return buildProductListDTO(result);
+  }
+
+  private boolean isInvitaliaRole(String role) {
+    return UserRole.INVITALIA.getRole().equalsIgnoreCase(role)
+      || UserRole.INVITALIA_ADMIN.getRole().equalsIgnoreCase(role);
   }
 
   private ProductListDTO buildProductListDTO(Page<ProductDTO> result) {
