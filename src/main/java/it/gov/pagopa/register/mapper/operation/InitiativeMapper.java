@@ -18,7 +18,10 @@ public class InitiativeMapper {
       .endDate(entity.getInitiativeEndDate().toLocalDate())
       .serviceId(entity.getInitiativeServiceId())
       .organizationName(entity.getInitiativeOrganizationName())
+      .organizationEmail(entity.getProducerEmail())
       .enabled(entity.getEnabled())
+      .createdAt(entity.getCreatedAt())
+      .updatedAt(entity.getUpdatedAt())
       .build();
   }
 
@@ -32,6 +35,8 @@ public class InitiativeMapper {
       .endDate(dto.getEndDate())
       .serviceId(dto.getServiceId())
       .enabled(true)
+      .createdAt(dto.getCreationDate())
+      .updatedAt(dto.getUpdateDate())
       .build();
   }
 }

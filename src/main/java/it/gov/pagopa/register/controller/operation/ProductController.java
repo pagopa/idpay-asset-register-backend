@@ -21,7 +21,7 @@ import static it.gov.pagopa.register.constants.ValidationPatterns.*;
 
 @Validated
 @RestController
-@RequestMapping("/idpay/register")
+@RequestMapping("/idpay/register/initiatives/{initiativeId}")
 @RequiredArgsConstructor
 public class ProductController {
 
@@ -30,16 +30,18 @@ public class ProductController {
   @GetMapping("/products")
   public ResponseEntity<ProductListDTO> getProductList(
     @RequestHeader(value = "x-organization-role", required = false, defaultValue = "operatore") @Pattern(regexp = ROLE_PATTERN) String role,
+    @PathVariable("initiativeId")  @Pattern(regexp = OBJECT_ID_PATTERN) String initiativeId,
     @RequestParam(required = false) @Pattern(regexp = UUID_V4_PATTERN) String organizationId,
     @RequestParam(required = false) @Pattern(regexp = ANY_TEXT) String productName,
     @RequestParam(required = false) @Pattern(regexp = ANY_TEXT) String fullProductName,
     @RequestParam(required = false) @Pattern(regexp = OBJECT_ID_PATTERN) String productFileId,
     @RequestParam(required = false) @Pattern(regexp = DIGITS_ONLY) String eprelCode,
     @RequestParam(required = false) @Pattern(regexp = GTIN_CODE) String gtinCode,
+    @RequestParam(required = false) @Pattern(regexp = PRODUCT_CODE) String productCode,
     @RequestParam(required = false) ProductStatus status,
     @RequestParam(required = false) ProductCategories category,
-    @RequestParam(required = false) @Pattern(regexp = ANY_TEXT) String  brand,
-    @RequestParam(required = false) @Pattern(regexp = ANY_TEXT) String  model,
+    @RequestParam(required = false) @Pattern(regexp = BRAND) String  brand,
+    @RequestParam(required = false) @Pattern(regexp = MODEL) String  model,
     @PageableDefault(size = 20, sort = "registrationDate", direction = Sort.Direction.DESC) Pageable pageable
   ) {
     String categoryName = Optional.ofNullable(category).map(Enum::name).orElse(null);
@@ -47,10 +49,12 @@ public class ProductController {
 
     ProductListDTO result = productService.fetchProductsByFilters(
       organizationId,
+      initiativeId,
       categoryName,
       productFileId,
       eprelCode,
       gtinCode,
+      productCode,
       productName,
       fullProductName,
       brand,
@@ -67,9 +71,11 @@ public class ProductController {
   public ResponseEntity<UpdateResultDTO> updateProductsState(
     @RequestHeader("x-organization-role") @Pattern(regexp = ROLE_PATTERN) String role,
     @RequestHeader("x-user-name") String username,
+    @PathVariable("initiativeId")  @Pattern(regexp = OBJECT_ID_PATTERN) String initiativeId,
     @RequestBody ProductUpdateStatusRequestDTO updateStatusDto
   ) {
     UpdateResultDTO result = productService.updateProductStatusesWithNotification(
+      initiativeId,
       updateStatusDto,
       role,
       username

@@ -64,6 +64,7 @@ class ProductFileSpecificRepositoryTest {
         .productFileId("fileId")
         .eprelCode("eprel")
         .gtinCode("gtin")
+        .productCode("productCode")
         .productName("productName")
         .brand("brand")
         .model("model")
@@ -76,7 +77,8 @@ class ProductFileSpecificRepositoryTest {
     assertTrue(criteria.getCriteriaObject().containsKey("category"));
     assertTrue(criteria.getCriteriaObject().containsKey("productFileId"));
     assertTrue(criteria.getCriteriaObject().containsKey("eprelCode"));
-    assertTrue(criteria.getCriteriaObject().containsKey("_id"));
+    assertTrue(criteria.getCriteriaObject().containsKey("productCode"));
+    assertTrue(criteria.getCriteriaObject().containsKey("gtinCode"));
     assertTrue(criteria.getCriteriaObject().containsKey("productName"));
     assertTrue(criteria.getCriteriaObject().containsKey("brand"));
     assertTrue(criteria.getCriteriaObject().containsKey("model"));
@@ -124,7 +126,7 @@ class ProductFileSpecificRepositoryTest {
     when(mongoTemplate.aggregate(any(Aggregation.class), eq("product"), eq(Product.class)))
       .thenReturn(aggregationResults);
 
-    List<Product> result = productSpecificRepository.retrieveDistinctProductFileIdsBasedOnRole(orgId, null, UserRole.OPERATORE.getRole());
+    List<Product> result = productSpecificRepository.retrieveDistinctProductFileIdsBasedOnRole(orgId, null, null, UserRole.OPERATORE.getRole());
 
     assertEquals(1, result.size());
     assertEquals("file123", result.getFirst().getProductFileId());

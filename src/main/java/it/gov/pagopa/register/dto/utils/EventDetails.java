@@ -8,11 +8,12 @@ public class EventDetails {
   private final String category;
   private final String productFileId;
   private final String organizationName;
-
-  public EventDetails(String orgId, String category, String productFileId, String organizationName) {
+  private final String initiativeId;
+  public EventDetails(String orgId, String category, String productFileId, String organizationName, String initiativeId) {
     this.orgId = orgId;
     this.category = category;
     this.productFileId = productFileId;
     this.organizationName = organizationName;
+    this.initiativeId = initiativeId;
   }
 }

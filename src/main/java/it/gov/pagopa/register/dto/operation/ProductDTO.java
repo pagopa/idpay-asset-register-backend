@@ -18,6 +18,8 @@ import java.util.List;
 public class ProductDTO {
 
   @Id
+  private String id;
+  private String initiativeId;
   private String gtinCode;
   private String organizationId;
   private String registrationDate;
@@ -25,6 +27,7 @@ public class ProductDTO {
   private String model;
   private String productGroup;
   private String category;
+  private String categoryCode;
   private String brand;
   private String eprelCode;
   private String productCode;

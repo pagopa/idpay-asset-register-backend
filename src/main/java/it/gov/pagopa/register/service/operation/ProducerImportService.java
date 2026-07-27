@@ -1,28 +1,33 @@
 package it.gov.pagopa.register.service.operation;
 
-import it.gov.pagopa.register.dto.operation.InitiativeStatus;
-import it.gov.pagopa.register.dto.operation.ProducerImportJsonDTO;
-import it.gov.pagopa.register.dto.operation.ProducerImportResultDTO;
+import feign.FeignException;
+import it.gov.pagopa.register.connector.initiative.PortalInitiativeService;
+import it.gov.pagopa.register.dto.operation.*;
 import it.gov.pagopa.register.model.operation.ProducersInitiative;
 import it.gov.pagopa.register.repository.operation.ProducersInitiativeRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.dao.QueryTimeoutException;
 import org.springframework.dao.TransientDataAccessResourceException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
-import tools.jackson.core.JacksonException;
-import tools.jackson.core.type.TypeReference;
-import tools.jackson.databind.ObjectMapper;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
-import java.time.format.DateTimeParseException;
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
+import java.util.Optional;
+import java.util.regex.Pattern;
+
+import static it.gov.pagopa.register.constants.AssetRegisterConstants.UploadEmailError.EMAIL_INITATIVE_ERROR_KEY;
+import static it.gov.pagopa.register.constants.AssetRegisterConstants.UploadEmailError.EMAIL_WRONG_ERROR_KEY;
+import static it.gov.pagopa.register.constants.ValidationPatterns.EMAIL_PATTERN;
+
+import static java.util.regex.Pattern.matches;
 
 @Slf4j
 @Service
@@ -31,35 +36,35 @@ public class ProducerImportService {
 
   private static final String CSV_SOURCE = "CSV";
   private static final int SAVE_BATCH_SIZE = 1000;
-  private static final String INITIATIVE_START_DATE = "initiativeStartDate";
-  private static final String INITIATIVE_END_DATE = "initiativeEndDate";
+  private static final Pattern EMAIL_VALIDATION_PATTERN = Pattern.compile(EMAIL_PATTERN);
+  private static final String MISSING_REQUIRED_FIELD_MESSAGE = "Missing required field [%s]";
+  private static final String INITIATIVE_ID = "initiativeId";
 
   private final ProducersInitiativeRepository producersInitiativeRepository;
-  private final ObjectMapper objectMapper;
+  private final PortalInitiativeService portalInitiativeService;
 
-
-  public ProducerImportResultDTO importJson(String json) {
-    log.info("[IMPORT_PRODUCERS] - Importing producers from json payload");
+  public ProducerImportResultDTO importProducers(List<ProducerInitiativeRequestDTO> requests) {
+    log.info("[IMPORT_PRODUCERS] - Importing producers from request payload");
 
     try {
-      List<ProducersInitiative> producers = parseJson(json);
-      ProducerImportResultDTO result = saveInBatches(producers);
+      ProducerConversionResult conversionResult = toProducers(requests);
+      ProducerImportResultDTO result = saveInBatches(
+        conversionResult.producers(),
+        conversionResult.totalRecords(),
+        conversionResult.failedRecords()
+      );
 
       log.info("[IMPORT_PRODUCERS] - Import completed. totalRecords={}, importedRecords={}, failedRecords={}",
         result.getTotalRecords(), result.getImportedRecords(), result.getFailedRecords());
       return result;
-    } catch (JacksonException e) {
-      log.warn("[IMPORT_PRODUCERS] - Invalid json payload: {}", e.getMessage());
-      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid JSON payload", e);
     } catch (IllegalArgumentException e) {
-      log.warn("[IMPORT_PRODUCERS] - Invalid json content: {}", e.getMessage());
+      log.warn("[IMPORT_PRODUCERS] - Invalid request content: {}", e.getMessage());
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e);
     }
   }
 
-  private ProducerImportResultDTO saveInBatches(List<ProducersInitiative> producers) {
+  private ProducerImportResultDTO saveInBatches(List<ProducersInitiative> producers, int totalRecords, int failedRecords) {
     int importedRecords = 0;
-    int failedRecords = 0;
     RuntimeException lastError = null;
 
     log.info("[IMPORT_PRODUCERS] - Saving {} producer records in batches of {}",
@@ -73,7 +78,7 @@ public class ProducerImportService {
         producersInitiativeRepository.saveAll(batch);
         importedRecords += batch.size();
         log.info("[IMPORT_PRODUCERS] - Saved batch {}/{} records. importedRecords={}, remainingRecords={}",
-          start + 1, end, importedRecords, producers.size() - importedRecords - failedRecords);
+          start + 1, end, importedRecords, totalRecords - importedRecords - failedRecords);
       } catch (RuntimeException e) {
         failedRecords += batch.size();
         lastError = e;
@@ -82,20 +87,22 @@ public class ProducerImportService {
       }
     }
 
-    if (failedRecords > 0) {
+    if (lastError != null) {
       String message = "Producer import partially failed. totalRecords=%d, importedRecords=%d, failedRecords=%d"
-        .formatted(producers.size(), importedRecords, failedRecords);
+        .formatted(totalRecords, importedRecords, failedRecords);
       HttpStatus status = isRequestTimeout(lastError) ? HttpStatus.REQUEST_TIMEOUT : HttpStatus.INTERNAL_SERVER_ERROR;
       log.error("[IMPORT_PRODUCERS] - {}", message, lastError);
       throw new ResponseStatusException(status, message, lastError);
     }
 
     return ProducerImportResultDTO.builder()
-      .status("OK")
-      .totalRecords(producers.size())
+      .status(failedRecords > 0 ? "PARTIAL" : "OK")
+      .totalRecords(totalRecords)
       .importedRecords(importedRecords)
-      .failedRecords(0)
-      .message("Producer import completed successfully")
+      .failedRecords(failedRecords)
+      .message(failedRecords > 0
+        ? "Producer import completed with failed records"
+        : "Producer import completed successfully")
       .build();
   }
 
@@ -120,119 +127,204 @@ public class ProducerImportService {
     return false;
   }
 
-  private List<ProducersInitiative> parseJson(String json) throws JacksonException {
-    if (json == null || json.isBlank()) {
-      throw new IllegalArgumentException("JSON payload is empty");
-    }
-
-    String trimmedJson = json.strip();
-
-    List<ProducerImportJsonDTO> records;
-
-    if (trimmedJson.startsWith("[")) {
-      List<Map<String, Object>> jsonRecords = objectMapper.readValue(
-        trimmedJson, new TypeReference<List<Map<String, Object>>>() {
-        });
-      records = jsonRecords.stream()
-        .map(this::toJsonDTO)
-        .toList();
-    } else {
-      records = Arrays.stream(trimmedJson.split("\\R"))
-        .map(String::strip)
-        .filter(line -> !line.isBlank())
-        .map(this::readJsonLine)
-        .toList();
-    }
-
-    if (records.isEmpty()) {
-      throw new IllegalArgumentException("JSON payload does not contain records");
+  private ProducerConversionResult toProducers(List<ProducerInitiativeRequestDTO> requests) {
+    if (requests == null || requests.isEmpty()) {
+      throw new IllegalArgumentException("Producer request payload does not contain records");
     }
 
     LocalDateTime now = LocalDateTime.now();
-    return records.stream()
-      .map(producerImportJsonDTO -> toProducer(producerImportJsonDTO, now))
-      .toList();
-  }
+    Map<String, InitiativeDTO> initiativeDetails = new HashMap<>();
+    List<ProducersInitiative> producers = new ArrayList<>();
+    int failedRecords = 0;
 
-  private ProducerImportJsonDTO readJsonLine(String line) {
-    try {
-      Map<String, Object> producerFields = objectMapper.readValue(line, new TypeReference<Map<String, Object>>() {
-      });
-      return toJsonDTO(producerFields);
-    } catch (JacksonException e) {
-      throw new IllegalArgumentException("Invalid JSON line", e);
+    for (ProducerInitiativeRequestDTO request : requests) {
+      try {
+        ProducerInput producerInput = toProducerInput(request);
+        producers.add(toProducer(
+          producerInput,
+          initiativeDetails.computeIfAbsent(producerInput.initiativeId(), portalInitiativeService::getInitiativeDetail),
+          now));
+      } catch (RuntimeException e) {
+        failedRecords++;
+        logSkippedRecord(request, e);
+      }
     }
+
+    return new ProducerConversionResult(producers, requests.size(), failedRecords);
   }
 
-  private ProducerImportJsonDTO toJsonDTO(Map<String, Object> producerFields) {
-    ProducerImportJsonDTO dto = new ProducerImportJsonDTO();
-    dto.setProducerId(stringValue(producerFields.get("producerId")));
-    dto.setInitiativeId(stringValue(producerFields.get("initiativeId")));
-    dto.setInitiativeName(stringValue(producerFields.get("initiativeName")));
-    dto.setInitiativeStatus(stringValue(producerFields.get("initiativeStatus"), producerFields.get("InitiativeStatus")));
-    dto.setInitiativeStartDate(stringValue(producerFields.get(INITIATIVE_START_DATE)));
-    dto.setInitiativeEndDate(stringValue(producerFields.get(INITIATIVE_END_DATE)));
-    dto.setInitiativeServiceId(stringValue(producerFields.get("initiativeServiceId")));
-    dto.setInitiativeOrganizationName(stringValue(producerFields.get("initiativeOrganizationName")));
-    return dto;
+  private String producerId(ProducerInitiativeRequestDTO request) {
+    return request == null ? null : StringUtils.strip(request.getProducerId());
   }
 
-  private String stringValue(Object... values) {
-    return Arrays.stream(values)
-      .filter(Objects::nonNull)
-      .findFirst()
-      .map(Object::toString)
-      .orElse(null);
+  private String initiativeId(ProducerInitiativeRequestDTO request) {
+    return request == null ? null : StringUtils.strip(request.getInitiativeId());
   }
 
-  private ProducersInitiative toProducer(ProducerImportJsonDTO dto, LocalDateTime now) {
-    String producerId = requiredValue(dto.getProducerId(), "producerId");
-    String initiativeId = requiredValue(dto.getInitiativeId(), "initiativeId");
+  private void logSkippedRecord(ProducerInitiativeRequestDTO request, RuntimeException e) {
+    if (e instanceof FeignException feignException) {
+      log.warn("[IMPORT_PRODUCERS] - Skipping producer record. producerId=[{}], initiativeId=[{}], invalidField=[{}], portalStatus=[{}], portalError={}",
+        producerId(request), initiativeId(request), invalidField(e), feignException.status(), portalError(feignException));
+      return;
+    }
+
+    log.warn("[IMPORT_PRODUCERS] - Skipping producer record. producerId=[{}], initiativeId=[{}], invalidField=[{}], error={}",
+      producerId(request), initiativeId(request), invalidField(e), e.getMessage());
+  }
+
+  private ProducerInput toProducerInput(ProducerInitiativeRequestDTO request) {
+    if (request == null) {
+      throw new IllegalArgumentException("Producer request cannot be null");
+    }
+
+    return new ProducerInput(
+      requiredValue(request.getProducerId(), "producerId"),
+      requiredValue(request.getInitiativeId(), INITIATIVE_ID),
+      requiredValue(request.getProducerName(), "producerName"),
+      optionalEmail(request.getProducerEmail(), request)
+    );
+  }
+
+  private ProducersInitiative toProducer(ProducerInput producerInput, InitiativeDTO initiativeDetail, LocalDateTime now) {
+    if (initiativeDetail == null) {
+      throw new IllegalArgumentException("Initiative detail not found for producerId [%s] and initiativeId [%s]"
+        .formatted(producerInput.producerId(), producerInput.initiativeId()));
+    }
+    String producerInitiativeId = producerInput.producerId() + "_" + producerInput.initiativeId();
+
+    String validatedEmail = null;
+    if (producerInput.producerEmail != null && !producerInput.producerEmail.isBlank()) {
+      if (matches(EMAIL_PATTERN, producerInput.producerEmail)) {
+        validatedEmail = producerInput.producerEmail;
+      } else {
+        log.warn("[IMPORT_PRODUCERS] - Invalid email format [{}] for producer {} and initiative {}. Saving producer WITHOUT email.",
+          producerInput.producerEmail, producerInput.producerId, producerInput.initiativeId);
+      }
+    }
 
     return ProducersInitiative.builder()
-      .id(producerId + "_" + initiativeId)
-      .producerId(producerId)
-      .initiativeId(initiativeId)
-      .initiativeName(requiredValue(dto.getInitiativeName(), "initiativeName"))
-      .initiativeStatus(parseInitiativeStatus(requiredValue(dto.getInitiativeStatus(), "initiativeStatus")))
-      .initiativeStartDate(parseJsonDate(
-        requiredValue(dto.getInitiativeStartDate(), INITIATIVE_START_DATE), INITIATIVE_START_DATE))
-      .initiativeEndDate(parseJsonDate(
-        requiredValue(dto.getInitiativeEndDate(), INITIATIVE_END_DATE), INITIATIVE_END_DATE))
-      .initiativeServiceId(requiredValue(dto.getInitiativeServiceId(), "initiativeServiceId"))
-      .initiativeOrganizationName(requiredValue(dto.getInitiativeOrganizationName(), "initiativeOrganizationName"))
+      .id(producerInitiativeId)
+      .producerId(producerInput.producerId())
+      .producerName(producerInput.producerName())
+      .producerEmail(validatedEmail)
+      .initiativeId(producerInput.initiativeId())
+      .initiativeName(requiredValue(initiativeDetail.getInitiativeName(), "initiativeName"))
+      .initiativeStatus(requiredStatus(initiativeDetail.getStatus(), "initiativeStatus"))
+      .initiativeStartDate(requiredDate(requiredGeneral(initiativeDetail).getStartDate(), "initiativeStartDate").atStartOfDay())
+      .initiativeEndDate(requiredDate(requiredGeneral(initiativeDetail).getEndDate(), "initiativeEndDate").atStartOfDay())
+      .initiativeServiceId(requiredValue(requiredAdditionalInfo(initiativeDetail).getServiceId(), "initiativeServiceId"))
+      .initiativeOrganizationName(requiredValue(initiativeDetail.getOrganizationName(), "initiativeOrganizationName"))
       .source(CSV_SOURCE)
       .enabled(Boolean.TRUE)
-      .createdAt(now)
+      .createdAt(resolveCreatedAt(producerInitiativeId, now))
       .updatedAt(now)
       .build();
   }
 
+  private LocalDateTime resolveCreatedAt(String producerInitiativeId, LocalDateTime now) {
+    return Optional.ofNullable(producersInitiativeRepository.findById(producerInitiativeId))
+      .flatMap(existingProducer -> existingProducer)
+      .map(ProducersInitiative::getCreatedAt)
+      .orElse(now);
+  }
+
+  public UpdatedOperativeEmailResult updateOperativeEmail(String organizationId, String initiativeId, String newEmail) {
+    String initiativeKey = organizationId + "_" + initiativeId;
+
+    log.info("[UPDATE_OPERATIVE_EMAIL] - Request to update operative email for key: {}", initiativeKey);
+
+    if (!matches(EMAIL_PATTERN, newEmail)) {
+      log.warn("[UPDATE_OPERATIVE_EMAIL] - Provided email [{}] has an invalid format for key: {}", newEmail, initiativeKey);
+      return UpdatedOperativeEmailResult.ko(EMAIL_WRONG_ERROR_KEY);
+    }
+
+    Optional<ProducersInitiative> optional = producersInitiativeRepository.findById(initiativeKey);
+      if(optional.isEmpty()){
+        log.error("[UPDATE_OPERATIVE_EMAIL] - Producer initiative not found for key: {}", initiativeKey);
+        return UpdatedOperativeEmailResult.ko(EMAIL_INITATIVE_ERROR_KEY);
+      }
+
+    ProducersInitiative initiative = optional.get();
+
+    initiative.setProducerEmail(newEmail.toLowerCase());
+    initiative.setUpdatedAt(LocalDateTime.now());
+
+    producersInitiativeRepository.save(initiative);
+
+    log.info("[UPDATE_OPERATIVE_EMAIL] - Operative email updated successfully to [{}] for key: {}", newEmail, initiativeKey);
+    return UpdatedOperativeEmailResult.ok();
+  }
+
   private String requiredValue(String value, String fieldName) {
-    if (value == null || value.isBlank()) {
-      throw new IllegalArgumentException("Missing required field [%s]".formatted(fieldName));
+    String cleanedValue = StringUtils.strip(value);
+    if (StringUtils.isBlank(cleanedValue)) {
+      throw new IllegalArgumentException(MISSING_REQUIRED_FIELD_MESSAGE.formatted(fieldName));
+    }
+    return cleanedValue;
+  }
+
+  private String optionalEmail(String value, ProducerInitiativeRequestDTO request) {
+    String email = StringUtils.strip(value);
+    if (StringUtils.isBlank(email)) {
+      return null;
+    }
+    if (EMAIL_VALIDATION_PATTERN.matcher(email).matches()) {
+      return email;
+    }
+    log.warn("[IMPORT_PRODUCERS] - Invalid producerEmail for producerId [{}], initiativeId [{}]. value will be stored as null",
+      producerId(request), initiativeId(request));
+    return null;
+  }
+
+  private String invalidField(RuntimeException e) {
+    if (e instanceof FeignException.NotFound) {
+      return INITIATIVE_ID;
+    }
+    String message = e.getMessage();
+    if (message == null || !message.startsWith("Missing required field [")) {
+      return message != null && message.toLowerCase().contains("initiative")
+        ? INITIATIVE_ID
+        : null;
+    }
+    return StringUtils.substringBetween(message, "[", "]");
+  }
+
+  private String portalError(FeignException e) {
+    String responseBody = e.contentUTF8();
+    return StringUtils.isNotBlank(responseBody) ? responseBody : e.getMessage();
+  }
+
+  private InitiativeDTO.InitiativeGeneralDTO requiredGeneral(InitiativeDTO initiativeDetail) {
+    if (initiativeDetail.getGeneral() == null) {
+      throw new IllegalArgumentException(MISSING_REQUIRED_FIELD_MESSAGE.formatted("initiativeGeneral"));
+    }
+    return initiativeDetail.getGeneral();
+  }
+
+  private InitiativeDTO.InitiativeAdditionalDTO requiredAdditionalInfo(InitiativeDTO initiativeDetail) {
+    if (initiativeDetail.getAdditionalInfo() == null) {
+      throw new IllegalArgumentException(MISSING_REQUIRED_FIELD_MESSAGE.formatted("initiativeAdditionalInfo"));
+    }
+    return initiativeDetail.getAdditionalInfo();
+  }
+
+  private LocalDate requiredDate(LocalDate value, String fieldName) {
+    if (value == null) {
+      throw new IllegalArgumentException(MISSING_REQUIRED_FIELD_MESSAGE.formatted(fieldName));
     }
     return value;
   }
 
-  private InitiativeStatus parseInitiativeStatus(String value) {
-    try {
-      return InitiativeStatus.valueOf(value);
-    } catch (IllegalArgumentException e) {
-      throw new IllegalArgumentException("Invalid initiativeStatus [%s]".formatted(value), e);
+  private InitiativeStatus requiredStatus(InitiativeStatus value, String fieldName) {
+    if (value == null) {
+      throw new IllegalArgumentException(MISSING_REQUIRED_FIELD_MESSAGE.formatted(fieldName));
     }
+    return value;
   }
 
-  private LocalDateTime parseJsonDate(String value, String fieldName) {
-    try {
-      return OffsetDateTime.parse(value).toLocalDateTime();
-    } catch (DateTimeParseException offsetDateTimeException) {
-      try {
-        return LocalDateTime.parse(value);
-      } catch (DateTimeParseException ex) {
-        ex.addSuppressed(offsetDateTimeException);
-        throw new IllegalArgumentException("Invalid date field [%s]".formatted(fieldName), ex);
-      }
-    }
+  private record ProducerInput(String producerId, String initiativeId, String producerName, String producerEmail) {
+  }
+
+  private record ProducerConversionResult(List<ProducersInitiative> producers, int totalRecords, int failedRecords) {
   }
 }

@@ -95,9 +95,11 @@ public class NotificationServiceImpl implements NotificationService {
 
 
   private EmailMessageDTO buildUploadEmailMessageDTO(String productFileId, String template, String recipientEmail, String subject) {
+    Map<String, String> templateValues = new HashMap<>();
+    templateValues.put("productFileName", productFileId);
     return EmailMessageDTO.builder()
       .templateName(template)
-      .templateValues(Map.of(emailProps.getPlaceHolder().get(PARTIAL), productFileId))
+      .templateValues(templateValues)
       .subject(subject)
       .senderEmail(null)
       .content(null)

@@ -1,267 +1,332 @@
 package it.gov.pagopa.register.service.validator;
 
 import it.gov.pagopa.register.configuration.ProductFileValidationConfig;
-import it.gov.pagopa.register.constants.AssetRegisterConstants;
+import it.gov.pagopa.register.configuration.InitiativeConfigMap;
+import it.gov.pagopa.register.model.initiative.CategoryConfig;
+import it.gov.pagopa.register.model.initiative.CsvTemplate;
+import it.gov.pagopa.register.model.initiative.InitiativeConfig;
+import it.gov.pagopa.register.model.initiative.ValidationRule;
 import it.gov.pagopa.register.dto.operation.ValidationResultDTO;
-import it.gov.pagopa.register.dto.utils.ColumnValidationRule;
+import it.gov.pagopa.register.service.validator.file.ProductFileValidatorService;
+import it.gov.pagopa.register.service.validator.rule.RuleDispatcher;
+import it.gov.pagopa.register.service.validator.rule.RuleExecutor;
 import org.apache.commons.csv.CSVRecord;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mockito;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockMultipartFile;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
+import static it.gov.pagopa.register.constants.AssetRegisterConstants.UploadError.*;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
-@ExtendWith(SpringExtension.class)
-@ContextConfiguration(classes = {
-  ProductFileValidatorService.class,
-})
+@ExtendWith(MockitoExtension.class)
 class ProductFileValidatorServiceTest {
 
-  @Autowired
-  ProductFileValidatorService productFileValidator;
+  private static final String INITIATIVE_ID = "687f8a176a5c92458819922a";
+  private static final String CATEGORY = "COOKINGHOBS";
+  private static final String HEADER = "Codice GTIN/EAN";
 
-  @MockitoBean
-  ProductFileValidationConfig validationConfig;
+  @Mock
+  private ProductFileValidationConfig validationConfig;
+  @Mock
+  private InitiativeConfigMap initiativeConfigMap;
+  @Mock
+  private RuleDispatcher ruleDispatcher;
+  @Mock
+  private RuleExecutor ruleExecutor;
+
+  private ProductFileValidatorService productFileValidator;
 
   @BeforeEach
   void setUp() {
-    validationConfig = Mockito.mock(ProductFileValidationConfig.class);
-    productFileValidator = new ProductFileValidatorService(validationConfig);
-    when(validationConfig.getMaxSize()).thenReturn(22);
-    when(validationConfig.getMaxRows()).thenReturn(100);
+    productFileValidator = new ProductFileValidatorService(validationConfig, initiativeConfigMap, ruleDispatcher);
+    lenient().when(validationConfig.getMaxSize()).thenReturn(1_000);
+    lenient().when(validationConfig.getMaxRows()).thenReturn(100);
   }
 
   @Test
   void validateFile_FileTypeError() throws IOException {
-    MockMultipartFile file = new MockMultipartFile(
-      "file",
-      "test.txt",
-      "text/csv",
-      "test content".getBytes());
-    String category = "Test";
-    ValidationResultDTO result = productFileValidator.validateFile(file,category);
-    assertNotNull(result);
-    assertEquals(AssetRegisterConstants.UploadKeyConstant.EXTENSION_FILE_ERROR_KEY, result.getErrorKey());
+    MockMultipartFile file = new MockMultipartFile("file", "test.txt", "text/csv", "test content".getBytes());
+
+    ValidationResultDTO result = productFileValidator.validateFile(file, CATEGORY, INITIATIVE_ID, "organization");
+
+    assertEquals(EXTENSION_FILE_ERROR_KEY, result.getErrorKey());
   }
 
   @Test
-  void validateFile_EmpyFileTypeError() throws IOException {
-    MockMultipartFile file = new MockMultipartFile(
-      "file",
-      "test.csv",
-      "text/csv",
-      "".getBytes());
-    String category = "Test";
-    ValidationResultDTO result = productFileValidator.validateFile(file,category);
-    assertNotNull(result);
-    assertEquals(AssetRegisterConstants.UploadKeyConstant.EMPTY_FILE_ERROR_KEY, result.getErrorKey());
+  void validateFile_EmptyFileTypeError() throws IOException {
+    MockMultipartFile file = new MockMultipartFile("file", "test.csv", "text/csv", new byte[0]);
+
+    ValidationResultDTO result = productFileValidator.validateFile(file, CATEGORY, INITIATIVE_ID, "organization");
+
+    assertEquals(EMPTY_FILE_ERROR_KEY, result.getErrorKey());
   }
+
   @Test
   void validateFile_SizeFileTypeError() throws IOException {
-    MockMultipartFile file = new MockMultipartFile(
-      "file",
-      "test.csv",
-      "text/csv",
-      "Codice GTIN/EAN\\n1234567".getBytes());
-    String category = "Test";
-    ValidationResultDTO result = productFileValidator.validateFile(file,category);
-    assertNotNull(result);
-    assertEquals(AssetRegisterConstants.UploadKeyConstant.MAX_SIZE_FILE_ERROR_KEY, result.getErrorKey());
+    when(validationConfig.getMaxSize()).thenReturn(1);
+    MockMultipartFile file = new MockMultipartFile("file", "test.csv", "text/csv", "too-big".getBytes());
+
+    ValidationResultDTO result = productFileValidator.validateFile(file, CATEGORY, INITIATIVE_ID, "organization");
+
+    assertEquals(MAX_SIZE_FILE_ERROR_KEY, result.getErrorKey());
+  }
+
+  @Test
+  void validateFile_InitiativeConfigError() throws IOException {
+    MockMultipartFile file = csv("test.csv", HEADER + "\n12345");
+    when(initiativeConfigMap.get(INITIATIVE_ID)).thenReturn(null);
+
+    ValidationResultDTO result = productFileValidator.validateFile(file, CATEGORY, INITIATIVE_ID, "organization");
+
+    assertEquals(INITIATIVE_CONFIG_ERROR, result.getErrorKey());
   }
 
   @Test
   void validateFile_UnknownCategoryError() throws IOException {
-    MockMultipartFile file = new MockMultipartFile(
-      "file",
-      "test.csv",
-      "text/csv",
-      "test".getBytes()
-    );
-    String category = "UnknownCategory";
+    MockMultipartFile file = csv("test.csv", HEADER + "\n12345");
+    when(initiativeConfigMap.get(INITIATIVE_ID)).thenReturn(initiativeConfig());
 
-    ValidationResultDTO result = productFileValidator.validateFile(file, category);
-    System.out.println(result.getErrorKey());
-    assertNotNull(result);
-    assertEquals(AssetRegisterConstants.UploadKeyConstant.UNKNOWN_CATEGORY_ERROR_KEY, result.getErrorKey());
+    ValidationResultDTO result = productFileValidator.validateFile(file, "UNKNOWN", INITIATIVE_ID, "organization");
+
+    assertEquals(UNKNOWN_CATEGORY_ERROR_KEY, result.getErrorKey());
   }
 
   @Test
-  void validateFile_HeaderFileError() throws Exception {
-    MockMultipartFile file = new MockMultipartFile(
-      "file",
-      "test.csv",
-      "text/csv",
-      "test content".getBytes()
-    );
-    String category = "COOKINGHOBS";
-    LinkedHashMap<String, ColumnValidationRule> mockSchema = new LinkedHashMap<>();
-    mockSchema.put("Codice GTIN/EAN", new ColumnValidationRule((v, z) -> true, "Error"));
-    mockSchema.put("Codice Prodotto", new ColumnValidationRule((v, z) -> true, "Error"));
+  void validateFile_HeaderFileError() throws IOException {
+    MockMultipartFile file = csv("test.csv", "wrong\n12345");
+    when(initiativeConfigMap.get(INITIATIVE_ID)).thenReturn(initiativeConfig());
 
-    Map<String, LinkedHashMap<String, ColumnValidationRule>> schemas = new HashMap<>();
-    schemas.put(category.toLowerCase(), mockSchema);
+    ValidationResultDTO result = productFileValidator.validateFile(file, CATEGORY, INITIATIVE_ID, "organization");
 
-    when(validationConfig.getSchemas()).thenReturn(schemas);
-    when(validationConfig.getMaxRows()).thenReturn(100);
-
-    // Act
-    ValidationResultDTO result = productFileValidator.validateFile(file, category);
-
-    // Assert
-    System.out.println(result.getErrorKey());
-    assertNotNull(result);
-    assertEquals(AssetRegisterConstants.UploadKeyConstant.HEADER_FILE_ERROR_KEY, result.getErrorKey());
+    assertEquals(HEADER_FILE_ERROR_KEY, result.getErrorKey());
   }
 
   @Test
   void validateFile_NoRowError() throws IOException {
-    MockMultipartFile file = new MockMultipartFile(
-      "file",
-      "test.csv",
-      "text/csv",
-      "Codice GTIN/EAN".getBytes()
-    );
+    MockMultipartFile file = csv("test.csv", HEADER);
+    when(initiativeConfigMap.get(INITIATIVE_ID)).thenReturn(initiativeConfig());
 
-    String category = "COOKINGHOBS";
-    LinkedHashMap<String, ColumnValidationRule> mockSchema = new LinkedHashMap<>();
-    mockSchema.put("Codice GTIN/EAN", new ColumnValidationRule((v, z) -> true, "Error"));
+    ValidationResultDTO result = productFileValidator.validateFile(file, CATEGORY, INITIATIVE_ID, "organization");
 
-    Map<String, LinkedHashMap<String, ColumnValidationRule>> schemas = new HashMap<>();
-    schemas.put(category.toLowerCase(), mockSchema);
-
-    when(validationConfig.getSchemas()).thenReturn(schemas);
-    when(validationConfig.getMaxRows()).thenReturn(1000);
-
-
-    ValidationResultDTO result = productFileValidator.validateFile(file, category);
-
-    assertNotNull(result);
-    assertEquals(AssetRegisterConstants.UploadKeyConstant.EMPTY_FILE_ERROR_KEY, result.getErrorKey());
+    assertEquals(EMPTY_FILE_ERROR_KEY, result.getErrorKey());
   }
-
 
   @Test
   void validateFile_MaxRowFileError() throws IOException {
-
-    MockMultipartFile file = new MockMultipartFile(
-      "file",
-      "test.csv",
-      "text/csv",
-      "Codice GTIN/EAN\n12345".getBytes()
-    );
-
-    String category = "COOKINGHOBS";
-
-    LinkedHashMap<String, ColumnValidationRule> mockSchema = new LinkedHashMap<>();
-    mockSchema.put("Codice GTIN/EAN", new ColumnValidationRule((v, z) -> true, "Error"));
-
-    Map<String, LinkedHashMap<String, ColumnValidationRule>> schemas = new HashMap<>();
-    schemas.put(category.toLowerCase(), mockSchema);
-
-    when(validationConfig.getSchemas()).thenReturn(schemas);
     when(validationConfig.getMaxRows()).thenReturn(0);
+    MockMultipartFile file = csv("test.csv", HEADER + "\n12345");
+    when(initiativeConfigMap.get(INITIATIVE_ID)).thenReturn(initiativeConfig());
 
-    ValidationResultDTO result = productFileValidator.validateFile(file, category);
+    ValidationResultDTO result = productFileValidator.validateFile(file, CATEGORY, INITIATIVE_ID, "organization");
 
-    System.out.println(result.getErrorKey());
-    assertNotNull(result);
-    assertEquals(AssetRegisterConstants.UploadKeyConstant.MAX_ROW_FILE_ERROR_KEY, result.getErrorKey());
+    assertEquals(MAX_ROW_FILE_ERROR_KEY, result.getErrorKey());
   }
-
-  @Test
-  void validateFile_InvalidFileExtensionError() throws IOException {
-    MockMultipartFile file = new MockMultipartFile(
-      "file", "file.txt", "text/plain", "invalid content".getBytes()
-    );
-
-    String category = "COOKINGHOBS";
-
-
-    ValidationResultDTO result = productFileValidator.validateFile(file, category);
-
-    assertNotNull(result);
-    assertEquals(AssetRegisterConstants.UploadKeyConstant.EXTENSION_FILE_ERROR_KEY, result.getErrorKey());
-  }
-
 
   @Test
   void validateFile_Ok() throws IOException {
-    MockMultipartFile file = new MockMultipartFile(
-      "file", "valid.csv", "text/csv",
-      "Codice GTIN/EAN\n12345".getBytes()
-    );
+    MockMultipartFile file = csv("valid.csv", HEADER + "\n12345");
+    when(initiativeConfigMap.get(INITIATIVE_ID)).thenReturn(initiativeConfig());
 
-    String category = "COOKINGHOBS";
+    ValidationResultDTO result = productFileValidator.validateFile(file, CATEGORY, INITIATIVE_ID, "organization");
 
-    LinkedHashMap<String, ColumnValidationRule> mockSchema = new LinkedHashMap<>();
-    mockSchema.put("Codice GTIN/EAN", new ColumnValidationRule((v, z) -> true, "Error"));
-
-    Map<String, LinkedHashMap<String, ColumnValidationRule>> schemas = new HashMap<>();
-    schemas.put(category.toLowerCase(), mockSchema);
-
-    when(validationConfig.getSchemas()).thenReturn(schemas);
-    when(validationConfig.getMaxRows()).thenReturn(100);
-
-
-    ValidationResultDTO result = productFileValidator.validateFile(file, category);
-
-    assertNotNull(result);
     assertEquals("OK", result.getStatus());
+    assertEquals(1, result.getRecords().size());
   }
-
 
   @Test
   void validateRecords_WithInvalidDataErrors() {
-    String category = "COOKINGHOBS";
+    CSVRecord csvRecord = org.mockito.Mockito.mock(CSVRecord.class);
+    when(initiativeConfigMap.get(INITIATIVE_ID)).thenReturn(initiativeConfig());
+    when(ruleDispatcher.resolve("REGEX")).thenReturn(ruleExecutor);
+    when(ruleExecutor.evaluate(any(), any())).thenReturn(false);
 
-    LinkedHashMap<String, ColumnValidationRule> mockSchema = new LinkedHashMap<>();
-    mockSchema.put("Codice GTIN/EAN", new ColumnValidationRule(
-      (value, cat) -> value != null && value.matches("\\d{13}"), "Invalid GTIN"
-    ));
+    ValidationResultDTO result = productFileValidator.validateRecords(List.of(csvRecord), CATEGORY, INITIATIVE_ID);
 
-    Map<String, LinkedHashMap<String, ColumnValidationRule>> schemas = new HashMap<>();
-    schemas.put(category.toLowerCase(), mockSchema);
-    when(validationConfig.getSchemas()).thenReturn(schemas);
-
-    List<String> headers = List.of("Codice GTIN/EAN");
-
-    CSVRecord csvRecord = Mockito.mock(CSVRecord.class);
-    when(csvRecord.get("Codice GTIN/EAN")).thenReturn("123ABC");
-
-    List<CSVRecord> records = List.of(csvRecord);
-
-    ValidationResultDTO result = productFileValidator.validateRecords(records, headers, category);
-
-    assertNotNull(result);
+    assertEquals("KO", result.getStatus());
     assertFalse(result.getInvalidRecords().isEmpty());
-    assertTrue(result.getErrorMessages().get(csvRecord).contains("Invalid GTIN"));
+    assertTrue(result.getErrorMessages().get(csvRecord).contains("Piano cottura"));
   }
-
 
   @Test
-  void validateRecords_NoRulesFoundException() {
-    String category = "UNKNOWN";
-    when(validationConfig.getSchemas()).thenReturn(Collections.emptyMap());
+  void validateRecords_WithValidDataReturnsOk() {
+    CSVRecord csvRecord = org.mockito.Mockito.mock(CSVRecord.class);
+    when(initiativeConfigMap.get(INITIATIVE_ID)).thenReturn(initiativeConfig());
+    when(ruleDispatcher.resolve("REGEX")).thenReturn(ruleExecutor);
+    when(ruleExecutor.evaluate(any(), any())).thenReturn(true);
 
-    List<CSVRecord> records = List.of();
-    List<String> headers = List.of();
+    ValidationResultDTO result = productFileValidator.validateRecords(List.of(csvRecord), CATEGORY, INITIATIVE_ID);
 
-    IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
-      productFileValidator.validateRecords(records, headers, category)
-    );
-
-    assertEquals("No validation rules found for category: " + category, exception.getMessage());
+    assertEquals("OK", result.getStatus());
+    assertNull(result.getInvalidRecords());
   }
 
+  @Test
+  void validateFile_BlankFileNameError() throws IOException {
+    MockMultipartFile file = new MockMultipartFile("file", "", "text/csv", "test content".getBytes());
 
+    ValidationResultDTO result = productFileValidator.validateFile(file, CATEGORY, INITIATIVE_ID, "organization");
+
+    assertEquals("KO", result.getStatus());
+    assertEquals(EMPTY_FILE_ERROR_KEY, result.getErrorKey());
+  }
+
+  @Test
+  void validateFile_CsvTemplateNotFoundError() throws IOException {
+    MockMultipartFile file = csv("test.csv", HEADER + "\n12345");
+
+    InitiativeConfig config = new InitiativeConfig();
+    CategoryConfig categoryConfig = new CategoryConfig("MISSING_TEMPLATE", HEADER, List.of(), "EPREL");
+    config.setCategories(Map.of(CATEGORY, categoryConfig));
+    config.setCsvTemplates(Map.of());
+
+    when(initiativeConfigMap.get(INITIATIVE_ID)).thenReturn(config);
+
+    ValidationResultDTO result = productFileValidator.validateFile(file, CATEGORY, INITIATIVE_ID, "organization");
+
+    assertEquals("KO", result.getStatus());
+    assertEquals(INITIATIVE_CONFIG_ERROR, result.getErrorKey());
+  }
+
+  @Test
+  void validateFile_CsvTemplateHeadersEmptyError() throws IOException {
+    MockMultipartFile file = csv("test.csv", HEADER + "\n12345");
+
+    InitiativeConfig config = new InitiativeConfig();
+    CategoryConfig categoryConfig = new CategoryConfig("TEMPLATE", HEADER, List.of(), "EPREL");
+    config.setCategories(Map.of(CATEGORY, categoryConfig));
+    config.setCsvTemplates(Map.of("TEMPLATE", new CsvTemplate(null, List.of())));
+
+    when(initiativeConfigMap.get(INITIATIVE_ID)).thenReturn(config);
+
+    ValidationResultDTO result = productFileValidator.validateFile(file, CATEGORY, INITIATIVE_ID, "organization");
+
+    assertEquals("KO", result.getStatus());
+    assertEquals(INITIATIVE_CONFIG_ERROR, result.getErrorKey());
+  }
+
+  @Test
+  void validateFile_CsvTemplateRulesEmptyError() throws IOException {
+    MockMultipartFile file = csv("test.csv", HEADER + "\n12345");
+
+    InitiativeConfig config = new InitiativeConfig();
+    CategoryConfig categoryConfig = new CategoryConfig("TEMPLATE", HEADER, List.of(), "EPREL");
+    config.setCategories(Map.of(CATEGORY, categoryConfig));
+    config.setCsvTemplates(Map.of("TEMPLATE", new CsvTemplate(List.of(HEADER), null)));
+
+    when(initiativeConfigMap.get(INITIATIVE_ID)).thenReturn(config);
+
+    ValidationResultDTO result = productFileValidator.validateFile(file, CATEGORY, INITIATIVE_ID, "organization");
+
+    assertEquals("KO", result.getStatus());
+    assertEquals(MAX_ROW_FILE_ERROR_KEY, result.getErrorKey());
+  }
+
+  @Test
+  void validateFile_InitiativeCategoriesEmptyError() throws IOException {
+    MockMultipartFile file = csv("test.csv", HEADER + "\n12345");
+
+    InitiativeConfig config = new InitiativeConfig();
+    config.setCategories(Map.of());
+
+    when(initiativeConfigMap.get(INITIATIVE_ID)).thenReturn(config);
+
+    ValidationResultDTO result = productFileValidator.validateFile(file, CATEGORY, INITIATIVE_ID, "organization");
+
+    assertEquals("KO", result.getStatus());
+    assertEquals(INITIATIVE_CONFIG_ERROR, result.getErrorKey());
+  }
+
+  @Test
+  void validateFile_CategoryConfigOrTemplateReferenceNullError() throws IOException {
+    MockMultipartFile file = csv("test.csv", HEADER + "\n12345");
+
+    InitiativeConfig config = new InitiativeConfig();
+    config.setCategories(new HashMap<>());
+    config.getCategories().put(CATEGORY, null);
+
+    when(initiativeConfigMap.get(INITIATIVE_ID)).thenReturn(config);
+
+    ValidationResultDTO result = productFileValidator.validateFile(file, CATEGORY, INITIATIVE_ID, "organization");
+
+    assertEquals("KO", result.getStatus());
+    assertEquals(INITIATIVE_CONFIG_ERROR, result.getErrorKey());
+  }
+
+  @Test
+  void validateFile_CsvTemplateRulesIsEmpty() throws IOException {
+    MockMultipartFile file = csv("test.csv", HEADER + "\n12345");
+    InitiativeConfig config = new InitiativeConfig();
+    CategoryConfig categoryConfig = new CategoryConfig("TEMPLATE", HEADER, List.of(), "EPREL");
+    config.setCategories(Map.of(CATEGORY, categoryConfig));
+    config.setCsvTemplates(Map.of("TEMPLATE", new CsvTemplate(List.of(HEADER), List.of())));
+    when(initiativeConfigMap.get(INITIATIVE_ID)).thenReturn(config);
+    ValidationResultDTO result = productFileValidator.validateFile(file, CATEGORY, INITIATIVE_ID, "organization");
+    assertEquals("KO", result.getStatus());
+    assertEquals(MAX_ROW_FILE_ERROR_KEY, result.getErrorKey());
+  }
+
+  @Test
+  void validateFile_InitiativeCategoriesIsNull() throws IOException {
+    MockMultipartFile file = csv("test.csv", HEADER + "\n12345");
+    InitiativeConfig config = new InitiativeConfig();
+    config.setCategories(null);
+    when(initiativeConfigMap.get(INITIATIVE_ID)).thenReturn(config);
+    ValidationResultDTO result = productFileValidator.validateFile(file, CATEGORY, INITIATIVE_ID, "organization");
+    assertEquals("KO", result.getStatus());
+    assertEquals(INITIATIVE_CONFIG_ERROR, result.getErrorKey());
+  }
+
+  @Test
+  void validateFile_CategoryConfigCsvTemplateIsNull() throws IOException {
+    MockMultipartFile file = csv("test.csv", HEADER + "\n12345");
+    InitiativeConfig config = new InitiativeConfig();
+    CategoryConfig categoryConfig = new CategoryConfig(null, HEADER, List.of(), "EPREL");
+    config.setCategories(Map.of(CATEGORY, categoryConfig));
+    when(initiativeConfigMap.get(INITIATIVE_ID)).thenReturn(config);
+    ValidationResultDTO result = productFileValidator.validateFile(file, CATEGORY, INITIATIVE_ID, "organization");
+    assertEquals("KO", result.getStatus());
+    assertEquals(INITIATIVE_CONFIG_ERROR, result.getErrorKey());
+  }
+
+  @Test
+  void validateFile_CsvTemplateHeadersIsEmpty() throws IOException {
+    MockMultipartFile file = csv("test.csv", HEADER + "\n12345");
+    InitiativeConfig config = new InitiativeConfig();
+    CategoryConfig categoryConfig = new CategoryConfig("TEMPLATE", HEADER, List.of(), "EPREL");
+    config.setCategories(Map.of(CATEGORY, categoryConfig));
+    config.setCsvTemplates(Map.of("TEMPLATE", new CsvTemplate(List.of(), List.of())));
+    when(initiativeConfigMap.get(INITIATIVE_ID)).thenReturn(config);
+    ValidationResultDTO result = productFileValidator.validateFile(file, CATEGORY, INITIATIVE_ID, "organization");
+    assertEquals("KO", result.getStatus());
+    assertEquals(INITIATIVE_CONFIG_ERROR, result.getErrorKey());
+  }
+
+  private MockMultipartFile csv(String filename, String content) {
+    return new MockMultipartFile("file", filename, "text/csv", content.getBytes());
+  }
+
+  private InitiativeConfig initiativeConfig() {
+    InitiativeConfig config = new InitiativeConfig();
+    CategoryConfig categoryConfig = new CategoryConfig("TEMPLATE", HEADER, List.of(), "EPREL");
+    ValidationRule rule = ValidationRule.builder()
+      .key("REGEX")
+      .field(HEADER)
+      .value("\\d+")
+      .errorKey("ERROR_CATEGORY_PRODUCTS")
+      .build();
+    config.setCategories(Map.of(CATEGORY, categoryConfig));
+    config.setCsvTemplates(Map.of("TEMPLATE", new CsvTemplate(List.of(HEADER), List.of(rule))));
+    return config;
+  }
 }
