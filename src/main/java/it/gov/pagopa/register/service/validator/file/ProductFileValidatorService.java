@@ -80,13 +80,7 @@ public class ProductFileValidatorService {
     }
 
     CategoryConfig categoryConfig = initiativeConfig.getCategories().get(category);
-    Map<String, CsvTemplate> csvTemplates = initiativeConfig.getCsvTemplates();
-    if (csvTemplates == null || csvTemplates.isEmpty()) {
-      log.error("[VALIDATE_FILE] - CSV templates section not valid");
-      return ValidationResultDTO.ko(INITIATIVE_CONFIG_ERROR);
-    }
-
-    CsvTemplate csvTemplate = csvTemplates.get(categoryConfig.getCsvTemplate());
+    CsvTemplate csvTemplate = initiativeConfig.getCsvTemplates().get(categoryConfig.getCsvTemplate());
 
     if (csvTemplate == null) {
       log.error("[VALIDATE_FILE] - CSV template not found for category: {}", category);
