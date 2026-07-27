@@ -16,6 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -26,7 +27,7 @@ import static it.gov.pagopa.register.constants.AssetRegisterConstants.Category.L
 import static it.gov.pagopa.register.constants.AssetRegisterConstants.UploadError.*;
 
 
-@Component
+@Service
 @RequiredArgsConstructor
 @Slf4j
 public class ProductFileValidatorService {
