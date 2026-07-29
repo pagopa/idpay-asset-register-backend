@@ -1,5 +1,7 @@
 package it.gov.pagopa.common.web.exception;
 
+import it.gov.pagopa.common.web.dto.ErrorDTO;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
@@ -27,7 +29,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import tools.jackson.databind.ObjectMapper;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 enum TestEnum {
   VALUE_ONE, VALUE_TWO
@@ -49,6 +56,9 @@ class ValidationExceptionHandlerTest {
 
   @MockitoSpyBean
   private TestController testControllerSpy;
+
+  @Autowired
+  private ValidationExceptionHandler validationExceptionHandler;
 
   @RestController
   @Slf4j
@@ -126,5 +136,35 @@ class ValidationExceptionHandlerTest {
       .andExpect(MockMvcResultMatchers.status().isBadRequest())
       .andExpect(MockMvcResultMatchers.jsonPath("$.code").value("INVALID_REQUEST"))
       .andExpect(MockMvcResultMatchers.jsonPath("$.message").value(org.hamcrest.Matchers.containsString("[intParam]")));
+  }
+
+  @Test
+  void handleMethodArgumentTypeMismatchException_EmptyInt() throws Exception {
+
+    mockMvc.perform(MockMvcRequestBuilders.get("/test-enum")
+        .queryParam("enumParam", "VALUE_ONE")
+        .queryParam("intParam", "")
+        .accept(MediaType.APPLICATION_JSON))
+      .andExpect(MockMvcResultMatchers.status().isBadRequest())
+      .andExpect(MockMvcResultMatchers.jsonPath("$.code").value("INVALID_REQUEST"))
+      .andExpect(MockMvcResultMatchers.jsonPath("$.message")
+        .value("[intParam]: invalid request parameter"));
+  }
+
+  @Test
+  void handleMethodArgumentTypeMismatchException_NullTypeAndValue() {
+    MethodArgumentTypeMismatchException exception = mock(MethodArgumentTypeMismatchException.class);
+    HttpServletRequest request = mock(HttpServletRequest.class);
+    when(exception.getName()).thenReturn("unknownParam");
+    when(exception.getRequiredType()).thenReturn(null);
+    when(exception.getValue()).thenReturn(null);
+    when(request.getMethod()).thenReturn("GET");
+    when(request.getRequestURI()).thenReturn("/test");
+
+    ErrorDTO response =
+      validationExceptionHandler.handleMethodArgumentTypeMismatchException(exception, request);
+
+    assertEquals("INVALID_REQUEST", response.getCode());
+    assertEquals("[unknownParam]: invalid request parameter", response.getMessage());
   }
 }
