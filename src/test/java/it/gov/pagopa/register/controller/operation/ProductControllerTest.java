@@ -26,6 +26,7 @@ import java.util.List;
 import static it.gov.pagopa.register.constants.AssetRegisterConstants.USERNAME;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -118,6 +119,28 @@ class ProductControllerTest {
           .queryParam("organizationId", "83843864-f3c0-4def-badb-7f197471b72e")
           .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isInternalServerError());
+    }
+
+    @Test
+    void testGetProducts_InvalidStatus_ShouldReturnBadRequest() throws Exception {
+      mockMvc.perform(get("/idpay/register/initiatives/{initiativeId}/products", INITIATIVE_ID)
+          .queryParam("status", "NOT_A_STATUS")
+          .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.code").value("INVALID_REQUEST"));
+
+      verifyNoInteractions(productService);
+    }
+
+    @Test
+    void testGetProducts_InvalidCategory_ShouldReturnBadRequest() throws Exception {
+      mockMvc.perform(get("/idpay/register/initiatives/{initiativeId}/products", INITIATIVE_ID)
+          .queryParam("category", "NOT_A_CATEGORY")
+          .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.code").value("INVALID_REQUEST"));
+
+      verifyNoInteractions(productService);
     }
 
     @Test
