@@ -16,6 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -26,7 +27,7 @@ import static it.gov.pagopa.register.constants.AssetRegisterConstants.Category.L
 import static it.gov.pagopa.register.constants.AssetRegisterConstants.UploadError.*;
 
 
-@Component
+@Service
 @RequiredArgsConstructor
 @Slf4j
 public class ProductFileValidatorService {
@@ -69,6 +70,11 @@ public class ProductFileValidatorService {
     }
 
     InitiativeConfig initiativeConfig = initiativeConfigMap.get(initiativeId);
+    if (initiativeConfig == null) {
+      log.error("[VALIDATE_FILE] - Unknown initiative");
+      return ValidationResultDTO.ko(INITIATIVE_CONFIG_ERROR);
+    }
+
     ValidationResultDTO configCheck = checkInitiativeAndCategoryConfig(initiativeConfig, category);
     if (configCheck != null) {
       return configCheck;
@@ -116,11 +122,6 @@ public class ProductFileValidatorService {
   }
 
   private ValidationResultDTO checkInitiativeAndCategoryConfig(InitiativeConfig initiativeConfig, String category) {
-    if (initiativeConfig == null) {
-      log.error("[VALIDATE_FILE] - Unknown initiative");
-      return ValidationResultDTO.ko(INITIATIVE_CONFIG_ERROR);
-    }
-
     if (initiativeConfig.getCategories() == null || initiativeConfig.getCategories().isEmpty()) {
       log.error("[VALIDATE_FILE] - CSV template category section not valid ");
       return ValidationResultDTO.ko(INITIATIVE_CONFIG_ERROR);
