@@ -27,6 +27,8 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -111,6 +113,38 @@ class ValidationServiceTest {
     );
 
     assertEquals(1, result.getInvalidRecords().size());
+  }
+
+  @Test
+  void shouldSkipExternalExecutor_whenRecordIsAlreadyInvalid() {
+    CSVRecord csvRecord = mock(CSVRecord.class);
+
+    CategoryConfig category = mock(CategoryConfig.class);
+    when(category.getProductMapper()).thenReturn("TEST");
+
+    when(mapper.extractBusinessKey(any(), any())).thenReturn("KEY");
+
+    Product existing = new Product();
+    existing.setOrganizationId("OTHER");
+
+    when(productRepository.findByGtinCodeAndInitiativeId(any(), any()))
+      .thenReturn(Optional.of(existing));
+
+    ProductValidationResult result = validationService.validateRecords(
+      List.of(csvRecord),
+      "cat",
+      "ORG",
+      "init",
+      "file",
+      List.of(),
+      "orgName",
+      mock(InitiativeConfig.class),
+      category,
+      List.of("VALID")
+    );
+
+    assertEquals(1, result.getInvalidRecords().size());
+    verify(externalCheckExecutor, never()).execute(any(), any(), any(), any(), any());
   }
 
   @Test

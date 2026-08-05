@@ -80,17 +80,18 @@ public abstract class AbstractValidationService {
           isValidRecord = false;
       }
 
-      // External checks (hook)
+      Map<String, Object> externalData = Map.of();
+      if (isValidRecord) {
+        ExternalCheckResult externalResult = performExternalChecks(csvRecord, externalContext);
 
-      ExternalCheckResult externalResult = performExternalChecks(csvRecord, externalContext);
+        if (!externalResult.isValid()) {
+          invalidRecords.add(csvRecord);
+          errorMessages.put(csvRecord, externalResult.getErrorMessage());
+          isValidRecord = false;
+        }
 
-      if (!externalResult.isValid()) {
-        invalidRecords.add(csvRecord);
-        errorMessages.put(csvRecord, externalResult.getErrorMessage());
-        isValidRecord = false;
+        externalData = externalResult.getExternalData();
       }
-
-      Map<String, Object> externalData = externalResult.getExternalData();
 
 
       if (isValidRecord) {
