@@ -77,6 +77,7 @@ public class NotificationServiceImpl implements NotificationService {
           templateValues.put(placeholder, htmlList);
         }
         case "formalMotivation" -> templateValues.put("formalMotivation", formalMotivation);
+        case "portalUrl" -> templateValues.put("portalUrl", emailProps.getPortalUrl());
         default ->
           log.warn("Placeholder not exists: {}", placeholder);
 
