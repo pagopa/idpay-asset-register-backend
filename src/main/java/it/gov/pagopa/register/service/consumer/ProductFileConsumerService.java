@@ -267,7 +267,6 @@ public class ProductFileConsumerService extends BaseKafkaConsumer<List<StorageEv
           orgId,
           initiativeId,
           fileId,
-          headers,
           organizationName,
           initiativeConfig,
           categoryConfig,
