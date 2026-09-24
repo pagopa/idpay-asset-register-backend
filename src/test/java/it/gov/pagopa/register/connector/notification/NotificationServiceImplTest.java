@@ -49,7 +49,12 @@ class NotificationServiceImplTest {
     assertEquals("Prodotti elaborati con successo - Registro dei beni", email.getSubject());
     assertEquals("Email_RDB_EsitoProdottiOK", email.getTemplateName());
 
-    assertEquals(Map.of("productFileName", PRODUCT_FILE_ID), email.getTemplateValues());
+    Map<String, String> expectedTemplateValues = Map.of(
+      "productFileName", PRODUCT_FILE_ID,
+      "portalUrl", emailNotificationConfig.getPortalUrl()
+    );
+
+    assertEquals(expectedTemplateValues, email.getTemplateValues());
   }
 
   @Test
@@ -64,7 +69,12 @@ class NotificationServiceImplTest {
     assertEquals("Elaborazione parziale dei prodotti - Registro dei beni", email.getSubject());
     assertEquals("Email_RDB_EsitoProdottiParziale", email.getTemplateName());
 
-    assertEquals(Map.of("productFileName", PRODUCT_FILE_ID), email.getTemplateValues());
+    Map<String, String> expectedTemplateValues = Map.of(
+      "productFileName", PRODUCT_FILE_ID,
+      "portalUrl", emailNotificationConfig.getPortalUrl()
+    );
+
+    assertEquals(expectedTemplateValues, email.getTemplateValues());
   }
 
 

@@ -33,6 +33,11 @@ public class NotificationServiceImpl implements NotificationService {
       senderEmail,
       emailProps.getSubject().get(OK)
     );
+
+    Optional.ofNullable(emailProps.getPortalUrl())
+      .filter(StringUtils::hasText)
+      .ifPresent(url -> email.getTemplateValues().put("portalUrl", url));
+
     notificationRestClient.sendEmail(email);
   }
 
@@ -44,6 +49,11 @@ public class NotificationServiceImpl implements NotificationService {
       recipientEmail,
       emailProps.getSubject().get(PARTIAL)
     );
+
+    Optional.ofNullable(emailProps.getPortalUrl())
+      .filter(StringUtils::hasText)
+      .ifPresent(url -> email.getTemplateValues().put("portalUrl", url));
+
     notificationRestClient.sendEmail(email);
   }
 
