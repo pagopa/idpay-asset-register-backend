@@ -4,6 +4,7 @@ import it.gov.pagopa.register.configuration.EmailNotificationConfig;
 import it.gov.pagopa.register.dto.notification.EmailMessageDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 
 import java.util.*;
@@ -77,6 +78,10 @@ public class NotificationServiceImpl implements NotificationService {
           templateValues.put(placeholder, htmlList);
         }
         case "formalMotivation" -> templateValues.put("formalMotivation", formalMotivation);
+        case "portalUrl" ->
+          Optional.ofNullable(emailProps.getPortalUrl())
+            .filter(StringUtils::hasText)
+            .ifPresent(url -> templateValues.put(placeholder, url));
         default ->
           log.warn("Placeholder not exists: {}", placeholder);
 
