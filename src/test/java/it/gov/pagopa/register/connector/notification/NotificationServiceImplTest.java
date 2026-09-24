@@ -46,8 +46,9 @@ class NotificationServiceImplTest {
 
     EmailMessageDTO email = captor.getValue();
     assertEquals(SENDER_EMAIL, email.getRecipientEmail());
-    assertEquals("Prodotti elaborati con successo", email.getSubject());
+    assertEquals("Prodotti elaborati con successo - Registro dei beni", email.getSubject());
     assertEquals("Email_RDB_EsitoProdottiOK", email.getTemplateName());
+
     assertEquals(Map.of("productFileName", PRODUCT_FILE_ID), email.getTemplateValues());
   }
 
@@ -60,8 +61,9 @@ class NotificationServiceImplTest {
 
     EmailMessageDTO email = captor.getValue();
     assertEquals(SENDER_EMAIL, email.getRecipientEmail());
-    assertEquals("Elaborazione parziale dei prodotti", email.getSubject());
+    assertEquals("Elaborazione parziale dei prodotti - Registro dei beni", email.getSubject());
     assertEquals("Email_RDB_EsitoProdottiParziale", email.getTemplateName());
+
     assertEquals(Map.of("productFileName", PRODUCT_FILE_ID), email.getTemplateValues());
   }
 
