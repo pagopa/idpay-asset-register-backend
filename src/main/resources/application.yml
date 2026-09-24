@@ -148,7 +148,7 @@ app:
         name: portalInitiativeClient
         base-url: ${INITIATIVE_MS_BASE_URL:https://api-io.dev.cstar.pagopa.it/idpay-itn/mock/api/privacynotice/v2}
     email-notification:
-      portal-url: ${PORTAL_RDB_BASE_URL:https://rdb.uat.cstar.pagopa.it/registro-dei-beni}
+      portal-url: ${PORTAL_RDB_URL:https://rdb.dev.cstar.pagopa.it/registro-dei-beni}
       service:
         name: notificationClient
         base-url:  ${NOTIFICATION_MS_BASE_URL:https://api-io.dev.cstar.pagopa.it/idpay-itn/mock/api/privacynotice/v2}
@@ -159,17 +159,17 @@ app:
         supervisioned: Email_RDB_ContrasegnazioneProdotti
         approved: Email_RDB_RipristinoProdotti
       subject:
-        ok: Prodotti elaborati con successo
-        partial:  Elaborazione parziale dei prodotti
+        ok: Prodotti elaborati con successo - Registro dei beni
+        partial:  Elaborazione parziale dei prodotti - Registro dei beni
         rejected: Notifica di esclusione prodotto - Registro dei beni
-        supervisioned: Prodotti Contrassegnati
-        approved: Prodotti Ripristinati
+        supervisioned: Prodotti Contrassegnati - Registro dei beni
+        approved: Prodotti Ripristinati - Registro dei beni
       place-holder:
-        ok: productFileName, initiativeName
-        partial: productFileName, initiativeName
+        ok: productFileName, initiativeName, portalUrl
+        partial: productFileName, initiativeName, portalUrl
         rejected: excludedList, formalMotivation, initiativeName, portalUrl
-        supervisioned: suspendedList, formalMotivation, initiativeName
-        approved: ripristinedList, initiativeName
+        supervisioned: suspendedList, formalMotivation, initiativeName, portalUrl
+        approved: ripristinedList, initiativeName, portalUrl
     eprel:
       service:
         get-product : ${EPREL_BASE_URL:https://eprel.ec.europa.eu/api/product/{REGISTRATION_NUMBER}}
