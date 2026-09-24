@@ -49,13 +49,15 @@ public class NotificationServiceImpl implements NotificationService {
 
   @Override
   public void sendEmailUpdateStatus(List<String> products, String formalMotivation, String status, String recipientEmail) {
+    String normalizedStatus = status != null ? status.toLowerCase() : "";
+
     EmailMessageDTO email = buildUpdateEmailMessageDTO(
-      status,
+      normalizedStatus,
       products,
       formalMotivation,
-      emailProps.getTemplate().get(status.toLowerCase()),
+      emailProps.getTemplate().get(normalizedStatus),
       recipientEmail,
-      emailProps.getSubject().get(status.toLowerCase())
+      emailProps.getSubject().get(normalizedStatus)
     );
     notificationRestClient.sendEmail(email);
   }
@@ -63,9 +65,11 @@ public class NotificationServiceImpl implements NotificationService {
   private EmailMessageDTO buildUpdateEmailMessageDTO(String status, List<String> products, String formalMotivation, String template, String recipientEmail, String subject) {
     Map<String, String> templateValues = new HashMap<>();
 
-    List<String> placeholders = Optional.ofNullable(emailProps.getPlaceHolder().get(status.toLowerCase()))
+    List<String> placeholders = Optional.ofNullable(emailProps.getPlaceHolder().get(status))
       .map(ph -> Arrays.asList(ph.split(",")))
       .orElse(List.of());
+
+    log.info("Processing email update status for status [{}] with placeholders: {}", status, placeholders);
 
     for (String rawPlaceholder : placeholders) {
       String placeholder = rawPlaceholder.trim();
@@ -78,15 +82,20 @@ public class NotificationServiceImpl implements NotificationService {
           templateValues.put(placeholder, htmlList);
         }
         case "formalMotivation" -> templateValues.put("formalMotivation", formalMotivation);
-        case "portalUrl" ->
-          Optional.ofNullable(emailProps.getPortalUrl())
-            .filter(StringUtils::hasText)
-            .ifPresent(url -> templateValues.put(placeholder, url));
-        default ->
-          log.warn("Placeholder not exists: {}", placeholder);
-
+        case "portalUrl" -> {
+          String portalUrl = emailProps.getPortalUrl();
+          if (StringUtils.hasText(portalUrl)) {
+            templateValues.put(placeholder, portalUrl);
+            log.info("Added portalUrl to email payload: {}", portalUrl);
+          } else {
+            log.warn("portalUrl config is empty or null!");
+          }
+        }
+        default -> log.warn("Placeholder not handled: {}", placeholder);
       }
     }
+
+    log.info("Sending email with templateValues: {}", templateValues);
 
     return EmailMessageDTO.builder()
       .templateName(template)
