@@ -1,6 +1,7 @@
 package it.gov.pagopa.register.configuration;
 
 import it.gov.pagopa.common.web.exception.ServiceException;
+import it.gov.pagopa.register.exception.operation.InvalidProducerImportException;
 import it.gov.pagopa.register.exception.operation.ReportNotFoundException;
 import it.gov.pagopa.register.exception.role.ConsentNotFoundException;
 import it.gov.pagopa.register.exception.role.PermissionNotFoundException;
@@ -25,6 +26,7 @@ public class ServiceExceptionConfig {
     exceptionMap.put(ConsentNotFoundException.class, HttpStatus.NOT_FOUND);
 
     //BadRequest
+    exceptionMap.put(InvalidProducerImportException.class, HttpStatus.BAD_REQUEST);
     exceptionMap.put(VersionNotMatchedException.class, HttpStatus.BAD_REQUEST);
 
     return exceptionMap;
