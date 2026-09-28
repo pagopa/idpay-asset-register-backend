@@ -23,6 +23,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -48,8 +49,8 @@ class ProducerImportControllerTest {
   @ParameterizedTest
   @ValueSource(strings = {"{\"producers\":[]}", "{\"producers\":null}", "{}"})
   void importProducers_shouldRejectMissingRecordsThroughErrorManager(String payload) throws Exception {
-    ProducersInitiativeRepository repository = Mockito.mock(ProducersInitiativeRepository.class);
-    PortalInitiativeService initiatives = Mockito.mock(PortalInitiativeService.class);
+    ProducersInitiativeRepository repository = mock(ProducersInitiativeRepository.class);
+    PortalInitiativeService initiatives = mock(PortalInitiativeService.class);
     ProducerImportService service = new ProducerImportService(repository, initiatives);
     ErrorManager errorManager = new ErrorManager(null);
     ServiceExceptionHandler serviceExceptionHandler = new ServiceExceptionHandler(
