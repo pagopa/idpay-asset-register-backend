@@ -1,9 +1,14 @@
 package it.gov.pagopa.register.controller.operation;
 
+import it.gov.pagopa.common.web.exception.ErrorManager;
+import it.gov.pagopa.register.connector.initiative.PortalInitiativeService;
 import it.gov.pagopa.register.dto.operation.ProducerImportResultDTO;
 import it.gov.pagopa.register.dto.operation.UpdatedOperativeEmailResult;
+import it.gov.pagopa.register.repository.operation.ProducersInitiativeRepository;
 import it.gov.pagopa.register.service.operation.ProducerImportService;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.security.autoconfigure.SecurityAutoConfiguration;
@@ -13,6 +18,7 @@ import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -36,6 +42,26 @@ class ProducerImportControllerTest {
 
   private static final String VALID_ORG_ID = "83843864-f3c0-4def-badb-7f197471b72e";
   private static final String VALID_INIT_ID = "65c3b1e3e4b0a1a2b3c4d5e6";
+
+  @ParameterizedTest
+  @ValueSource(strings = {"{\"producers\":[]}", "{\"producers\":null}", "{}"})
+  void importProducers_shouldRejectMissingRecordsThroughErrorManager(String payload) throws Exception {
+    ProducersInitiativeRepository repository = Mockito.mock(ProducersInitiativeRepository.class);
+    PortalInitiativeService initiatives = Mockito.mock(PortalInitiativeService.class);
+    ProducerImportService service = new ProducerImportService(repository, initiatives);
+    MockMvc importMvc = MockMvcBuilders.standaloneSetup(new ProducerImportController(service))
+      .setControllerAdvice(new ErrorManager(null))
+      .build();
+
+    importMvc.perform(post("/idpay/register/producers")
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(payload))
+      .andExpect(status().isBadRequest())
+      .andExpect(jsonPath("$.code").value("INVALID_REQUEST"))
+      .andExpect(jsonPath("$.message").value("Producer request payload does not contain records"));
+
+    verifyNoInteractions(repository, initiatives);
+  }
 
   @Test
   void importProducers_shouldReturnImportedRecords() throws Exception {
