@@ -265,7 +265,6 @@ class ProducerImportServiceTest {
       () -> producerImportService.importProducers(requests)
     );
 
-    assertEquals(HttpStatus.BAD_REQUEST, exception.getHttpStatus());
     assertEquals("INVALID_REQUEST", exception.getCode());
     assertInstanceOf(IllegalArgumentException.class, exception.getCause());
     assertEquals("Producer request payload does not contain records", exception.getMessage());

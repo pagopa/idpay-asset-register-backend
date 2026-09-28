@@ -1,6 +1,8 @@
 package it.gov.pagopa.register.controller.operation;
 
 import it.gov.pagopa.common.web.exception.ErrorManager;
+import it.gov.pagopa.common.web.exception.ServiceExceptionHandler;
+import it.gov.pagopa.register.configuration.ServiceExceptionConfig;
 import it.gov.pagopa.register.connector.initiative.PortalInitiativeService;
 import it.gov.pagopa.register.dto.operation.ProducerImportResultDTO;
 import it.gov.pagopa.register.dto.operation.UpdatedOperativeEmailResult;
@@ -49,8 +51,11 @@ class ProducerImportControllerTest {
     ProducersInitiativeRepository repository = Mockito.mock(ProducersInitiativeRepository.class);
     PortalInitiativeService initiatives = Mockito.mock(PortalInitiativeService.class);
     ProducerImportService service = new ProducerImportService(repository, initiatives);
+    ErrorManager errorManager = new ErrorManager(null);
+    ServiceExceptionHandler serviceExceptionHandler = new ServiceExceptionHandler(
+      errorManager, new ServiceExceptionConfig().serviceExceptionMapper());
     MockMvc importMvc = MockMvcBuilders.standaloneSetup(new ProducerImportController(service))
-      .setControllerAdvice(new ErrorManager(null))
+      .setControllerAdvice(serviceExceptionHandler, errorManager)
       .build();
 
     importMvc.perform(post("/idpay/register/producers")
