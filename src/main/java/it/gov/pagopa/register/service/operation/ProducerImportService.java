@@ -3,6 +3,7 @@ package it.gov.pagopa.register.service.operation;
 import feign.FeignException;
 import it.gov.pagopa.register.connector.initiative.PortalInitiativeService;
 import it.gov.pagopa.register.dto.operation.*;
+import it.gov.pagopa.register.exception.operation.InvalidProducerImportException;
 import it.gov.pagopa.register.model.operation.ProducersInitiative;
 import it.gov.pagopa.register.repository.operation.ProducersInitiativeRepository;
 import lombok.RequiredArgsConstructor;
@@ -59,7 +60,7 @@ public class ProducerImportService {
       return result;
     } catch (IllegalArgumentException e) {
       log.warn("[IMPORT_PRODUCERS] - Invalid request content: {}", e.getMessage());
-      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e);
+      throw new InvalidProducerImportException(e.getMessage(), e);
     }
   }
 
