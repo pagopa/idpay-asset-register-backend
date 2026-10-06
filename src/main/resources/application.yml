@@ -135,6 +135,8 @@ spring:
       max-request-size: 3MB
 
 app:
+  test-support:
+    enabled: ${TEST_SUPPORT_ENABLED:false}
   rest-client:
     one-trust:
       service:
