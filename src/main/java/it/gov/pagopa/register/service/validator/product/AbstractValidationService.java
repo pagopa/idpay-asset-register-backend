@@ -25,32 +25,31 @@ public abstract class AbstractValidationService {
   protected final Map<String, ProductMapperStrategy> mapperByCategory;
 
   protected AbstractValidationService(
-      ProductRepository productRepository,
-      Map<String, ProductMapperStrategy> mapperByCategory) {
+    ProductRepository productRepository,
+    Map<String, ProductMapperStrategy> mapperByCategory) {
     this.productRepository = productRepository;
     this.mapperByCategory = mapperByCategory;
   }
 
   protected ProductValidationResult validateInternal(
-      List<CSVRecord> records,
-      String category,
-      String orgId,
-      String initiativeId,
-      String productFileId,
-      List<String> headers,
-      String organizationName,
-      CategoryConfig categoryConfig,
-      List<String> allowedReloadStatuses,
-      ExternalContext externalContext,
-      String dmDate
+    List<CSVRecord> records,
+    String category,
+    String orgId,
+    String initiativeId,
+    String productFileId,
+    String organizationName,
+    CategoryConfig categoryConfig,
+    List<String> allowedReloadStatuses,
+    ExternalContext externalContext,
+    String dmDate
   ) {
 
     ProductMapperStrategy mapper =
-        mapperByCategory.get(categoryConfig.getProductMapper());
+      mapperByCategory.get(categoryConfig.getProductMapper());
 
     if (mapper == null) {
       throw new IllegalStateException(
-          "No ProductMapperStrategy configured for category: " + category);
+        "No ProductMapperStrategy configured for category: " + category);
     }
 
     Map<String, Product> validProducts = new LinkedHashMap<>();
@@ -66,18 +65,18 @@ public abstract class AbstractValidationService {
       // NOTE: Assumes GTIN/EAN as the unique key.
       // This will not be valid if products without GTIN/EAN as identifier are introduced.
       Optional<Product> existing =
-          productRepository.findByGtinCodeAndInitiativeId(businessKey, initiativeId);
+        productRepository.findByGtinCodeAndInitiativeId(businessKey, initiativeId);
 
       // DB check
       if (!dbCheck(
-          orgId, csvRecord, existing, invalidRecords, errorMessages, allowedReloadStatuses, dmDate)) {
+        orgId, csvRecord, existing, invalidRecords, errorMessages, allowedReloadStatuses, dmDate)) {
         isValidRecord = false;
       }
 
       // Duplicate check
       if (isValidRecord && handleDuplicate(
-          businessKey, validProducts, mapper, headers, invalidRecords, errorMessages)) {
-          isValidRecord = false;
+        businessKey, validProducts, csvRecord, invalidRecords, errorMessages)) {
+        isValidRecord = false;
       }
 
       Map<String, Object> externalData = Map.of();
@@ -97,15 +96,15 @@ public abstract class AbstractValidationService {
       if (isValidRecord) {
 
         Product product =
-            mapper.mapToProduct(
-                csvRecord,
-                category,
-                orgId,
-                initiativeId,
-                productFileId,
-                organizationName,
-                new MappingContext(externalData)
-            );
+          mapper.mapToProduct(
+            csvRecord,
+            category,
+            orgId,
+            initiativeId,
+            productFileId,
+            organizationName,
+            new MappingContext(externalData)
+          );
 
         existing.ifPresent(db -> {
           product.setFormalMotivation(db.getFormalMotivation());
@@ -120,27 +119,22 @@ public abstract class AbstractValidationService {
   }
 
   protected boolean handleDuplicate(
-      String businessKey,
-      Map<String, Product> validProducts,
-      ProductMapperStrategy mapper,
-      List<String> headers,
-      List<CSVRecord> invalidRecords,
-      Map<CSVRecord, String> errorMessages
+    String businessKey,
+    Map<String, Product> validProducts,
+    CSVRecord csvRecord,
+    List<CSVRecord> invalidRecords,
+    Map<CSVRecord, String> errorMessages
   ) {
 
     if (!validProducts.containsKey(businessKey)) {
       return false;
     }
 
-    Product duplicate = validProducts.remove(businessKey);
-
-    CSVRecord duplicateRow = mapper.mapToCsvRow(duplicate, headers);
-
-    invalidRecords.add(duplicateRow);
+    invalidRecords.add(csvRecord);
 
     // NOTE: DUPLICATE_GTIN_EAN assumes GTIN/EAN as the unique key.
     // This will not be valid if products without GTIN/EAN as identifier are introduced.
-    errorMessages.put(duplicateRow,ERROR_MAP.get(DUPLICATE_GTIN_EAN));
+    errorMessages.put(csvRecord,ERROR_MAP.get(DUPLICATE_GTIN_EAN));
 
     return true;
   }

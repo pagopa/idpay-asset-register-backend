@@ -8,6 +8,7 @@ import it.gov.pagopa.register.dto.operation.InitiativeDTO;
 import it.gov.pagopa.register.dto.operation.InitiativeStatus;
 import it.gov.pagopa.register.dto.operation.ProducerImportResultDTO;
 import it.gov.pagopa.register.dto.operation.ProducerInitiativeRequestDTO;
+import it.gov.pagopa.register.exception.operation.InvalidProducerImportException;
 import it.gov.pagopa.register.model.operation.ProducersInitiative;
 import it.gov.pagopa.register.repository.operation.ProducersInitiativeRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -259,12 +260,15 @@ class ProducerImportServiceTest {
   void importProducers_shouldRejectEmptyPayload() {
     List<ProducerInitiativeRequestDTO> requests = List.of();
 
-    ResponseStatusException exception = assertThrows(
-      ResponseStatusException.class,
+    InvalidProducerImportException exception = assertThrows(
+      InvalidProducerImportException.class,
       () -> producerImportService.importProducers(requests)
     );
 
-    assertEquals(HttpStatus.BAD_REQUEST, exception.getStatusCode());
+    assertEquals("INVALID_REQUEST", exception.getCode());
+    assertInstanceOf(IllegalArgumentException.class, exception.getCause());
+    assertEquals("Producer request payload does not contain records", exception.getMessage());
+    verifyNoInteractions(producersInitiativeRepository, portalInitiativeService);
   }
 
   @Test

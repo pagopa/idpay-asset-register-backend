@@ -16,6 +16,7 @@ public class EmailNotificationConfig {
   private Map<String, String> template;
   private Map<String, String> subject;
   private Map<String, String> placeHolder;
+  private String portalUrl;
 
   @Getter
   @Setter

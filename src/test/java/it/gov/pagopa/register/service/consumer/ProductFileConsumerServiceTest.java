@@ -100,7 +100,7 @@ class ProductFileConsumerServiceTest {
 
     when(validationService.validateRecords(
       any(), any(), any(), any(), any(),
-      any(), any(), any(), any(), any()))
+      any(), any(), any(), any()))
       .thenReturn(validationResultWithValidProduct());
 
     mockCsv();
@@ -125,7 +125,7 @@ class ProductFileConsumerServiceTest {
 
     when(validationService.validateRecords(
       any(), any(), any(), any(), any(),
-      any(), any(), any(), any(), any()))
+      any(), any(), any(), any()))
       .thenThrow(new EprelException("eprel down"));
 
     mockCsv();
@@ -160,7 +160,7 @@ class ProductFileConsumerServiceTest {
     );
 
     when(validationService.validateRecords(any(), any(), any(), any(), any(),
-      any(), any(), any(), any(), any()))
+      any(), any(), any(), any()))
       .thenReturn(result);
 
     try (MockedStatic<CsvUtils> utils = mockStatic(CsvUtils.class)) {
@@ -198,7 +198,7 @@ class ProductFileConsumerServiceTest {
       .thenReturn(List.of(new Product()));
 
     when(validationService.validateRecords(any(), any(), any(), any(), any(),
-      any(), any(), any(), any(), any()))
+      any(), any(), any(), any()))
       .thenReturn(validationResultWithValidProduct());
 
     try (MockedStatic<CsvUtils> utils = mockStatic(CsvUtils.class)) {
@@ -242,7 +242,7 @@ class ProductFileConsumerServiceTest {
 
     when(validationService.validateRecords(
       any(), any(), any(), any(), any(),
-      any(), any(), any(), any(), any()))
+      any(), any(), any(), any()))
       .thenReturn(result);
 
     try (MockedStatic<CsvUtils> utils = mockStatic(CsvUtils.class)) {
@@ -275,7 +275,7 @@ class ProductFileConsumerServiceTest {
     when(productFileRepository.findById(any())).thenReturn(Optional.of(new ProductFile()));
 
     when(validationService.validateRecords(any(), any(), any(), any(), any(),
-      any(), any(), any(), any(), any()))
+      any(), any(), any(), any()))
       .thenReturn(validationResultWithValidProduct());
 
     try (MockedStatic<CsvUtils> utils = mockStatic(CsvUtils.class)) {
@@ -304,7 +304,7 @@ class ProductFileConsumerServiceTest {
     when(productFileRepository.findById(any())).thenReturn(Optional.of(new ProductFile()));
 
     when(validationService.validateRecords(any(), any(), any(), any(), any(),
-      any(), any(), any(), any(), any()))
+      any(), any(), any(), any()))
       .thenReturn(validationResultWithValidProduct());
 
     try (MockedStatic<CsvUtils> utils = mockStatic(CsvUtils.class)) {
