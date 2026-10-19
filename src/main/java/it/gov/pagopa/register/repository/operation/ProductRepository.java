@@ -12,6 +12,8 @@ import java.util.Optional;
 public interface ProductRepository extends MongoRepository<Product, String>, ProductSpecificRepository {
 
 
+  List<Product> findByProductFileId(String productFileId);
+
   Optional<Product> findByGtinCodeAndInitiativeId(String gtinCode, String initiativeId);
 
   List<Product> findByGtinCodeInAndInitiativeId(List<String> gtinCodes, String initiativeId);

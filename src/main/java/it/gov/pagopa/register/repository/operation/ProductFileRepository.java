@@ -10,6 +10,8 @@ import java.util.Optional;
 
 public interface ProductFileRepository extends MongoRepository<ProductFile, String> {
 
+  List<ProductFile> findByOrganizationIdAndInitiativeIdAndFileName(String organizationId, String initiativeId, String fileName);
+
   Page<ProductFile> findByOrganizationIdAndInitiativeIdAndUploadStatusNot(String organizationId, String initiativeId, String uploadStatus, Pageable pageable);
 
   Optional<ProductFile> findByIdAndOrganizationIdAndInitiativeId(String id, String organizationId, String initiativeId);
