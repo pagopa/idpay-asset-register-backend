@@ -134,6 +134,9 @@ class ProductMapperStrategyTest {
     assertEquals(ProductStatus.UPLOADED.name(), product.getStatus());
     assertEquals("Satellitare DecoderBrand DecoderModel", product.getProductName());
     assertEquals("8009876543210 - Satellitare DecoderBrand DecoderModel", product.getFullProductName());
+    assertTrue(product.getScart());
+    assertEquals("LAN", product.getConnectivity());
+    assertEquals("https://example.com/sheet", product.getTechnicalSheetUrl());
   }
 
   @Test
@@ -144,11 +147,14 @@ class ProductMapperStrategyTest {
       .category(SATELLITE)
       .model("ModelY")
       .brand("BrandY")
+      .scart(false)
+      .connectivity("WI-FI")
+      .technicalSheetUrl("https://example.com/url")
       .build();
 
     CSVRecord csvRecord = decoderProductMapper.mapToCsvRow(
       product,
-      List.of("gtinCode", "productCode", "category", "model", "brand")
+      List.of("gtinCode", "productCode", "category", "model", "brand", "scart", "connectivity", "technicalSheetUrl")
     );
 
     assertNotNull(csvRecord);
@@ -157,6 +163,9 @@ class ProductMapperStrategyTest {
     assertEquals(SATELLITE, csvRecord.get(2));
     assertEquals("ModelY", csvRecord.get(3));
     assertEquals("BrandY", csvRecord.get(4));
+    assertEquals("false", csvRecord.get(5));
+    assertEquals("WI-FI", csvRecord.get(6));
+    assertEquals("https://example.com/url", csvRecord.get(7));
   }
 
 
@@ -463,6 +472,9 @@ class ProductMapperStrategyTest {
     when(csvRecord.get(CODE_GTIN_EAN)).thenReturn("8009876543210");
     when(csvRecord.get(BRAND)).thenReturn("DecoderBrand");
     when(csvRecord.get(MODEL)).thenReturn("DecoderModel");
+    when(csvRecord.get(SCART)).thenReturn("SI");
+    when(csvRecord.get(CONNECTIVITY)).thenReturn("LAN");
+    when(csvRecord.get(TECHNICAL_SHEET_URL)).thenReturn("https://example.com/sheet");
     return csvRecord;
   }
 

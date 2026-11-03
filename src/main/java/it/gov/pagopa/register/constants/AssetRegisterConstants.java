@@ -64,6 +64,9 @@ public final class AssetRegisterConstants {
     public static final String COUNTRY_OF_PRODUCTION = "Paese di Produzione";
     public static final String BRAND = "Marca";
     public static final String MODEL = "Modello";
+    public static final String SCART = "Scart";
+    public static final String CONNECTIVITY = "Connessione IP";
+    public static final String TECHNICAL_SHEET_URL = "Scheda tecnica";
   }
 
   // =========================================================
@@ -230,6 +233,9 @@ public final class AssetRegisterConstants {
     public static final String ERROR_COUNTRY_OF_PRODUCTION = "ERROR_COUNTRY_OF_PRODUCTION";
     public static final String ERROR_CATEGORY_PRODUCTS = "ERROR_CATEGORY_PRODUCTS";
     public static final String ERROR_CODE_EPREL = "ERROR_CODE_EPREL";
+    public static final String ERROR_SCART = "ERROR_SCART";
+    public static final String ERROR_CONNECTIVITY = "ERROR_CONNECTIVITY";
+    public static final String ERROR_TECHNICAL_SHEET_URL = "ERROR_TECHNICAL_SHEET_URL";
   }
 
   public static final Map<String, String> ERROR_MAP = Map.ofEntries(
@@ -253,7 +259,10 @@ public final class AssetRegisterConstants {
     Map.entry(ErrorKey.ERROR_CODE_PRODUCT_NOT_NULL, "Il campo Codice Prodotto è obbligatorio, non deve contenere caratteri speciali o lettere accentate e deve essere lungo al massimo 100 caratteri"),
     Map.entry(ErrorKey.ERROR_COUNTRY_OF_PRODUCTION, "Paese di Produzione non è un ISO 3166 valido o non è in maiuscolo"),
     Map.entry(ErrorKey.ERROR_CATEGORY_PRODUCTS, "Il campo Categoria è obbligatorio e deve essere \"{}\""),
-    Map.entry(ErrorKey.ERROR_CODE_EPREL, "Il Codice EPREL è obbligatorio e deve essere un valore numerico")
+    Map.entry(ErrorKey.ERROR_CODE_EPREL, "Il Codice EPREL è obbligatorio e deve essere un valore numerico"),
+    Map.entry(ErrorKey.ERROR_SCART, "Il campo Scart è obbligatorio e deve essere \"{}\""),
+    Map.entry(ErrorKey.ERROR_CONNECTIVITY, "Il campo connessione IP è obbligatorio e deve essere \"{}\""),
+    Map.entry(ErrorKey.ERROR_TECHNICAL_SHEET_URL, "Il campo scheda tecnica è obbligatorio e deve essere lungo al massimo 100 caratteri")
   );
 
   // =========================================================

@@ -64,6 +64,9 @@ public class DecoderProductMapper implements ProductMapperStrategy {
       .status(ProductStatus.UPLOADED.name())
       .statusChangeChronology(new ArrayList<>())
       .formalMotivation("")
+      .scart(input.scart)
+      .connectivity(input.connectivity)
+      .technicalSheetUrl(input.technicalSheetUrl)
       .build();
   }
 
@@ -82,7 +85,10 @@ public class DecoderProductMapper implements ProductMapperStrategy {
           product.getProductCode(),
           product.getCategory(),
           product.getModel(),
-          product.getBrand()
+          product.getBrand(),
+          product.getScart(),
+          product.getConnectivity(),
+          product.getTechnicalSheetUrl()
         );
       }
 
@@ -108,7 +114,10 @@ public class DecoderProductMapper implements ProductMapperStrategy {
       sanitizeGtinForDto(csv.get(CODE_GTIN_EAN)),
       sanitizeProductCodeForDto(csv.get(CODE_PRODUCT)),
       sanitizeBrandOrModelForDto(csv.get(BRAND)),
-      sanitizeBrandOrModelForDto(csv.get(MODEL))
+      sanitizeBrandOrModelForDto(csv.get(MODEL)),
+      parseScart(csv.get(SCART)),
+      normalizeConnectivity(csv.get(CONNECTIVITY)),
+      normalizeTechnicalSheetUrl(csv.get(TECHNICAL_SHEET_URL))
     );
   }
 
@@ -130,6 +139,9 @@ public class DecoderProductMapper implements ProductMapperStrategy {
     String gtinCode,
     String productCode,
     String brand,
-    String model
+    String model,
+    Boolean scart,
+    String connectivity,
+    String technicalSheetUrl
   ) {}
 }
