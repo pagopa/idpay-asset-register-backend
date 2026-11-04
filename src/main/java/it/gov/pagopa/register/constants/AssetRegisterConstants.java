@@ -260,8 +260,8 @@ public final class AssetRegisterConstants {
     Map.entry(ErrorKey.ERROR_COUNTRY_OF_PRODUCTION, "Paese di Produzione non è un ISO 3166 valido o non è in maiuscolo"),
     Map.entry(ErrorKey.ERROR_CATEGORY_PRODUCTS, "Il campo Categoria è obbligatorio e deve essere \"{}\""),
     Map.entry(ErrorKey.ERROR_CODE_EPREL, "Il Codice EPREL è obbligatorio e deve essere un valore numerico"),
-    Map.entry(ErrorKey.ERROR_SCART, "Il campo Scart è obbligatorio e deve essere \"{}\""),
-    Map.entry(ErrorKey.ERROR_CONNECTIVITY, "Il campo connessione IP è obbligatorio e deve essere \"{}\""),
+    Map.entry(ErrorKey.ERROR_SCART, "Il campo Scart è obbligatorio e deve essere Si o No"),
+    Map.entry(ErrorKey.ERROR_CONNECTIVITY, "Il campo connessione IP è obbligatorio e deve essere LAN, WIFI, LAN e WIFI o Nessuna"),
     Map.entry(ErrorKey.ERROR_TECHNICAL_SHEET_URL, "Il campo scheda tecnica è obbligatorio e deve essere un uri valido")
   );
 
