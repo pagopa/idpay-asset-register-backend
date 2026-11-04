@@ -262,7 +262,7 @@ public final class AssetRegisterConstants {
     Map.entry(ErrorKey.ERROR_CODE_EPREL, "Il Codice EPREL è obbligatorio e deve essere un valore numerico"),
     Map.entry(ErrorKey.ERROR_SCART, "Il campo Scart è obbligatorio e deve essere \"{}\""),
     Map.entry(ErrorKey.ERROR_CONNECTIVITY, "Il campo connessione IP è obbligatorio e deve essere \"{}\""),
-    Map.entry(ErrorKey.ERROR_TECHNICAL_SHEET_URL, "Il campo scheda tecnica è obbligatorio e deve essere lungo al massimo 100 caratteri")
+    Map.entry(ErrorKey.ERROR_TECHNICAL_SHEET_URL, "Il campo scheda tecnica è obbligatorio e deve essere un uri valido")
   );
 
   // =========================================================
