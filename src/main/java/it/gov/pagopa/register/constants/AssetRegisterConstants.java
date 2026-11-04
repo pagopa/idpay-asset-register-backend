@@ -321,3 +321,4 @@ public final class AssetRegisterConstants {
     public static final String TOTAL_VOLUME = "totalVolume";
   }
 }
+
