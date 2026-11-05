@@ -115,9 +115,9 @@ public class DecoderProductMapper implements ProductMapperStrategy {
       sanitizeProductCodeForDto(csv.get(CODE_PRODUCT)),
       sanitizeBrandOrModelForDto(csv.get(BRAND)),
       sanitizeBrandOrModelForDto(csv.get(MODEL)),
-      parseScart(csv.get(SCART)),
-      normalizeConnectivity(csv.get(CONNECTIVITY)),
-      normalizeTechnicalSheetUrl(csv.get(TECHNICAL_SHEET_URL))
+      csv.isMapped(SCART) ? parseScart(csv.get(SCART)) : null,
+      csv.isMapped(CONNECTIVITY) ? normalizeConnectivity(csv.get(CONNECTIVITY)) : null,
+      csv.isMapped(TECHNICAL_SHEET_URL) ? normalizeTechnicalSheetUrl(csv.get(TECHNICAL_SHEET_URL)) : null
     );
   }
 

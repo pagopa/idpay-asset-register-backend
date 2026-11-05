@@ -21,7 +21,6 @@ public class ProductMapper {
   private static final int MAX_NAME_LENGTH = 255;
   private static final int MAX_FIELD_100 = 100;
   private static final int MAX_GTIN_LENGTH = 14;
-  private static final int MAX_URL_LENGTH = 255;
 
   public static ProductDTO toDTO(Product entity, String role) {
     if (entity == null) return null;
@@ -180,12 +179,7 @@ public class ProductMapper {
     if (value == null || value.isBlank()) {
       return null;
     }
-    String v = value.trim().replaceAll("\\s+", "");
-    if (v.length() > MAX_URL_LENGTH) {
-      v = v.substring(0, MAX_URL_LENGTH);
-    }
-    return v;
+    return value.trim().replaceAll("\\s+", "");
   }
-
 
 }

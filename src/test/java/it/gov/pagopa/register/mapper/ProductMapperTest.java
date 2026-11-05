@@ -262,8 +262,10 @@ class ProductMapperTest {
   @Test
   void testNormalizeTechnicalSheetUrl() {
     assertEquals("https://example.com/sheet", ProductMapper.normalizeTechnicalSheetUrl("  https://example.com/  sheet  "));
+
     String longUrl = "https://example.com/" + "a".repeat(300);
-    assertEquals(255, ProductMapper.normalizeTechnicalSheetUrl(longUrl).length());
+    assertEquals(longUrl.length(), ProductMapper.normalizeTechnicalSheetUrl(longUrl).length());
+
     assertNull(ProductMapper.normalizeTechnicalSheetUrl(null));
     assertNull(ProductMapper.normalizeTechnicalSheetUrl("   "));
   }
