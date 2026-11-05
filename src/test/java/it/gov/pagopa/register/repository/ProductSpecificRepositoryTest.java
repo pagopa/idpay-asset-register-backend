@@ -25,6 +25,7 @@ import org.springframework.data.mongodb.core.query.Query;
 
 import java.util.List;
 
+import static it.gov.pagopa.register.constants.AssetRegisterConstants.ProductStatusLabels.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -397,5 +398,95 @@ class ProductSpecificRepositoryTest {
 
     assertTrue(results.isEmpty());
     verify(mongoTemplate, never()).find(any(Query.class), eq(Product.class));
+  }
+
+  @Test
+  void testFindByFilter_statusSort_shouldSortByItalianTranslation() {
+    Criteria criteria = Criteria.where("organizationId").is("org1");
+    Pageable pageable = PageRequest.of(
+      0,
+      10,
+      Sort.by(Sort.Order.asc("status"))
+    );
+
+    AggregationResults<Product> results =
+      new AggregationResults<>(List.of(), new Document());
+
+    when(mongoTemplate.aggregate(
+      any(Aggregation.class),
+      eq("product"),
+      eq(Product.class)
+    )).thenReturn(results);
+
+    repository.findByFilter(criteria, pageable);
+
+    ArgumentCaptor<Aggregation> captor =
+      ArgumentCaptor.forClass(Aggregation.class);
+
+    verify(mongoTemplate).aggregate(
+      captor.capture(),
+      eq("product"),
+      eq(Product.class)
+    );
+
+    String pipeline = captor.getValue().toString();
+
+    assertTrue(pipeline.contains("$addFields"));
+    assertTrue(pipeline.contains("statusIt"));
+    assertTrue(pipeline.contains("$switch"));
+    assertTrue(pipeline.contains("$sort"));
+    assertTrue(pipeline.contains("$skip"));
+    assertTrue(pipeline.contains("$limit"));
+
+    assertTrue(pipeline.contains(ProductStatus.APPROVED.name()));
+    assertTrue(pipeline.contains(ProductStatus.WAIT_APPROVED.name()));
+    assertTrue(pipeline.contains(ProductStatus.SUPERVISED.name()));
+    assertTrue(pipeline.contains(ProductStatus.UPLOADED.name()));
+    assertTrue(pipeline.contains(ProductStatus.REJECTED.name()));
+
+    assertTrue(pipeline.contains(APPROVED_IT));
+    assertTrue(pipeline.contains(WAIT_APPROVED_IT));
+    assertTrue(pipeline.contains(SUPERVISED_IT));
+    assertTrue(pipeline.contains(UPLOADED_IT));
+    assertTrue(pipeline.contains(REJECTED_IT));
+  }
+
+  @Test
+  void testFindByFilter_statusDescendingSort_shouldUseDescendingDirection() {
+    Criteria criteria = Criteria.where("organizationId").is("org1");
+
+    Pageable pageable = PageRequest.of(
+      0,
+      10,
+      Sort.by(Sort.Order.desc("status"))
+    );
+
+    AggregationResults<Product> results =
+      new AggregationResults<>(List.of(), new Document());
+
+    when(mongoTemplate.aggregate(
+      any(Aggregation.class),
+      eq("product"),
+      eq(Product.class)
+    )).thenReturn(results);
+
+    repository.findByFilter(criteria, pageable);
+
+    ArgumentCaptor<Aggregation> captor =
+      ArgumentCaptor.forClass(Aggregation.class);
+
+    verify(mongoTemplate).aggregate(
+      captor.capture(),
+      eq("product"),
+      eq(Product.class)
+    );
+
+    String pipeline = captor.getValue().toString();
+
+    assertTrue(pipeline.contains("statusIt"));
+    assertTrue(
+      pipeline.contains("\"statusIt\" : -1"),
+      () -> "La pipeline non ordina statusIt in DESC: " + pipeline
+    );
   }
 }

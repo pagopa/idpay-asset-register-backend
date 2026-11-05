@@ -18,6 +18,7 @@ import java.util.*;
 
 import static it.gov.pagopa.register.constants.AggregationConstants.*;
 import static it.gov.pagopa.register.constants.AssetRegisterConstants.Category.*;
+import static it.gov.pagopa.register.constants.AssetRegisterConstants.ProductStatusLabels.*;
 
 @RequiredArgsConstructor
 public class ProductSpecificRepositoryImpl implements ProductSpecificRepository {
@@ -199,11 +200,63 @@ public class ProductSpecificRepositoryImpl implements ProductSpecificRepository 
       return buildEnergyClassAggregation(criteria, pageable);
     }
 
+    if (isSortedBy(sort, FIELD_STATUS)) {
+      return buildStatusAggregation(criteria, pageable);
+    }
+
     if (isSortedBy(sort, FIELD_CATEGORY) || isSortedBy(sort, FIELD_BATCH_NAME)) {
       return buildCategoryAggregation(criteria, pageable, isSortedBy(sort, FIELD_BATCH_NAME));
     }
 
     return null;
+  }
+
+  private Aggregation buildStatusAggregation(
+    Criteria criteria,
+    Pageable pageable
+  ) {
+    Sort.Direction direction =
+      getSortDirection(pageable, FIELD_STATUS);
+
+    return Aggregation.newAggregation(
+      addStatusTranslationField(),
+      Aggregation.match(criteria),
+      Aggregation.sort(
+        Sort.by(direction, RUNTIME_FIELD_STATUS_IT)
+      ),
+      Aggregation.skip(pageable.getOffset()),
+      Aggregation.limit(pageable.getPageSize())
+    );
+  }
+
+  private AggregationOperation addStatusTranslationField() {
+    return Aggregation.addFields()
+      .addField(RUNTIME_FIELD_STATUS_IT)
+      .withValue(
+        ConditionalOperators.switchCases(
+          ConditionalOperators.Switch.CaseOperator.when(
+            ComparisonOperators.valueOf(FIELD_STATUS)
+              .equalToValue(ProductStatus.APPROVED.name())
+          ).then(APPROVED_IT),
+          ConditionalOperators.Switch.CaseOperator.when(
+            ComparisonOperators.valueOf(FIELD_STATUS)
+              .equalToValue(ProductStatus.WAIT_APPROVED.name())
+            ).then(WAIT_APPROVED_IT),
+          ConditionalOperators.Switch.CaseOperator.when(
+            ComparisonOperators.valueOf(FIELD_STATUS)
+              .equalToValue(ProductStatus.SUPERVISED.name())
+          ).then(SUPERVISED_IT),
+          ConditionalOperators.Switch.CaseOperator.when(
+            ComparisonOperators.valueOf(FIELD_STATUS)
+              .equalToValue(ProductStatus.UPLOADED.name())
+          ).then(UPLOADED_IT),
+          ConditionalOperators.Switch.CaseOperator.when(
+            ComparisonOperators.valueOf(FIELD_STATUS)
+              .equalToValue(ProductStatus.REJECTED.name())
+          ).then(REJECTED_IT)
+        ).defaultTo("$" + FIELD_STATUS)
+      )
+      .build();
   }
 
   private boolean isSortedBy(Sort sort, String property) {

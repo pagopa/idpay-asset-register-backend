@@ -16,6 +16,7 @@ public class AggregationConstants {
   public static final String FIELD_ID = "_id";
   public static final String FIELD_STATUS = "status";
   public static final String RUNTIME_FIELD_CATEGORY_IT = "categoryIt";
+  public static final String RUNTIME_FIELD_STATUS_IT = "statusIt";
 
   public static final String LOWER_SUFFIX = "_lower";
 

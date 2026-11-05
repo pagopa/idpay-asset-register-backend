@@ -204,6 +204,20 @@ public final class AssetRegisterConstants {
     }
   }
 
+// =========================================================
+// PRODUCT STATUS LABELS
+// =========================================================
+  public static final class ProductStatusLabels {
+
+    private ProductStatusLabels() {}
+
+    public static final String APPROVED_IT = "Approvato";
+    public static final String SUPERVISED_IT = "Da Controllare";
+    public static final String REJECTED_IT = "Rifiutato";
+    public static final String UPLOADED_IT = "Da Esaminare";
+    public static final String WAIT_APPROVED_IT = "Da Approvare";
+  }
+
   // =========================================================
   // ERRORS
   // =========================================================
