@@ -53,6 +53,9 @@ public class ProductMapper {
       .statusChangeChronology(chronology)
       .formalMotivation(entity.getFormalMotivation())
       .organizationName(entity.getOrganizationName())
+      .scart(entity.getScart())
+      .connectivity(entity.getConnectivity())
+      .technicalSheetUrl(entity.getTechnicalSheetUrl())
       .build();
   }
 
@@ -147,5 +150,36 @@ public class ProductMapper {
     return v;
   }
 
+  public static Boolean parseScart(String value) {
+    if (value == null || value.isBlank()) {
+      return false;
+    }
+    String trimmed = value.trim();
+    if ("SI".equalsIgnoreCase(trimmed) || "TRUE".equalsIgnoreCase(trimmed) || "1".equalsIgnoreCase(trimmed)) {
+      return Boolean.TRUE;
+    }
+    if ("NO".equalsIgnoreCase(trimmed) || "FALSE".equalsIgnoreCase(trimmed) || "0".equalsIgnoreCase(trimmed)) {
+      return Boolean.FALSE;
+    }
+    return false;
+  }
+
+  public static String normalizeConnectivity(String value) {
+    if (value == null || value.isBlank()) {
+      return null;
+    }
+    String v = value.trim().replaceAll("\\s+", " ");
+    if (v.length() > MAX_FIELD_100) {
+      v = v.substring(0, MAX_FIELD_100);
+    }
+    return v;
+  }
+
+  public static String normalizeTechnicalSheetUrl(String value) {
+    if (value == null || value.isBlank()) {
+      return null;
+    }
+    return value.trim().replaceAll("\\s+", "");
+  }
 
 }
