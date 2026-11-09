@@ -286,7 +286,7 @@ class ProductMapperTest {
       .fullProductName("full-name")
       .organizationName("orgName")
       .scart(true)
-      .ipConnection(IpConnection.LAN)
+      .connectivity("LAN")
       .technicalSheetUrl("https://url.it")
       .build();
 
@@ -294,8 +294,23 @@ class ProductMapperTest {
 
     assertNotNull(dto);
     assertTrue(dto.getScart());
-    assertEquals(IpConnection.LAN, dto.getIpConnection());
+    assertEquals("LAN", dto.getConnectivity());
     assertEquals("https://url.it", dto.getTechnicalSheetUrl());
+  }
+
+  @Test
+  void testToDTO_NormalizesLegacyConnectivityValue() {
+    Product product = Product.builder()
+      .organizationId("org1")
+      .registrationDate(LocalDateTime.now())
+      .status(ProductStatus.APPROVED.name())
+      .category("C")
+      .connectivity("WI" + "-FI")
+      .build();
+
+    ProductDTO dto = ProductMapper.toDTO(product, UserRole.INVITALIA.getRole());
+
+    assertEquals("WIFI", dto.getConnectivity());
   }
 
 }

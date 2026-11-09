@@ -56,7 +56,7 @@ public class ProductMapper {
       .formalMotivation(entity.getFormalMotivation())
       .organizationName(entity.getOrganizationName())
       .scart(entity.getScart())
-      .ipConnection(entity.getIpConnection())
+      .connectivity(normalizeConnectivityForOutput(entity.getConnectivity()))
       .technicalSheetUrl(entity.getTechnicalSheetUrl())
       .build();
   }
@@ -179,6 +179,11 @@ public class ProductMapper {
       case "nessuna", "nessuno" -> IpConnection.NONE;
       default -> null;
     };
+  }
+
+  public static String normalizeConnectivityForOutput(String value) {
+    IpConnection connection = normalizeConnectivity(value);
+    return connection == null ? value : connection.getConnection();
   }
 
   public static String normalizeTechnicalSheetUrl(String value) {

@@ -66,7 +66,7 @@ public class DecoderProductMapper implements ProductMapperStrategy {
       .statusChangeChronology(new ArrayList<>())
       .formalMotivation("")
       .scart(input.scart)
-      .ipConnection(input.ipConnection)
+      .connectivity(input.ipConnection == null ? null : input.ipConnection.getConnection())
       .technicalSheetUrl(input.technicalSheetUrl)
       .build();
   }
@@ -88,7 +88,7 @@ public class DecoderProductMapper implements ProductMapperStrategy {
           product.getModel(),
           product.getBrand(),
           product.getScart(),
-          product.getIpConnection() == null ? null : product.getIpConnection().getConnection(),
+          normalizeConnectivityForOutput(product.getConnectivity()),
           product.getTechnicalSheetUrl()
         );
       }
