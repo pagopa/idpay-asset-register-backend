@@ -179,7 +179,7 @@ class ProductFileValidatorServiceTest {
     InitiativeConfig config = decoderInitiativeConfig();
     when(initiativeConfigMap.get(INITIATIVE_ID)).thenReturn(config);
     ProductFileValidatorService validator = decoderValidator();
-    MockMultipartFile file = decoderCsv("SI", "LAN e WI-FI", "www.example.com/scheda.pdf");
+    MockMultipartFile file = decoderCsv("SI", "LAN e WIFI", "www.example.com/scheda.pdf");
 
     ValidationResultDTO fileResult = validator.validateFile(file, SATELLITE_CODE, INITIATIVE_ID, "organization");
     ValidationResultDTO recordsResult = validator.validateRecords(fileResult.getRecords(), SATELLITE_CODE, INITIATIVE_ID);
@@ -383,11 +383,11 @@ class ProductFileValidatorServiceTest {
         .key("REGEX").field(SCART).value("(?i)^(si|no)$").errorKey("ERROR_SCART").build(),
       ValidationRule.builder()
         .key("REGEX").field(IP_CONNECTION)
-        .value("(?i)^(LAN|WI-FI|LAN\\s+e\\s+WI-FI|Nessuna)$")
+        .value("(?i)^(LAN|WIFI|LAN\\s+e\\s+WIFI|Nessuna)$")
         .errorKey("ERROR_CONNECTIVITY").build(),
       ValidationRule.builder()
         .key("REGEX").field(TECHNICAL_SHEET_URL)
-        .value("(?i)^(?:$|(?:https?://|www\\.)[^\\s]+)$")
+        .value("(?i)^(?:https?://|www\\.)[^\\s]+$")
         .errorKey("ERROR_TECHNICAL_SHEET_URL").build()
     );
 

@@ -11,11 +11,11 @@ class IpConnectionTest {
 
   @Test
   void serializesUsingExternalValue() {
-    assertEquals("\"LAN e WI-FI\"", objectMapper.writeValueAsString(IpConnection.LAN_WI_FI));
+    assertEquals("\"LAN e WIFI\"", objectMapper.writeValueAsString(IpConnection.LAN_WI_FI));
   }
 
   @Test
   void deserializesExternalValue() {
-    assertEquals(IpConnection.WI_FI, objectMapper.readValue("\"WI-FI\"", IpConnection.class));
+    assertEquals(IpConnection.WI_FI, objectMapper.readValue("\"WIFI\"", IpConnection.class));
   }
 }

@@ -254,8 +254,8 @@ class ProductMapperTest {
   @Test
   void testNormalizeConnectivity() {
     assertEquals(IpConnection.LAN, ProductMapper.normalizeConnectivity("LAN"));
-    assertEquals(IpConnection.WI_FI, ProductMapper.normalizeConnectivity("wi-fi"));
-    assertEquals(IpConnection.LAN_WI_FI, ProductMapper.normalizeConnectivity("  LAN   e   WI-FI  "));
+    assertEquals(IpConnection.WI_FI, ProductMapper.normalizeConnectivity("wifi"));
+    assertEquals(IpConnection.LAN_WI_FI, ProductMapper.normalizeConnectivity("  LAN   e   WIFI  "));
     assertEquals(IpConnection.NONE, ProductMapper.normalizeConnectivity("Nessuna"));
     assertNull(ProductMapper.normalizeConnectivity(null));
     assertNull(ProductMapper.normalizeConnectivity(""));

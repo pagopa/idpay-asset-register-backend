@@ -7,8 +7,8 @@ import java.util.Arrays;
 
 public enum IpConnection {
   LAN("LAN"),
-  WI_FI("WI-FI"),
-  LAN_WI_FI("LAN e WI-FI"),
+  WI_FI("WIFI"),
+  LAN_WI_FI("LAN e WIFI"),
   NONE("Nessuna");
 
   private final String connection;
