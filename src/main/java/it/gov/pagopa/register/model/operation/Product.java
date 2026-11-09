@@ -1,5 +1,6 @@
 package it.gov.pagopa.register.model.operation;
 
+import it.gov.pagopa.register.enums.IpConnection;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -43,6 +44,6 @@ public class Product {
   private String fullProductName;
   private String organizationName;
   private Boolean scart;
-  private String connectivity;
+  private IpConnection ipConnection;
   private String technicalSheetUrl;
 }

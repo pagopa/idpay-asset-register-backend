@@ -1,6 +1,7 @@
 package it.gov.pagopa.register.mapper.product;
 
 import it.gov.pagopa.register.dto.utils.EprelProduct;
+import it.gov.pagopa.register.enums.IpConnection;
 import it.gov.pagopa.register.enums.ProductStatus;
 import it.gov.pagopa.register.model.initiative.CategoryConfig;
 import it.gov.pagopa.register.model.operation.Product;
@@ -135,7 +136,7 @@ class ProductMapperStrategyTest {
     assertEquals("Satellitare DecoderBrand DecoderModel", product.getProductName());
     assertEquals("8009876543210 - Satellitare DecoderBrand DecoderModel", product.getFullProductName());
     assertTrue(product.getScart());
-    assertEquals("LAN", product.getConnectivity());
+    assertEquals(IpConnection.LAN, product.getIpConnection());
     assertEquals("https://example.com/sheet", product.getTechnicalSheetUrl());
   }
 
@@ -148,7 +149,7 @@ class ProductMapperStrategyTest {
       .model("ModelY")
       .brand("BrandY")
       .scart(false)
-      .connectivity("WI-FI")
+      .ipConnection(IpConnection.WI_FI)
       .technicalSheetUrl("https://example.com/url")
       .build();
 
@@ -200,7 +201,7 @@ class ProductMapperStrategyTest {
 
     assertNotNull(product);
     assertNull(product.getScart());
-    assertNull(product.getConnectivity());
+    assertNull(product.getIpConnection());
     assertNull(product.getTechnicalSheetUrl());
   }
 

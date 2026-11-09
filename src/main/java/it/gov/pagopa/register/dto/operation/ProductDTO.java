@@ -1,6 +1,7 @@
 package it.gov.pagopa.register.dto.operation;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import it.gov.pagopa.register.enums.IpConnection;
 import it.gov.pagopa.register.model.operation.StatusChangeEvent;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -42,6 +43,6 @@ public class ProductDTO {
   private String formalMotivation;
   private String organizationName;
   private Boolean scart;
-  private String connectivity;
+  private IpConnection ipConnection;
   private String technicalSheetUrl;
 }

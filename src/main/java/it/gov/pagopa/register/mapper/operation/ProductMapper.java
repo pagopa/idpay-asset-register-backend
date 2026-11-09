@@ -1,6 +1,7 @@
 package it.gov.pagopa.register.mapper.operation;
 
 import it.gov.pagopa.register.dto.operation.ProductDTO;
+import it.gov.pagopa.register.enums.IpConnection;
 import it.gov.pagopa.register.enums.ProductStatus;
 import it.gov.pagopa.register.enums.UserRole;
 import it.gov.pagopa.register.model.operation.Product;
@@ -8,6 +9,7 @@ import it.gov.pagopa.register.model.operation.StatusChangeEvent;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import static it.gov.pagopa.register.constants.AssetRegisterConstants.Category.Labels.CATEGORIES_FOR_DTO;
 import static it.gov.pagopa.register.constants.AssetRegisterConstants.Category.Labels.CATEGORIES_FOR_FILENAME;
@@ -54,7 +56,7 @@ public class ProductMapper {
       .formalMotivation(entity.getFormalMotivation())
       .organizationName(entity.getOrganizationName())
       .scart(entity.getScart())
-      .connectivity(entity.getConnectivity())
+      .ipConnection(entity.getIpConnection())
       .technicalSheetUrl(entity.getTechnicalSheetUrl())
       .build();
   }
@@ -164,22 +166,29 @@ public class ProductMapper {
     return false;
   }
 
-  public static String normalizeConnectivity(String value) {
+  public static IpConnection normalizeConnectivity(String value) {
     if (value == null || value.isBlank()) {
       return null;
     }
-    String v = value.trim().replaceAll("\\s+", " ");
-    if (v.length() > MAX_FIELD_100) {
-      v = v.substring(0, MAX_FIELD_100);
-    }
-    return v;
+    String normalized = value.replaceAll("[\\s_-]", "").toLowerCase(Locale.ROOT);
+
+    return switch (normalized) {
+      case "lan" -> IpConnection.LAN;
+      case "wifi" -> IpConnection.WI_FI;
+      case "lanewifi", "lanwifi" -> IpConnection.LAN_WI_FI;
+      case "nessuna", "nessuno" -> IpConnection.NONE;
+      default -> null;
+    };
   }
 
   public static String normalizeTechnicalSheetUrl(String value) {
     if (value == null || value.isBlank()) {
       return null;
     }
-    return value.trim().replaceAll("\\s+", "");
+    String normalized = value.trim().replaceAll("\\s+", "");
+    return normalized.regionMatches(true, 0, "www.", 0, 4)
+      ? "https://" + normalized
+      : normalized;
   }
 
 }
