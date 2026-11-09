@@ -15,7 +15,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -96,8 +95,15 @@ public class ProductFileValidatorService {
     List<String> expectedHeaders = csvTemplate.getHeaders();
     List<String> actualHeaders = CsvUtils.readHeaders(file);
 
-    if (!actualHeaders.equals(expectedHeaders)) {
-      log.warn("[VALIDATE_FILE] - Header mismatch: {}", filename);
+    List<String> normalizedActual = actualHeaders.stream()
+      .map(h -> h != null ? h.trim() : "")
+      .toList();
+    List<String> normalizedExpected = expectedHeaders.stream()
+      .map(h -> h != null ? h.trim() : "")
+      .toList();
+
+    if (!normalizedActual.equals(normalizedExpected)) {
+      log.warn("[VALIDATE_FILE] - Header mismatch: actual={}, expected={}", normalizedActual, normalizedExpected);
       return ValidationResultDTO.ko(HEADER_FILE_ERROR_KEY);
     }
 
