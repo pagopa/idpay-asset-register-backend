@@ -30,14 +30,14 @@ public class CsvUtils {
   }
 
   public static List<String> readHeaders(MultipartFile file) throws IOException {
-    try (BufferedReader reader = new BufferedReader(
-      new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8))) {
-      String headerLine = reader.readLine();
-      if (headerLine != null) {
-        return Arrays.asList(headerLine.split(";"));
-      } else {
-        return List.of("");
-      }
+    try (Reader reader = new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8);
+         CSVParser parser = CSVFormat.Builder.create()
+           .setHeader()
+           .setTrim(true)
+           .setDelimiter(DELIMITER)
+           .build()
+           .parse(reader)) {
+      return parser.getHeaderNames();
     }
   }
 
