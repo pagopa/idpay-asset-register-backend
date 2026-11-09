@@ -18,8 +18,8 @@ public class CsvUtils {
 
   public static final String DELIMITER = ";";
 
-  private static String readAndSanitizeContent(MultipartFile file) throws IOException {
-    try (BufferedReader reader = new BufferedReader(new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8))) {
+  private static String readAndSanitizeContent(InputStream inputStream) throws IOException {
+    try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
       StringBuilder sb = new StringBuilder();
       char[] buffer = new char[8192];
       int charsRead;
@@ -37,6 +37,10 @@ public class CsvUtils {
       }
       return sb.toString();
     }
+  }
+
+  private static String readAndSanitizeContent(MultipartFile file) throws IOException {
+    return readAndSanitizeContent(file.getInputStream());
   }
 
   public static List<CSVRecord> readCsvRecords(MultipartFile file) throws IOException {
@@ -57,6 +61,7 @@ public class CsvUtils {
     try (Reader reader = new StringReader(content);
          CSVParser parser = CSVFormat.Builder.create()
            .setHeader()
+           .setAllowMissingColumnNames(true)
            .setTrim(true)
            .setDelimiter(DELIMITER)
            .build()
@@ -66,8 +71,8 @@ public class CsvUtils {
   }
 
   public static List<CSVRecord> readCsvRecords(ByteArrayOutputStream file) throws IOException {
-    try (BufferedReader reader = new BufferedReader(new InputStreamReader(
-      new ByteArrayInputStream(file.toByteArray()), StandardCharsets.UTF_8));
+    String content = readAndSanitizeContent(new ByteArrayInputStream(file.toByteArray()));
+    try (BufferedReader reader = new BufferedReader(new StringReader(content));
          CSVParser parser = new CSVParser(reader, CSVFormat.Builder.create()
            .setHeader()
            .setTrim(true)
@@ -78,10 +83,11 @@ public class CsvUtils {
   }
 
   public static List<String> readHeader(ByteArrayOutputStream file) throws IOException {
-    try (BufferedReader reader = new BufferedReader(new InputStreamReader(
-      new ByteArrayInputStream(file.toByteArray()), StandardCharsets.UTF_8));
+    String content = readAndSanitizeContent(new ByteArrayInputStream(file.toByteArray()));
+    try (BufferedReader reader = new BufferedReader(new StringReader(content));
          CSVParser parser = new CSVParser(reader, CSVFormat.Builder.create()
            .setHeader()
+           .setAllowMissingColumnNames(true)
            .setTrim(true)
            .setDelimiter(';')
            .build())) {
