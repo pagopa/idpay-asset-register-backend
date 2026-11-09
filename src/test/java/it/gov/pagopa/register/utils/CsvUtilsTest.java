@@ -5,6 +5,7 @@ import org.junit.jupiter.api.*;
 import org.springframework.mock.web.MockMultipartFile;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -67,4 +68,47 @@ class CsvUtilsTest {
 
     Files.deleteIfExists(tempFile);
   }
+
+  @Test
+  void testReadCsvWithBOMFromMultipartFile() throws IOException {
+    String csvWithBOM = "\uFEFFName;Age\nJohn;30\nJane;25\n";
+    MockMultipartFile file = new MockMultipartFile("file", "test_bom.csv", "text/csv", csvWithBOM.getBytes(StandardCharsets.UTF_8));
+
+    List<String> headers = CsvUtils.readHeaders(file);
+    assertEquals(List.of("Name", "Age"), headers);
+
+    List<CSVRecord> records = CsvUtils.readCsvRecords(file);
+    assertEquals(2, records.size());
+    assertEquals("John", records.get(0).get("Name"));
+  }
+
+  @Test
+  void testReadCsvWithoutBOMFromMultipartFile() throws IOException {
+    String csvWithoutBOM = "Name;Age\nJohn;30\nJane;25\n";
+    MockMultipartFile file = new MockMultipartFile("file", "test_no_bom.csv", "text/csv", csvWithoutBOM.getBytes(StandardCharsets.UTF_8));
+
+    List<String> headers = CsvUtils.readHeaders(file);
+    assertEquals(List.of("Name", "Age"), headers);
+
+    List<CSVRecord> records = CsvUtils.readCsvRecords(file);
+    assertEquals(2, records.size());
+    assertEquals("John", records.get(0).get("Name"));
+  }
+
+  @Test
+  void testReadCsvLargeContentMultipartFile() throws IOException {
+    StringBuilder largeContent = new StringBuilder("Name;Age\n");
+    for (int i = 0; i < 2000; i++) {
+      largeContent.append("User").append(i).append(";").append(20 + (i % 30)).append("\n");
+    }
+
+    MockMultipartFile file = new MockMultipartFile("file", "test_large.csv", "text/csv", largeContent.toString().getBytes(StandardCharsets.UTF_8));
+
+    List<String> headers = CsvUtils.readHeaders(file);
+    assertEquals(List.of("Name", "Age"), headers);
+
+    List<CSVRecord> records = CsvUtils.readCsvRecords(file);
+    assertEquals(2000, records.size());
+  }
+
 }
