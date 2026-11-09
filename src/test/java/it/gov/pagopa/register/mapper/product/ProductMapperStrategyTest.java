@@ -148,7 +148,7 @@ class ProductMapperStrategyTest {
       .model("ModelY")
       .brand("BrandY")
       .scart(false)
-      .connectivity("WI-FI")
+      .connectivity("WIFI")
       .technicalSheetUrl("https://example.com/url")
       .build();
 
@@ -164,7 +164,7 @@ class ProductMapperStrategyTest {
     assertEquals("ModelY", csvRecord.get(3));
     assertEquals("BrandY", csvRecord.get(4));
     assertEquals("false", csvRecord.get(5));
-    assertEquals("WI-FI", csvRecord.get(6));
+    assertEquals("WIFI", csvRecord.get(6));
     assertEquals("https://example.com/url", csvRecord.get(7));
   }
 

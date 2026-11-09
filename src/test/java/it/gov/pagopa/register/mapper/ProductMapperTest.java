@@ -1,6 +1,7 @@
 package it.gov.pagopa.register.mapper;
 
 import it.gov.pagopa.register.dto.operation.ProductDTO;
+import it.gov.pagopa.register.enums.IpConnection;
 import it.gov.pagopa.register.enums.ProductStatus;
 import it.gov.pagopa.register.enums.UserRole;
 import it.gov.pagopa.register.mapper.operation.ProductMapper;
@@ -252,16 +253,20 @@ class ProductMapperTest {
 
   @Test
   void testNormalizeConnectivity() {
-    assertEquals("LAN e WI-FI", ProductMapper.normalizeConnectivity("  LAN   e   WI-FI  "));
-    String longString = "A".repeat(150);
-    assertEquals(100, ProductMapper.normalizeConnectivity(longString).length());
+    assertEquals(IpConnection.LAN, ProductMapper.normalizeConnectivity("LAN"));
+    assertEquals(IpConnection.WI_FI, ProductMapper.normalizeConnectivity("wifi"));
+    assertEquals(IpConnection.LAN_WI_FI, ProductMapper.normalizeConnectivity("  LAN   e   WIFI  "));
+    assertEquals(IpConnection.NONE, ProductMapper.normalizeConnectivity("Nessuna"));
     assertNull(ProductMapper.normalizeConnectivity(null));
+    assertNull(ProductMapper.normalizeConnectivity(""));
     assertNull(ProductMapper.normalizeConnectivity("   "));
+    assertNull(ProductMapper.normalizeConnectivity("Bluetooth"));
   }
 
   @Test
   void testNormalizeTechnicalSheetUrl() {
     assertEquals("https://example.com/sheet", ProductMapper.normalizeTechnicalSheetUrl("  https://example.com/  sheet  "));
+    assertEquals("https://www.google.com", ProductMapper.normalizeTechnicalSheetUrl(" www.google.com "));
 
     String longUrl = "https://example.com/" + "a".repeat(300);
     assertEquals(longUrl.length(), ProductMapper.normalizeTechnicalSheetUrl(longUrl).length());
@@ -291,6 +296,21 @@ class ProductMapperTest {
     assertTrue(dto.getScart());
     assertEquals("LAN", dto.getConnectivity());
     assertEquals("https://url.it", dto.getTechnicalSheetUrl());
+  }
+
+  @Test
+  void testToDTO_NormalizesLegacyConnectivityValue() {
+    Product product = Product.builder()
+      .organizationId("org1")
+      .registrationDate(LocalDateTime.now())
+      .status(ProductStatus.APPROVED.name())
+      .category("C")
+      .connectivity("WI" + "-FI")
+      .build();
+
+    ProductDTO dto = ProductMapper.toDTO(product, UserRole.INVITALIA.getRole());
+
+    assertEquals("WIFI", dto.getConnectivity());
   }
 
 }

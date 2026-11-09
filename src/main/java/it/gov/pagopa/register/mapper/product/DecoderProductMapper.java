@@ -1,5 +1,6 @@
 package it.gov.pagopa.register.mapper.product;
 
+import it.gov.pagopa.register.enums.IpConnection;
 import it.gov.pagopa.register.enums.ProductStatus;
 import it.gov.pagopa.register.model.initiative.CategoryConfig;
 import it.gov.pagopa.register.model.operation.Product;
@@ -65,7 +66,7 @@ public class DecoderProductMapper implements ProductMapperStrategy {
       .statusChangeChronology(new ArrayList<>())
       .formalMotivation("")
       .scart(input.scart)
-      .connectivity(input.connectivity)
+      .connectivity(input.ipConnection == null ? null : input.ipConnection.getConnection())
       .technicalSheetUrl(input.technicalSheetUrl)
       .build();
   }
@@ -87,7 +88,7 @@ public class DecoderProductMapper implements ProductMapperStrategy {
           product.getModel(),
           product.getBrand(),
           product.getScart(),
-          product.getConnectivity(),
+          normalizeConnectivityForOutput(product.getConnectivity()),
           product.getTechnicalSheetUrl()
         );
       }
@@ -116,7 +117,7 @@ public class DecoderProductMapper implements ProductMapperStrategy {
       sanitizeBrandOrModelForDto(csv.get(BRAND)),
       sanitizeBrandOrModelForDto(csv.get(MODEL)),
       csv.isMapped(SCART) ? parseScart(csv.get(SCART)) : null,
-      csv.isMapped(CONNECTIVITY) ? normalizeConnectivity(csv.get(CONNECTIVITY)) : null,
+      csv.isMapped(IP_CONNECTION) ? normalizeConnectivity(csv.get(IP_CONNECTION)) : null,
       csv.isMapped(TECHNICAL_SHEET_URL) ? normalizeTechnicalSheetUrl(csv.get(TECHNICAL_SHEET_URL)) : null
     );
   }
@@ -141,7 +142,7 @@ public class DecoderProductMapper implements ProductMapperStrategy {
     String brand,
     String model,
     Boolean scart,
-    String connectivity,
+    IpConnection ipConnection,
     String technicalSheetUrl
   ) {}
 }
