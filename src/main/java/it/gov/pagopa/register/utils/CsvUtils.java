@@ -18,19 +18,43 @@ public class CsvUtils {
 
   public static final String DELIMITER = ";";
 
+  private static String readAndSanitizeContent(MultipartFile file) throws IOException {
+    try (BufferedReader reader = new BufferedReader(new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8))) {
+      StringBuilder sb = new StringBuilder();
+      char[] buffer = new char[8192];
+      int charsRead;
+      boolean firstCharsChecked = false;
+
+      while ((charsRead = reader.read(buffer)) != -1) {
+        String chunk = new String(buffer, 0, charsRead);
+        if (!firstCharsChecked) {
+          if (chunk.startsWith("\uFEFF")) {
+            chunk = chunk.substring(1);
+          }
+          firstCharsChecked = true;
+        }
+        sb.append(chunk);
+      }
+      return sb.toString();
+    }
+  }
+
   public static List<CSVRecord> readCsvRecords(MultipartFile file) throws IOException {
-    Reader reader = new InputStreamReader(file.getInputStream());
-    CSVParser parser = CSVFormat.Builder.create()
-      .setTrim(Boolean.TRUE)
-      .setHeader().setSkipHeaderRecord(Boolean.TRUE)
-      .setDelimiter(DELIMITER)
-      .build()
-      .parse(reader);
-    return parser.getRecords();
+    String content = readAndSanitizeContent(file);
+    try (Reader reader = new StringReader(content);
+         CSVParser parser = CSVFormat.Builder.create()
+           .setTrim(Boolean.TRUE)
+           .setHeader().setSkipHeaderRecord(Boolean.TRUE)
+           .setDelimiter(DELIMITER)
+           .build()
+           .parse(reader)) {
+      return parser.getRecords();
+    }
   }
 
   public static List<String> readHeaders(MultipartFile file) throws IOException {
-    try (Reader reader = new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8);
+    String content = readAndSanitizeContent(file);
+    try (Reader reader = new StringReader(content);
          CSVParser parser = CSVFormat.Builder.create()
            .setHeader()
            .setTrim(true)

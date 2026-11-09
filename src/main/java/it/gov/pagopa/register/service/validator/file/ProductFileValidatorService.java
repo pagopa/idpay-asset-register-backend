@@ -95,22 +95,10 @@ public class ProductFileValidatorService {
     List<String> expectedHeaders = csvTemplate.getHeaders();
     List<String> actualHeaders = CsvUtils.readHeaders(file);
 
-    List<String> normalizedActual = actualHeaders.stream()
-      .map(h -> h != null ? h.trim().toLowerCase().replace("\uFEFF", "") : "")
-      .toList();
-    List<String> normalizedExpected = expectedHeaders.stream()
-      .map(h -> h != null ? h.trim().toLowerCase() : "")
-      .toList();
-
-    if (!normalizedActual.equals(normalizedExpected)) {
-      log.error("[VALIDATE_FILE] - HEADER MISMATCH DETECTED!\nFILE (Actual):     {}\nTEMPLATE (Expected): {}", normalizedActual, normalizedExpected);
+    if (!actualHeaders.equals(expectedHeaders)) {
+      log.warn("[VALIDATE_FILE] - Header mismatch: {}", filename);
       return ValidationResultDTO.ko(HEADER_FILE_ERROR_KEY);
     }
-
-//    if (!actualHeaders.equals(expectedHeaders)) {
-//      log.warn("[VALIDATE_FILE] - Header mismatch: {}", filename);
-//      return ValidationResultDTO.ko(HEADER_FILE_ERROR_KEY);
-//    }
 
     List<CSVRecord> records = CsvUtils.readCsvRecords(file);
     if (records.isEmpty()) {
