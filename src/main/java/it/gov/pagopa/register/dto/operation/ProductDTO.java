@@ -41,4 +41,7 @@ public class ProductDTO {
   private List<StatusChangeEvent> statusChangeChronology;
   private String formalMotivation;
   private String organizationName;
+  private Boolean scart;
+  private String connectivity;
+  private String technicalSheetUrl;
 }

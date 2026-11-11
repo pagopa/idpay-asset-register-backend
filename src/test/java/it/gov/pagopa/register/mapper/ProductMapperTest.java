@@ -1,6 +1,7 @@
 package it.gov.pagopa.register.mapper;
 
 import it.gov.pagopa.register.dto.operation.ProductDTO;
+import it.gov.pagopa.register.enums.IpConnection;
 import it.gov.pagopa.register.enums.ProductStatus;
 import it.gov.pagopa.register.enums.UserRole;
 import it.gov.pagopa.register.mapper.operation.ProductMapper;
@@ -51,7 +52,7 @@ class ProductMapperTest {
     ProductDTO dto = ProductMapper.toDTO(product, UserRole.OPERATORE.getRole());
 
     assertNotNull(dto);
-    assertEquals(ProductStatus.UPLOADED.name(), dto.getStatus(), "Con ruolo OPERATORE e stato SUPERVISED deve diventare UPLOADED");
+    assertEquals(ProductStatus.UPLOADED.name(), dto.getStatus());
 
     assertNotNull(dto.getStatusChangeChronology());
     assertEquals(original.size(), dto.getStatusChangeChronology().size());
@@ -75,7 +76,7 @@ class ProductMapperTest {
     Product product = Product.builder()
       .organizationId("org1")
       .registrationDate(LocalDateTime.of(2025, 10, 3, 18, 53, 24))
-      .status(ProductStatus.SUPERVISED.name()) // << nuovo caso
+      .status(ProductStatus.SUPERVISED.name())
       .model("ModelX")
       .productGroup("GroupA")
       .category("CategoryA")
@@ -97,12 +98,12 @@ class ProductMapperTest {
     ProductDTO dto = ProductMapper.toDTO(product, UserRole.INVITALIA.getRole());
 
     assertNotNull(dto);
-    assertEquals(ProductStatus.SUPERVISED.name(), dto.getStatus(), "Con ruolo non OPERATORE lo stato SUPERVISED deve restare invariato");
+    assertEquals(ProductStatus.SUPERVISED.name(), dto.getStatus());
 
     assertNotNull(dto.getStatusChangeChronology());
-    assertFalse(dto.getStatusChangeChronology().isEmpty(), "La chronology deve essere presente per ruoli non OPERATORE");
+    assertFalse(dto.getStatusChangeChronology().isEmpty());
     StatusChangeEvent first = dto.getStatusChangeChronology().get(0);
-    assertNotEquals("-", first.getUsername(), "Per ruoli non OPERATORE la chronology non deve essere mascherata");
+    assertNotEquals("-", first.getUsername());
 
     assertEquals("OK", dto.getFormalMotivation());
     assertEquals("GTIN123 - CategoryA BrandX ModelX 10", dto.getFullProductName());
@@ -124,9 +125,9 @@ class ProductMapperTest {
     ProductDTO dto = ProductMapper.toDTO(product, UserRole.INVITALIA.getRole());
 
     assertNotNull(dto);
-    assertNotNull(dto.getStatusChangeChronology(), "La chronology non deve essere null");
-    assertEquals(0, dto.getStatusChangeChronology().size(), "Se chronology è null sull'entità, deve diventare lista vuota");
-    assertEquals("full-name", dto.getFullProductName(), "fullProductName deve propagare nel DTO");
+    assertNotNull(dto.getStatusChangeChronology());
+    assertEquals(0, dto.getStatusChangeChronology().size());
+    assertEquals("full-name", dto.getFullProductName());
   }
 
   @Test
@@ -227,8 +228,89 @@ class ProductMapperTest {
       .build();
 
     ProductDTO dto = ProductMapper.toDTO(product, UserRole.INVITALIA_ADMIN.getRole());
-    assertEquals("", dto.getCapacity(), "In DTO, 'N\\A' diventa stringa vuota");
+    assertEquals("", dto.getCapacity());
     assertEquals("full-name", dto.getFullProductName());
+  }
+
+  @Test
+  void testParseScart() {
+    assertTrue(ProductMapper.parseScart("SI"));
+    assertTrue(ProductMapper.parseScart("si"));
+    assertTrue(ProductMapper.parseScart("  SI  "));
+    assertTrue(ProductMapper.parseScart("TRUE"));
+    assertTrue(ProductMapper.parseScart("True"));
+    assertTrue(ProductMapper.parseScart("1"));
+    assertFalse(ProductMapper.parseScart("NO"));
+    assertFalse(ProductMapper.parseScart("no"));
+    assertFalse(ProductMapper.parseScart("FALSE"));
+    assertFalse(ProductMapper.parseScart("False"));
+    assertFalse(ProductMapper.parseScart("0"));
+    assertFalse(ProductMapper.parseScart("INVALID"));
+    assertFalse(ProductMapper.parseScart(""));
+    assertFalse(ProductMapper.parseScart("   "));
+    assertFalse(ProductMapper.parseScart(null));
+  }
+
+  @Test
+  void testNormalizeConnectivity() {
+    assertEquals(IpConnection.LAN, ProductMapper.normalizeConnectivity("LAN"));
+    assertEquals(IpConnection.WI_FI, ProductMapper.normalizeConnectivity("wifi"));
+    assertEquals(IpConnection.LAN_WI_FI, ProductMapper.normalizeConnectivity("  LAN   e   WIFI  "));
+    assertEquals(IpConnection.NONE, ProductMapper.normalizeConnectivity("Nessuna"));
+    assertNull(ProductMapper.normalizeConnectivity(null));
+    assertNull(ProductMapper.normalizeConnectivity(""));
+    assertNull(ProductMapper.normalizeConnectivity("   "));
+    assertNull(ProductMapper.normalizeConnectivity("Bluetooth"));
+  }
+
+  @Test
+  void testNormalizeTechnicalSheetUrl() {
+    assertEquals("https://example.com/sheet", ProductMapper.normalizeTechnicalSheetUrl("  https://example.com/  sheet  "));
+    assertEquals("https://www.google.com", ProductMapper.normalizeTechnicalSheetUrl(" www.google.com "));
+
+    String longUrl = "https://example.com/" + "a".repeat(300);
+    assertEquals(longUrl.length(), ProductMapper.normalizeTechnicalSheetUrl(longUrl).length());
+
+    assertNull(ProductMapper.normalizeTechnicalSheetUrl(null));
+    assertNull(ProductMapper.normalizeTechnicalSheetUrl("   "));
+  }
+
+  @Test
+  void testToDTO_NewFieldsMapped() {
+    Product product = Product.builder()
+      .organizationId("org1")
+      .registrationDate(LocalDateTime.now())
+      .status(ProductStatus.APPROVED.name())
+      .category("C")
+      .productName("name")
+      .fullProductName("full-name")
+      .organizationName("orgName")
+      .scart(true)
+      .connectivity("LAN")
+      .technicalSheetUrl("https://url.it")
+      .build();
+
+    ProductDTO dto = ProductMapper.toDTO(product, UserRole.INVITALIA.getRole());
+
+    assertNotNull(dto);
+    assertTrue(dto.getScart());
+    assertEquals("LAN", dto.getConnectivity());
+    assertEquals("https://url.it", dto.getTechnicalSheetUrl());
+  }
+
+  @Test
+  void testToDTO_NormalizesLegacyConnectivityValue() {
+    Product product = Product.builder()
+      .organizationId("org1")
+      .registrationDate(LocalDateTime.now())
+      .status(ProductStatus.APPROVED.name())
+      .category("C")
+      .connectivity("WI" + "-FI")
+      .build();
+
+    ProductDTO dto = ProductMapper.toDTO(product, UserRole.INVITALIA.getRole());
+
+    assertEquals("WIFI", dto.getConnectivity());
   }
 
 }
