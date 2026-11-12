@@ -200,7 +200,49 @@ class ProductFileValidatorServiceTest {
 
     assertEquals("OK", fileResult.getStatus());
     assertEquals("KO", recordsResult.getStatus());
-    assertTrue(recordsResult.getErrorMessages().values().iterator().next().contains("URL HTTP/HTTPS valido"));
+    assertTrue(recordsResult.getErrorMessages().values().iterator().next().contains("\"Nessuna\""));
+  }
+
+  @Test
+  void validateDecoderTemplate_WithNessunaTechnicalSheetUrlReturnsOk() throws IOException {
+    InitiativeConfig config = decoderInitiativeConfig();
+    when(initiativeConfigMap.get(INITIATIVE_ID)).thenReturn(config);
+    ProductFileValidatorService validator = decoderValidator();
+    MockMultipartFile file = decoderCsv("SI", "LAN", "Nessuna");
+
+    ValidationResultDTO fileResult = validator.validateFile(file, SATELLITE_CODE, INITIATIVE_ID, "organization");
+    ValidationResultDTO recordsResult = validator.validateRecords(fileResult.getRecords(), SATELLITE_CODE, INITIATIVE_ID);
+
+    assertEquals("OK", fileResult.getStatus());
+    assertEquals("OK", recordsResult.getStatus());
+  }
+
+  @Test
+  void validateDecoderTemplate_WithBlankTechnicalSheetUrlReturnsFormalError() throws IOException {
+    InitiativeConfig config = decoderInitiativeConfig();
+    when(initiativeConfigMap.get(INITIATIVE_ID)).thenReturn(config);
+    ProductFileValidatorService validator = decoderValidator();
+    MockMultipartFile file = decoderCsv("SI", "LAN", "");
+
+    ValidationResultDTO fileResult = validator.validateFile(file, SATELLITE_CODE, INITIATIVE_ID, "organization");
+    ValidationResultDTO recordsResult = validator.validateRecords(fileResult.getRecords(), SATELLITE_CODE, INITIATIVE_ID);
+
+    assertEquals("OK", fileResult.getStatus());
+    assertEquals("KO", recordsResult.getStatus());
+  }
+
+  @Test
+  void validateDecoderTemplate_WithAccentedScartSiReturnsOk() throws IOException {
+    InitiativeConfig config = decoderInitiativeConfig();
+    when(initiativeConfigMap.get(INITIATIVE_ID)).thenReturn(config);
+    ProductFileValidatorService validator = decoderValidator();
+    MockMultipartFile file = decoderCsv("Sì", "LAN", "Nessuna");
+
+    ValidationResultDTO fileResult = validator.validateFile(file, SATELLITE_CODE, INITIATIVE_ID, "organization");
+    ValidationResultDTO recordsResult = validator.validateRecords(fileResult.getRecords(), SATELLITE_CODE, INITIATIVE_ID);
+
+    assertEquals("OK", fileResult.getStatus());
+    assertEquals("OK", recordsResult.getStatus());
   }
 
   @Test
@@ -380,14 +422,14 @@ class ProductFileValidatorServiceTest {
   private InitiativeConfig decoderInitiativeConfig() {
     List<ValidationRule> rules = List.of(
       ValidationRule.builder()
-        .key("REGEX").field(SCART).value("(?i)^(si|no)$").errorKey("ERROR_SCART").build(),
+        .key("REGEX").field(SCART).value("(?iu)^(si|s\u00ec|no)$").errorKey("ERROR_SCART").build(),
       ValidationRule.builder()
         .key("REGEX").field(IP_CONNECTION)
         .value("(?i)^(LAN|WIFI|LAN\\s+e\\s+WIFI|Nessuna)$")
         .errorKey("ERROR_CONNECTIVITY").build(),
       ValidationRule.builder()
         .key("REGEX").field(TECHNICAL_SHEET_URL)
-        .value("(?i)^(?:https?://|www\\.)[^\\s]+$")
+        .value("(?i)^(?:Nessuna|(?:https?://|www\\.)[^\\s]+)$")
         .errorKey("ERROR_TECHNICAL_SHEET_URL").build()
     );
 
