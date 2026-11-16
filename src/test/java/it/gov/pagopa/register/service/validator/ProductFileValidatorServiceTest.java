@@ -419,6 +419,15 @@ class ProductFileValidatorServiceTest {
     return csv("decoder.csv", headers + "\n" + row);
   }
 
+  /**
+   * NOTE: the rules defined here (e.g., regex for Rejection/Connectivity/Technical Sheet) are
+   * test values and DO NOT necessarily reflect the actual active configuration.
+   * In production, {@link InitiativeConfig} and its {@link ValidationRule} are loaded
+   * from MongoDB via {@code InitiativeRepository} at the startup of {@link InitiativeConfigMap}
+   * (static in-memory cache, without runtime reload). Before release, check the rules
+   * actually present in the DB and whether a coordinated restart is needed to propagate
+   * changes, in addition to validating any new accepted values
+   */
   private InitiativeConfig decoderInitiativeConfig() {
     List<ValidationRule> rules = List.of(
       ValidationRule.builder()

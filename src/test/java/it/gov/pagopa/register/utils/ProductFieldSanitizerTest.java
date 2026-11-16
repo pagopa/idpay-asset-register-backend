@@ -55,6 +55,10 @@ class ProductFieldSanitizerTest {
     assertEquals("Nessuna", ProductFieldSanitizer.normalizeTechnicalSheetUrl("Nessuna"));
     assertEquals("Nessuna", ProductFieldSanitizer.normalizeTechnicalSheetUrl("nessuna"));
     assertEquals("Nessuna", ProductFieldSanitizer.normalizeTechnicalSheetUrl(" NESSUNA "));
+
+    // Regression: path and query are case-sensitive and must be preserved as-is.
+    assertEquals("https://example.com/Manuale.PDF?token=AbC",
+      ProductFieldSanitizer.normalizeTechnicalSheetUrl("https://example.com/Manuale.PDF?token=AbC"));
   }
 
 }

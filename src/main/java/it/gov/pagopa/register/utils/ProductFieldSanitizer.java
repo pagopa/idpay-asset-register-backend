@@ -116,7 +116,7 @@ public class ProductFieldSanitizer {
     if (value == null || value.isBlank()) {
       return null;
     }
-    String normalized = value.trim().replaceAll("\\s+", "").toLowerCase(Locale.ROOT);
+    String normalized = value.trim().replaceAll("\\s+", "");
     if ("nessuna".equalsIgnoreCase(normalized)) {
       return "Nessuna";
     }
