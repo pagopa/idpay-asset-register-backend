@@ -18,8 +18,8 @@ import java.util.List;
 import static it.gov.pagopa.register.constants.AssetRegisterConstants.Category.COOKINGHOBS;
 import static it.gov.pagopa.register.constants.AssetRegisterConstants.Category.Labels.CATEGORIES_FOR_PRODUCT_NAME;
 import static it.gov.pagopa.register.constants.AssetRegisterConstants.CsvHeader.*;
-import static it.gov.pagopa.register.mapper.operation.ProductMapper.*;
 import static it.gov.pagopa.register.utils.CsvUtils.DELIMITER;
+import static it.gov.pagopa.register.utils.ProductFieldSanitizer.*;
 
 
 @SuppressWarnings({"java:S6830", "java:S117"})
