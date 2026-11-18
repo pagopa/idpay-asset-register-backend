@@ -134,6 +134,9 @@ class ProductMapperStrategyTest {
     assertEquals(ProductStatus.UPLOADED.name(), product.getStatus());
     assertEquals("Satellitare DecoderBrand DecoderModel", product.getProductName());
     assertEquals("8009876543210 - Satellitare DecoderBrand DecoderModel", product.getFullProductName());
+    assertTrue(product.getScart());
+    assertEquals("LAN", product.getConnectivity());
+    assertEquals("https://example.com/sheet", product.getTechnicalSheetUrl());
   }
 
   @Test
@@ -144,11 +147,14 @@ class ProductMapperStrategyTest {
       .category(SATELLITE)
       .model("ModelY")
       .brand("BrandY")
+      .scart(false)
+      .connectivity("WIFI")
+      .technicalSheetUrl("https://example.com/url")
       .build();
 
     CSVRecord csvRecord = decoderProductMapper.mapToCsvRow(
       product,
-      List.of("gtinCode", "productCode", "category", "model", "brand")
+      List.of("gtinCode", "productCode", "category", "model", "brand", "scart", "connectivity", "technicalSheetUrl")
     );
 
     assertNotNull(csvRecord);
@@ -157,6 +163,45 @@ class ProductMapperStrategyTest {
     assertEquals(SATELLITE, csvRecord.get(2));
     assertEquals("ModelY", csvRecord.get(3));
     assertEquals("BrandY", csvRecord.get(4));
+    assertEquals("false", csvRecord.get(5));
+    assertEquals("WIFI", csvRecord.get(6));
+    assertEquals("https://example.com/url", csvRecord.get(7));
+  }
+
+  @Test
+  void decoderMapToProduct_OldCsvFormatWithoutNewColumns() {
+    // CSV vecchio tracciato senza Scart, Connettività e Scheda Tecnica
+    String csvContent = "Codice EPREL,Codice GTIN/EAN,Codice Prodotto,Categoria,Modello,Marca\n" +
+      "12345,8009876543210,DEC123,DT,DecoderModel,DecoderBrand";
+
+    CSVRecord oldRecord;
+    try {
+      oldRecord = org.apache.commons.csv.CSVFormat.DEFAULT.builder()
+        .setHeader()
+        .setSkipHeaderRecord(true)
+        .setTrim(true)
+        .build()
+        .parse(new java.io.StringReader(csvContent))
+        .getRecords()
+        .getFirst();
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+
+    Product product = decoderProductMapper.mapToProduct(
+      oldRecord,
+      SATELLITE_CODE,
+      ORG_ID,
+      INITIATIVE_ID,
+      PRODUCT_FILE_ID,
+      ORGANIZATION_NAME,
+      null
+    );
+
+    assertNotNull(product);
+    assertNull(product.getScart());
+    assertNull(product.getConnectivity());
+    assertNull(product.getTechnicalSheetUrl());
   }
 
 
@@ -457,13 +502,22 @@ class ProductMapperStrategyTest {
     return csvRecord;
   }
 
-  private static CSVRecord decoderRecord() {
-    CSVRecord csvRecord = mock(CSVRecord.class);
-    when(csvRecord.get(CODE_PRODUCT)).thenReturn("DEC123");
-    when(csvRecord.get(CODE_GTIN_EAN)).thenReturn("8009876543210");
-    when(csvRecord.get(BRAND)).thenReturn("DecoderBrand");
-    when(csvRecord.get(MODEL)).thenReturn("DecoderModel");
-    return csvRecord;
+  private CSVRecord decoderRecord() {
+    try {
+      String csvContent = "Codice EPREL,Codice GTIN/EAN,Codice Prodotto,Categoria,Modello,Marca,Scart,Connessione IP,Scheda tecnica\n" +
+        "12345,8009876543210,DEC123,DT,DecoderModel,DecoderBrand,SI,LAN,https://example.com/sheet";
+
+      return org.apache.commons.csv.CSVFormat.DEFAULT.builder()
+        .setHeader()
+        .setSkipHeaderRecord(true)
+        .setTrim(true)
+        .build()
+        .parse(new java.io.StringReader(csvContent))
+        .getRecords()
+        .getFirst();
+    } catch (Exception e) {
+      throw new RuntimeException("Errore nella creazione del record di test", e);
+    }
   }
 
   private static CSVRecord eprelRecord() {

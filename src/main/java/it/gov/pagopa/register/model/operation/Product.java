@@ -42,4 +42,7 @@ public class Product {
   private String productName;
   private String fullProductName;
   private String organizationName;
+  private Boolean scart;
+  private String connectivity;
+  private String technicalSheetUrl;
 }

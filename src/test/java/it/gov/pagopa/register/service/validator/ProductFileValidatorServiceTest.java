@@ -10,6 +10,7 @@ import it.gov.pagopa.register.dto.operation.ValidationResultDTO;
 import it.gov.pagopa.register.service.validator.file.ProductFileValidatorService;
 import it.gov.pagopa.register.service.validator.rule.RuleDispatcher;
 import it.gov.pagopa.register.service.validator.rule.RuleExecutor;
+import it.gov.pagopa.register.service.validator.rule.csv.RegexRuleExecutor;
 import org.apache.commons.csv.CSVRecord;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -24,6 +25,8 @@ import java.util.List;
 import java.util.Map;
 
 import static it.gov.pagopa.register.constants.AssetRegisterConstants.UploadError.*;
+import static it.gov.pagopa.register.constants.AssetRegisterConstants.CsvHeader.*;
+import static it.gov.pagopa.register.constants.AssetRegisterConstants.Category.SATELLITE_CODE;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.lenient;
@@ -169,6 +172,35 @@ class ProductFileValidatorServiceTest {
 
     assertEquals("OK", result.getStatus());
     assertNull(result.getInvalidRecords());
+  }
+
+  @Test
+  void validateDecoderTemplate_WithValidAdditionalFieldsReturnsOk() throws IOException {
+    InitiativeConfig config = decoderInitiativeConfig();
+    when(initiativeConfigMap.get(INITIATIVE_ID)).thenReturn(config);
+    ProductFileValidatorService validator = decoderValidator();
+    MockMultipartFile file = decoderCsv("SI", "LAN e WIFI", "www.example.com/scheda.pdf");
+
+    ValidationResultDTO fileResult = validator.validateFile(file, SATELLITE_CODE, INITIATIVE_ID, "organization");
+    ValidationResultDTO recordsResult = validator.validateRecords(fileResult.getRecords(), SATELLITE_CODE, INITIATIVE_ID);
+
+    assertEquals("OK", fileResult.getStatus());
+    assertEquals("OK", recordsResult.getStatus());
+  }
+
+  @Test
+  void validateDecoderTemplate_WithInvalidTechnicalSheetUrlReturnsFormalError() throws IOException {
+    InitiativeConfig config = decoderInitiativeConfig();
+    when(initiativeConfigMap.get(INITIATIVE_ID)).thenReturn(config);
+    ProductFileValidatorService validator = decoderValidator();
+    MockMultipartFile file = decoderCsv("NO", "Nessuna", "ftp://example.com/scheda.pdf");
+
+    ValidationResultDTO fileResult = validator.validateFile(file, SATELLITE_CODE, INITIATIVE_ID, "organization");
+    ValidationResultDTO recordsResult = validator.validateRecords(fileResult.getRecords(), SATELLITE_CODE, INITIATIVE_ID);
+
+    assertEquals("OK", fileResult.getStatus());
+    assertEquals("KO", recordsResult.getStatus());
+    assertTrue(recordsResult.getErrorMessages().values().iterator().next().contains("URL HTTP/HTTPS valido"));
   }
 
   @Test
@@ -328,5 +360,49 @@ class ProductFileValidatorServiceTest {
     config.setCategories(Map.of(CATEGORY, categoryConfig));
     config.setCsvTemplates(Map.of("TEMPLATE", new CsvTemplate(List.of(HEADER), List.of(rule))));
     return config;
+  }
+
+  private ProductFileValidatorService decoderValidator() {
+    return new ProductFileValidatorService(
+      validationConfig,
+      initiativeConfigMap,
+      new RuleDispatcher(List.of(new RegexRuleExecutor()))
+    );
+  }
+
+  private MockMultipartFile decoderCsv(String scart, String connection, String technicalSheetUrl) {
+    String headers = String.join(";", decoderHeaders());
+    String row = String.join(";", "12345", "8009876543210", "DEC123", "SAT", "DecoderModel",
+      "DecoderBrand", scart, connection, technicalSheetUrl);
+    return csv("decoder.csv", headers + "\n" + row);
+  }
+
+  private InitiativeConfig decoderInitiativeConfig() {
+    List<ValidationRule> rules = List.of(
+      ValidationRule.builder()
+        .key("REGEX").field(SCART).value("(?i)^(si|no)$").errorKey("ERROR_SCART").build(),
+      ValidationRule.builder()
+        .key("REGEX").field(IP_CONNECTION)
+        .value("(?i)^(LAN|WIFI|LAN\\s+e\\s+WIFI|Nessuna)$")
+        .errorKey("ERROR_CONNECTIVITY").build(),
+      ValidationRule.builder()
+        .key("REGEX").field(TECHNICAL_SHEET_URL)
+        .value("(?i)^(?:https?://|www\\.)[^\\s]+$")
+        .errorKey("ERROR_TECHNICAL_SHEET_URL").build()
+    );
+
+    InitiativeConfig config = new InitiativeConfig();
+    config.setCategories(Map.of(
+      SATELLITE_CODE, new CategoryConfig("DECODER_TEMPLATE", CODE_PRODUCT, List.of(), "DECODER")
+    ));
+    config.setCsvTemplates(Map.of(
+      "DECODER_TEMPLATE", new CsvTemplate(decoderHeaders(), rules)
+    ));
+    return config;
+  }
+
+  private List<String> decoderHeaders() {
+    return List.of(CODE_EPREL, CODE_GTIN_EAN, CODE_PRODUCT, it.gov.pagopa.register.constants.AssetRegisterConstants.CsvHeader.CATEGORY,
+      MODEL, BRAND, SCART, IP_CONNECTION, TECHNICAL_SHEET_URL);
   }
 }
