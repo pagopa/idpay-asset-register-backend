@@ -261,12 +261,12 @@ class ProductMapperTest {
       .registrationDate(LocalDateTime.now())
       .status(ProductStatus.APPROVED.name())
       .category("C")
-      .connectivity("WI" + "-FI")
+      .connectivity("WI" + "FI")
       .build();
 
     ProductDTO dto = ProductMapper.toDTO(product, UserRole.INVITALIA.getRole());
 
-    assertEquals("WIFI", dto.getConnectivity());
+    assertEquals("WI-FI", dto.getConnectivity());
   }
 
 }
