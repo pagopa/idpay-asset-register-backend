@@ -204,6 +204,21 @@ class ProductFileValidatorServiceTest {
   }
 
   @Test
+  void validateDecoderTemplate_WithHttpsTechnicalSheetUrlReturnsCoherentFormalError() throws IOException {
+    InitiativeConfig config = decoderInitiativeConfig();
+    when(initiativeConfigMap.get(INITIATIVE_ID)).thenReturn(config);
+    ProductFileValidatorService validator = decoderValidator();
+    MockMultipartFile file = decoderCsv("NO", "Nessuna", "https://example.com/scheda-tecnica/ds-090");
+
+    ValidationResultDTO fileResult = validator.validateFile(file, SATELLITE_CODE, INITIATIVE_ID, "organization");
+    ValidationResultDTO recordsResult = validator.validateRecords(fileResult.getRecords(), SATELLITE_CODE, INITIATIVE_ID);
+
+    assertEquals("OK", fileResult.getStatus());
+    assertEquals("KO", recordsResult.getStatus());
+    assertTrue(recordsResult.getErrorMessages().values().iterator().next().contains("inizi con \"www.\""));
+  }
+
+  @Test
   void validateDecoderTemplate_WithNessunaTechnicalSheetUrlReturnsOk() throws IOException {
     InitiativeConfig config = decoderInitiativeConfig();
     when(initiativeConfigMap.get(INITIATIVE_ID)).thenReturn(config);
@@ -438,7 +453,7 @@ class ProductFileValidatorServiceTest {
         .errorKey("ERROR_CONNECTIVITY").build(),
       ValidationRule.builder()
         .key("REGEX").field(TECHNICAL_SHEET_URL)
-        .value("(?i)^(?:Nessuna|(?:https?://|www\\.)[^\\s]+)$")
+        .value("(?i)^(?:Nessuna|www\\.[^\\s]+)$")
         .errorKey("ERROR_TECHNICAL_SHEET_URL").build()
     );
 
