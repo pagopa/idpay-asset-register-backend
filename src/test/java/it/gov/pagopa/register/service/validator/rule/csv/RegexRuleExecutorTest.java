@@ -1,5 +1,6 @@
 package it.gov.pagopa.register.service.validator.rule.csv;
 
+import static it.gov.pagopa.register.constants.AssetRegisterConstants.ErrorKey.ERROR_CODE_PRODUCT;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -43,6 +44,39 @@ class RegexRuleExecutorTest {
     boolean result = executor.evaluate(validationRuleMock, csvRuleContextMock);
 
     assertFalse(result);
+  }
+
+  @Test
+  void testEvaluate_True_OptionalProductCodeIsNull() {
+    String field = "Codice Prodotto";
+
+    when(validationRuleMock.getField()).thenReturn(field);
+    when(validationRuleMock.getErrorKey()).thenReturn(ERROR_CODE_PRODUCT);
+    when(csvRuleContextMock.getValue(field)).thenReturn(null);
+
+    assertTrue(executor.evaluate(validationRuleMock, csvRuleContextMock));
+  }
+
+  @Test
+  void testEvaluate_True_OptionalProductCodeIsBlank() {
+    String field = "Codice Prodotto";
+
+    when(validationRuleMock.getField()).thenReturn(field);
+    when(validationRuleMock.getErrorKey()).thenReturn(ERROR_CODE_PRODUCT);
+    when(csvRuleContextMock.getValue(field)).thenReturn("   ");
+
+    assertTrue(executor.evaluate(validationRuleMock, csvRuleContextMock));
+  }
+
+  @Test
+  void testEvaluate_False_MandatoryProductCodeIsBlank() {
+    String field = "Codice Prodotto";
+
+    when(validationRuleMock.getField()).thenReturn(field);
+    when(validationRuleMock.getErrorKey()).thenReturn("ERROR_CODE_PRODUCT_NOT_NULL");
+    when(csvRuleContextMock.getValue(field)).thenReturn("");
+
+    assertFalse(executor.evaluate(validationRuleMock, csvRuleContextMock));
   }
 
   @Test
