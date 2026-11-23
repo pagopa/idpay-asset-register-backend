@@ -20,10 +20,7 @@ public class RegexRuleExecutor implements RuleExecutor {
     if (value == null || value.isBlank()) {
       // In the Bonus Elettrodomestici template the product code is optional.
       // The decoder template uses ERROR_CODE_PRODUCT_NOT_NULL and remains mandatory.
-      if (ERROR_CODE_PRODUCT.equals(rule.getErrorKey())) {
-        return true;
-      }
-      return false;
+      return ERROR_CODE_PRODUCT.equals(rule.getErrorKey());
     }
     return value.matches(rule.getValue());
   }
