@@ -312,16 +312,8 @@ public class ProductSpecificRepositoryImpl implements ProductSpecificRepository 
             ).then(TERRESTRIAL_IT_P),
 
             ConditionalOperators.Switch.CaseOperator.when(
-              ComparisonOperators.valueOf(FIELD_CATEGORY).equalToValue(TERRESTRIAL_VIA_CABLE)
-            ).then(TERRESTRIAL_VIA_CABLE_IT_P),
-
-            ConditionalOperators.Switch.CaseOperator.when(
               ComparisonOperators.valueOf(FIELD_CATEGORY).equalToValue(TERRESTRIAL_AND_SATELLITE)
-            ).then(TERRESTRIAL_AND_SATELLITE_IT_P),
-
-            ConditionalOperators.Switch.CaseOperator.when(
-              ComparisonOperators.valueOf(FIELD_CATEGORY).equalToValue(TERRESTRIAL_SATELLITE_AND_VIA_CABLE)
-            ).then(TERRESTRIAL_SATELLITE_AND_VIA_CABLE_IT_P)
+            ).then(TERRESTRIAL_AND_SATELLITE_IT_P)
 
           )
           .defaultTo("$" + FIELD_CATEGORY)
