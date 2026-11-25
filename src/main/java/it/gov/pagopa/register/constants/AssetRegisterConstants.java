@@ -107,24 +107,17 @@ public final class AssetRegisterConstants {
 
     public static final String SATELLITE_CODE = "DS";
     public static final String TERRESTRIAL_CODE = "DT";
-    public static final String TERRESTRIAL_VIA_CABLE_CODE = "DTC";
     public static final String TERRESTRIAL_AND_SATELLITE_CODE = "DTS";
-    public static final String TERRESTRIAL_SATELLITE_AND_VIA_CABLE_CODE = "DTSC";
     public static final String SATELLITE =  "SATELLITE";
     public static final String TERRESTRIAL = "TERRESTRIAL";
-    public static final String TERRESTRIAL_VIA_CABLE = "TERRESTRIAL_VIA_CABLE";
     public static final String TERRESTRIAL_AND_SATELLITE = "TERRESTRIAL_AND_SATELLITE";
-    public static final String TERRESTRIAL_SATELLITE_AND_VIA_CABLE = "TERRESTRIAL_SATELLITE_AND_VIA_CABLE";
     public static final String SATELLITE_IT_S =  "Satellitare";
     public static final String TERRESTRIAL_IT_S = "Terrestre";
-    public static final String TERRESTRIAL_VIA_CABLE_IT_S = "Terrestre via Cavo";
     public static final String TERRESTRIAL_AND_SATELLITE_IT_S = "Terrestre e Satellitare";
-    public static final String TERRESTRIAL_SATELLITE_AND_VIA_CABLE_IT_S = "Terrestre, Satellitare e via Cavo";
     public static final String SATELLITE_IT_P =  "Satellitare";
     public static final String TERRESTRIAL_IT_P = "Terrestre";
-    public static final String TERRESTRIAL_VIA_CABLE_IT_P = "Terrestre_via_Cavo";
     public static final String TERRESTRIAL_AND_SATELLITE_IT_P = "Terrestre_e_Satellitare";
-    public static final String TERRESTRIAL_SATELLITE_AND_VIA_CABLE_IT_P = "Terrestre_Satellitare_e_via_Cavo";
+
 
     // -------- LABELS --------
     public static final class Labels {
@@ -144,9 +137,7 @@ public final class AssetRegisterConstants {
         /* BD */
         Map.entry(SATELLITE_CODE, SATELLITE_IT_S),
         Map.entry(TERRESTRIAL_CODE, TERRESTRIAL_IT_S),
-        Map.entry(TERRESTRIAL_VIA_CABLE_CODE, TERRESTRIAL_VIA_CABLE_IT_S),
-        Map.entry(TERRESTRIAL_AND_SATELLITE_CODE, TERRESTRIAL_AND_SATELLITE_IT_S),
-        Map.entry(TERRESTRIAL_SATELLITE_AND_VIA_CABLE_CODE, TERRESTRIAL_SATELLITE_AND_VIA_CABLE_IT_S)
+        Map.entry(TERRESTRIAL_AND_SATELLITE_CODE, TERRESTRIAL_AND_SATELLITE_IT_S)
       );
 
       public static final Map<String, String> CATEGORIES_FOR_DTO = Map.ofEntries(
@@ -163,9 +154,7 @@ public final class AssetRegisterConstants {
         /* BD */
         Map.entry(SATELLITE_CODE, SATELLITE_IT_S),
         Map.entry(TERRESTRIAL_CODE, TERRESTRIAL_IT_S),
-        Map.entry(TERRESTRIAL_VIA_CABLE_CODE, TERRESTRIAL_VIA_CABLE_IT_S),
-        Map.entry(TERRESTRIAL_AND_SATELLITE_CODE, TERRESTRIAL_AND_SATELLITE_IT_S),
-        Map.entry(TERRESTRIAL_SATELLITE_AND_VIA_CABLE_CODE, TERRESTRIAL_SATELLITE_AND_VIA_CABLE_IT_S)
+        Map.entry(TERRESTRIAL_AND_SATELLITE_CODE, TERRESTRIAL_AND_SATELLITE_IT_S)
       );
 
       public static final Map<String, String> CATEGORIES_FOR_CSV_CHECK = Map.ofEntries(
@@ -182,9 +171,7 @@ public final class AssetRegisterConstants {
         /* BD */
         Map.entry(SATELLITE_CODE, SATELLITE_CODE),
         Map.entry(TERRESTRIAL_CODE, TERRESTRIAL_CODE),
-        Map.entry(TERRESTRIAL_VIA_CABLE_CODE, TERRESTRIAL_VIA_CABLE_CODE),
-        Map.entry(TERRESTRIAL_AND_SATELLITE_CODE, TERRESTRIAL_AND_SATELLITE_CODE),
-        Map.entry(TERRESTRIAL_SATELLITE_AND_VIA_CABLE_CODE, TERRESTRIAL_SATELLITE_AND_VIA_CABLE_CODE)
+        Map.entry(TERRESTRIAL_AND_SATELLITE_CODE, TERRESTRIAL_AND_SATELLITE_CODE)
       );
 
       public static final Map<String, String> CATEGORIES_FOR_FILENAME = Map.ofEntries(
@@ -200,9 +187,7 @@ public final class AssetRegisterConstants {
         /* BD */
         Map.entry(SATELLITE_CODE, SATELLITE_IT_P),
         Map.entry(TERRESTRIAL_CODE, TERRESTRIAL_IT_P),
-        Map.entry(TERRESTRIAL_VIA_CABLE_CODE, TERRESTRIAL_VIA_CABLE_IT_P),
-        Map.entry(TERRESTRIAL_AND_SATELLITE_CODE, TERRESTRIAL_AND_SATELLITE_IT_P),
-        Map.entry(TERRESTRIAL_SATELLITE_AND_VIA_CABLE_CODE, TERRESTRIAL_SATELLITE_AND_VIA_CABLE_IT_P)
+        Map.entry(TERRESTRIAL_AND_SATELLITE_CODE, TERRESTRIAL_AND_SATELLITE_IT_P)
       );
     }
   }

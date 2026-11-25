@@ -13,7 +13,6 @@ class ProductCategoriesTest {
     assertTrue(Arrays.asList(ProductCategories.values()).contains(ProductCategories.WASHINGMACHINES));
     assertTrue(Arrays.asList(ProductCategories.values()).contains(ProductCategories.COOKINGHOBS));
     assertTrue(Arrays.asList(ProductCategories.values()).contains(ProductCategories.DS));
-    assertTrue(Arrays.asList(ProductCategories.values()).contains(ProductCategories.DTSC));
   }
 
   @Test
