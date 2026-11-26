@@ -252,17 +252,17 @@ public final class AssetRegisterConstants {
     Map.entry(ErrorKey.STATUS_NOT_VALID, "Il prodotto è sottoposto alle verifiche previste dal DM del {} e pertanto non è possibile variare le informazioni ad esso collegate"),
 
     // Csv Errors
-    Map.entry(ErrorKey.ERROR_GTIN_EAN, "Il Codice GTIN/EAN è obbligatorio e deve essere univoco ed alfanumerico e lungo al massimo 14 caratteri"),
-    Map.entry(ErrorKey.ERROR_BRAND, "Il campo Marca è obbligatorio, non deve contenere caratteri speciali o lettere accentate e deve essere lungo al massimo 100 caratteri"),
-    Map.entry(ErrorKey.ERROR_MODEL, "Il campo Modello è obbligatorio, non deve contenere caratteri speciali o lettere accentate e deve essere lungo al massimo 100 caratteri"),
-    Map.entry(ErrorKey.ERROR_CODE_PRODUCT, "Il Codice prodotto non deve contenere caratteri speciali o lettere accentate e deve essere lungo al massimo 100 caratteri"),
-    Map.entry(ErrorKey.ERROR_CODE_PRODUCT_NOT_NULL, "Il campo Codice Prodotto è obbligatorio, non deve contenere caratteri speciali o lettere accentate e deve essere lungo al massimo 100 caratteri"),
+    Map.entry(ErrorKey.ERROR_GTIN_EAN, "Il Codice GTIN/EAN è obbligatorio: sono ammessi solo lettere e numeri, massimo 14 caratteri"),
+    Map.entry(ErrorKey.ERROR_BRAND, "Il campo Marca è obbligatorio, massimo 100 caratteri; sono ammessi anche accenti, spazi e simboli"),
+    Map.entry(ErrorKey.ERROR_MODEL, "Il campo Modello è obbligatorio, massimo 100 caratteri; sono ammessi anche accenti, spazi e simboli"),
+    Map.entry(ErrorKey.ERROR_CODE_PRODUCT, "Il Codice Prodotto ammette lettere non accentate, numeri, spazi e simboli, massimo 100 caratteri; esclusi &, \", ', <, >, %, $, :, virgola, ; e ="),
+    Map.entry(ErrorKey.ERROR_CODE_PRODUCT_NOT_NULL, "Il Codice Prodotto è obbligatorio e ammette lettere non accentate, numeri, spazi e simboli, massimo 100 caratteri; esclusi &, \", ', <, >, %, $, :, virgola, ; e ="),
     Map.entry(ErrorKey.ERROR_COUNTRY_OF_PRODUCTION, "Paese di Produzione non è un ISO 3166 valido o non è in maiuscolo"),
     Map.entry(ErrorKey.ERROR_CATEGORY_PRODUCTS, "Il campo Categoria è obbligatorio e deve essere \"{}\""),
     Map.entry(ErrorKey.ERROR_CODE_EPREL, "Il Codice EPREL è obbligatorio e deve essere un valore numerico"),
     Map.entry(ErrorKey.ERROR_SCART, "Il campo Scart è obbligatorio e deve essere Si o No"),
-    Map.entry(ErrorKey.ERROR_CONNECTIVITY, "Il campo connessione IP è obbligatorio e deve essere LAN, WIFI, LAN e WIFI o Nessuna"),
-    Map.entry(ErrorKey.ERROR_TECHNICAL_SHEET_URL, "Il campo scheda tecnica è obbligatorio e deve essere un URL HTTP/HTTPS valido o iniziare con www.")
+    Map.entry(ErrorKey.ERROR_CONNECTIVITY, "Il campo connessione IP è obbligatorio e deve essere LAN, WI-FI, LAN e WI-FI o Nessuna"),
+    Map.entry(ErrorKey.ERROR_TECHNICAL_SHEET_URL, "Il campo Scheda tecnica è obbligatorio: inserire \"Nessuna\" oppure un URL che inizi con \"www.\"")
   );
 
   // =========================================================

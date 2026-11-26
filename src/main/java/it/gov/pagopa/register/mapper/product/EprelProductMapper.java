@@ -23,9 +23,9 @@ import static it.gov.pagopa.register.constants.AssetRegisterConstants.Category.L
 import static it.gov.pagopa.register.constants.AssetRegisterConstants.CsvHeader.*;
 import static it.gov.pagopa.register.constants.AssetRegisterConstants.EprelField.*;
 import static it.gov.pagopa.register.constants.AssetRegisterConstants.Refrigerator.*;
-import static it.gov.pagopa.register.mapper.operation.ProductMapper.*;
 import static it.gov.pagopa.register.utils.CsvUtils.DELIMITER;
 import static it.gov.pagopa.register.utils.EprelUtils.mapEnergyClass;
+import static it.gov.pagopa.register.utils.ProductFieldSanitizer.*;
 
 
 @SuppressWarnings({"java:S6830", "java:S117"})

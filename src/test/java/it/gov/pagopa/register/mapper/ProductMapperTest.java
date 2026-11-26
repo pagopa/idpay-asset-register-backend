@@ -1,7 +1,6 @@
 package it.gov.pagopa.register.mapper;
 
 import it.gov.pagopa.register.dto.operation.ProductDTO;
-import it.gov.pagopa.register.enums.IpConnection;
 import it.gov.pagopa.register.enums.ProductStatus;
 import it.gov.pagopa.register.enums.UserRole;
 import it.gov.pagopa.register.mapper.operation.ProductMapper;
@@ -233,49 +232,6 @@ class ProductMapperTest {
   }
 
   @Test
-  void testParseScart() {
-    assertTrue(ProductMapper.parseScart("SI"));
-    assertTrue(ProductMapper.parseScart("si"));
-    assertTrue(ProductMapper.parseScart("  SI  "));
-    assertTrue(ProductMapper.parseScart("TRUE"));
-    assertTrue(ProductMapper.parseScart("True"));
-    assertTrue(ProductMapper.parseScart("1"));
-    assertFalse(ProductMapper.parseScart("NO"));
-    assertFalse(ProductMapper.parseScart("no"));
-    assertFalse(ProductMapper.parseScart("FALSE"));
-    assertFalse(ProductMapper.parseScart("False"));
-    assertFalse(ProductMapper.parseScart("0"));
-    assertFalse(ProductMapper.parseScart("INVALID"));
-    assertFalse(ProductMapper.parseScart(""));
-    assertFalse(ProductMapper.parseScart("   "));
-    assertFalse(ProductMapper.parseScart(null));
-  }
-
-  @Test
-  void testNormalizeConnectivity() {
-    assertEquals(IpConnection.LAN, ProductMapper.normalizeConnectivity("LAN"));
-    assertEquals(IpConnection.WI_FI, ProductMapper.normalizeConnectivity("wifi"));
-    assertEquals(IpConnection.LAN_WI_FI, ProductMapper.normalizeConnectivity("  LAN   e   WIFI  "));
-    assertEquals(IpConnection.NONE, ProductMapper.normalizeConnectivity("Nessuna"));
-    assertNull(ProductMapper.normalizeConnectivity(null));
-    assertNull(ProductMapper.normalizeConnectivity(""));
-    assertNull(ProductMapper.normalizeConnectivity("   "));
-    assertNull(ProductMapper.normalizeConnectivity("Bluetooth"));
-  }
-
-  @Test
-  void testNormalizeTechnicalSheetUrl() {
-    assertEquals("https://example.com/sheet", ProductMapper.normalizeTechnicalSheetUrl("  https://example.com/  sheet  "));
-    assertEquals("https://www.google.com", ProductMapper.normalizeTechnicalSheetUrl(" www.google.com "));
-
-    String longUrl = "https://example.com/" + "a".repeat(300);
-    assertEquals(longUrl.length(), ProductMapper.normalizeTechnicalSheetUrl(longUrl).length());
-
-    assertNull(ProductMapper.normalizeTechnicalSheetUrl(null));
-    assertNull(ProductMapper.normalizeTechnicalSheetUrl("   "));
-  }
-
-  @Test
   void testToDTO_NewFieldsMapped() {
     Product product = Product.builder()
       .organizationId("org1")
@@ -305,12 +261,12 @@ class ProductMapperTest {
       .registrationDate(LocalDateTime.now())
       .status(ProductStatus.APPROVED.name())
       .category("C")
-      .connectivity("WI" + "-FI")
+      .connectivity("WI" + "FI")
       .build();
 
     ProductDTO dto = ProductMapper.toDTO(product, UserRole.INVITALIA.getRole());
 
-    assertEquals("WIFI", dto.getConnectivity());
+    assertEquals("WI-FI", dto.getConnectivity());
   }
 
 }
